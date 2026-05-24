@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Acceso Fútbol
 
-## Getting Started
+Landing page and TikTok embed widget for [accesofutbol.com](https://accesofutbol.com).
 
-First, run the development server:
+## Features
+
+- Homepage with TikTok profile embed (official TikTok widget)
+- Optional featured videos via TikTok iframe player
+- Standalone embed route at `/embed/tiktok` for GoDaddy or other site builders
+- Configurable TikTok username and video IDs via environment variables
+
+## Setup
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Copy environment variables:
+
+```bash
+cp .env.example .env.local
+```
+
+3. Edit `.env.local` with your TikTok handle and optional video IDs:
+
+```env
+NEXT_PUBLIC_TIKTOK_USERNAME=your_tiktok_handle
+NEXT_PUBLIC_TIKTOK_VIDEO_IDS=6718335390845095173,7123456789012345678
+```
+
+Video IDs are the numeric part from a TikTok URL:
+`https://www.tiktok.com/@user/video/6718335390845095173` → `6718335390845095173`
+
+4. Run locally:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Embed on GoDaddy (iframe)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+If you keep the GoDaddy site and want to show the TikTok widget without replacing the whole site, deploy this project and add a **Custom HTML** block:
 
-## Learn More
+```html
+<iframe
+  src="https://accesofutbol.com/embed/tiktok"
+  width="100%"
+  height="900"
+  style="border:0; border-radius:16px; overflow:hidden;"
+  loading="lazy"
+  title="Acceso Fútbol en TikTok"
+></iframe>
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Deploy
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Deploy to Vercel (recommended) and point your domain DNS to the deployment. Then replace the GoDaddy placeholder site or embed the `/embed/tiktok` route.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run build
+npm run start
+```
 
-## Deploy on Vercel
+## TikTok embed options
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Method | Use case |
+|--------|----------|
+| Profile embed (`TikTokProfileEmbed`) | Shows profile card + recent videos |
+| Video iframe (`TikTokVideoPlayer`) | Single video player, good for highlights |
+| `/embed/tiktok` page | Drop-in iframe for GoDaddy or other builders |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Official docs: [TikTok Embeds](https://www.tiktok.com/embed)

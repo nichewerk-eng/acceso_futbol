@@ -1,26 +1,81 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --brand-orange: #f07820;
+  --brand-orange-dark: #d06010;
+  --brand-teal: #1a7a78;
+  --brand-blue: #1e4fa0;
+  --bg-1: #030f10;
+  --bg-2: #0c2d30;
+  --bg-3: #051a1c;
+  --foreground: #ffffff;
 }
 
 @theme inline {
-  --color-background: var(--background);
+  --color-brand-orange: var(--brand-orange);
+  --color-brand-orange-dark: var(--brand-orange-dark);
+  --color-brand-teal: var(--brand-teal);
+  --color-brand-blue: var(--brand-blue);
+  --color-bg-1: var(--bg-1);
+  --color-bg-2: var(--bg-2);
+  --color-bg-3: var(--bg-3);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-display: var(--font-oswald);
 }
 
 body {
-  background: var(--background);
+  background: var(--bg-1);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-oswald), Arial, Helvetica, sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-oswald), Arial, Helvetica, sans-serif;
+}
+
+.brand-gradient {
+  background: linear-gradient(
+    135deg,
+    #d06010 0%,
+    #f07820 30%,
+    #1a7a78 65%,
+    #1e4fa0 100%
+  );
+}
+
+.brand-gradient-text {
+  background: linear-gradient(
+    90deg,
+    #f07820 0%,
+    #f07820 35%,
+    #1a7a78 70%,
+    #1e4fa0 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.broadcast-glow {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(240, 120, 32, 0.22), transparent),
+    radial-gradient(ellipse 60% 40% at 90% 20%, rgba(30, 79, 160, 0.15), transparent),
+    radial-gradient(ellipse 50% 30% at 10% 80%, rgba(26, 122, 120, 0.12), transparent);
+}
+
+.ticker-scroll {
+  animation: ticker 28s linear infinite;
+}
+
+@keyframes ticker {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.tiktok-embed {
+  margin: 0 auto !important;
 }
