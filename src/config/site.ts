@@ -17,9 +17,8 @@ export const siteConfig = {
   description:
     "Opinión caliente, micro-análisis y narrativas de Liga MX y la Selección Mexicana. Síguenos en TikTok antes del Mundial 2026.",
   url: "https://accesofutbol.com",
-  email: "jon@accesofutbol.com",
+  email: "hello@accesofutbol.com",
   founded: 2026,
-  location: "Austin / Buda, Texas, USA",
   worldCup: {
     date: "11 de junio de 2026",
     venue: "Estadio Banorte",

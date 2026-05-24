@@ -10,9 +10,7 @@ export function SiteFooter() {
           <p className="font-display text-lg font-bold uppercase tracking-[0.1em] text-white">
             {siteConfig.name}
           </p>
-          <p className="mt-1 text-sm text-white/50">
-            {siteConfig.legalName} · {siteConfig.location}
-          </p>
+          <p className="mt-1 text-sm text-white/50">{siteConfig.legalName}</p>
           <p className="mt-1 text-sm text-white/50">
             Fundado {siteConfig.founded}
           </p>
