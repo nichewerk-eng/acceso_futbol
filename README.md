@@ -2,40 +2,18 @@
 
 Landing page and TikTok embed widget for [accesofutbol.com](https://accesofutbol.com).
 
+TikTok: [@accesofutbolmx](https://www.tiktok.com/@accesofutbolmx)
+
 ## Features
 
 - Homepage with TikTok profile embed (official TikTok widget)
 - Optional featured videos via TikTok iframe player
 - Standalone embed route at `/embed/tiktok` for GoDaddy or other site builders
-- Configurable TikTok username and video IDs via environment variables
 
 ## Setup
 
-1. Install dependencies:
-
 ```bash
 npm install
-```
-
-2. Copy environment variables:
-
-```bash
-cp .env.example .env.local
-```
-
-3. Edit `.env.local` with your TikTok handle and optional video IDs:
-
-```env
-NEXT_PUBLIC_TIKTOK_USERNAME=your_tiktok_handle
-NEXT_PUBLIC_TIKTOK_VIDEO_IDS=6718335390845095173,7123456789012345678
-```
-
-Video IDs are the numeric part from a TikTok URL:
-`https://www.tiktok.com/@user/video/6718335390845095173` → `6718335390845095173`
-
-4. Run locally:
-
-```bash
 npm run dev
 ```
 
@@ -58,7 +36,7 @@ If you keep the GoDaddy site and want to show the TikTok widget without replacin
 
 ## Deploy
 
-Deploy to Vercel (recommended) and point your domain DNS to the deployment. Then replace the GoDaddy placeholder site or embed the `/embed/tiktok` route.
+Deploy to Vercel (recommended) and point your domain DNS to the deployment.
 
 ```bash
 npm run build

@@ -1,9 +1,3 @@
-const parseVideoIds = (value: string | undefined): string[] =>
-  (value ?? "")
-    .split(",")
-    .map((id) => id.trim())
-    .filter(Boolean);
-
 export const brandColors = {
   orange: "#f07820",
   orangeDark: "#d06010",
@@ -32,8 +26,8 @@ export const siteConfig = {
     headline: "México abre el Mundial 2026",
   },
   tiktok: {
-    username: process.env.NEXT_PUBLIC_TIKTOK_USERNAME ?? "accesofutbolmx",
-    videoIds: parseVideoIds(process.env.NEXT_PUBLIC_TIKTOK_VIDEO_IDS),
+    username: "accesofutbolmx",
+    videoIds: [] as string[],
     get profileUrl() {
       return `https://www.tiktok.com/@${this.username}`;
     },
