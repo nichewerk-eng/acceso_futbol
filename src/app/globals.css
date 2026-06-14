@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Class-based dark mode: applies dark: utilities when .dark is on an ancestor */
+@variant dark (&:where(.dark, .dark *));
+
 :root {
   --brand-orange: #f07820;
   --brand-orange-dark: #d06010;
@@ -78,4 +81,33 @@ body {
 
 .tiktok-embed {
   margin: 0 auto !important;
+  max-width: none !important;
+  width: 100% !important;
+}
+
+.tiktok-embed [data-e2e="common-videoList"] {
+  align-items: stretch !important;
+  gap: 1rem !important;
+}
+
+.tiktok-embed [data-e2e="common-videoList-VideoContainer"] {
+  height: auto !important;
+  min-height: 740px !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.tiktok-embed [data-e2e="common-videoList-VideoContainer"] iframe {
+  display: block !important;
+  width: 325px !important;
+  height: 740px !important;
+  min-height: 740px !important;
+  max-height: none !important;
+  border: 0 !important;
+}
+
+.tiktok-embed [data-e2e="common-videoList-VideoContainer"] > div {
+  height: auto !important;
+  min-height: 740px !important;
+  max-height: none !important;
 }
