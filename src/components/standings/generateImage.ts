@@ -457,14 +457,14 @@ export async function downloadGroupImage(
 
   // Results
   if (pastFixtures.length > 0) {
-    drawSectionHeader('📋  RESULTADOS', ORANGE);
+    drawSectionHeader('RESULTADOS', ORANGE);
     pastFixtures.forEach((f) => drawFixtureRow(f, true));
     cursorY += 8;
   }
 
   // Upcoming
   if (upcomingFixtures.length > 0) {
-    drawSectionHeader('📅  PRÓXIMOS PARTIDOS', TEAL);
+    drawSectionHeader('PRÓXIMOS PARTIDOS', TEAL);
     upcomingFixtures.slice(0, 2).forEach((f) => drawFixtureRow(f, false));
   }
 

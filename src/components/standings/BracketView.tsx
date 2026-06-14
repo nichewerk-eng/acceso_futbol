@@ -211,7 +211,7 @@ function TeamSlot({
         ].join(' ')}
       >
         <span className="text-2xl leading-none">
-          {team ? flag(team.team.abbreviation) : '❓'}
+          {team ? flag(team.team.abbreviation) : '–'}
         </span>
         <span className={['text-sm font-bold truncate max-w-[100px] sm:max-w-[140px]', nameColor].join(' ')}>
           {team ? team.team.name : '—'}

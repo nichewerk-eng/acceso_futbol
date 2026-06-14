@@ -156,10 +156,10 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
           {/* Theme toggle */}
           <button
             onClick={toggleTheme}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-white/5 text-base transition hover:border-brand-orange/50 hover:bg-orange-50 dark:hover:bg-white/10"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-white/5 transition hover:border-brand-orange/50 hover:bg-orange-50 dark:hover:bg-white/10"
             aria-label={dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
           >
-            {dark ? '☀️' : '🌙'}
+            {dark ? <SunIcon /> : <MoonIcon />}
           </button>
         </div>
 
@@ -193,7 +193,7 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
         {/* ── View toggle ── */}
         <div className="mb-6 flex justify-center">
           <div className="flex gap-1 rounded-xl bg-gray-100 dark:bg-white/5 p-1">
-            {([['tabla', '📊 Grupos'], ['cuadro', '🏆 Cuadro R32']] as const).map(([v, label]) => (
+            {([['tabla', 'Grupos'], ['cuadro', 'Cuadro R32']] as const).map(([v, label]) => (
               <button
                 key={v}
                 onClick={() => setView(v)}
@@ -261,17 +261,17 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
                     onClick={handleDownload}
                     disabled={downloading}
                     title="Descargar imagen TikTok 4K"
-                    className="flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-white/[0.08] px-3 py-1.5 text-xs text-gray-500 dark:text-white/50 transition hover:border-brand-orange/50 hover:text-brand-orange disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-white/[0.08] px-2.5 py-1.5 text-xs text-gray-500 dark:text-white/50 transition hover:border-brand-orange/50 hover:text-brand-orange disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <DownloadIcon spinning={downloading} />
-                    {downloading ? 'Generando…' : 'Imagen 4K'}
+                    <span className="hidden sm:inline">{downloading ? 'Generando…' : 'Imagen 4K'}</span>
                   </button>
                   <button
                     onClick={handleShare}
-                    className="flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-white/[0.08] px-3 py-1.5 text-xs text-gray-500 dark:text-white/50 transition hover:border-brand-orange/50 hover:text-brand-orange"
+                    className="flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-white/[0.08] px-2.5 py-1.5 text-xs text-gray-500 dark:text-white/50 transition hover:border-brand-orange/50 hover:text-brand-orange"
                   >
                     <ShareIcon />
-                    {copied ? 'Copiado ✓' : 'Compartir'}
+                    <span className="hidden sm:inline">{copied ? 'Copiado ✓' : 'Compartir'}</span>
                   </button>
                 </div>
               </div>
@@ -396,13 +396,13 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
             {/* Fixtures grid */}
             <div className="grid gap-6 sm:grid-cols-2">
               <section>
-                <SectionTitle icon="📋" label="Resultados" />
+                <SectionTitle label="Resultados" />
                 {pastFixtures.length === 0
                   ? <EmptyState text="Sin partidos disputados aún" />
                   : <div className="flex flex-col gap-2">{pastFixtures.map((f) => <ResultCard key={f.id} fixture={f} tz={userTz} />)}</div>}
               </section>
               <section>
-                <SectionTitle icon="📅" label="Próximos partidos" />
+                <SectionTitle label="Próximos partidos" />
                 {upcomingFixtures.length === 0
                   ? <EmptyState text="No hay más partidos programados" />
                   : <div className="flex flex-col gap-2">{upcomingFixtures.map((f) => <UpcomingCard key={f.id} fixture={f} tz={userTz} />)}</div>}
@@ -431,10 +431,9 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function SectionTitle({ icon, label }: { icon: string; label: string }) {
+function SectionTitle({ label }: { label: string }) {
   return (
     <div className="mb-3 flex items-center gap-2 border-b border-gray-200 dark:border-white/[0.06] pb-2">
-      <span>{icon}</span>
       <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-gray-500 dark:text-white/50">{label}</h3>
     </div>
   );
@@ -564,6 +563,23 @@ function DownloadIcon({ spinning }: { spinning: boolean }) {
   return (
     <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+    </svg>
+  );
+}
+
+function SunIcon() {
+  return (
+    <svg className="h-4 w-4 text-gray-500 dark:text-white/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <circle cx="12" cy="12" r="5" />
+      <path strokeLinecap="round" d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg className="h-4 w-4 text-gray-500 dark:text-white/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
     </svg>
   );
 }
