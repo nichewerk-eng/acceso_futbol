@@ -95,10 +95,14 @@ const TABLE_W = W - PAD_L - PAD_R;
 const TOP_PAD = 60; // reduced — logo sits close to top edge
 
 // Fixture alignment — both sections use identical x anchors
-const FIX_SCORE_X = W / 2;       // 540 — score / "vs" centred here
-const FIX_HOME_R  = 452;         // home team name right-aligns here
-const FIX_AWAY_L  = 628;         // away team name left-aligns here
-const FIX_NAME_MAX = 265;        // max team-name width (px)
+const FIX_SCORE_X  = W / 2;   // 540 — score / "vs" centred here
+const FIX_HOME_R   = 435;     // home name right edge (score gets ~75px breathing room)
+const FIX_AWAY_L   = 645;     // away flag left edge (score gets ~75px breathing room)
+const FLAG_W       = 30;      // reserved px for flag glyph
+const FLAG_GAP     = 6;       // px between flag and name text
+const NAME_MAX_H   = 210;     // max name width — home side
+const NAME_MAX_A   = 240;     // max name width — away side
+const EMOJI_FONT   = '22px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
 
 // ── Main export ───────────────────────────────────────────────────────────────
 export async function downloadGroupImage(
@@ -377,6 +381,37 @@ export async function downloadGroupImage(
 
     const mid = cursorY + cardH / 2;
 
+    // ── helpers for separated flag + name rendering ─────────────────────────
+    // Home team: flag sits to the LEFT of the name, name right-aligns to homeR
+    function drawHome(name: string, flagEmoji: string, color: string, bold: boolean) {
+      const nameFont = `${bold ? 'bold' : '400'} 20px Oswald, "Arial Narrow", Arial, sans-serif`;
+      ctx.font = nameFont;
+      const nameText = clampText(ctx, name, NAME_MAX_H);
+      const nameW    = ctx.measureText(nameText).width;
+      const nameX    = FIX_HOME_R - nameW;
+      ctx.fillStyle  = color;
+      ctx.textAlign  = 'left';
+      ctx.fillText(nameText, nameX, mid + 7);
+      ctx.font       = EMOJI_FONT;
+      ctx.textAlign  = 'center';
+      ctx.fillText(flagEmoji, nameX - FLAG_GAP - FLAG_W / 2, mid + 7);
+    }
+
+    // Away team: flag sits to the LEFT of the name, both left-align from awayL
+    function drawAway(name: string, flagEmoji: string, color: string, bold: boolean) {
+      ctx.font       = EMOJI_FONT;
+      ctx.textAlign  = 'left';
+      ctx.fillStyle  = color;
+      ctx.fillText(flagEmoji, FIX_AWAY_L, mid + 7);
+      const nameFont = `${bold ? 'bold' : '400'} 20px Oswald, "Arial Narrow", Arial, sans-serif`;
+      ctx.font       = nameFont;
+      const nameText = clampText(ctx, name, NAME_MAX_A);
+      ctx.textAlign  = 'left';
+      ctx.fillStyle  = color;
+      ctx.fillText(nameText, FIX_AWAY_L + FLAG_W + FLAG_GAP, mid + 7);
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
     if (isPast) {
       const dateStr = new Date(f.date).toLocaleDateString('es-MX', {
         day: 'numeric', month: 'short', timeZone: tz,
@@ -393,29 +428,24 @@ export async function downloadGroupImage(
       ctx.textAlign = 'center';
       ctx.fillText('FT', W - PAD_R - 24, cursorY + 20);
 
-      // Home team — right-aligned to shared anchor
       const homeWin = Number(f.home.score) > Number(f.away.score);
-      ctx.font = `${homeWin ? 'bold' : '400'} 22px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",Oswald,Arial,sans-serif`;
-      ctx.textAlign = 'right';
-      ctx.fillStyle = homeWin ? WHITE : 'rgba(255,255,255,0.45)';
-      ctx.fillText(clampText(ctx, `${flag(f.home.abbreviation)} ${f.home.name}`, FIX_NAME_MAX), FIX_HOME_R, mid + 8);
+      const awayWin = Number(f.away.score) > Number(f.home.score);
 
-      // Score
+      drawHome(f.home.name, flag(f.home.abbreviation),
+        homeWin ? WHITE : 'rgba(255,255,255,0.45)', homeWin);
+
+      // Score — smaller font leaves more room for names
       ctx.shadowColor = 'rgba(240,120,32,0.38)';
       ctx.shadowBlur = 10;
       ctx.fillStyle = ORANGE;
-      ctx.font = 'bold 32px Oswald, "Arial Narrow", Arial, sans-serif';
+      ctx.font = 'bold 28px Oswald, "Arial Narrow", Arial, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(`${f.home.score ?? '?'}–${f.away.score ?? '?'}`, FIX_SCORE_X, mid + 11);
+      ctx.fillText(`${f.home.score ?? '?'}–${f.away.score ?? '?'}`, FIX_SCORE_X, mid + 10);
       ctx.shadowBlur = 0;
       ctx.shadowColor = 'transparent';
 
-      // Away team — left-aligned from shared anchor
-      const awayWin = Number(f.away.score) > Number(f.home.score);
-      ctx.font = `${awayWin ? 'bold' : '400'} 22px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",Oswald,Arial,sans-serif`;
-      ctx.textAlign = 'left';
-      ctx.fillStyle = awayWin ? WHITE : 'rgba(255,255,255,0.45)';
-      ctx.fillText(clampText(ctx, `${flag(f.away.abbreviation)} ${f.away.name}`, FIX_NAME_MAX), FIX_AWAY_L, mid + 8);
+      drawAway(f.away.name, flag(f.away.abbreviation),
+        awayWin ? WHITE : 'rgba(255,255,255,0.45)', awayWin);
 
     } else {
       const dateStr = new Date(f.date).toLocaleDateString('es-MX', {
@@ -433,23 +463,14 @@ export async function downloadGroupImage(
       ctx.font = '13px Oswald, "Arial Narrow", Arial, sans-serif';
       ctx.fillText(timeStr, PAD_L + 72, cursorY + 45);
 
-      // Home team — right-aligned to shared anchor
-      ctx.font = '22px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",Oswald,Arial,sans-serif';
-      ctx.textAlign = 'right';
-      ctx.fillStyle = 'rgba(255,255,255,0.68)';
-      ctx.fillText(clampText(ctx, `${flag(f.home.abbreviation)} ${f.home.name}`, FIX_NAME_MAX), FIX_HOME_R, mid + 8);
+      drawHome(f.home.name, flag(f.home.abbreviation), 'rgba(255,255,255,0.68)', false);
 
-      // VS — centred at shared anchor
       ctx.fillStyle = 'rgba(255,255,255,0.18)';
-      ctx.font = 'bold 22px Oswald, "Arial Narrow", Arial, sans-serif';
+      ctx.font = 'bold 20px Oswald, "Arial Narrow", Arial, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('vs', FIX_SCORE_X, mid + 8);
+      ctx.fillText('vs', FIX_SCORE_X, mid + 7);
 
-      // Away team — left-aligned from shared anchor
-      ctx.font = '22px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",Oswald,Arial,sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillStyle = 'rgba(255,255,255,0.68)';
-      ctx.fillText(clampText(ctx, `${flag(f.away.abbreviation)} ${f.away.name}`, FIX_NAME_MAX), FIX_AWAY_L, mid + 8);
+      drawAway(f.away.name, flag(f.away.abbreviation), 'rgba(255,255,255,0.68)', false);
     }
 
     cursorY += FH;
