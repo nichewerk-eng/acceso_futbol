@@ -10,6 +10,7 @@ export const TEAM_NAME_ES: Record<string, string> = {
   // G
   'Germany':         'Alemania',
   // S
+  'South Africa':    'Sudáfrica',
   'South Korea':     'Corea del Sur',
   'Switzerland':     'Suiza',
   'Sweden':          'Suecia',
