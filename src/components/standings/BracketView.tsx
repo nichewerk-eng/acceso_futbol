@@ -1,4 +1,5 @@
 import type { Group, TeamEntry } from './types';
+import { teamNameEs } from './teamNames';
 
 // ── Hardcoded R32 bracket (from FIFA / ESPN fixture data) ──────────────────────
 // Slot encoding:
@@ -214,7 +215,7 @@ function TeamSlot({
           {team ? flag(team.team.abbreviation) : '–'}
         </span>
         <span className={['text-sm font-bold truncate max-w-[100px] sm:max-w-[140px]', nameColor].join(' ')}>
-          {team ? team.team.name : '—'}
+          {team ? teamNameEs(team.team.name) : '—'}
         </span>
       </div>
 
