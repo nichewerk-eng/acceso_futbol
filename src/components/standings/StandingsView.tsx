@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import BracketView from './BracketView';
 import { downloadGroupImage } from './generateImage';
+import { teamNameEs } from './teamNames';
 import type { Fixture, Group } from './types';
 
 // ── Flag emoji map ─────────────────────────────────────────────────────────────
@@ -322,7 +323,7 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
                         'truncate text-xs sm:text-sm font-semibold',
                         isFirst ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-white/80',
                       ].join(' ')}>
-                        {entry.team.name}
+                        {teamNameEs(entry.team.name)}
                       </span>
                       {isTop2 && (
                         <span className={[
@@ -466,7 +467,7 @@ function ResultCard({ fixture: f, tz }: { fixture: Fixture; tz: string }) {
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 flex-1 items-center gap-1.5">
           <span className="text-base">{flag(f.home.abbreviation)}</span>
-          <span className={['truncate text-sm font-semibold', homeWin ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-white/50'].join(' ')}>{f.home.name}</span>
+          <span className={['truncate text-sm font-semibold', homeWin ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-white/50'].join(' ')}>{teamNameEs(f.home.name)}</span>
         </div>
         <div className="shrink-0 text-center">
           <span className="text-lg font-bold tracking-wider text-brand-orange">
@@ -477,7 +478,7 @@ function ResultCard({ fixture: f, tz }: { fixture: Fixture; tz: string }) {
         </div>
         <div className="flex min-w-0 flex-1 flex-row-reverse items-center gap-1.5">
           <span className="text-base">{flag(f.away.abbreviation)}</span>
-          <span className={['truncate text-sm font-semibold text-right', awayWin ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-white/50'].join(' ')}>{f.away.name}</span>
+          <span className={['truncate text-sm font-semibold text-right', awayWin ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-white/50'].join(' ')}>{teamNameEs(f.away.name)}</span>
         </div>
       </div>
       {f.city && <p className="mt-1 text-center text-[10px] text-gray-400 dark:text-white/20">{f.city}</p>}
@@ -495,12 +496,12 @@ function UpcomingCard({ fixture: f, tz }: { fixture: Fixture; tz: string }) {
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 flex-1 items-center gap-1.5">
           <span className="text-base">{flag(f.home.abbreviation)}</span>
-          <span className="truncate text-sm font-semibold text-gray-600 dark:text-white/70">{f.home.name}</span>
+          <span className="truncate text-sm font-semibold text-gray-600 dark:text-white/70">{teamNameEs(f.home.name)}</span>
         </div>
         <span className="shrink-0 text-sm font-bold text-gray-300 dark:text-white/20">vs</span>
         <div className="flex min-w-0 flex-1 flex-row-reverse items-center gap-1.5">
           <span className="text-base">{flag(f.away.abbreviation)}</span>
-          <span className="truncate text-right text-sm font-semibold text-gray-600 dark:text-white/70">{f.away.name}</span>
+          <span className="truncate text-right text-sm font-semibold text-gray-600 dark:text-white/70">{teamNameEs(f.away.name)}</span>
         </div>
       </div>
       {f.city && <p className="mt-1 text-center text-[10px] text-gray-400 dark:text-white/20">{f.city}</p>}
@@ -518,7 +519,7 @@ function LiveFixtureCard({ fixture: f, tz }: { fixture: Fixture; tz: string }) {
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <span className="text-xl">{flag(f.home.abbreviation)}</span>
-          <span className="truncate font-bold text-gray-900 dark:text-white">{f.home.name}</span>
+          <span className="truncate font-bold text-gray-900 dark:text-white">{teamNameEs(f.home.name)}</span>
         </div>
         <div className="shrink-0 text-center">
           <span className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -529,7 +530,7 @@ function LiveFixtureCard({ fixture: f, tz }: { fixture: Fixture; tz: string }) {
         </div>
         <div className="flex min-w-0 flex-1 flex-row-reverse items-center gap-2">
           <span className="text-xl">{flag(f.away.abbreviation)}</span>
-          <span className="truncate text-right font-bold text-gray-900 dark:text-white">{f.away.name}</span>
+          <span className="truncate text-right font-bold text-gray-900 dark:text-white">{teamNameEs(f.away.name)}</span>
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import type { Fixture, Group } from './types';
+import { teamNameEs } from './teamNames';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const ORANGE  = '#f07820';
@@ -75,22 +76,22 @@ function clampText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number
   return text + '…';
 }
 
-// Column x-centres (logical px within 1080 canvas, left pad = 48)
+// Column x-centres (logical px within 1080 canvas, left pad = 68)
 const COL = {
-  pos:  90,   // position circle centre — extra left breathing room
-  flag: 150,  // flag emoji centre
-  team: 180,  // team name left edge
-  pj:   440,
-  g:    510,
-  e:    578,
-  p:    645,
-  gf:   712,
-  gc:   779,
-  gd:   848,
-  pts:  980,  // pts badge centre (right area)
+  pos:  110,  // position circle centre
+  flag: 170,  // flag emoji centre
+  team: 214,  // team name left edge — padded away from flag
+  pj:   460,
+  g:    530,
+  e:    598,
+  p:    665,
+  gf:   732,
+  gc:   799,
+  gd:   868,
+  pts:  972,  // pts badge centre — right edge lands at 1008, inside PAD_R
 };
-const PAD_L   = 48;
-const PAD_R   = 48;
+const PAD_L   = 68;
+const PAD_R   = 68;
 const TABLE_W = W - PAD_L - PAD_R;
 const TOP_PAD = 60; // reduced — logo sits close to top edge
 
@@ -259,8 +260,8 @@ export async function downloadGroupImage(
     ctx.font = nameFont;
     ctx.textAlign = 'left';
     ctx.fillStyle = isFirst ? WHITE : 'rgba(255,255,255,0.82)';
-    const maxNameW = COL.pj - COL.team - 12;
-    const safeName = clampText(ctx, entry.team.name, maxNameW);
+    const maxNameW = COL.pj - COL.team - 10;
+    const safeName = clampText(ctx, teamNameEs(entry.team.name), maxNameW);
     ctx.fillText(safeName, COL.team, cy + 13);
 
     // Stat numbers (PJ G E P GF GC)
@@ -431,7 +432,7 @@ export async function downloadGroupImage(
       const homeWin = Number(f.home.score) > Number(f.away.score);
       const awayWin = Number(f.away.score) > Number(f.home.score);
 
-      drawHome(f.home.name, flag(f.home.abbreviation),
+      drawHome(teamNameEs(f.home.name), flag(f.home.abbreviation),
         homeWin ? WHITE : 'rgba(255,255,255,0.45)', homeWin);
 
       // Score — smaller font leaves more room for names
@@ -444,7 +445,7 @@ export async function downloadGroupImage(
       ctx.shadowBlur = 0;
       ctx.shadowColor = 'transparent';
 
-      drawAway(f.away.name, flag(f.away.abbreviation),
+      drawAway(teamNameEs(f.away.name), flag(f.away.abbreviation),
         awayWin ? WHITE : 'rgba(255,255,255,0.45)', awayWin);
 
     } else {
@@ -463,14 +464,14 @@ export async function downloadGroupImage(
       ctx.font = '13px Oswald, "Arial Narrow", Arial, sans-serif';
       ctx.fillText(timeStr, PAD_L + 72, cursorY + 45);
 
-      drawHome(f.home.name, flag(f.home.abbreviation), 'rgba(255,255,255,0.68)', false);
+      drawHome(teamNameEs(f.home.name), flag(f.home.abbreviation), 'rgba(255,255,255,0.68)', false);
 
       ctx.fillStyle = 'rgba(255,255,255,0.18)';
       ctx.font = 'bold 20px Oswald, "Arial Narrow", Arial, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('vs', FIX_SCORE_X, mid + 7);
 
-      drawAway(f.away.name, flag(f.away.abbreviation), 'rgba(255,255,255,0.68)', false);
+      drawAway(teamNameEs(f.away.name), flag(f.away.abbreviation), 'rgba(255,255,255,0.68)', false);
     }
 
     cursorY += FH;
