@@ -79,7 +79,7 @@ function clampText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number
 // Column x-centres (logical px within 1080 canvas, left pad = 68)
 const COL = {
   pos:  110,  // position circle centre
-  flag: 170,  // flag emoji centre
+  flag: 153,  // flag emoji centre — closer to pos circle, more air before name
   team: 214,  // team name left edge — padded away from flag
   pj:   460,
   g:    530,
