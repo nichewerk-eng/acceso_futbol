@@ -555,12 +555,12 @@ export async function downloadGroupImageWithPhoto(
   ctx.scale(SCALE, SCALE);
 
   // ── Layout constants ───────────────────────────────────────────────────────
-  const PHOTO_H   = 820;   // user photo occupies top 820 px
+  const PHOTO_H   = 750;   // user photo occupies top 750 px
   const PL        = 68;    // left padding
   const PR        = 68;    // right padding
   const ROW_H     = 160;   // height of each team row
   const OSWALD    = 'Oswald, "Arial Narrow", Arial, sans-serif';
-  const EMOJI_F   = '64px "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
+  const EMOJI_F   = '52px "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
 
   // Column x-centres for the stats (right side of the row)
   const COL = {
@@ -623,13 +623,13 @@ export async function downloadGroupImageWithPhoto(
   ctx.font      = `bold 58px ${OSWALD}`;
   ctx.fillStyle = WHITE;
   ctx.textAlign = 'left';
-  ctx.fillText('CLASIFICACIÓN', PL, PHOTO_H - 195);
+  ctx.fillText('CLASIFICACIÓN', PL, PHOTO_H - 160);
 
   // "GRUPO X" – huge orange, overlapping photo/content seam
   ctx.font      = `bold 168px ${OSWALD}`;
   ctx.fillStyle = ORANGE;
   ctx.textAlign = 'left';
-  ctx.fillText(`GRUPO ${groupLetter}`, PL, PHOTO_H - 28);
+  ctx.fillText(`GRUPO ${groupLetter}`, PL, PHOTO_H - 20);
 
   // ── 4. Subtitle ───────────────────────────────────────────────────────────
   const matchday = Math.max(...group.entries.map((e) => e.gp), 0);
