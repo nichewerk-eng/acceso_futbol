@@ -564,9 +564,9 @@ export async function downloadGroupImageWithPhoto(
 
   // Column x-centres for the stats (right side of the row)
   const COL = {
-    flag : PL + 35,        // flag emoji centre  (103)
-    nameL: PL + 72,        // team name box left (140)
-    nameW: 245,            // team name box width → right edge at 385
+    flag : PL + 20,        // flag emoji centre  (88) – shifted left for spacing
+    nameL: PL + 84,        // team name box left (152) – more gap after flag
+    nameW: 240,            // team name box width → right edge at 392
     g    : 438,
     e    : 500,
     p    : 562,
