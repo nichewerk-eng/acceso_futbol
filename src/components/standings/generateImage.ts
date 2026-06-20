@@ -534,3 +534,236 @@ export async function downloadGroupImage(
     URL.revokeObjectURL(url);
   }, 'image/png');
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Fox-Deportes–style image: user photo background + standings overlay
+// ─────────────────────────────────────────────────────────────────────────────
+export async function downloadGroupImageWithPhoto(
+  group: Group,
+  _pastFixtures: Fixture[],
+  _upcomingFixtures: Fixture[],
+  groupLetter: string,
+  _tz: string,
+  photoDataUrl: string,
+): Promise<void> {
+  await document.fonts.ready;
+
+  const canvas = document.createElement('canvas');
+  canvas.width  = W * SCALE;
+  canvas.height = H * SCALE;
+  const ctx = canvas.getContext('2d')!;
+  ctx.scale(SCALE, SCALE);
+
+  // ── Layout constants ───────────────────────────────────────────────────────
+  const PHOTO_H   = 820;   // user photo occupies top 820 px
+  const PL        = 68;    // left padding
+  const PR        = 68;    // right padding
+  const ROW_H     = 195;   // height of each team row
+  const OSWALD    = 'Oswald, "Arial Narrow", Arial, sans-serif';
+  const EMOJI_F   = '64px "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
+
+  // Column x-centres for the stats (right side of the row)
+  const COL = {
+    flag : PL + 35,        // flag emoji centre  (103)
+    nameL: PL + 72,        // team name box left (140)
+    nameW: 245,            // team name box width → right edge at 385
+    g    : 438,
+    e    : 500,
+    p    : 562,
+    gf   : 624,
+    gc   : 686,
+    dg   : 748,
+    pts  : 878,
+  };
+
+  // ── 1. Full dark background ────────────────────────────────────────────────
+  ctx.fillStyle = BG;
+  ctx.fillRect(0, 0, W, H);
+
+  // ── 2. User photo (object-cover crop to top area) ─────────────────────────
+  try {
+    const img  = await loadImage(photoDataUrl);
+    const sc   = Math.max(W / img.width, PHOTO_H / img.height);
+    const dw   = img.width  * sc;
+    const dh   = img.height * sc;
+    const dx   = (W  - dw) / 2;
+    const dy   = (PHOTO_H - dh) / 2;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, W, PHOTO_H);
+    ctx.clip();
+    ctx.drawImage(img, dx, dy, dw, dh);
+    ctx.restore();
+  } catch { /* fall through – dark bg is already drawn */ }
+
+  // Gradient: transparent → full dark (bottom 55% of photo area)
+  const grad = ctx.createLinearGradient(0, PHOTO_H * 0.35, 0, PHOTO_H + 10);
+  grad.addColorStop(0,    'rgba(3,15,16,0)');
+  grad.addColorStop(0.55, 'rgba(3,15,16,0.72)');
+  grad.addColorStop(1,    'rgba(3,15,16,1)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, PHOTO_H * 0.35, W, PHOTO_H - PHOTO_H * 0.35 + 10);
+
+  // Side vignette (helps text readability on bright photos)
+  const vigL = ctx.createLinearGradient(0, 0, 160, 0);
+  vigL.addColorStop(0, 'rgba(3,15,16,0.55)');
+  vigL.addColorStop(1, 'rgba(3,15,16,0)');
+  ctx.fillStyle = vigL;
+  ctx.fillRect(0, 0, 160, PHOTO_H);
+
+  // ── 3. Handle text over photo ─────────────────────────────────────────────
+  // "@accesofutbolmx" – small, top-left
+  ctx.font      = `bold 30px ${OSWALD}`;
+  ctx.fillStyle = 'rgba(255,255,255,0.65)';
+  ctx.textAlign = 'left';
+  ctx.fillText('@accesofutbolmx', PL, 90);
+
+  // "CLASIFICACIÓN" – white, bottom of photo
+  ctx.font      = `bold 58px ${OSWALD}`;
+  ctx.fillStyle = WHITE;
+  ctx.textAlign = 'left';
+  ctx.fillText('CLASIFICACIÓN', PL, PHOTO_H - 195);
+
+  // "GRUPO X" – huge orange, overlapping photo/content seam
+  ctx.font      = `bold 168px ${OSWALD}`;
+  ctx.fillStyle = ORANGE;
+  ctx.textAlign = 'left';
+  ctx.fillText(`GRUPO ${groupLetter}`, PL, PHOTO_H - 28);
+
+  // ── 4. Subtitle ───────────────────────────────────────────────────────────
+  const matchday = Math.max(...group.entries.map((e) => e.gp), 0);
+  ctx.font      = `300 30px ${OSWALD}`;
+  ctx.fillStyle = 'rgba(255,255,255,0.50)';
+  ctx.textAlign = 'left';
+  ctx.fillText(
+    `FASE DE GRUPOS  ·  JORNADA ${matchday || '—'}`,
+    PL, PHOTO_H + 56,
+  );
+
+  // ── 5. Thin accent separator ──────────────────────────────────────────────
+  const sepY = PHOTO_H + 80;
+  ctx.strokeStyle = ORANGE;
+  ctx.lineWidth   = 2;
+  ctx.beginPath();
+  ctx.moveTo(PL, sepY);
+  ctx.lineTo(W - PR, sepY);
+  ctx.stroke();
+
+  // ── 6. Column-header labels ───────────────────────────────────────────────
+  const HDR_Y = sepY + 44;
+  const hFont = `bold 22px ${OSWALD}`;
+  ctx.font      = hFont;
+  ctx.fillStyle = 'rgba(255,255,255,0.22)';
+  ctx.textAlign = 'center';
+  for (const [key, x] of [
+    ['G', COL.g], ['E', COL.e], ['P', COL.p],
+    ['GF', COL.gf], ['GC', COL.gc], ['DG', COL.dg],
+  ] as [string, number][]) {
+    ctx.fillText(key, x, HDR_Y);
+  }
+  ctx.fillStyle = ORANGE + 'aa';
+  ctx.fillText('PTS', COL.pts, HDR_Y);
+
+  // ── 7. Team rows ──────────────────────────────────────────────────────────
+  const ROW_START = HDR_Y + 18;
+
+  group.entries.forEach((entry, i) => {
+    const ry     = ROW_START + i * ROW_H;
+    const midY   = ry + ROW_H / 2;
+    const isTop2 = i < 2;
+
+    // Row background (subtle alternate + top-2 accent)
+    ctx.fillStyle = i % 2 === 0
+      ? 'rgba(255,255,255,0.035)'
+      : 'rgba(255,255,255,0.015)';
+    ctx.fillRect(0, ry + 4, W, ROW_H - 8);
+
+    // Top-2 left accent bar
+    if (isTop2) {
+      ctx.fillStyle = ORANGE;
+      ctx.fillRect(0, ry + 4, 4, ROW_H - 8);
+    }
+
+    // ── Flag emoji ────────────────────────────────────────────────────────
+    const fl = flag(entry.team.abbreviation);
+    ctx.font      = EMOJI_F;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(fl, COL.flag, midY);
+
+    // ── Team name box ─────────────────────────────────────────────────────
+    const BOX_H  = 64;
+    const BOX_Y  = midY - BOX_H / 2;
+    const name   = clampText(ctx, teamNameEs(entry.team.name).toUpperCase(), COL.nameW - 20);
+
+    ctx.fillStyle   = 'rgba(255,255,255,0.07)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+    ctx.lineWidth   = 1;
+    roundRect(ctx, COL.nameL, BOX_Y, COL.nameW, BOX_H, 8);
+    ctx.fill();
+    ctx.stroke();
+    ctx.font         = `bold 28px ${OSWALD}`;
+    ctx.fillStyle    = WHITE;
+    ctx.textAlign    = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(name, COL.nameL + 14, midY);
+
+    // ── Stats ─────────────────────────────────────────────────────────────
+    ctx.font         = `500 34px ${OSWALD}`;
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle    = 'rgba(255,255,255,0.60)';
+    for (const [val, x] of [
+      [entry.w,  COL.g ],
+      [entry.d,  COL.e ],
+      [entry.l,  COL.p ],
+      [entry.gf, COL.gf],
+      [entry.ga, COL.gc],
+      [entry.gf - entry.ga, COL.dg],
+    ] as [number, number][]) {
+      ctx.fillText(String(val), x, midY);
+    }
+
+    // Points badge
+    const pts    = entry.pts;
+    const PTSR   = 42;
+    fillRoundRect(ctx, COL.pts - PTSR, midY - PTSR, PTSR * 2, PTSR * 2, 10, isTop2 ? ORANGE : 'rgba(255,255,255,0.10)');
+    ctx.font         = `bold 46px ${OSWALD}`;
+    ctx.fillStyle    = isTop2 ? WHITE : 'rgba(255,255,255,0.85)';
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(pts), COL.pts, midY);
+  });
+
+  // ── 8. Footer ─────────────────────────────────────────────────────────────
+  const tableBottom = ROW_START + group.entries.length * ROW_H;
+  const FOOTER_Y    = Math.max(tableBottom + 60, H - 160);
+
+  // Acceso Futbol logo
+  try {
+    const logo = await loadImage('/acceso_futbol_logo_logo_transparent_bg.PNG');
+    const LH   = 90;
+    const LW   = logo.width * (LH / logo.height);
+    ctx.drawImage(logo, (W - LW) / 2, FOOTER_Y, LW, LH);
+  } catch { /* skip */ }
+
+  ctx.font         = `bold 22px ${OSWALD}`;
+  ctx.fillStyle    = 'rgba(255,255,255,0.35)';
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText('@accesofutbolmx', W / 2, FOOTER_Y + 112);
+
+  // ── 9. Download ───────────────────────────────────────────────────────────
+  canvas.toBlob((blob) => {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a   = document.createElement('a');
+    a.href     = url;
+    a.download = `grupo-${groupLetter.toLowerCase()}-foto-mundial2026.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 'image/png');
+}

@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import BracketView from './BracketView';
-import { downloadGroupImage } from './generateImage';
+import { downloadGroupImage, downloadGroupImageWithPhoto } from './generateImage';
 import { teamNameEs } from './teamNames';
 import type { Fixture, Group } from './types';
 
@@ -61,7 +61,9 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
   const [copied, setCopied]         = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [userTz, setUserTz]         = useState('America/Mexico_City');
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [bgPhotoUrl, setBgPhotoUrl]  = useState<string | null>(null);
+  const intervalRef  = useRef<ReturnType<typeof setInterval> | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   // Restore preferences from localStorage on mount
   useEffect(() => {
@@ -111,16 +113,40 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
     if (!currentGroup) return;
     setDownloading(true);
     try {
-      await downloadGroupImage(
-        currentGroup,
-        pastFixtures,
-        upcomingFixtures,
-        selectedGroup,
-        userTz,
-      );
+      if (bgPhotoUrl) {
+        await downloadGroupImageWithPhoto(
+          currentGroup,
+          pastFixtures,
+          upcomingFixtures,
+          selectedGroup,
+          userTz,
+          bgPhotoUrl,
+        );
+      } else {
+        await downloadGroupImage(
+          currentGroup,
+          pastFixtures,
+          upcomingFixtures,
+          selectedGroup,
+          userTz,
+        );
+      }
     } finally {
       setDownloading(false);
     }
+  }
+
+  function handlePhotoFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const result = evt.target?.result;
+      if (typeof result === 'string') setBgPhotoUrl(result);
+    };
+    reader.readAsDataURL(file);
+    // reset so same file can be re-selected
+    e.target.value = '';
   }
 
   const dark = theme === 'dark';
@@ -258,14 +284,51 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
                   <span className="ml-2 text-xs text-gray-400 dark:text-white/30 font-normal normal-case tracking-normal">Jornada en curso</span>
                 </h2>
                 <div className="flex items-center gap-2">
+                  {/* Photo upload button */}
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handlePhotoFileChange}
+                  />
+                  {bgPhotoUrl ? (
+                    <div className="flex items-center gap-1">
+                      {/* Thumbnail preview */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={bgPhotoUrl}
+                        alt="Foto de fondo"
+                        className="h-7 w-7 rounded object-cover border border-green-400/50 cursor-pointer"
+                        onClick={() => photoInputRef.current?.click()}
+                        title="Cambiar foto"
+                      />
+                      <button
+                        onClick={() => setBgPhotoUrl(null)}
+                        title="Quitar foto"
+                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 dark:border-white/[0.08] text-xs text-gray-400 dark:text-white/40 transition hover:border-red-400/50 hover:text-red-400"
+                      >
+                        <XIcon />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => photoInputRef.current?.click()}
+                      title="Subir foto de fondo"
+                      className="flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-white/[0.08] px-2.5 py-1.5 text-xs text-gray-500 dark:text-white/50 transition hover:border-brand-teal/50 hover:text-brand-teal"
+                    >
+                      <CameraIcon />
+                      <span className="hidden sm:inline">Subir foto</span>
+                    </button>
+                  )}
                   <button
                     onClick={handleDownload}
                     disabled={downloading}
-                    title="Descargar imagen TikTok 4K"
-                    className="flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-white/[0.08] px-2.5 py-1.5 text-xs text-gray-500 dark:text-white/50 transition hover:border-brand-orange/50 hover:text-brand-orange disabled:opacity-40 disabled:cursor-not-allowed"
+                    title={bgPhotoUrl ? 'Descargar imagen con foto' : 'Descargar imagen TikTok 4K'}
+                    className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs transition disabled:opacity-40 disabled:cursor-not-allowed ${bgPhotoUrl ? 'border-brand-orange/50 text-brand-orange hover:bg-orange-50 dark:hover:bg-orange-950/20' : 'border-gray-200 dark:border-white/[0.08] text-gray-500 dark:text-white/50 hover:border-brand-orange/50 hover:text-brand-orange'}`}
                   >
                     <DownloadIcon spinning={downloading} />
-                    <span className="hidden sm:inline">{downloading ? 'Generando…' : 'Imagen 4K'}</span>
+                    <span className="hidden sm:inline">{downloading ? 'Generando…' : bgPhotoUrl ? 'Con foto' : 'Imagen 4K'}</span>
                   </button>
                   <button
                     onClick={handleShare}
@@ -549,6 +612,23 @@ function ShareIcon() {
   return (
     <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+    </svg>
+  );
+}
+
+function CameraIcon() {
+  return (
+    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+      <circle cx="12" cy="13" r="4" />
+    </svg>
+  );
+}
+
+function XIcon() {
+  return (
+    <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
     </svg>
   );
 }
