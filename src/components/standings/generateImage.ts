@@ -558,7 +558,7 @@ export async function downloadGroupImageWithPhoto(
   const PHOTO_H   = 820;   // user photo occupies top 820 px
   const PL        = 68;    // left padding
   const PR        = 68;    // right padding
-  const ROW_H     = 195;   // height of each team row
+  const ROW_H     = 160;   // height of each team row
   const OSWALD    = 'Oswald, "Arial Narrow", Arial, sans-serif';
   const EMOJI_F   = '64px "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
 
