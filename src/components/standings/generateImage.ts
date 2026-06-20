@@ -555,7 +555,7 @@ export async function downloadGroupImageWithPhoto(
   ctx.scale(SCALE, SCALE);
 
   // ── Layout constants ───────────────────────────────────────────────────────
-  const PHOTO_H   = 750;   // user photo occupies top 750 px
+  const PHOTO_H   = 900;   // photo fills top 900 px; text sits below TikTok safe zone
   const PL        = 68;    // left padding
   const PR        = 68;    // right padding
   const ROW_H     = 160;   // height of each team row
@@ -613,17 +613,17 @@ export async function downloadGroupImageWithPhoto(
   ctx.fillRect(0, 0, 160, PHOTO_H);
 
   // ── 3. Handle text over photo ─────────────────────────────────────────────
-  // "@accesofutbolmx" – small, top-left
+  // "@accesofutbolmx" – small, pushed down below TikTok's top safe zone
   ctx.font      = `bold 30px ${OSWALD}`;
   ctx.fillStyle = 'rgba(255,255,255,0.65)';
   ctx.textAlign = 'left';
-  ctx.fillText('@accesofutbolmx', PL, 90);
+  ctx.fillText('@accesofutbolmx', PL, 260);
 
-  // "CLASIFICACIÓN" – white, bottom of photo
+  // "CLASIFICACIÓN" – white, lower in photo
   ctx.font      = `bold 58px ${OSWALD}`;
   ctx.fillStyle = WHITE;
   ctx.textAlign = 'left';
-  ctx.fillText('CLASIFICACIÓN', PL, PHOTO_H - 160);
+  ctx.fillText('CLASIFICACIÓN', PL, PHOTO_H - 180);
 
   // "GRUPO X" – huge orange, overlapping photo/content seam
   ctx.font      = `bold 168px ${OSWALD}`;
@@ -673,10 +673,14 @@ export async function downloadGroupImageWithPhoto(
     const midY   = ry + ROW_H / 2;
     const isTop2 = i < 2;
 
+    // Reset canvas state fully so no opacity/color bleeds from previous row
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+
     // Row background (subtle alternate + top-2 accent)
     ctx.fillStyle = i % 2 === 0
-      ? 'rgba(255,255,255,0.035)'
-      : 'rgba(255,255,255,0.015)';
+      ? 'rgba(255,255,255,0.040)'
+      : 'rgba(255,255,255,0.020)';
     ctx.fillRect(0, ry + 4, W, ROW_H - 8);
 
     // Top-2 left accent bar
@@ -687,8 +691,10 @@ export async function downloadGroupImageWithPhoto(
 
     // ── Flag emoji ────────────────────────────────────────────────────────
     const fl = flag(entry.team.abbreviation);
-    ctx.font      = EMOJI_F;
-    ctx.textAlign = 'center';
+    ctx.globalAlpha  = 1;
+    ctx.fillStyle    = WHITE;
+    ctx.font         = EMOJI_F;
+    ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(fl, COL.flag, midY);
 
