@@ -693,9 +693,21 @@ export async function downloadGroupImageWithPhoto(
     ctx.fillText(fl, COL.flag, midY);
 
     // ── Team name box ─────────────────────────────────────────────────────
-    const BOX_H  = 64;
-    const BOX_Y  = midY - BOX_H / 2;
-    const name   = clampText(ctx, teamNameEs(entry.team.name).toUpperCase(), COL.nameW - 20);
+    const BOX_H   = 64;
+    const BOX_Y   = midY - BOX_H / 2;
+    const fullName = teamNameEs(entry.team.name).toUpperCase();
+    const NAME_MAX_W = COL.nameW - 24;
+
+    // Shrink font until the full name fits — never truncate
+    let nameFontSize = 28;
+    for (const size of [28, 24, 20, 17]) {
+      ctx.font = `bold ${size}px ${OSWALD}`;
+      if (ctx.measureText(fullName).width <= NAME_MAX_W) {
+        nameFontSize = size;
+        break;
+      }
+      nameFontSize = size; // use smallest if nothing fits
+    }
 
     ctx.fillStyle   = 'rgba(255,255,255,0.07)';
     ctx.strokeStyle = 'rgba(255,255,255,0.10)';
@@ -703,11 +715,11 @@ export async function downloadGroupImageWithPhoto(
     roundRect(ctx, COL.nameL, BOX_Y, COL.nameW, BOX_H, 8);
     ctx.fill();
     ctx.stroke();
-    ctx.font         = `bold 28px ${OSWALD}`;
+    ctx.font         = `bold ${nameFontSize}px ${OSWALD}`;
     ctx.fillStyle    = WHITE;
     ctx.textAlign    = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText(name, COL.nameL + 14, midY);
+    ctx.fillText(fullName, COL.nameL + 14, midY);
 
     // ── Stats ─────────────────────────────────────────────────────────────
     ctx.font         = `500 34px ${OSWALD}`;
