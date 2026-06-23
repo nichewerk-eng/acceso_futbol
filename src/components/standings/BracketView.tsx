@@ -64,46 +64,16 @@ interface SlotResult {
 }
 
 /**
- * ESPN marks each team's note.color to signal their standing:
- *   green  → clinched / confirmed advancement
- *   yellow → still in play (leading but not yet locked)
- *   red    → eliminated
+ * Determines certainty without trusting ESPN's projection colours
+ * (ESPN uses the same green for both projections and true clinches).
  *
- * We parse the hex color and treat any clearly-green shade as confirmed.
- * A description fallback catches any exact "Clinched …" phrases too.
- */
-function noteIsConfirmed(
-  note: { color: string; description: string; rank: number } | null,
-): boolean {
-  if (!note) return false;
-
-  // ── Color-based check (most reliable) ───────────────────────────────────
-  const c = (note.color ?? '').toLowerCase().trim();
-  if (c === 'green') return true;
-  if (c.startsWith('#') && (c.length === 7 || c.length === 4)) {
-    let r: number, g: number, b: number;
-    if (c.length === 4) {
-      r = parseInt(c[1] + c[1], 16);
-      g = parseInt(c[2] + c[2], 16);
-      b = parseInt(c[3] + c[3], 16);
-    } else {
-      r = parseInt(c.slice(1, 3), 16);
-      g = parseInt(c.slice(3, 5), 16);
-      b = parseInt(c.slice(5, 7), 16);
-    }
-    // Green if the G channel clearly dominates R and B
-    if (g > 80 && g > r + 20 && g > b + 5) return true;
-  }
-
-  // ── Description fallback (exact start match, not .includes) ─────────────
-  const desc = (note.description ?? '').toLowerCase();
-  return desc.startsWith('clinched') || desc.startsWith('advances');
-}
-
-/**
- * Returns 'confirmed' if ESPN has flagged this team's note as a green
- * (clinched) colour, or if every team in the group has played all 3 games.
- * Falls back to projected / seeded otherwise.
+ * Rules:
+ *  - All 3 group games played → standings are final → confirmed
+ *  - 6 pts after exactly 2 games (2 wins) → team has beaten both
+ *    opponents it has faced; in a 4-team group this is the clearest
+ *    near-clinch signal → confirmed
+ *  - Any games played but not meeting above → projected
+ *  - No games played → seeded (no data)
  */
 function teamCertainty(
   team: TeamEntry | null | undefined,
@@ -111,10 +81,11 @@ function teamCertainty(
 ): Certainty {
   if (!team) return 'seeded';
 
-  if (noteIsConfirmed(team.note)) return 'confirmed';
-
   // All 3 group games finished → standings are final
   if (group?.entries.every((e) => e.gp >= 3)) return 'confirmed';
+
+  // 2 wins (6 pts) after 2 games — team has already beaten 2 opponents
+  if (team.gp === 2 && team.pts >= 6) return 'confirmed';
 
   if (team.gp > 0) return 'projected';
   return 'seeded';
