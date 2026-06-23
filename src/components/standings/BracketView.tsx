@@ -64,9 +64,46 @@ interface SlotResult {
 }
 
 /**
- * Returns 'confirmed' if ESPN has flagged this team as having clinched
- * advancement (note with an advance/clinch/qualify keyword), or if all
- * 3 group games are done.  Falls back to projected/seeded otherwise.
+ * ESPN marks each team's note.color to signal their standing:
+ *   green  → clinched / confirmed advancement
+ *   yellow → still in play (leading but not yet locked)
+ *   red    → eliminated
+ *
+ * We parse the hex color and treat any clearly-green shade as confirmed.
+ * A description fallback catches any exact "Clinched …" phrases too.
+ */
+function noteIsConfirmed(
+  note: { color: string; description: string; rank: number } | null,
+): boolean {
+  if (!note) return false;
+
+  // ── Color-based check (most reliable) ───────────────────────────────────
+  const c = (note.color ?? '').toLowerCase().trim();
+  if (c === 'green') return true;
+  if (c.startsWith('#') && (c.length === 7 || c.length === 4)) {
+    let r: number, g: number, b: number;
+    if (c.length === 4) {
+      r = parseInt(c[1] + c[1], 16);
+      g = parseInt(c[2] + c[2], 16);
+      b = parseInt(c[3] + c[3], 16);
+    } else {
+      r = parseInt(c.slice(1, 3), 16);
+      g = parseInt(c.slice(3, 5), 16);
+      b = parseInt(c.slice(5, 7), 16);
+    }
+    // Green if the G channel clearly dominates R and B
+    if (g > 80 && g > r + 20 && g > b + 5) return true;
+  }
+
+  // ── Description fallback (exact start match, not .includes) ─────────────
+  const desc = (note.description ?? '').toLowerCase();
+  return desc.startsWith('clinched') || desc.startsWith('advances');
+}
+
+/**
+ * Returns 'confirmed' if ESPN has flagged this team's note as a green
+ * (clinched) colour, or if every team in the group has played all 3 games.
+ * Falls back to projected / seeded otherwise.
  */
 function teamCertainty(
   team: TeamEntry | null | undefined,
@@ -74,22 +111,9 @@ function teamCertainty(
 ): Certainty {
   if (!team) return 'seeded';
 
-  // ESPN explicitly marks clinched teams via the note field
-  if (team.note) {
-    const desc = (team.note.description ?? '').toLowerCase();
-    if (
-      desc.includes('advance') ||
-      desc.includes('clinch')  ||
-      desc.includes('qualif')  ||
-      desc.includes('round')   ||
-      desc.includes('clasif')  ||
-      desc.includes('clasific')
-    ) {
-      return 'confirmed';
-    }
-  }
+  if (noteIsConfirmed(team.note)) return 'confirmed';
 
-  // All 3 games played in the group → standings are final
+  // All 3 group games finished → standings are final
   if (group?.entries.every((e) => e.gp >= 3)) return 'confirmed';
 
   if (team.gp > 0) return 'projected';
