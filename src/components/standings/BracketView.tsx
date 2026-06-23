@@ -63,12 +63,37 @@ interface SlotResult {
   certainty: Certainty;
 }
 
-function groupCertainty(group: Group | undefined): Certainty {
-  if (!group) return 'seeded';
-  const allDone = group.entries.every((e) => e.gp >= 3);
-  if (allDone) return 'confirmed';
-  const anyPlayed = group.entries.some((e) => e.gp > 0);
-  return anyPlayed ? 'projected' : 'seeded';
+/**
+ * Returns 'confirmed' if ESPN has flagged this team as having clinched
+ * advancement (note with an advance/clinch/qualify keyword), or if all
+ * 3 group games are done.  Falls back to projected/seeded otherwise.
+ */
+function teamCertainty(
+  team: TeamEntry | null | undefined,
+  group: Group | undefined,
+): Certainty {
+  if (!team) return 'seeded';
+
+  // ESPN explicitly marks clinched teams via the note field
+  if (team.note) {
+    const desc = (team.note.description ?? '').toLowerCase();
+    if (
+      desc.includes('advance') ||
+      desc.includes('clinch')  ||
+      desc.includes('qualif')  ||
+      desc.includes('round')   ||
+      desc.includes('clasif')  ||
+      desc.includes('clasific')
+    ) {
+      return 'confirmed';
+    }
+  }
+
+  // All 3 games played in the group → standings are final
+  if (group?.entries.every((e) => e.gp >= 3)) return 'confirmed';
+
+  if (team.gp > 0) return 'projected';
+  return 'seeded';
 }
 
 // The 8 third-place slots in the bracket (Annex C order)
@@ -127,23 +152,25 @@ function resolveSlot(
 ): SlotResult {
   // Winner  e.g. "A1"
   if (/^[A-L]1$/.test(slot)) {
-    const g = groupMap.get(slot[0]);
+    const g    = groupMap.get(slot[0]);
+    const team = g?.entries.find((e) => e.position === 1) ?? null;
     return {
-      team: g?.entries.find((e) => e.position === 1) ?? null,
+      team,
       label: `1° Gr. ${slot[0]}`,
       isThird: false,
-      certainty: groupCertainty(g),
+      certainty: teamCertainty(team, g),
     };
   }
 
   // Runner-up  e.g. "A2"
   if (/^[A-L]2$/.test(slot)) {
-    const g = groupMap.get(slot[0]);
+    const g    = groupMap.get(slot[0]);
+    const team = g?.entries.find((e) => e.position === 2) ?? null;
     return {
-      team: g?.entries.find((e) => e.position === 2) ?? null,
+      team,
       label: `2° Gr. ${slot[0]}`,
       isThird: false,
-      certainty: groupCertainty(g),
+      certainty: teamCertainty(team, g),
     };
   }
 
@@ -266,7 +293,7 @@ export default function BracketView({ groups, userTz }: Props) {
     <div>
       {/* ── Legend ── */}
       <div className="mb-5 flex flex-wrap gap-3">
-        <LegendBadge cls="bg-emerald-500/15 text-emerald-400" label="Confirmado — grupo finalizado" />
+        <LegendBadge cls="bg-emerald-500/15 text-emerald-400" label="Confirmado — clasificado" />
         <LegendBadge cls="bg-brand-orange/15 text-brand-orange" label="Proyectado — en juego" />
         <LegendBadge cls="bg-white/5 dark:bg-white/5 bg-gray-100 text-gray-400 dark:text-white/25" label="Sin definir — jornada no iniciada" />
       </div>
