@@ -93,45 +93,167 @@ function teamCertainty(
   return 'seeded';
 }
 
-// The 8 third-place slots in the bracket (Annex C order)
+// ── FIFA Annex C: official third-place bracket assignment ──────────────────
+// Source: FIFA World Cup 26™ Regulations (May 2026), Annex C, pp. 80–97
+// https://digitalhub.fifa.com/m/636f5c9c6f29771f/original/FWC2026_regulations_EN.pdf
+//
+// Column order: winner of group A, B, D, E, G, I, K, L each faces a third.
+// Each of the 495 rows covers one possible combination of which 8 of 12
+// groups produce a qualifying third-placed team.
+// Row char i = group letter of the third that faces ANNEX_C_WINNERS[i].
+const ANNEX_C_WINNERS = ['A','B','D','E','G','I','K','L'] as const;
+
+const ANNEX_C_ROWS: readonly string[] = [
+ 'EJIFHGLK','HGIDJFLK','EJIDHGLK','EJIDHFLK','EGIDJFLK','EGJDHFLK','EGIDHFLK',
+ 'EGJDHFLI','EGJDHFIK','HGICJFLK','EJICHGLK','EJICHFLK','EGICJFLK','EGJCHFLK',
+ 'EGICHFLK','EGJCHFLI','EGJCHFIK','HGICJDLK','CJIDHFLK','CGIDJFLK','CGJDHFLK',
+ 'CGIDHFLK','CGJDHFLI','CGJDHFIK','EJICHDLK','EGICJDLK','EGJCHDLK','EGICHDLK',
+ 'EGJCHDLI','EGJCHDIK','CJEDIFLK','CJEDHFLK','CEIDHFLK','CJEDHFLI','CJEDHFIK',
+ 'CGEDJFLK','CGEDIFLK','CGEDJFLI','CGEDJFIK','CGEDHFLK','CGJDHFLE','CGJDHFEK',
+ 'CGEDHFLI','CGEDHFIK','CGJDHFEI','HJBFIGLK','EJIBHGLK','EJBFIHLK','EJBFIGLK',
+ 'EJBFHGLK','EGBFIHLK','EJBFHGLI','EJBFHGIK','HJBDIGLK','HJBDIFLK','IGBDJFLK',
+ 'HGBDJFLK','HGBDIFLK','HGBDJFLI','HGBDJFIK','EJBDIHLK','EJBDIGLK','EJBDHGLK',
+ 'EGBDIHLK','EJBDHGLI','EJBDHGIK','EJBDIFLK','EJBDHFLK','EIBDHFLK','EJBDHFLI',
+ 'EJBDHFIK','EGBDJFLK','EGBDIFLK','EGBDJFLI','EGBDJFIK','EGBDHFLK','HGBDJFLE',
+ 'HGBDJFEK','EGBDHFLI','EGBDHFIK','HGBDJFEI','HJBCIGLK','HJBCIFLK','IGBCJFLK',
+ 'HGBCJFLK','HGBCIFLK','HGBCJFLI','HGBCJFIK','EJBCIHLK','EJBCIGLK','EJBCHGLK',
+ 'EGBCIHLK','EJBCHGLI','EJBCHGIK','EJBCIFLK','EJBCHFLK','EIBCHFLK','EJBCHFLI',
+ 'EJBCHFIK','EGBCJFLK','EGBCIFLK','EGBCJFLI','EGBCJFIK','EGBCHFLK','HGBCJFLE',
+ 'HGBCJFEK','EGBCHFLI','EGBCHFIK','HGBCJFEI','HJBCIDLK','IGBCJDLK','HGBCJDLK',
+ 'HGBCIDLK','HGBCJDLI','HGBCJDIK','CJBDIFLK','CJBDHFLK','CIBDHFLK','CJBDHFLI',
+ 'CJBDHFIK','CGBDJFLK','CGBDIFLK','CGBDJFLI','CGBDJFIK','CGBDHFLK','CGBDHFLJ',
+ 'HGBCJFDK','CGBDHFLI','CGBDHFIK','HGBCJFDI','EJBCIDLK','EJBCHDLK','EIBCHDLK',
+ 'EJBCHDLI','EJBCHDIK','EGBCJDLK','EGBCIDLK','EGBCJDLI','EGBCJDIK','EGBCHDLK',
+ 'HGBCJDLE','HGBCJDEK','EGBCHDLI','EGBCHDIK','HGBCJDEI','CJBDEFLK','CEBDIFLK',
+ 'CJBDEFLI','CJBDEFIK','CEBDHFLK','CJBDHFLE','CJBDHFEK','CEBDHFLI','CEBDHFIK',
+ 'CJBDHFEI','CGBDEFLK','CGBDJFLE','CGBDJFEK','CGBDEFLI','CGBDEFIK','CGBDJFEI',
+ 'CGBDHFLE','CGBDHFEK','HGBCJFDE','CGBDHFEI','HJIFAGLK','EJIAHGLK','EJIFAHLK',
+ 'EJIFAGLK','EGJFAHLK','EGIFAHLK','EGJFAHLI','EGJFAHIK','HJIDAGLK','HJIDAFLK',
+ 'IGJDAFLK','HGJDAFLK','HGIDAFLK','HGJDAFLI','HGJDAFIK','EJIDAHLK','EJIDAGLK',
+ 'EGJDAHLK','EGIDAHLK','EGJDAHLI','EGJDAHIK','EJIDAFLK','HJEDAFLK','HEIDAFLK',
+ 'HJEDAFLI','HJEDAFIK','EGJDAFLK','EGIDAFLK','EGJDAFLI','EGJDAFIK','HGEDAFLK',
+ 'HGJDAFLE','HGJDAFEK','HGEDAFLI','HGEDAFIK','HGJDAFEI','HJICAGLK','HJICAFLK',
+ 'IGJCAFLK','HGJCAFLK','HGICAFLK','HGJCAFLI','HGJCAFIK','EJICAHLK','EJICAGLK',
+ 'EGJCAHLK','EGICAHLK','EGJCAHLI','EGJCAHIK','EJICAFLK','HJECAFLK','HEICAFLK',
+ 'HJECAFLI','HJECAFIK','EGJCAFLK','EGICAFLK','EGJCAFLI','EGJCAFIK','HGECAFLK',
+ 'HGJCAFLE','HGJCAFEK','HGECAFLI','HGECAFIK','HGJCAFEI','HJICADLK','IGJCADLK',
+ 'HGJCADLK','HGICADLK','HGJCADLI','HGJCADIK','CJIDAFLK','HJFCADLK','HFICADLK',
+ 'HJFCADLI','HJFCADIK','CGJDAFLK','CGIDAFLK','CGJDAFLI','CGJDAFIK','HGFCADLK',
+ 'CGJDAFLH','HGJCAFDK','HGFCADLI','HGFCADIK','HGJCAFDI','EJICADLK','HJECADLK',
+ 'HEICADLK','HJECADLI','HJECADIK','EGJCADLK','EGICADLK','EGJCADLI','EGJCADIK',
+ 'HGECADLK','HGJCADLE','HGJCADEK','HGECADLI','HGECADIK','HGJCADEI','CJEDAFLK',
+ 'CEIDAFLK','CJEDAFLI','CJEDAFIK','HEFCADLK','HJFCADLE','HJECAFDK','HEFCADLI',
+ 'HEFCADIK','HJECAFDI','CGEDAFLK','CGJDAFLE','CGJDAFEK','CGEDAFLI','CGEDAFIK',
+ 'CGJDAFEI','HGFCADLE','HGECAFDK','HGJCAFDE','HGECAFDI','HJBAIGLK','HJBAIFLK',
+ 'IJBFAGLK','HJBFAGLK','HGBAIFLK','HJBFAGLI','HJBFAGIK','EJBAIHLK','EJBAIGLK',
+ 'EJBAHGLK','EGBAIHLK','EJBAHGLI','EJBAHGIK','EJBAIFLK','EJBFAHLK','EIBFAHLK',
+ 'EJBFAHLI','EJBFAHIK','EJBFAGLK','EGBAIFLK','EJBFAGLI','EJBFAGIK','EGBFAHLK',
+ 'HJBFAGLE','HJBFAGEK','EGBFAHLI','EGBFAHIK','HJBFAGEI','IJBDAHLK','IJBDAGLK',
+ 'HJBDAGLK','IGBDAHLK','HJBDAGLI','HJBDAGIK','IJBDAFLK','HJBDAFLK','HIBDAFLK',
+ 'HJBDAFLI','HJBDAFIK','FJBDAGLK','IGBDAFLK','FJBDAGLI','FJBDAGIK','HGBDAFLK',
+ 'HGBDAFLJ','HGBDAFJK','HGBDAFLI','HGBDAFIK','HGBDAFIJ','EJBAIDLK','EJBDAHLK',
+ 'EIBDAHLK','EJBDAHLI','EJBDAHIK','EJBDAGLK','EGBAIDLK','EJBDAGLI','EJBDAGIK',
+ 'EGBDAHLK','HJBDAGLE','HJBDAGEK','EGBDAHLI','EGBDAHIK','HJBDAGEI','EJBDAFLK',
+ 'EIBDAFLK','EJBDAFLI','EJBDAFIK','HEBDAFLK','HJBDAFLE','HJBDAFEK','HEBDAFLI',
+ 'HEBDAFIK','HJBDAFEI','EGBDAFLK','EGBDAFLJ','EGBDAFJK','EGBDAFLI','EGBDAFIK',
+ 'EGBDAFIJ','HGBDAFLE','HGBDAFEK','HGBDAFEJ','HGBDAFEI','IJBCAHLK','IJBCAGLK',
+ 'HJBCAGLK','IGBCAHLK','HJBCAGLI','HJBCAGIK','IJBCAFLK','HJBCAFLK','HIBCAFLK',
+ 'HJBCAFLI','HJBCAFIK','CJBFAGLK','IGBCAFLK','CJBFAGLI','CJBFAGIK','HGBCAFLK',
+ 'HGBCAFLJ','HGBCAFJK','HGBCAFLI','HGBCAFIK','HGBCAFIJ','EJBAICLK','EJBCAHLK',
+ 'EIBCAHLK','EJBCAHLI','EJBCAHIK','EJBCAGLK','EGBAICLK','EJBCAGLI','EJBCAGIK',
+ 'EGBCAHLK','HJBCAGLE','HJBCAGEK','EGBCAHLI','EGBCAHIK','HJBCAGEI','EJBCAFLK',
+ 'EIBCAFLK','EJBCAFLI','EJBCAFIK','HEBCAFLK','HJBCAFLE','HJBCAFEK','HEBCAFLI',
+ 'HEBCAFIK','HJBCAFEI','EGBCAFLK','EGBCAFLJ','EGBCAFJK','EGBCAFLI','EGBCAFIK',
+ 'EGBCAFIJ','HGBCAFLE','HGBCAFEK','HGBCAFEJ','HGBCAFEI','IJBCADLK','HJBCADLK',
+ 'HIBCADLK','HJBCADLI','HJBCADIK','CJBDAGLK','IGBCADLK','CJBDAGLI','CJBDAGIK',
+ 'HGBCADLK','HGBCADLJ','HGBCADJK','HGBCADLI','HGBCADIK','HGBCADIJ','CJBDAFLK',
+ 'CIBDAFLK','CJBDAFLI','CJBDAFIK','HFBCADLK','CJBDAFLH','HJBCAFDK','HFBCADLI',
+ 'HFBCADIK','HJBCAFDI','CGBDAFLK','CGBDAFLJ','CGBDAFJK','CGBDAFLI','CGBDAFIK',
+ 'CGBDAFIJ','CGBDAFLH','HGBCAFDK','HGBCAFDJ','HGBCAFDI','EJBCADLK','EIBCADLK',
+ 'EJBCADLI','EJBCADIK','HEBCADLK','HJBCADLE','HJBCADEK','HEBCADLI','HEBCADIK',
+ 'HJBCADEI','EGBCADLK','EGBCADLJ','EGBCADJK','EGBCADLI','EGBCADIK','EGBCADIJ',
+ 'HGBCADLE','HGBCADEK','HGBCADEJ','HGBCADEI','CEBDAFLK','CJBDAFLE','CJBDAFEK',
+ 'CEBDAFLI','CEBDAFIK','CJBDAFEI','HFBCADLE','HEBCAFDK','HJBCAFDE','HEBCAFDI',
+ 'CGBDAFLE','CGBDAFEK','CGBDAFEJ','CGBDAFEI','HGBCAFDE',
+];
+
+// Maps each winner letter to the R32 slot string it corresponds to in our R32 array.
+// Derived from the R32 array: whichever match has homeSlot = 'X1', its awaySlot is here.
+const WINNER_TO_SLOT: Record<string, string> = {
+  A: 'T:CEFHI',  // r32-07: A1 vs T:CEFHI
+  B: 'T:EFGIJ',  // r32-13: B1 vs T:EFGIJ
+  D: 'T:BEFIJ',  // r32-10: D1 vs T:BEFIJ
+  E: 'T:ABCDF',  // r32-03: E1 vs T:ABCDF
+  G: 'T:AEHIJ',  // r32-09: G1 vs T:AEHIJ
+  I: 'T:CDFGH',  // r32-06: I1 vs T:CDFGH
+  K: 'T:DEIJL',  // r32-16: K1 vs T:DEIJL
+  L: 'T:EHIJK',  // r32-08: L1 vs T:EHIJK
+};
+
+// Fallback slot order used when Annex C cannot yet resolve (< 8 groups determined)
 const THIRD_SLOTS = [
   'T:ABCDF', 'T:CDFGH', 'T:CEFHI', 'T:EHIJK',
   'T:AEHIJ', 'T:BEFIJ', 'T:EFGIJ', 'T:DEIJL',
 ] as const;
 
 /**
- * Pre-compute all 8 third-place slot assignments with global deduplication.
- * Ranks all 12 thirds by pts → GD → GF, then greedily assigns the best
- * available third to each slot (a team can only appear in one slot).
+ * Pre-compute all 8 third-place slot assignments using the official FIFA
+ * Annex C lookup table (495 rows — one per possible combination of which
+ * 8 of the 12 groups produce a qualifying third-placed team).
+ *
+ * Falls back to the greedy eligibility approach only when the top-8
+ * combination cannot yet be determined (e.g. early tournament stage
+ * where fewer than 8 groups have distinct standings).
  */
 function computeThirdAssignments(groups: Group[]): Map<string, TeamEntry | null> {
-  // team id → group letter
   const teamToGroup = new Map<string, string>();
   for (const group of groups) {
     const letter = group.abbreviation.replace('Group ', '');
-    for (const entry of group.entries) {
-      teamToGroup.set(entry.team.id, letter);
-    }
+    for (const entry of group.entries) teamToGroup.set(entry.team.id, letter);
   }
 
-  // All 12 thirds sorted: pts ↓, GD ↓, GF ↓
   const allThirds = groups
     .flatMap((g) => g.entries.filter((e) => e.position === 3))
     .sort((a, b) => {
       if (b.pts !== a.pts) return b.pts - a.pts;
-      const gdA = Number(a.gd);
-      const gdB = Number(b.gd);
+      const gdA = Number(a.gd), gdB = Number(b.gd);
       if (gdB !== gdA) return gdB - gdA;
       return b.gf - a.gf;
     });
 
-  const assignments = new Map<string, TeamEntry | null>();
-  const usedIds = new Set<string>();
+  const top8 = allThirds.slice(0, 8);
 
+  // Build group-letter → third-team map for the top 8
+  const thirdByGroup = new Map<string, TeamEntry>();
+  const comboLetters: string[] = [];
+  for (const t of top8) {
+    const gl = teamToGroup.get(t.team.id);
+    if (gl) { thirdByGroup.set(gl, t); comboLetters.push(gl); }
+  }
+
+  const assignments = new Map<string, TeamEntry | null>();
+  const combo = new Set(comboLetters);
+
+  // ── Annex C lookup (exact, official) ───────────────────────────────────
+  if (combo.size === 8) {
+    for (const row of ANNEX_C_ROWS) {
+      const rowLetters = new Set(row);
+      if (rowLetters.size === 8 && [...rowLetters].every((c) => combo.has(c))) {
+        ANNEX_C_WINNERS.forEach((winner, i) => {
+          const slot = WINNER_TO_SLOT[winner];
+          assignments.set(slot, thirdByGroup.get(row[i]) ?? null);
+        });
+        return assignments;
+      }
+    }
+  }
+
+  // ── Greedy fallback (when combination is not yet fully determined) ──────
+  const usedIds = new Set<string>();
   for (const slot of THIRD_SLOTS) {
     const eligible = new Set(slot.slice(2).split(''));
     const best =
-      allThirds.find((t) => {
+      top8.find((t) => {
         const gl = teamToGroup.get(t.team.id);
         return gl && eligible.has(gl) && !usedIds.has(t.team.id);
       }) ?? null;
