@@ -186,7 +186,11 @@ function resolveSlot(
 
 // ── Date formatting ────────────────────────────────────────────────────────────
 function fmtMatchDate(iso: string, tz: string) {
-  return new Date(iso).toLocaleDateString('es-MX', {
+  // Date-only strings (YYYY-MM-DD) are parsed as UTC midnight by JS,
+  // which shifts the displayed day in negative-offset timezones (e.g. CDT = UTC-5).
+  // Anchoring to noon UTC keeps the calendar day correct for UTC-11 to UTC+11.
+  const dt = iso.length === 10 ? iso + 'T12:00:00Z' : iso;
+  return new Date(dt).toLocaleDateString('es-MX', {
     timeZone: tz,
     weekday: 'short',
     day: 'numeric',
