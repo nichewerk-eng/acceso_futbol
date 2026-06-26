@@ -16,23 +16,25 @@ interface R32Match {
   city: string;
 }
 
+// Dates are full UTC ISO timestamps so the user's local timezone
+// determines which calendar day each match appears under.
 const R32: R32Match[] = [
-  { id: 'r32-01', date: '2026-06-28', homeSlot: 'A2',       awaySlot: 'B2',       venue: 'SoFi Stadium',           city: 'Inglewood, CA'      },
-  { id: 'r32-02', date: '2026-06-29', homeSlot: 'C1',       awaySlot: 'F2',       venue: 'NRG Stadium',            city: 'Houston, TX'        },
-  { id: 'r32-03', date: '2026-06-29', homeSlot: 'E1',       awaySlot: 'T:ABCDF',  venue: 'Gillette Stadium',       city: 'Foxborough, MA'     },
-  { id: 'r32-04', date: '2026-06-30', homeSlot: 'F1',       awaySlot: 'C2',       venue: 'Estadio BBVA',           city: 'Guadalupe, NL'      },
-  { id: 'r32-05', date: '2026-06-30', homeSlot: 'E2',       awaySlot: 'I2',       venue: 'AT&T Stadium',           city: 'Arlington, TX'      },
-  { id: 'r32-06', date: '2026-06-30', homeSlot: 'I1',       awaySlot: 'T:CDFGH',  venue: 'MetLife Stadium',        city: 'East Rutherford, NJ'},
-  { id: 'r32-07', date: '2026-07-01', homeSlot: 'A1',       awaySlot: 'T:CEFHI',  venue: 'Estadio Banorte',        city: 'Ciudad de México'   },
-  { id: 'r32-08', date: '2026-07-01', homeSlot: 'L1',       awaySlot: 'T:EHIJK',  venue: 'Mercedes-Benz Stadium',  city: 'Atlanta, GA'        },
-  { id: 'r32-09', date: '2026-07-01', homeSlot: 'G1',       awaySlot: 'T:AEHIJ',  venue: 'Lumen Field',            city: 'Seattle, WA'        },
-  { id: 'r32-10', date: '2026-07-02', homeSlot: 'D1',       awaySlot: 'T:BEFIJ',  venue: "Levi's Stadium",         city: 'Santa Clara, CA'    },
-  { id: 'r32-11', date: '2026-07-02', homeSlot: 'H1',       awaySlot: 'J2',       venue: 'SoFi Stadium',           city: 'Inglewood, CA'      },
-  { id: 'r32-12', date: '2026-07-02', homeSlot: 'K2',       awaySlot: 'L2',       venue: 'BMO Field',              city: 'Toronto'            },
-  { id: 'r32-13', date: '2026-07-03', homeSlot: 'B1',       awaySlot: 'T:EFGIJ',  venue: 'BC Place',               city: 'Vancouver'          },
-  { id: 'r32-14', date: '2026-07-03', homeSlot: 'D2',       awaySlot: 'G2',       venue: 'AT&T Stadium',           city: 'Arlington, TX'      },
-  { id: 'r32-15', date: '2026-07-03', homeSlot: 'J1',       awaySlot: 'H2',       venue: 'Hard Rock Stadium',      city: 'Miami, FL'          },
-  { id: 'r32-16', date: '2026-07-04', homeSlot: 'K1',       awaySlot: 'T:DEIJL',  venue: 'Arrowhead Stadium',      city: 'Kansas City, MO'    },
+  { id: 'r32-01', date: '2026-06-28T19:00Z', homeSlot: 'A2',  awaySlot: 'B2',      venue: 'SoFi Stadium',          city: 'Inglewood, CA'       },
+  { id: 'r32-02', date: '2026-06-29T17:00Z', homeSlot: 'C1',  awaySlot: 'F2',      venue: 'NRG Stadium',           city: 'Houston, TX'         },
+  { id: 'r32-03', date: '2026-06-29T20:30Z', homeSlot: 'E1',  awaySlot: 'T:ABCDF', venue: 'Gillette Stadium',      city: 'Foxborough, MA'      },
+  { id: 'r32-04', date: '2026-06-30T01:00Z', homeSlot: 'F1',  awaySlot: 'C2',      venue: 'Estadio BBVA',          city: 'Guadalupe, NL'       },
+  { id: 'r32-05', date: '2026-06-30T17:00Z', homeSlot: 'E2',  awaySlot: 'I2',      venue: 'AT&T Stadium',          city: 'Arlington, TX'       },
+  { id: 'r32-06', date: '2026-06-30T21:00Z', homeSlot: 'I1',  awaySlot: 'T:CDFGH', venue: 'MetLife Stadium',       city: 'East Rutherford, NJ' },
+  { id: 'r32-07', date: '2026-07-01T01:00Z', homeSlot: 'A1',  awaySlot: 'T:CEFHI', venue: 'Estadio Banorte',       city: 'Ciudad de México'    },
+  { id: 'r32-08', date: '2026-07-01T16:00Z', homeSlot: 'L1',  awaySlot: 'T:EHIJK', venue: 'Mercedes-Benz Stadium', city: 'Atlanta, GA'         },
+  { id: 'r32-09', date: '2026-07-01T20:00Z', homeSlot: 'G1',  awaySlot: 'T:AEHIJ', venue: 'Lumen Field',           city: 'Seattle, WA'         },
+  { id: 'r32-10', date: '2026-07-02T00:00Z', homeSlot: 'D1',  awaySlot: 'T:BEFIJ', venue: "Levi's Stadium",        city: 'Santa Clara, CA'     },
+  { id: 'r32-11', date: '2026-07-02T19:00Z', homeSlot: 'H1',  awaySlot: 'J2',      venue: 'SoFi Stadium',          city: 'Inglewood, CA'       },
+  { id: 'r32-12', date: '2026-07-02T23:00Z', homeSlot: 'K2',  awaySlot: 'L2',      venue: 'BMO Field',             city: 'Toronto'             },
+  { id: 'r32-13', date: '2026-07-03T03:00Z', homeSlot: 'B1',  awaySlot: 'T:EFGIJ', venue: 'BC Place',              city: 'Vancouver'           },
+  { id: 'r32-14', date: '2026-07-03T18:00Z', homeSlot: 'D2',  awaySlot: 'G2',      venue: 'AT&T Stadium',          city: 'Arlington, TX'       },
+  { id: 'r32-15', date: '2026-07-03T22:00Z', homeSlot: 'J1',  awaySlot: 'H2',      venue: 'Hard Rock Stadium',     city: 'Miami, FL'           },
+  { id: 'r32-16', date: '2026-07-04T01:30Z', homeSlot: 'K1',  awaySlot: 'T:DEIJL', venue: 'Arrowhead Stadium',     city: 'Kansas City, MO'     },
 ];
 
 // ── Flag emoji (shared with StandingsView) ─────────────────────────────────────
@@ -186,16 +188,17 @@ function resolveSlot(
 
 // ── Date formatting ────────────────────────────────────────────────────────────
 function fmtMatchDate(iso: string, tz: string) {
-  // Date-only strings (YYYY-MM-DD) are parsed as UTC midnight by JS,
-  // which shifts the displayed day in negative-offset timezones (e.g. CDT = UTC-5).
-  // Anchoring to noon UTC keeps the calendar day correct for UTC-11 to UTC+11.
-  const dt = iso.length === 10 ? iso + 'T12:00:00Z' : iso;
-  return new Date(dt).toLocaleDateString('es-MX', {
+  return new Date(iso).toLocaleDateString('es-MX', {
     timeZone: tz,
     weekday: 'short',
     day: 'numeric',
     month: 'short',
   });
+}
+
+// Returns a YYYY-MM-DD key in the user's local timezone for grouping matches by day
+function localDateKey(iso: string, tz: string): string {
+  return new Date(iso).toLocaleDateString('sv-SE', { timeZone: tz });
 }
 
 // ── Team slot card ─────────────────────────────────────────────────────────────
@@ -283,8 +286,10 @@ export default function BracketView({ groups, userTz }: Props) {
   const thirdAssignments = computeThirdAssignments(groups);
 
   // Group matches by date for section headers
+  // Group by the user's local calendar date (not UTC date)
   const byDate = R32.reduce<Record<string, R32Match[]>>((acc, m) => {
-    (acc[m.date] ??= []).push(m);
+    const key = localDateKey(m.date, userTz);
+    (acc[key] ??= []).push(m);
     return acc;
   }, {});
 
