@@ -308,7 +308,7 @@ export default function BracketView({ groups, userTz }: Props) {
           {/* Date header */}
           <div className="mb-3 flex items-center gap-3">
             <span className="text-xs font-bold tracking-[0.2em] uppercase text-gray-400 dark:text-white/40">
-              {fmtMatchDate(date, userTz)}
+              {fmtMatchDate(matches[0].date, userTz)}
             </span>
             <div className="h-px flex-1 bg-gray-200 dark:bg-white/[0.06]" />
           </div>
