@@ -1,3 +1,5 @@
+'use client';
+import { useState } from 'react';
 import type { Group, TeamEntry } from './types';
 import { teamNameEs } from './teamNames';
 
@@ -308,6 +310,46 @@ function resolveSlot(
   return { team: null, label: slot, isThird: false, certainty: 'seeded' };
 }
 
+// ── All-thirds ranking (for the live leaderboard) ─────────────────────────────
+interface RankedThird {
+  rank: number;
+  qualifies: boolean;
+  team: TeamEntry;
+  group: string;
+  groupDone: boolean; // all 3 group games finished
+}
+
+function rankAllThirds(groups: Group[]): RankedThird[] {
+  const teamToGroup = new Map<string, string>();
+  const groupDoneMap = new Map<string, boolean>();
+  for (const group of groups) {
+    const letter = group.abbreviation.replace('Group ', '');
+    const done = group.entries.every((e) => e.gp >= 3);
+    groupDoneMap.set(letter, done);
+    for (const entry of group.entries) teamToGroup.set(entry.team.id, letter);
+  }
+
+  const thirds = groups.flatMap((g) => g.entries.filter((e) => e.position === 3));
+  thirds.sort((a, b) => {
+    if (b.pts !== a.pts) return b.pts - a.pts;
+    const gdA = Number(a.gd), gdB = Number(b.gd);
+    if (gdB !== gdA) return gdB - gdA;
+    if (b.gf !== a.gf) return b.gf - a.gf;
+    return 0;
+  });
+
+  return thirds.map((t, i) => {
+    const grp = teamToGroup.get(t.team.id) ?? '?';
+    return {
+      rank: i + 1,
+      qualifies: i < 8,
+      team: t,
+      group: grp,
+      groupDone: groupDoneMap.get(grp) ?? false,
+    };
+  });
+}
+
 // ── Date formatting ────────────────────────────────────────────────────────────
 function fmtMatchDate(iso: string, tz: string) {
   return new Date(iso).toLocaleDateString('es-MX', {
@@ -393,6 +435,205 @@ function TeamSlot({
   );
 }
 
+// ── Best thirds leaderboard ────────────────────────────────────────────────────
+function BestThirdsTable({ groups }: { groups: Group[] }) {
+  const [open, setOpen] = useState(true);
+  const ranked = rankAllThirds(groups);
+  const anyPlayed = ranked.some((r) => r.team.gp > 0);
+  if (!anyPlayed) return null;
+
+  return (
+    <div className="mb-8 rounded-2xl border border-gray-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] overflow-hidden">
+      {/* Header / toggle */}
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-white/[0.03] transition-colors"
+      >
+        <div className="flex items-center gap-2.5">
+          <span className="text-xs font-bold tracking-[0.18em] uppercase text-gray-500 dark:text-white/40">
+            Mejores Terceros
+          </span>
+          <span className="rounded bg-brand-teal/15 text-brand-teal px-1.5 py-0.5 text-[9px] font-bold tracking-wider uppercase">
+            Top 8 clasifican
+          </span>
+        </div>
+        <svg
+          className={[
+            'h-4 w-4 text-gray-400 dark:text-white/30 transition-transform duration-200',
+            open ? 'rotate-180' : '',
+          ].join(' ')}
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="overflow-x-auto">
+          {/* Column headers */}
+          <div className="grid grid-cols-[2rem_1fr_2rem_2rem_2.5rem_2.5rem_2.5rem_2.5rem] gap-x-1 px-4 pb-1 text-[9px] font-bold tracking-widest uppercase text-gray-400 dark:text-white/25">
+            <span className="text-center">#</span>
+            <span>Equipo</span>
+            <span className="text-center">Gr</span>
+            <span className="text-center">PJ</span>
+            <span className="text-center">Pts</span>
+            <span className="text-center">DG</span>
+            <span className="text-center">GF</span>
+            <span className="text-center">Estado</span>
+          </div>
+
+          <div>
+            {ranked.map((r, i) => {
+              const isIn = r.qualifies;
+              const isCutline = i === 8; // first OUT row
+
+              // Certainty for badge
+              const confirmed = isIn && r.groupDone;
+              const projected = isIn && !r.groupDone;
+              const bubble =
+                !isIn &&
+                !r.groupDone &&
+                ranked[7] &&
+                (r.team.pts >= ranked[7].team.pts);
+
+              return (
+                <div key={r.team.team.id}>
+                  {/* Cutline separator */}
+                  {isCutline && (
+                    <div className="mx-4 my-0.5 flex items-center gap-2">
+                      <div className="h-px flex-1 border-t border-dashed border-gray-300 dark:border-white/10" />
+                      <span className="text-[8px] font-bold tracking-widest uppercase text-gray-300 dark:text-white/20">
+                        eliminados
+                      </span>
+                      <div className="h-px flex-1 border-t border-dashed border-gray-300 dark:border-white/10" />
+                    </div>
+                  )}
+
+                  <div
+                    className={[
+                      'grid grid-cols-[2rem_1fr_2rem_2rem_2.5rem_2.5rem_2.5rem_2.5rem] gap-x-1 px-4 py-2 items-center',
+                      isIn
+                        ? 'border-l-2 border-emerald-500/40'
+                        : 'border-l-2 border-transparent',
+                      confirmed
+                        ? 'bg-emerald-500/[0.04]'
+                        : isIn
+                          ? ''
+                          : 'opacity-50',
+                    ].join(' ')}
+                  >
+                    {/* Rank */}
+                    <span
+                      className={[
+                        'text-center text-xs font-bold tabular-nums',
+                        isIn
+                          ? 'text-emerald-500 dark:text-emerald-400'
+                          : 'text-gray-300 dark:text-white/20',
+                      ].join(' ')}
+                    >
+                      {r.rank}
+                    </span>
+
+                    {/* Flag + name */}
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      <span className="text-base leading-none shrink-0">
+                        {flag(r.team.team.abbreviation)}
+                      </span>
+                      <span
+                        className={[
+                          'truncate text-xs font-semibold',
+                          isIn
+                            ? 'text-gray-900 dark:text-white'
+                            : 'text-gray-400 dark:text-white/40',
+                        ].join(' ')}
+                      >
+                        {teamNameEs(r.team.team.name)}
+                      </span>
+                    </div>
+
+                    {/* Group */}
+                    <span className="text-center text-[10px] font-bold text-gray-400 dark:text-white/30">
+                      {r.group}
+                    </span>
+
+                    {/* PJ */}
+                    <span className="text-center text-[10px] tabular-nums text-gray-500 dark:text-white/40">
+                      {r.team.gp}
+                    </span>
+
+                    {/* Pts */}
+                    <span
+                      className={[
+                        'text-center text-xs font-bold tabular-nums',
+                        isIn
+                          ? 'text-gray-900 dark:text-white'
+                          : 'text-gray-400 dark:text-white/30',
+                      ].join(' ')}
+                    >
+                      {r.team.pts}
+                    </span>
+
+                    {/* DG */}
+                    <span
+                      className={[
+                        'text-center text-[10px] tabular-nums',
+                        Number(r.team.gd) > 0
+                          ? 'text-emerald-500 dark:text-emerald-400'
+                          : Number(r.team.gd) < 0
+                            ? 'text-red-400'
+                            : 'text-gray-400 dark:text-white/30',
+                      ].join(' ')}
+                    >
+                      {Number(r.team.gd) > 0 ? '+' : ''}{r.team.gd}
+                    </span>
+
+                    {/* GF */}
+                    <span className="text-center text-[10px] tabular-nums text-gray-400 dark:text-white/30">
+                      {r.team.gf}
+                    </span>
+
+                    {/* Status badge */}
+                    <span
+                      className={[
+                        'text-center text-[8px] font-bold tracking-wide uppercase rounded px-1 py-0.5',
+                        confirmed
+                          ? 'bg-emerald-500/15 text-emerald-500 dark:text-emerald-400'
+                          : projected
+                            ? 'bg-brand-orange/15 text-brand-orange'
+                            : bubble
+                              ? 'bg-yellow-400/15 text-yellow-500 dark:text-yellow-400'
+                              : 'bg-gray-100 dark:bg-white/5 text-gray-300 dark:text-white/20',
+                      ].join(' ')}
+                    >
+                      {confirmed ? '✓' : projected ? '~' : bubble ? '!' : '✗'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Legend row */}
+          <div className="flex flex-wrap gap-x-4 gap-y-1 px-4 py-2.5 border-t border-gray-100 dark:border-white/[0.04]">
+            <span className="text-[8px] text-gray-400 dark:text-white/25">
+              <span className="font-bold text-emerald-500">✓</span> Confirmado
+            </span>
+            <span className="text-[8px] text-gray-400 dark:text-white/25">
+              <span className="font-bold text-brand-orange">~</span> Proyectado
+            </span>
+            <span className="text-[8px] text-gray-400 dark:text-white/25">
+              <span className="font-bold text-yellow-500">!</span> En la cuerda
+            </span>
+            <span className="text-[8px] text-gray-400 dark:text-white/25">
+              <span className="font-bold text-gray-300 dark:text-white/20">✗</span> Eliminado
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 interface Props {
   groups: Group[];
@@ -423,6 +664,9 @@ export default function BracketView({ groups, userTz }: Props) {
         <LegendBadge cls="bg-brand-orange/15 text-brand-orange" label="Proyectado — en juego" />
         <LegendBadge cls="bg-white/5 dark:bg-white/5 bg-gray-100 text-gray-400 dark:text-white/25" label="Sin definir — jornada no iniciada" />
       </div>
+
+      {/* ── Best thirds live leaderboard ── */}
+      <BestThirdsTable groups={groups} />
 
       {/* ── Matches grouped by date ── */}
       {Object.entries(byDate).map(([date, matches]) => (
