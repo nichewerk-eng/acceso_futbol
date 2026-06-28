@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Oswald } from "next/font/google";
 import { siteConfig } from "@/config/site";
+import { TeamProvider } from "@/contexts/TeamContext";
 import "./globals.css";
 
 const oswald = Oswald({
@@ -20,6 +21,8 @@ export const metadata: Metadata = {
   alternates: {
     canonical: siteConfig.url,
   },
+  themeColor: '#f07820',
+  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'Acceso Futbol' },
   openGraph: {
     title: "Acceso Futbol | Liga MX y El Tri en TikTok",
     description: siteConfig.description,
@@ -51,7 +54,9 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${oswald.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-bg-1 font-display text-white">
-        {children}
+        <TeamProvider>
+          {children}
+        </TeamProvider>
       </body>
     </html>
   );
