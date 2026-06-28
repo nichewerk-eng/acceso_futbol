@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { teamNameEs } from '@/components/standings/teamNames';
+import type { MatchEvent } from '@/app/api/match/[league]/[id]/route';
 
 // ── Flag map ──────────────────────────────────────────────────────────────────
 const FLAG: Record<string, string> = {
@@ -34,6 +35,24 @@ interface BannerFixture {
   status: { state: string; shortDetail: string; completed: boolean };
   home: { name: string; abbreviation: string; score: string | null };
   away: { name: string; abbreviation: string; score: string | null };
+}
+
+// ── Goal event helpers ────────────────────────────────────────────────────────
+interface GoalEvent { scorer: string; clock: string; teamAbbr: string; ownGoal: boolean }
+
+function parseGoals(plays: MatchEvent[]): GoalEvent[] {
+  return plays
+    .filter((p) => /goal/i.test(p.type) || /\bscores?\b/i.test(p.text))
+    .map((p) => {
+      const ownGoal = /own.?goal|en.?propia/i.test(p.text);
+      // Extract scorer name — text is often "J. Smith scores" or "Goal - Smith (23')"
+      const nameMatch = p.text.match(/^([A-ZÁ-Ú][a-záéíóúñ]+ )?([A-ZÁ-Ú][a-záéíóúñ.-]+(?: [A-ZÁ-Ú][a-záéíóúñ.-]+)*)\s+(?:scores?|anota|gol)/i)
+        ?? p.text.match(/(?:Goal|Gol)\s*[-–:]\s*(.+?)(?:\s*\(|$)/i);
+      const scorer = nameMatch?.[2] ?? nameMatch?.[1] ?? p.text.split(' ').slice(0, 2).join(' ');
+      // Normalize clock: "23:00" → "23'" or keep as-is if already "23'"
+      const clock  = p.clock.replace(/:00$/, '').replace(/^(\d+)$/, "$1'");
+      return { scorer: scorer.trim(), clock, teamAbbr: p.teamAbbr, ownGoal };
+    });
 }
 
 // ── Countdown hook ────────────────────────────────────────────────────────────
@@ -116,6 +135,8 @@ export default function HeroBanner() {
     if (tz) setUserTz(tz);
   }, []);
 
+  const [goals, setGoals] = useState<GoalEvent[]>([]);
+
   const load = useCallback(async (silent = false) => {
     if (!silent) setRefreshing(true);
     try {
@@ -129,6 +150,31 @@ export default function HeroBanner() {
     intervalRef.current = setInterval(() => load(true), 30_000);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [load]);
+
+  // Fetch live match details (goal scorers) when Mexico is playing
+  const liveMatchRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => {
+    const liveId = fixtures.find(
+      (f) => f.status.state === 'in' && (f.home.abbreviation === 'MEX' || f.away.abbreviation === 'MEX')
+    )?.id;
+
+    if (liveMatchRef.current) clearInterval(liveMatchRef.current);
+    if (!liveId) { setGoals([]); return; }
+
+    const fetchGoals = async () => {
+      try {
+        const res = await fetch(`/api/match/mundial/${liveId}`);
+        if (res.ok) {
+          const d = await res.json();
+          setGoals(parseGoals(d.plays ?? []));
+        }
+      } catch { /* ignore */ }
+    };
+
+    fetchGoals();
+    liveMatchRef.current = setInterval(fetchGoals, 15_000);
+    return () => { if (liveMatchRef.current) clearInterval(liveMatchRef.current); };
+  }, [fixtures]);
 
   // Mexico
   const mexAll    = fixtures.filter((f) => f.home.abbreviation === 'MEX' || f.away.abbreviation === 'MEX');
@@ -199,6 +245,40 @@ export default function HeroBanner() {
                 <span className="text-xs font-bold text-white/50">{teamNameEs(rival.name)}</span>
               </div>
             </div>
+
+            {/* Goal scorers — shown only when live */}
+            {mexLive && goals.length > 0 && (() => {
+              const mexAbbr  = mexGame.home.abbreviation === 'MEX' ? mexGame.home.abbreviation : mexGame.away.abbreviation;
+              const rivAbbr  = mexAbbr === 'MEX' ? rival.abbreviation : 'MEX';
+              const mexGoals = goals.filter((g) => g.teamAbbr === mexAbbr || (!g.teamAbbr && goals.indexOf(g) % 2 === 0));
+              const rivGoals = goals.filter((g) => g.teamAbbr === rivAbbr);
+              return (
+                <div className="flex w-full max-w-md justify-between gap-4 text-xs">
+                  {/* México goals */}
+                  <div className="flex flex-col gap-1 flex-1">
+                    {mexGoals.map((g, i) => (
+                      <span key={i} className="flex items-center gap-1 text-white/70">
+                        <span>{g.ownGoal ? '🔴' : '⚽'}</span>
+                        <span className="font-semibold">{g.scorer}</span>
+                        <span className="text-white/30">{g.clock}</span>
+                        {g.ownGoal && <span className="text-[9px] text-red-400">PP</span>}
+                      </span>
+                    ))}
+                  </div>
+                  {/* Rival goals */}
+                  <div className="flex flex-col gap-1 flex-1 items-end">
+                    {rivGoals.map((g, i) => (
+                      <span key={i} className="flex items-center gap-1 text-white/50">
+                        <span className="text-white/30">{g.clock}</span>
+                        <span>{g.ownGoal ? '🔴' : '⚽'}</span>
+                        <span className="font-semibold">{g.scorer}</span>
+                        {g.ownGoal && <span className="text-[9px] text-red-400">PP</span>}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Countdown — large digits */}
             {!mexLive && countdown.total > 0 && (
