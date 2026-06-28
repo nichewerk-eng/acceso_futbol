@@ -672,12 +672,6 @@ export default function BracketView({ groups, userTz, fixtures = [] }: Props) {
 
   return (
     <div>
-      {/* ── Legend ── */}
-      <div className="mb-5 flex flex-wrap gap-3">
-        <LegendBadge cls="bg-emerald-500/15 text-emerald-400" label="Confirmado — clasificado" />
-        <LegendBadge cls="bg-brand-orange/15 text-brand-orange" label="Proyectado — en juego" />
-        <LegendBadge cls="bg-white/5 dark:bg-white/5 bg-gray-100 text-gray-400 dark:text-white/25" label="Sin definir — jornada no iniciada" />
-      </div>
 
       {/* ── Matches grouped by date ── */}
       {Object.entries(byDate).map(([date, matches]) => (
@@ -759,12 +753,6 @@ export default function BracketView({ groups, userTz, fixtures = [] }: Props) {
                           : 'text-gray-400 dark:text-white/30'].join(' ')}>
                         {home.team ? teamNameEs(home.team.team.name) : home.label}
                       </span>
-                      {home.certainty !== 'seeded' && (
-                        <span className={['text-[9px] font-bold uppercase tracking-wider',
-                          home.certainty === 'confirmed' ? 'text-emerald-500' : 'text-brand-orange'].join(' ')}>
-                          {home.certainty === 'confirmed' ? 'Confirmado' : 'Proyectado'}
-                        </span>
-                      )}
                     </div>
 
                     {/* Score / vs */}
@@ -788,12 +776,6 @@ export default function BracketView({ groups, userTz, fixtures = [] }: Props) {
                           : 'text-gray-400 dark:text-white/30'].join(' ')}>
                         {away.team ? teamNameEs(away.team.team.name) : away.label}
                       </span>
-                      {away.certainty !== 'seeded' && (
-                        <span className={['text-[9px] font-bold uppercase tracking-wider',
-                          away.certainty === 'confirmed' ? 'text-emerald-500' : 'text-brand-orange'].join(' ')}>
-                          {away.certainty === 'confirmed' ? 'Confirmado' : 'Proyectado'}
-                        </span>
-                      )}
                     </div>
                   </div>
 
