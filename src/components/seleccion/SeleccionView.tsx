@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { teamNameEs } from '@/components/standings/teamNames';
 import type { Fixture } from '@/components/standings/types';
 
-// ── Historical WC data — El Quinto Partido narrative ─────────────────────────
+// ── Historical WC data ─────────────────────────────────────────────────────────
 const CURSE_YEARS = [
   { year: 1994, rival: 'Bulgaria',       score: '1–1 pen',  note: 'Inicio de la maldición' },
   { year: 1998, rival: 'Alemania',       score: '1–2',      note: '' },
@@ -23,29 +23,8 @@ const FLAG: Record<string, string> = {
 };
 const flag = (a: string) => FLAG[a] ?? '🏳️';
 
-function useCountdown(targetDate: string | null, tz: string) {
-  const [diff, setDiff] = useState(0);
-  useEffect(() => {
-    if (!targetDate) return;
-    const tick = () => setDiff(Math.max(0, new Date(targetDate).getTime() - Date.now()));
-    tick();
-    const id = setInterval(tick, 1_000);
-    return () => clearInterval(id);
-  }, [targetDate]);
-  void tz;
-  const s = Math.floor(diff / 1000);
-  const days  = Math.floor(s / 86400);
-  const hours = Math.floor((s % 86400) / 3600);
-  const mins  = Math.floor((s % 3600) / 60);
-  const secs  = s % 60;
-  return { days, hours, mins, secs, total: diff };
-}
-
 function fmtDate(iso: string, tz: string) {
   return new Date(iso).toLocaleDateString('es-MX', { timeZone: tz, weekday: 'long', day: 'numeric', month: 'long' });
-}
-function fmtTime(iso: string, tz: string) {
-  return new Date(iso).toLocaleTimeString('es-MX', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: true });
 }
 
 interface Props { fixtures: Fixture[] }
@@ -57,117 +36,16 @@ export default function SeleccionView({ fixtures }: Props) {
     if (tz) setUserTz(tz);
   }, []);
 
-  // Filter Mexico fixtures
-  const mexFixtures = fixtures.filter((f) =>
-    f.home.abbreviation === 'MEX' || f.away.abbreviation === 'MEX'
-  );
-  const liveGame     = mexFixtures.find((f) => f.status.state === 'in');
-  const nextGame     = mexFixtures.filter((f) => f.status.state === 'pre').sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
-  const pastGames    = mexFixtures.filter((f) => f.status.state === 'post').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-  const countdown = useCountdown(nextGame?.date ?? null, userTz);
+  const mexFixtures = fixtures.filter((f) => f.home.abbreviation === 'MEX' || f.away.abbreviation === 'MEX');
+  const liveGame    = mexFixtures.find((f) => f.status.state === 'in');
+  const nextGame    = mexFixtures.filter((f) => f.status.state === 'pre').sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+  const pastGames   = mexFixtures.filter((f) => f.status.state === 'post').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const is2026Live    = !!liveGame;
   const is2026Active  = is2026Live || !!nextGame;
 
   return (
     <div className="min-h-screen bg-[#f0f6f6] dark:bg-bg-1 font-display text-gray-900 dark:text-white">
-
-      {/* ── Hero ── */}
-      <div className="relative overflow-hidden bg-gray-900 dark:bg-[#080d12] px-4 pb-8 pt-6 sm:pb-12">
-        <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 80% at 50% -10%, rgba(26,122,120,0.35) 0%, transparent 65%)' }} />
-        <div className="relative mx-auto max-w-5xl">
-
-          {/* Eyebrow */}
-          <p className="text-center text-[10px] font-bold tracking-[0.25em] uppercase text-white/30 mb-4">FIFA World Cup 2026</p>
-
-          {/* Live banner */}
-          {liveGame && (
-            <div className="mb-5 flex justify-center">
-              <div className="inline-flex items-center gap-3 rounded-full border border-red-500/40 bg-red-500/10 px-5 py-2">
-                <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
-                <span className="text-sm font-bold text-white">
-                  {flag(liveGame.home.abbreviation)} {liveGame.home.score} – {liveGame.away.score} {flag(liveGame.away.abbreviation)}
-                </span>
-                <span className="text-xs text-red-400">{liveGame.status.shortDetail}</span>
-              </div>
-            </div>
-          )}
-
-          {/* Next match + countdown — two-column on desktop */}
-          {!liveGame && nextGame && (() => {
-            const mexHome  = nextGame.home.abbreviation === 'MEX';
-            const rival    = mexHome ? nextGame.away : nextGame.home;
-            return (
-              <div className="flex flex-col items-center gap-6 sm:flex-row sm:justify-between sm:gap-0">
-
-                {/* Teams */}
-                <div className="flex flex-1 items-center justify-center gap-5 sm:justify-start">
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="text-5xl leading-none">🇲🇽</span>
-                    <span className="text-xs font-bold text-white/60">México</span>
-                  </div>
-                  <div className="text-center">
-                    <span className="block text-[10px] font-bold uppercase tracking-widest text-white/30 mb-1">Próximo partido</span>
-                    <span className="block text-lg font-bold text-white/60">vs</span>
-                    <span className="block text-[11px] text-white/30 mt-1">
-                      {new Date(nextGame.date).toLocaleDateString('es-MX', { timeZone: userTz, weekday: 'long', day: 'numeric', month: 'long' })}
-                    </span>
-                    <span className="block text-sm font-bold text-white">{fmtTime(nextGame.date, userTz)}</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="text-5xl leading-none">{flag(rival.abbreviation)}</span>
-                    <span className="text-xs font-bold text-white/60">{teamNameEs(rival.name)}</span>
-                  </div>
-                </div>
-
-                {/* Countdown */}
-                {countdown.total > 0 && (
-                  <div className="flex items-end gap-3 sm:gap-4">
-                    {([['Días', countdown.days], ['Horas', countdown.hours], ['Min', countdown.mins], ['Seg', countdown.secs]] as const).map(([label, val], i) => (
-                      <div key={label} className="flex items-end gap-3">
-                        {i > 0 && <span className="mb-1 text-xl font-bold text-white/20 leading-none">:</span>}
-                        <div className="flex flex-col items-center">
-                          <span className="block text-4xl font-bold tabular-nums text-white sm:text-5xl leading-none">
-                            {String(val).padStart(2, '0')}
-                          </span>
-                          <span className="text-[9px] uppercase tracking-widest text-white/30 mt-1">{label}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-
-          {/* Results inline — compact pills below hero */}
-          {pastGames.length > 0 && (
-            <div className="mt-6 overflow-x-auto -mx-4 px-4">
-              <div className="flex gap-2 min-w-max">
-                {pastGames.slice(0, 5).map((f) => {
-                  const mexHome  = f.home.abbreviation === 'MEX';
-                  const mexScore = mexHome ? Number(f.home.score) : Number(f.away.score);
-                  const rivScore = mexHome ? Number(f.away.score) : Number(f.home.score);
-                  const rivAbbr  = mexHome ? f.away.abbreviation : f.home.abbreviation;
-                  const won      = mexScore > rivScore;
-                  const drew     = mexScore === rivScore;
-                  return (
-                    <Link key={f.id} href={`/partido/mundial/${f.id}`}
-                      className={['flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition hover:opacity-80',
-                        won  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
-                             : drew ? 'border-white/10 bg-white/5 text-white/50'
-                             : 'border-red-500/30 bg-red-500/10 text-red-400'].join(' ')}>
-                      <span className="font-bold">{won ? 'G' : drew ? 'E' : 'P'}</span>
-                      🇲🇽 {mexScore}–{rivScore} {flag(rivAbbr)}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
 
       <div className="mx-auto max-w-5xl px-4 py-8 pb-16 sm:px-6 space-y-10">
 

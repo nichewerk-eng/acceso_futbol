@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import SiteNav from '@/components/SiteNav';
-import LiveTicker from '@/components/LiveTicker';
+import HeroBanner from '@/components/HeroBanner';
 import SeleccionView from '@/components/seleccion/SeleccionView';
 import type { Fixture } from '@/components/standings/types';
 
@@ -48,7 +48,7 @@ export default async function SeleccionPage() {
   return (
     <>
       <SiteNav />
-      <LiveTicker />
+      <HeroBanner />
       <SeleccionView fixtures={fixtures} />
     </>
   );

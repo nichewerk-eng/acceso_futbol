@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import HeroBanner from '@/components/HeroBanner';
 import BracketView from './BracketView';
 import BracketSimulator from './BracketSimulator';
 import { downloadGroupImage, downloadGroupImageWithPhoto } from './generateImage';
@@ -108,15 +109,6 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
   const liveFixtures = groupFixtures.filter((f) => f.status.state === 'in');
   const upcomingFixtures = groupFixtures.filter((f) => f.status.state === 'pre').sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  // ── Derived: jumbotron fixtures (all groups) ─────────────────────────────────
-  const allLive = fixtures.filter((f) => f.status.state === 'in');
-  const allToday = fixtures.filter((f) => f.status.state !== 'in' && isToday(f.date, userTz)).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  const allUpcoming = fixtures.filter((f) => f.status.state === 'pre').sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  const jumboFixtures = allLive.length > 0 ? allLive
-    : allToday.length > 0 ? allToday
-    : allUpcoming.slice(0, 8);
-  const jumboMode: 'live' | 'today' | 'upcoming' =
-    allLive.length > 0 ? 'live' : allToday.length > 0 ? 'today' : 'upcoming';
 
 
   // ── Download / share handlers ────────────────────────────────────────────────
@@ -221,46 +213,8 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
         <div className="h-px" style={{ background: 'linear-gradient(to right, rgba(240,120,32,0.5), rgba(255,255,255,0.04), rgba(26,122,120,0.5))' }} />
       </nav>
 
-      {/* ── JUMBOTRON — all-tournament games ─────────────────────────────────── */}
-      <div className="relative overflow-hidden bg-gray-900 dark:bg-[#080d12]">
-        <div className="pointer-events-none absolute inset-0 opacity-25"
-          style={{ background: 'radial-gradient(ellipse 70% 60% at 50% -10%, #f07820 0%, transparent 65%)' }} />
-
-        <div className="relative mx-auto max-w-6xl px-4 py-4 sm:px-6">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              {jumboMode === 'live' && (
-                <span className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
-                  <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-red-400">En vivo</span>
-                </span>
-              )}
-              {jumboMode === 'today' && <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40">Partidos de hoy</span>}
-              {jumboMode === 'upcoming' && <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40">Próximos partidos</span>}
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] text-white/25">
-                {lastUpdated.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: userTz })} {tzLabel(userTz)}
-              </span>
-              <button onClick={() => refresh(false)} disabled={refreshing}
-                className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-white/30 transition hover:text-white/60 disabled:opacity-40">
-                <RefreshIcon spinning={refreshing} />
-                {refreshing ? 'Actualizando…' : 'Actualizar'}
-              </button>
-            </div>
-          </div>
-
-          {jumboFixtures.length === 0 ? (
-            <div className="py-4 text-center text-xs text-white/20">Sin partidos programados</div>
-          ) : (
-            <div className="overflow-x-auto pb-1 -mx-4 px-4">
-              <div className="flex gap-3 min-w-max">
-                {jumboFixtures.map((f) => <JumboCard key={f.id} fixture={f} tz={userTz} />)}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* ── SHARED HERO BANNER ────────────────────────────────────────────────── */}
+      <HeroBanner />
 
       {/* ── MAIN CONTENT ──────────────────────────────────────────────────────── */}
       <div className="mx-auto max-w-5xl px-4 pb-16 pt-8 sm:px-6">
