@@ -154,108 +154,110 @@ export default function HeroBanner() {
 
   return (
     <div className="relative overflow-hidden bg-gray-900 dark:bg-[#080d12]">
-      <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 80% at 50% -10%, rgba(26,122,120,0.3) 0%, transparent 65%)' }} />
+      <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse 80% 70% at 50% -5%, rgba(26,122,120,0.32) 0%, transparent 60%)' }} />
 
-      <div className="relative mx-auto max-w-6xl px-4 pt-5 pb-4 sm:px-6">
+      <div className="relative mx-auto max-w-5xl px-4 pt-6 pb-5 sm:px-6">
 
-        {/* ── Top row: Mexico countdown + scoreboard ──────────────────────── */}
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:gap-8">
+        {/* ── Mexico countdown — centered ──────────────────────────────────── */}
+        {mexGame && rival ? (
+          <div className="flex flex-col items-center text-center gap-4">
 
-          {/* Mexico section */}
-          {(mexGame && rival) ? (
-            <div className="flex-shrink-0 lg:w-64">
-              {/* Live badge */}
-              {mexLive && (
-                <div className="mb-3 flex items-center gap-1.5">
-                  <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-red-400">En vivo · {mexLive.status.shortDetail}</span>
-                </div>
-              )}
+            {/* Live badge */}
+            {mexLive && (
+              <div className="flex items-center gap-2 rounded-full border border-red-500/40 bg-red-500/10 px-4 py-1.5">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+                <span className="text-xs font-bold tracking-widest uppercase text-red-400">En vivo · {mexLive.status.shortDetail}</span>
+              </div>
+            )}
+            {!mexLive && (
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/30">Próximo partido</p>
+            )}
 
-              {/* Flags */}
-              <div className="flex items-center gap-4">
-                <div className="flex flex-col items-center gap-1">
-                  <span className="text-4xl leading-none">🇲🇽</span>
-                  <span className="text-[10px] font-bold text-white/50">México</span>
-                </div>
-                <div className="flex-1 text-center">
-                  {mexLive ? (
-                    <p className="text-3xl font-bold tabular-nums text-white">
-                      {mexGame.home.score}<span className="mx-1.5 text-white/25">–</span>{mexGame.away.score}
-                    </p>
-                  ) : (
-                    <>
-                      <p className="text-[9px] font-bold uppercase tracking-widest text-white/25">Próximo</p>
-                      <p className="text-sm font-bold text-white/40 my-0.5">vs</p>
-                      <p className="text-[10px] text-white/30 leading-tight">{fmtDay(mexGame.date, userTz)}</p>
-                      <p className="text-sm font-bold text-white mt-0.5">{fmtTime(mexGame.date, userTz)}</p>
-                    </>
-                  )}
-                </div>
-                <div className="flex flex-col items-center gap-1">
-                  <span className="text-4xl leading-none">{flag(rival.abbreviation)}</span>
-                  <span className="text-[10px] font-bold text-white/50">{teamNameEs(rival.name)}</span>
-                </div>
+            {/* Flags + score/vs */}
+            <div className="flex items-center justify-center gap-6 sm:gap-10">
+              <div className="flex flex-col items-center gap-1.5">
+                <span className="text-6xl leading-none sm:text-7xl">🇲🇽</span>
+                <span className="text-xs font-bold text-white/50">México</span>
               </div>
 
-              {/* Countdown */}
-              {!mexLive && countdown.total > 0 && (
-                <div className="mt-3 flex items-end gap-2">
-                  {([['Días', countdown.days], ['Horas', countdown.hours], ['Min', countdown.mins], ['Seg', countdown.secs]] as const).map(([label, val], i) => (
-                    <div key={label} className="flex items-end gap-2">
-                      {i > 0 && <span className="mb-1 text-base font-bold text-white/15">:</span>}
-                      <div className="flex flex-col items-center">
-                        <span className="block text-2xl font-bold tabular-nums text-white sm:text-3xl leading-none">{String(val).padStart(2, '0')}</span>
-                        <span className="text-[8px] uppercase tracking-widest text-white/25 mt-0.5">{label}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-            </div>
-          ) : (
-            <div className="flex-shrink-0 lg:w-64 flex items-center gap-2">
-              <span className="text-3xl">🇲🇽</span>
-              <p className="text-xs text-white/30">Sin partido programado</p>
-            </div>
-          )}
-
-          {/* Vertical divider on desktop */}
-          <div className="hidden lg:block w-px bg-white/[0.06] self-stretch" />
-
-          {/* Scoreboard */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                {boardMode === 'live' && (
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
-                    <span className="text-[10px] font-bold tracking-widest uppercase text-red-400">En vivo</span>
-                  </span>
+              <div className="text-center">
+                {mexLive ? (
+                  <p className="text-5xl font-bold tabular-nums text-white sm:text-6xl">
+                    {mexGame.home.score}<span className="mx-2 text-white/20">–</span>{mexGame.away.score}
+                  </p>
+                ) : (
+                  <>
+                    <p className="text-2xl font-bold text-white/25">vs</p>
+                    <p className="text-xs text-white/30 mt-1">{fmtDay(mexGame.date, userTz)}</p>
+                    <p className="text-sm font-bold text-white mt-0.5">{fmtTime(mexGame.date, userTz)}</p>
+                  </>
                 )}
-                {boardMode === 'today' && <span className="text-[10px] font-bold tracking-widest uppercase text-white/40">Partidos de hoy</span>}
-                {boardMode === 'upcoming' && <span className="text-[10px] font-bold tracking-widest uppercase text-white/40">Próximos partidos</span>}
               </div>
-              <div className="flex items-center gap-2 text-[10px] text-white/20">
-                <span>{lastUp.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: userTz })} {tzLabel(userTz)}</span>
-                <button onClick={() => load(false)} disabled={refreshing}
-                  className="text-white/30 hover:text-white/60 transition disabled:opacity-40">
-                  {refreshing ? '…' : '↻'}
-                </button>
+
+              <div className="flex flex-col items-center gap-1.5">
+                <span className="text-6xl leading-none sm:text-7xl">{flag(rival.abbreviation)}</span>
+                <span className="text-xs font-bold text-white/50">{teamNameEs(rival.name)}</span>
               </div>
             </div>
 
-            {boardFixtures.length === 0 ? (
-              <p className="py-4 text-center text-[11px] text-white/20">Sin partidos programados</p>
-            ) : (
-              <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0">
-                <div className="flex gap-2 min-w-max lg:flex-wrap lg:min-w-0">
-                  {boardFixtures.map((f) => <GameCard key={f.id} f={f} tz={userTz} />)}
-                </div>
+            {/* Countdown — large digits */}
+            {!mexLive && countdown.total > 0 && (
+              <div className="flex items-end justify-center gap-3 sm:gap-5">
+                {([['Días', countdown.days], ['Horas', countdown.hours], ['Min', countdown.mins], ['Seg', countdown.secs]] as const).map(([label, val], i) => (
+                  <div key={label} className="flex items-end gap-3 sm:gap-5">
+                    {i > 0 && <span className="mb-2 text-2xl font-bold text-white/15 leading-none">:</span>}
+                    <div className="flex flex-col items-center">
+                      <span className="block text-5xl font-bold tabular-nums text-white sm:text-6xl leading-none">
+                        {String(val).padStart(2, '0')}
+                      </span>
+                      <span className="text-[9px] uppercase tracking-widest text-white/30 mt-1.5">{label}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
+        ) : (
+          <div className="flex items-center justify-center gap-2 py-2">
+            <span className="text-3xl">🇲🇽</span>
+            <p className="text-xs text-white/30">Sin partido programado</p>
+          </div>
+        )}
+
+        {/* ── Divider ──────────────────────────────────────────────────────── */}
+        <div className="my-5 h-px bg-white/[0.06]" />
+
+        {/* ── Partidos de hoy / en vivo / próximos ─────────────────────────── */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              {boardMode === 'live' && (
+                <span className="flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+                  <span className="text-[10px] font-bold tracking-widest uppercase text-red-400">En vivo</span>
+                </span>
+              )}
+              {boardMode === 'today' && <span className="text-[10px] font-bold tracking-widest uppercase text-white/40">Partidos de hoy</span>}
+              {boardMode === 'upcoming' && <span className="text-[10px] font-bold tracking-widest uppercase text-white/40">Próximos partidos</span>}
+            </div>
+            <div className="flex items-center gap-2 text-[10px] text-white/20">
+              <span>{lastUp.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: userTz })} {tzLabel(userTz)}</span>
+              <button onClick={() => load(false)} disabled={refreshing}
+                className="text-white/30 hover:text-white/60 transition disabled:opacity-40">
+                {refreshing ? '…' : '↻'}
+              </button>
+            </div>
+          </div>
+
+          {boardFixtures.length === 0 ? (
+            <p className="py-2 text-center text-[11px] text-white/20">Sin partidos programados</p>
+          ) : (
+            <div className="overflow-x-auto -mx-4 px-4">
+              <div className="flex gap-2 min-w-max">
+                {boardFixtures.map((f) => <GameCard key={f.id} f={f} tz={userTz} />)}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
