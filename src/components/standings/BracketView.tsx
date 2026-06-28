@@ -299,11 +299,18 @@ function resolveSlot(
   if (slot.startsWith('T:')) {
     const groupLetters = slot.slice(2).split('').join('/');
     const team = thirdAssignments.get(slot) ?? null;
+    // Find the team's own group to check if all games are done
+    const teamGroup = team
+      ? [...groupMap.values()].find((g) =>
+          g.entries.some((e) => e.team.id === team.team.id),
+        )
+      : undefined;
+    const certainty = teamCertainty(team, teamGroup);
     return {
       team,
       label: `Mejor 3° (${groupLetters})`,
       isThird: true,
-      certainty: 'projected',
+      certainty,
     };
   }
 
