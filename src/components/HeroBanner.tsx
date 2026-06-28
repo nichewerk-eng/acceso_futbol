@@ -1,8 +1,33 @@
 'use client';
 
+import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { teamNameEs } from '@/components/standings/teamNames';
 import type { MatchEvent } from '@/app/api/match/[league]/[id]/route';
+
+// ── Team logo map — use uploaded crests when available ────────────────────────
+const TEAM_LOGO: Record<string, string> = {
+  MEX: '/seleccion_logo/mexico.png',
+  ECU: '/seleccion_logo/ecuador.png',
+};
+
+function TeamCrest({ abbr, size = 72 }: { abbr: string; size?: number }) {
+  const src = TEAM_LOGO[abbr];
+  if (src) {
+    return (
+      <Image
+        src={src}
+        alt={abbr}
+        width={size}
+        height={size}
+        className="object-contain drop-shadow-lg"
+        style={{ width: size, height: size }}
+      />
+    );
+  }
+  // Fallback to flag emoji
+  return <span style={{ fontSize: size * 0.75, lineHeight: 1 }}>{FLAG[abbr] ?? '🏳️'}</span>;
+}
 
 // ── Flag map ──────────────────────────────────────────────────────────────────
 const FLAG: Record<string, string> = {
@@ -219,10 +244,10 @@ export default function HeroBanner() {
               <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/30">Próximo partido</p>
             )}
 
-            {/* Flags + score/vs */}
-            <div className="flex items-center justify-center gap-6 sm:gap-10">
-              <div className="flex flex-col items-center gap-1.5">
-                <span className="text-6xl leading-none sm:text-7xl">🇲🇽</span>
+            {/* Crests + score/vs */}
+            <div className="flex items-center justify-center gap-6 sm:gap-12">
+              <div className="flex flex-col items-center gap-2">
+                <TeamCrest abbr="MEX" size={80} />
                 <span className="text-xs font-bold text-white/50">México</span>
               </div>
 
@@ -240,8 +265,8 @@ export default function HeroBanner() {
                 )}
               </div>
 
-              <div className="flex flex-col items-center gap-1.5">
-                <span className="text-6xl leading-none sm:text-7xl">{flag(rival.abbreviation)}</span>
+              <div className="flex flex-col items-center gap-2">
+                <TeamCrest abbr={rival.abbreviation} size={80} />
                 <span className="text-xs font-bold text-white/50">{teamNameEs(rival.name)}</span>
               </div>
             </div>
