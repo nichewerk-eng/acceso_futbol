@@ -6,9 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 const NAV_LINKS = [
-  { href: '/',          label: 'Inicio' },
-  { href: '/tabla',     label: 'Mundial 2026' },
-  { href: '/seleccion', label: 'Selección' },
+  { href: '/tabla', label: 'Mundial 2026' },
 ];
 
 export default function SiteNav() {

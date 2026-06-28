@@ -156,16 +156,6 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
             />
           </Link>
 
-          {/* Page-level nav links */}
-          <div className="hidden sm:flex items-center gap-1 ml-1">
-            {([['/', 'Inicio'], ['/tabla', 'Mundial 2026'], ['/seleccion', 'Selección']] as const).map(([href, label]) => (
-              <Link key={href} href={href}
-                className="rounded-lg px-3 py-1.5 text-xs font-bold tracking-wide transition-all text-gray-400 dark:text-white/40 hover:text-gray-700 dark:hover:text-white/70 bg-brand-orange/10 text-brand-orange"
-                style={href === '/tabla' ? { color: 'var(--color-brand-orange)', background: 'rgba(240,120,32,0.10)' } : {}}>
-                {label}
-              </Link>
-            ))}
-          </div>
 
           <div className="flex-1" />
 
