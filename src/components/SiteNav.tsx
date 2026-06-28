@@ -7,9 +7,7 @@ import { useEffect, useState } from 'react';
 
 const NAV_LINKS = [
   { href: '/tabla',      label: 'Mundial 2026' },
-  { href: '/liga-mx',   label: 'Liga MX' },
   { href: '/seleccion', label: 'Selección' },
-  { href: '/mi-equipo', label: 'Mi Equipo' },
 ];
 
 export default function SiteNav() {
