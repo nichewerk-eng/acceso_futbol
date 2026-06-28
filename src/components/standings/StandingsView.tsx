@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import BracketView from './BracketView';
+import BracketSimulator from './BracketSimulator';
 import { downloadGroupImage, downloadGroupImageWithPhoto } from './generateImage';
 import { teamNameEs } from './teamNames';
 import type { Fixture, Group } from './types';
@@ -54,7 +55,7 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
   const [groups, setGroups]         = useState<Group[]>(initialGroups);
   const [fixtures, setFixtures]     = useState<Fixture[]>(initialFixtures);
   const [selectedGroup, setSelectedGroup] = useState('A');
-  const [view, setView]             = useState<'tabla' | 'cuadro'>('tabla');
+  const [view, setView]             = useState<'tabla' | 'cuadro' | 'simulador'>('tabla');
   const [theme, setTheme]           = useState<'dark' | 'light'>('dark');
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [refreshing, setRefreshing] = useState(false);
@@ -220,7 +221,7 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
         {/* ── View toggle ── */}
         <div className="mb-6 flex justify-center">
           <div className="flex gap-1 rounded-xl bg-gray-100 dark:bg-white/5 p-1">
-            {([['tabla', 'Grupos'], ['cuadro', 'Cuadro R32']] as const).map(([v, label]) => (
+            {([['tabla', 'Grupos'], ['cuadro', 'Cuadro R32'], ['simulador', 'Simulador']] as const).map(([v, label]) => (
               <button
                 key={v}
                 onClick={() => setView(v)}
@@ -270,6 +271,7 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
 
         {/* ── Bracket view ── */}
         {view === 'cuadro' && <BracketView groups={groups} userTz={userTz} />}
+        {view === 'simulador' && <BracketSimulator groups={groups} />}
 
         {/* ── Table + fixtures ── */}
         {view === 'tabla' && currentGroup ? (
