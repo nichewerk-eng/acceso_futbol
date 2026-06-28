@@ -134,7 +134,6 @@ export default function HeroBanner() {
   const mexAll    = fixtures.filter((f) => f.home.abbreviation === 'MEX' || f.away.abbreviation === 'MEX');
   const mexLive   = mexAll.find((f) => f.status.state === 'in');
   const mexNext   = mexAll.filter((f) => f.status.state === 'pre').sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
-  const mexPast   = mexAll.filter((f) => f.status.state === 'post').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const countdown = useCountdown(mexNext?.date ?? null);
 
   const mexGame  = mexLive ?? mexNext;
@@ -214,26 +213,6 @@ export default function HeroBanner() {
                 </div>
               )}
 
-              {/* Past results pills */}
-              {mexPast.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {mexPast.slice(0, 3).map((f) => {
-                    const mH = f.home.abbreviation === 'MEX';
-                    const mS = mH ? Number(f.home.score) : Number(f.away.score);
-                    const rS = mH ? Number(f.away.score) : Number(f.home.score);
-                    const rA = mH ? f.away.abbreviation : f.home.abbreviation;
-                    const won = mS > rS; const drew = mS === rS;
-                    return (
-                      <span key={f.id} className={['flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold',
-                        won ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
-                            : drew ? 'border-white/10 bg-white/5 text-white/40'
-                            : 'border-red-500/30 bg-red-500/10 text-red-400'].join(' ')}>
-                        <b>{won ? 'G' : drew ? 'E' : 'P'}</b> 🇲🇽 {mS}–{rS} {flag(rA)}
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
             </div>
           ) : (
             <div className="flex-shrink-0 lg:w-64 flex items-center gap-2">
