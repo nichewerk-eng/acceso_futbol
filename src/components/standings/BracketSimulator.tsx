@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import type { Group, TeamEntry } from './types';
+import { useState, useMemo, useEffect } from 'react';
+import type { Group, TeamEntry, Fixture } from './types';
 import { teamNameEs } from './teamNames';
 
 // ── Flag map ────────────────────────────────────────────────────────────────
@@ -97,24 +97,24 @@ const WINNER_TO_SLOT: Record<string, string> = {
 };
 const THIRD_SLOTS = ['T:ABCDF','T:CDFGH','T:CEFHI','T:EHIJK','T:AEHIJ','T:BEFIJ','T:EFGIJ','T:DEIJL'] as const;
 
-// ── R32 bracket definition ───────────────────────────────────────────────────
+// ── R32 bracket definition (UTC kickoff times for fixture matching) ───────────
 const R32_DEFS = [
-  { id:'r01', homeSlot:'A2',  awaySlot:'B2',      label:'16vos · 28 Jun' },
-  { id:'r02', homeSlot:'C1',  awaySlot:'F2',      label:'16vos · 29 Jun' },
-  { id:'r03', homeSlot:'E1',  awaySlot:'T:ABCDF', label:'16vos · 29 Jun' },
-  { id:'r04', homeSlot:'F1',  awaySlot:'C2',      label:'16vos · 29 Jun' },
-  { id:'r05', homeSlot:'E2',  awaySlot:'I2',      label:'16vos · 30 Jun' },
-  { id:'r06', homeSlot:'I1',  awaySlot:'T:CDFGH', label:'16vos · 30 Jun' },
-  { id:'r07', homeSlot:'A1',  awaySlot:'T:CEFHI', label:'16vos · 30 Jun' },
-  { id:'r08', homeSlot:'L1',  awaySlot:'T:EHIJK', label:'16vos · 1 Jul'  },
-  { id:'r09', homeSlot:'G1',  awaySlot:'T:AEHIJ', label:'16vos · 1 Jul'  },
-  { id:'r10', homeSlot:'D1',  awaySlot:'T:BEFIJ', label:'16vos · 2 Jul'  },
-  { id:'r11', homeSlot:'H1',  awaySlot:'J2',      label:'16vos · 2 Jul'  },
-  { id:'r12', homeSlot:'K2',  awaySlot:'L2',      label:'16vos · 2 Jul'  },
-  { id:'r13', homeSlot:'B1',  awaySlot:'T:EFGIJ', label:'16vos · 3 Jul'  },
-  { id:'r14', homeSlot:'D2',  awaySlot:'G2',      label:'16vos · 3 Jul'  },
-  { id:'r15', homeSlot:'J1',  awaySlot:'H2',      label:'16vos · 3 Jul'  },
-  { id:'r16', homeSlot:'K1',  awaySlot:'T:DEIJL', label:'16vos · 4 Jul'  },
+  { id:'r01', date:'2026-06-28T19:00Z', homeSlot:'A2',  awaySlot:'B2',      label:'16vos · 28 Jun' },
+  { id:'r02', date:'2026-06-29T17:00Z', homeSlot:'C1',  awaySlot:'F2',      label:'16vos · 29 Jun' },
+  { id:'r03', date:'2026-06-29T20:30Z', homeSlot:'E1',  awaySlot:'T:ABCDF', label:'16vos · 29 Jun' },
+  { id:'r04', date:'2026-06-30T01:00Z', homeSlot:'F1',  awaySlot:'C2',      label:'16vos · 29 Jun' },
+  { id:'r05', date:'2026-06-30T17:00Z', homeSlot:'E2',  awaySlot:'I2',      label:'16vos · 30 Jun' },
+  { id:'r06', date:'2026-06-30T21:00Z', homeSlot:'I1',  awaySlot:'T:CDFGH', label:'16vos · 30 Jun' },
+  { id:'r07', date:'2026-07-01T01:00Z', homeSlot:'A1',  awaySlot:'T:CEFHI', label:'16vos · 30 Jun' },
+  { id:'r08', date:'2026-07-01T16:00Z', homeSlot:'L1',  awaySlot:'T:EHIJK', label:'16vos · 1 Jul'  },
+  { id:'r09', date:'2026-07-01T20:00Z', homeSlot:'G1',  awaySlot:'T:AEHIJ', label:'16vos · 1 Jul'  },
+  { id:'r10', date:'2026-07-02T00:00Z', homeSlot:'D1',  awaySlot:'T:BEFIJ', label:'16vos · 2 Jul'  },
+  { id:'r11', date:'2026-07-02T19:00Z', homeSlot:'H1',  awaySlot:'J2',      label:'16vos · 2 Jul'  },
+  { id:'r12', date:'2026-07-02T23:00Z', homeSlot:'K2',  awaySlot:'L2',      label:'16vos · 2 Jul'  },
+  { id:'r13', date:'2026-07-03T03:00Z', homeSlot:'B1',  awaySlot:'T:EFGIJ', label:'16vos · 3 Jul'  },
+  { id:'r14', date:'2026-07-03T18:00Z', homeSlot:'D2',  awaySlot:'G2',      label:'16vos · 3 Jul'  },
+  { id:'r15', date:'2026-07-03T22:00Z', homeSlot:'J1',  awaySlot:'H2',      label:'16vos · 3 Jul'  },
+  { id:'r16', date:'2026-07-04T01:30Z', homeSlot:'K1',  awaySlot:'T:DEIJL', label:'16vos · 4 Jul'  },
 ];
 
 // R16 pairings: each pair of R32 match winners
@@ -280,6 +280,8 @@ function computeBracket(r32: BMatch[], picks: Picks): RoundData[] {
   return rounds;
 }
 
+interface LockedScore { home: string; away: string }
+
 // ── Match card ───────────────────────────────────────────────────────────────
 function MatchCard({
   match,
@@ -288,6 +290,8 @@ function MatchCard({
   picks,
   onPick,
   isChampionship,
+  locked,
+  lockedScore,
 }: {
   match: BMatch;
   roundIdx: number;
@@ -295,6 +299,8 @@ function MatchCard({
   picks: Picks;
   onPick: (roundIdx: number, matchIdx: number, side: Side) => void;
   isChampionship?: boolean;
+  locked?: boolean;
+  lockedScore?: LockedScore;
 }) {
   const key = `${roundIdx}-${matchIdx}`;
   const picked = picks[key];
@@ -303,20 +309,23 @@ function MatchCard({
     const isWinner = picked === side;
     const isLoser  = picked && picked !== side;
     const isTbd    = !team;
+    const score    = lockedScore ? (side === 'home' ? lockedScore.home : lockedScore.away) : null;
 
     return (
       <button
-        onClick={() => team && onPick(roundIdx, matchIdx, side)}
-        disabled={isTbd}
+        onClick={() => !locked && team && onPick(roundIdx, matchIdx, side)}
+        disabled={isTbd || locked}
         className={[
-          'flex w-full items-center gap-2 px-3 py-2 text-left transition-all duration-150',
+          'flex flex-1 w-full items-center gap-2 px-3 py-1 text-left transition-all duration-150',
           'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal/50',
-          isTbd
+          isTbd || locked
             ? 'cursor-default'
             : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-white/[0.04]',
-          isWinner
-            ? 'bg-brand-teal/10 dark:bg-brand-teal/15'
-            : '',
+          isWinner && locked
+            ? 'bg-gray-100 dark:bg-white/[0.06]'
+            : isWinner
+              ? 'bg-brand-teal/10 dark:bg-brand-teal/15'
+              : '',
           isLoser
             ? 'opacity-30'
             : '',
@@ -332,15 +341,22 @@ function MatchCard({
           'flex-1 truncate text-[11px] font-semibold leading-tight',
           isTbd
             ? 'text-gray-300 dark:text-white/15 italic'
-            : isWinner
-              ? 'text-brand-teal dark:text-brand-teal font-bold'
-              : 'text-gray-700 dark:text-white/80',
+            : isWinner && locked
+              ? 'text-gray-700 dark:text-white/70 font-bold'
+              : isWinner
+                ? 'text-brand-teal dark:text-brand-teal font-bold'
+                : 'text-gray-700 dark:text-white/80',
         ].join(' ')}>
           {isTbd ? '—' : team.name}
         </span>
 
-        {/* Winner indicator */}
-        {isWinner && (
+        {/* Score (locked) or winner check (user pick) */}
+        {isWinner && locked && score !== null && (
+          <span className="text-[11px] font-bold tabular-nums text-gray-500 dark:text-white/50 shrink-0">
+            {score}
+          </span>
+        )}
+        {isWinner && !locked && (
           <svg className="h-3 w-3 text-brand-teal shrink-0" viewBox="0 0 12 12" fill="currentColor">
             <path d="M10 3L5 8.5 2 5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
           </svg>
@@ -350,20 +366,30 @@ function MatchCard({
   };
 
   return (
-    <div className={[
-      'rounded-xl overflow-hidden border transition-all duration-200',
-      isChampionship
-        ? 'border-yellow-400/60 dark:border-yellow-400/40 shadow-lg shadow-yellow-400/10'
-        : 'border-gray-200 dark:border-white/[0.07]',
-      'bg-white dark:bg-white/[0.025]',
-      isChampionship ? 'ring-1 ring-yellow-400/30' : '',
-    ].join(' ')}>
-      <div className="px-3 py-1 border-b border-gray-100 dark:border-white/[0.04]">
+    <div
+      style={{ height: CARD_H }}
+      className={[
+        'rounded-xl overflow-hidden border transition-all duration-200 flex flex-col',
+        isChampionship
+          ? 'border-yellow-400/60 dark:border-yellow-400/40 shadow-lg shadow-yellow-400/10'
+          : locked
+            ? 'border-gray-300/60 dark:border-white/[0.10]'
+            : 'border-gray-200 dark:border-white/[0.07]',
+        'bg-white dark:bg-white/[0.025]',
+        isChampionship ? 'ring-1 ring-yellow-400/30' : '',
+      ].join(' ')}
+    >
+      <div className="px-3 py-1 border-b border-gray-100 dark:border-white/[0.04] flex items-center justify-between">
         <span className="text-[9px] font-bold tracking-widest uppercase text-gray-400 dark:text-white/25">
           {match.label}
         </span>
+        {locked && (
+          <span className="text-[8px] font-bold tracking-wide uppercase text-gray-400 dark:text-white/25">
+            Final
+          </span>
+        )}
       </div>
-      <div className="divide-y divide-gray-100 dark:divide-white/[0.04]">
+      <div className="flex-1 divide-y divide-gray-100 dark:divide-white/[0.04] flex flex-col">
         <TeamRow team={match.home} side="home" />
         <TeamRow team={match.away} side="away" />
       </div>
@@ -395,9 +421,70 @@ function Connector() {
   );
 }
 
+// ── Bracket layout constants & helpers ───────────────────────────────────────
+// CARD_H must match the actual rendered height of MatchCard.
+// All y-positions in SVG connectors are derived from these two values.
+const CARD_H  = 90;               // match card height (px)
+const GAP_0   = 8;                // gap between cards in R32 (px)
+const SLOT_0  = CARD_H + GAP_0;   // 98 — vertical slot occupied by one R32 card
+const CONN_W  = 20;               // connector column width (px)
+const LABEL_H = 20;               // round label row height (px)
+
+/**
+ * Returns the exact paddingTop and gap (both in px) for a given round index
+ * so that each match is perfectly centred between its two parent matches.
+ *
+ * Derivation (H = CARD_H, G = GAP_0, S = SLOT_0 = H+G):
+ *   paddingTop(r) = S * (2^(r-1) − 0.5)
+ *   gap(r)        = (2^r − 1) * H + 2^r * G
+ */
+function bracketLayout(rIdx: number): { paddingTop: number; gap: number } {
+  if (rIdx === 0) return { paddingTop: 0, gap: GAP_0 };
+  const p2 = Math.pow(2, rIdx);
+  return {
+    paddingTop: SLOT_0 * (p2 / 2 - 0.5),
+    gap:        (p2 - 1) * CARD_H + p2 * GAP_0,
+  };
+}
+
+// ── Fixture → R32 slot matching ──────────────────────────────────────────────
+function findR32Fixture(defDate: string, fixtures: Fixture[]): Fixture | undefined {
+  const defMs = new Date(defDate).getTime();
+  return fixtures.find(f => Math.abs(new Date(f.date).getTime() - defMs) < 3 * 60 * 60 * 1000);
+}
+
 // ── Main component ───────────────────────────────────────────────────────────
-export default function BracketSimulator({ groups }: { groups: Group[] }) {
+export default function BracketSimulator({ groups, fixtures = [] }: { groups: Group[]; fixtures?: Fixture[] }) {
   const [picks, setPicks] = useState<Picks>({});
+  const [lockedKeys, setLockedKeys] = useState<Set<string>>(new Set());
+  const [lockedScores, setLockedScores] = useState<Record<string, LockedScore>>({});
+
+  // Auto-fill picks from completed R32 fixtures
+  useEffect(() => {
+    if (!fixtures.length) return;
+    const newLocked = new Set<string>();
+    const newScores: Record<string, LockedScore> = {};
+    const newPicks: Picks = {};
+
+    R32_DEFS.forEach((def, idx) => {
+      const fixture = findR32Fixture(def.date, fixtures);
+      if (!fixture || fixture.status.state !== 'post') return;
+      const homeScore = Number(fixture.home.score ?? 0);
+      const awayScore = Number(fixture.away.score ?? 0);
+      // Skip if still 0-0 (data not yet populated)
+      if (homeScore === 0 && awayScore === 0) return;
+      const key = `0-${idx}`;
+      newPicks[key] = homeScore >= awayScore ? 'home' : 'away';
+      newLocked.add(key);
+      newScores[key] = { home: String(homeScore), away: String(awayScore) };
+    });
+
+    if (newLocked.size === 0) return;
+
+    setPicks(prev => ({ ...prev, ...newPicks }));
+    setLockedKeys(newLocked);
+    setLockedScores(newScores);
+  }, [fixtures]);
 
   const r32 = useMemo(() => buildR32(groups), [groups]);
   const bracket = useMemo(() => computeBracket(r32, picks), [r32, picks]);
@@ -413,14 +500,14 @@ export default function BracketSimulator({ groups }: { groups: Group[] }) {
   }, [bracket, picks]);
 
   const handlePick = (roundIdx: number, matchIdx: number, side: Side) => {
+    const key = `${roundIdx}-${matchIdx}`;
+    if (lockedKeys.has(key)) return; // can't override real results
     setPicks(prev => {
       const next = { ...prev };
-      const key = `${roundIdx}-${matchIdx}`;
 
       // If same pick → deselect
       if (prev[key] === side) {
         delete next[key];
-        // Clear all downstream picks
         clearDownstream(next, roundIdx, matchIdx, bracket);
         return next;
       }
@@ -432,9 +519,17 @@ export default function BracketSimulator({ groups }: { groups: Group[] }) {
     });
   };
 
-  const handleReset = () => setPicks({});
+  // Reset only unlocked (user) picks
+  const handleReset = () => {
+    setPicks(prev => {
+      const next: Picks = {};
+      for (const k of lockedKeys) if (prev[k]) next[k] = prev[k];
+      return next;
+    });
+  };
 
   const filledCount = Object.keys(picks).length;
+  const lockedCount = lockedKeys.size;
   const totalMatches = 16 + 8 + 4 + 2 + 1;
 
   return (
@@ -446,10 +541,13 @@ export default function BracketSimulator({ groups }: { groups: Group[] }) {
             Simulador de Bracket
           </h2>
           <p className="text-xs text-gray-400 dark:text-white/40 mt-0.5">
-            Toca un equipo para avanzarlo. {filledCount}/{totalMatches} partidos simulados.
+            {lockedCount > 0
+              ? `${lockedCount} resultado${lockedCount > 1 ? 's' : ''} oficial${lockedCount > 1 ? 'es' : ''} · ${filledCount - lockedCount}/${totalMatches - lockedCount} simulados`
+              : `Toca un equipo para avanzarlo. ${filledCount}/${totalMatches} partidos simulados.`
+            }
           </p>
         </div>
-        {filledCount > 0 && (
+        {filledCount > lockedCount && (
           <button
             onClick={handleReset}
             className="rounded-lg border border-gray-200 dark:border-white/10 px-3 py-1.5 text-xs font-semibold text-gray-500 dark:text-white/40 hover:text-gray-800 dark:hover:text-white/80 hover:border-gray-300 dark:hover:border-white/20 transition-colors"
@@ -464,91 +562,121 @@ export default function BracketSimulator({ groups }: { groups: Group[] }) {
 
       {/* Bracket — horizontal scroll */}
       <div className="overflow-x-auto -mx-4 px-4">
-        <div className="flex gap-0 min-w-max">
+        <div className="flex min-w-max items-start">
           {bracket.map((round, rIdx) => {
-            const isLast = rIdx === bracket.length - 1;
+            const isLast     = rIdx === bracket.length - 1;
             const matchCount = round.matches.length;
-
-            // Each match in round R needs 2^R vertical "slots" of space
-            // We achieve this by spacing matches with flex gaps
-            const gapClass = rIdx === 0 ? 'gap-2'
-              : rIdx === 1 ? 'gap-8'
-              : rIdx === 2 ? 'gap-20'
-              : rIdx === 3 ? 'gap-44'
-              : 'gap-0';
-
-            const paddingClass = rIdx === 0 ? 'pt-0'
-              : rIdx === 1 ? 'pt-[3.5rem]'
-              : rIdx === 2 ? 'pt-[6.5rem]'
-              : rIdx === 3 ? 'pt-[12.5rem]'
-              : 'pt-[24.5rem]';
+            const layout     = bracketLayout(rIdx);
+            const prevLayout = rIdx > 0 ? bracketLayout(rIdx - 1) : null;
 
             return (
-              <div key={round.name} className="flex">
-                {/* Connector before each round except first */}
-                {rIdx > 0 && (
-                  <div className={['flex flex-col px-1.5', paddingClass, gapClass].join(' ')}>
-                    {round.matches.map((_, mIdx) => (
-                      <div key={mIdx} className="flex items-center h-[58px]">
-                        <div className="w-3 h-px bg-gray-200 dark:bg-white/10" />
-                      </div>
-                    ))}
+              <div key={round.name} className="flex items-start">
+                {/* ── SVG bracket connector ─────────────────────────────── */}
+                {rIdx > 0 && prevLayout && (
+                  <div style={{ width: CONN_W, flexShrink: 0 }}>
+                    {/* Spacer matches the label row height so SVG y=0 aligns with card tops */}
+                    <div style={{ height: LABEL_H }} />
+                    <svg
+                      width={CONN_W}
+                      height={layout.paddingTop + matchCount * CARD_H + Math.max(0, matchCount - 1) * layout.gap}
+                      className="text-gray-300 dark:text-white/[0.08] overflow-visible"
+                    >
+                      <g stroke="currentColor" strokeWidth="1" fill="none">
+                        {round.matches.map((_, mIdx) => {
+                          const y0 = prevLayout.paddingTop + (2 * mIdx) * (CARD_H + prevLayout.gap) + CARD_H / 2;
+                          const y1 = prevLayout.paddingTop + (2 * mIdx + 1) * (CARD_H + prevLayout.gap) + CARD_H / 2;
+                          const yC = layout.paddingTop + mIdx * (CARD_H + layout.gap) + CARD_H / 2;
+                          const mx = CONN_W / 2;
+                          return (
+                            <g key={mIdx}>
+                              <line x1={0}    y1={y0} x2={mx}     y2={y0} />
+                              <line x1={0}    y1={y1} x2={mx}     y2={y1} />
+                              <line x1={mx}   y1={y0} x2={mx}     y2={y1} />
+                              <line x1={mx}   y1={yC} x2={CONN_W} y2={yC} />
+                            </g>
+                          );
+                        })}
+                      </g>
+                    </svg>
                   </div>
                 )}
 
-                {/* Round column */}
-                <div className="flex flex-col items-stretch" style={{ width: '152px' }}>
-                  {/* Round label */}
-                  <div className="mb-2 text-center">
+                {/* ── Round column ──────────────────────────────────────── */}
+                <div className="flex flex-col items-stretch" style={{ width: 152 }}>
+                  {/* Label — fixed height so SVG offsets are exact */}
+                  <div
+                    className="text-center flex items-center justify-center"
+                    style={{ height: LABEL_H }}
+                  >
                     <span className="text-[9px] font-bold tracking-[0.15em] uppercase text-gray-400 dark:text-white/30">
                       {round.shortName}
                     </span>
                   </div>
 
-                  {/* Matches */}
-                  <div className={['flex flex-col', gapClass, paddingClass].join(' ')}>
-                    {round.matches.map((match, mIdx) => (
-                      <MatchCard
-                        key={match.id}
-                        match={match}
-                        roundIdx={rIdx}
-                        matchIdx={mIdx}
-                        picks={picks}
-                        onPick={handlePick}
-                        isChampionship={isLast}
-                      />
-                    ))}
+                  {/* Match cards */}
+                  <div className="flex flex-col" style={{ paddingTop: layout.paddingTop, gap: layout.gap }}>
+                    {round.matches.map((match, mIdx) => {
+                      const matchKey = `${rIdx}-${mIdx}`;
+                      return (
+                        <MatchCard
+                          key={match.id}
+                          match={match}
+                          roundIdx={rIdx}
+                          matchIdx={mIdx}
+                          picks={picks}
+                          onPick={handlePick}
+                          isChampionship={isLast}
+                          locked={lockedKeys.has(matchKey)}
+                          lockedScore={lockedScores[matchKey]}
+                        />
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* Connector after last round */}
-                {isLast && champion && (
-                  <div className={['flex flex-col px-1.5', paddingClass].join(' ')}>
-                    <div className="flex items-center h-[58px]">
-                      <div className="w-3 h-px bg-yellow-400/40" />
+                {/* ── Exit connector + trophy after Final ───────────────── */}
+                {isLast && champion && (() => {
+                  const finalLayout = bracketLayout(bracket.length - 1);
+                  const troW = 108;
+                  const yC   = finalLayout.paddingTop + CARD_H / 2;
+                  return (
+                    <div className="flex items-start" style={{ flexShrink: 0 }}>
+                      {/* short horizontal to trophy */}
+                      <div style={{ width: CONN_W, flexShrink: 0 }}>
+                        <div style={{ height: LABEL_H }} />
+                        <svg width={CONN_W} height={finalLayout.paddingTop + CARD_H} className="text-yellow-400/40 overflow-visible">
+                          <line x1={0} y1={yC} x2={CONN_W} y2={yC} stroke="currentColor" strokeWidth="1" />
+                        </svg>
+                      </div>
+                      {/* trophy card */}
+                      <div style={{ paddingTop: LABEL_H + finalLayout.paddingTop }}>
+                        <div
+                          style={{ height: CARD_H, width: troW }}
+                          className="flex flex-col items-center justify-center rounded-xl border border-yellow-400/40 bg-yellow-400/10 px-3"
+                        >
+                          <div className="text-2xl leading-none mb-1">🏆</div>
+                          <div className="text-[10px] font-black text-yellow-500 dark:text-yellow-400 truncate max-w-full text-center">
+                            {champion.name}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
             );
           })}
-
-          {/* Champion trophy slot */}
-          {champion && (
-            <div className="flex flex-col justify-center items-center px-4" style={{ paddingTop: '24.5rem' }}>
-              <div className="rounded-xl border border-yellow-400/40 bg-yellow-400/10 px-4 py-3 text-center min-w-[100px]">
-                <div className="text-2xl mb-1">🏆</div>
-                <div className="text-xs font-black text-yellow-500 dark:text-yellow-400 truncate max-w-[80px]">
-                  {champion.name}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
       {/* Legend */}
       <div className="mt-8 flex flex-wrap gap-4 text-[10px] text-gray-400 dark:text-white/30">
+        {lockedCount > 0 && (
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-2 h-2 rounded-sm bg-gray-300 dark:bg-white/20" />
+            Resultado oficial (no editable)
+          </span>
+        )}
         <span className="flex items-center gap-1.5">
           <span className="inline-block w-2 h-2 rounded-sm bg-brand-teal/40" />
           Seleccionado como ganador

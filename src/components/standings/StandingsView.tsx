@@ -427,13 +427,7 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
 
         {/* ─── SIMULADOR TAB ──────────────────────────────────────────────────── */}
         {view === 'simulador' && (
-          <div>
-            <div className="mb-6">
-              <h2 className="text-lg font-bold tracking-wide text-gray-900 dark:text-white">Simulador de Bracket</h2>
-              <p className="text-xs text-gray-400 dark:text-white/30 mt-1">Elige los ganadores y simula tu propio camino al título</p>
-            </div>
-            <BracketSimulator groups={groups} />
-          </div>
+          <BracketSimulator groups={groups} fixtures={fixtures} />
         )}
 
         {/* Footer */}

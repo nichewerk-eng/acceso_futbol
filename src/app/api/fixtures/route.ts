@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { espnFetch, scoreboardUrl, SLUG } from '@/lib/espn';
 import { getCache, setCache } from '@/lib/apiCache';
 
-// Group stage (Jun 11) → Round of 16 (Jul 10) inclusive
-const DATE_RANGE = '20260611-20260710';
+// Group stage (Jun 11) → Final (Jul 19) inclusive
+const DATE_RANGE = '20260611-20260720';
 const CACHE_KEY  = 'wc-fixtures';
 const TTL_MS     = 30_000;
 
