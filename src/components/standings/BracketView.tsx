@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import type { Group, TeamEntry } from './types';
+import type { Group, TeamEntry, Fixture } from './types';
 import { teamNameEs } from './teamNames';
 
 // ── Hardcoded R32 bracket (from FIFA / ESPN fixture data) ──────────────────────
@@ -641,13 +641,20 @@ function BestThirdsTable({ groups }: { groups: Group[] }) {
   );
 }
 
+// ── Match fixture lookup (by date proximity — R32 games in the fixtures array) ──
+function findFixture(match: R32Match, fixtures: Fixture[]): Fixture | undefined {
+  const matchMs = new Date(match.date).getTime();
+  return fixtures.find((f) => Math.abs(new Date(f.date).getTime() - matchMs) < 90 * 60 * 1000);
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 interface Props {
   groups: Group[];
   userTz: string;
+  fixtures?: Fixture[];
 }
 
-export default function BracketView({ groups, userTz }: Props) {
+export default function BracketView({ groups, userTz, fixtures = [] }: Props) {
   const groupMap = new Map(
     groups.map((g) => [g.abbreviation.replace('Group ', ''), g]),
   );
@@ -691,8 +698,14 @@ export default function BracketView({ groups, userTz }: Props) {
             {matches.map((match) => {
               const home = resolveSlot(match.homeSlot, groupMap, thirdAssignments);
               const away = resolveSlot(match.awaySlot, groupMap, thirdAssignments);
+              const fixture = findFixture(match, fixtures);
+              const isLive  = fixture?.status.state === 'in';
+              const isDone  = fixture?.status.state === 'post';
+              const homeScore = fixture?.home.score ?? null;
+              const awayScore = fixture?.away.score ?? null;
+              const homeWin = isDone && Number(homeScore) > Number(awayScore);
+              const awayWin = isDone && Number(awayScore) > Number(homeScore);
 
-              // Highlight if Mexico is playing
               const mexInvolved =
                 home.team?.team.abbreviation === 'MEX' ||
                 away.team?.team.abbreviation === 'MEX';
@@ -701,45 +714,102 @@ export default function BracketView({ groups, userTz }: Props) {
                 <div
                   key={match.id}
                   className={[
-                    'relative overflow-hidden rounded-2xl border p-4 transition-all',
-                    mexInvolved
-                      ? 'border-brand-orange/30 bg-brand-orange/[0.04] shadow-[0_0_20px_rgba(240,120,32,0.08)]'
-                      : 'border-gray-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] shadow-sm dark:shadow-none',
+                    'relative overflow-hidden rounded-2xl border transition-all',
+                    isLive
+                      ? 'border-red-500/30 bg-red-500/[0.03] shadow-[0_0_24px_rgba(239,68,68,0.08)]'
+                      : mexInvolved
+                        ? 'border-brand-orange/30 bg-brand-orange/[0.04] shadow-[0_0_20px_rgba(240,120,32,0.08)]'
+                        : isDone
+                          ? 'border-gray-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.02]'
+                          : 'border-gray-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] shadow-sm dark:shadow-none',
                   ].join(' ')}
                 >
-                  {mexInvolved && (
-                    <div
-                      className="pointer-events-none absolute inset-0 opacity-10"
-                      style={{
-                        background:
-                          'radial-gradient(ellipse 80% 60% at 50% -20%, #f07820, transparent)',
-                      }}
-                    />
+                  {mexInvolved && !isLive && (
+                    <div className="pointer-events-none absolute inset-0 opacity-10"
+                      style={{ background: 'radial-gradient(ellipse 80% 60% at 50% -20%, #f07820, transparent)' }} />
                   )}
 
-                  {/* Venue */}
-                  <div className="mb-3 flex items-center justify-between">
-                    <span className="text-[10px] text-gray-400 dark:text-white/30 truncate">{match.venue}</span>
-                    <span className="ml-2 shrink-0 text-[10px] text-gray-400 dark:text-white/20">{match.city}</span>
-                  </div>
-
-                  {/* Teams */}
-                  <div className="flex items-center gap-3">
-                    <TeamSlot result={home} align="left" />
-                    <div className="flex shrink-0 flex-col items-center gap-1">
-                      <span className="text-xs font-bold text-gray-300 dark:text-white/20">vs</span>
+                  {/* ── Card header: status badge + city ── */}
+                  <div className="flex items-center justify-between px-4 pt-3.5 pb-0">
+                    <div>
+                      {isLive ? (
+                        <span className="flex items-center gap-1.5 rounded-full bg-red-500/10 border border-red-500/30 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-red-400">
+                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+                          {fixture?.status.shortDetail ?? 'En vivo'}
+                        </span>
+                      ) : isDone ? (
+                        <span className="rounded bg-gray-100 dark:bg-white/[0.07] px-2 py-0.5 text-[10px] font-bold text-gray-500 dark:text-white/40">FT</span>
+                      ) : (
+                        <span className={['rounded px-2 py-0.5 text-[10px] font-bold',
+                          mexInvolved
+                            ? 'bg-brand-orange/15 text-brand-orange'
+                            : 'bg-[#1a7a78]/10 text-[#1a7a78] dark:text-[#4db8b5]'].join(' ')}>
+                          {new Date(match.date).toLocaleTimeString('es-MX', { timeZone: userTz, hour: '2-digit', minute: '2-digit', hour12: true })}
+                        </span>
+                      )}
                     </div>
-                    <TeamSlot result={away} align="right" />
+                    <span className="text-[10px] text-gray-400 dark:text-white/20 truncate ml-2">{match.city}</span>
                   </div>
 
-                  {/* Mexico highlight tag */}
-                  {mexInvolved && (
-                    <div className="mt-3 flex items-center justify-center gap-1.5">
-                      <span className="text-[10px] font-bold tracking-widest uppercase text-brand-orange/70">
-                        🇲🇽 El Tri en juego
+                  {/* ── Teams + score ── */}
+                  <div className="flex items-center gap-2 px-4 py-4">
+                    {/* Home */}
+                    <div className={['flex flex-1 flex-col items-start gap-1', awayWin ? 'opacity-50' : ''].join(' ')}>
+                      <span className="text-2xl leading-none">{home.team ? flag(home.team.team.abbreviation) : '🏳️'}</span>
+                      <span className={['text-xs font-bold leading-tight',
+                        home.certainty === 'confirmed' ? 'text-gray-900 dark:text-white'
+                          : home.certainty === 'projected' ? 'text-gray-600 dark:text-white/70'
+                          : 'text-gray-400 dark:text-white/30'].join(' ')}>
+                        {home.team ? teamNameEs(home.team.team.name) : home.label}
                       </span>
+                      {home.certainty !== 'seeded' && (
+                        <span className={['text-[9px] font-bold uppercase tracking-wider',
+                          home.certainty === 'confirmed' ? 'text-emerald-500' : 'text-brand-orange'].join(' ')}>
+                          {home.certainty === 'confirmed' ? 'Confirmado' : 'Proyectado'}
+                        </span>
+                      )}
                     </div>
-                  )}
+
+                    {/* Score / vs */}
+                    <div className="shrink-0 text-center px-1">
+                      {(isLive || isDone) && homeScore !== null ? (
+                        <span className={['text-2xl font-bold tabular-nums',
+                          isLive ? 'text-red-400' : 'text-gray-900 dark:text-white'].join(' ')}>
+                          {homeScore}<span className="mx-1 text-gray-300 dark:text-white/20">–</span>{awayScore}
+                        </span>
+                      ) : (
+                        <span className="text-sm font-bold text-gray-300 dark:text-white/20">vs</span>
+                      )}
+                    </div>
+
+                    {/* Away */}
+                    <div className={['flex flex-1 flex-col items-end gap-1', homeWin ? 'opacity-50' : ''].join(' ')}>
+                      <span className="text-2xl leading-none">{away.team ? flag(away.team.team.abbreviation) : '🏳️'}</span>
+                      <span className={['text-xs font-bold leading-tight text-right',
+                        away.certainty === 'confirmed' ? 'text-gray-900 dark:text-white'
+                          : away.certainty === 'projected' ? 'text-gray-600 dark:text-white/70'
+                          : 'text-gray-400 dark:text-white/30'].join(' ')}>
+                        {away.team ? teamNameEs(away.team.team.name) : away.label}
+                      </span>
+                      {away.certainty !== 'seeded' && (
+                        <span className={['text-[9px] font-bold uppercase tracking-wider',
+                          away.certainty === 'confirmed' ? 'text-emerald-500' : 'text-brand-orange'].join(' ')}>
+                          {away.certainty === 'confirmed' ? 'Confirmado' : 'Proyectado'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ── Footer: venue + Mexico tag ── */}
+                  <div className={['flex items-center px-4 pb-3',
+                    mexInvolved ? 'justify-between' : 'justify-end'].join(' ')}>
+                    {mexInvolved && (
+                      <span className="text-[10px] font-bold tracking-widest uppercase text-brand-orange/70">
+                        🇲🇽 El Tri
+                      </span>
+                    )}
+                    <span className="text-[10px] text-gray-400 dark:text-white/20 truncate">{match.venue}</span>
+                  </div>
                 </div>
               );
             })}

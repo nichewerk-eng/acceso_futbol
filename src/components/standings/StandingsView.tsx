@@ -60,7 +60,7 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
   const [groups, setGroups]               = useState<Group[]>(initialGroups);
   const [fixtures, setFixtures]           = useState<Fixture[]>(initialFixtures);
   const [selectedGroup, setSelectedGroup] = useState('A');
-  const [view, setView]                   = useState<View>('tabla');
+  const [view, setView]                   = useState<View>('cuadro');
   const [theme, setTheme]                 = useState<'dark' | 'light'>('dark');
   const [lastUpdated, setLastUpdated]     = useState(new Date());
   const [refreshing, setRefreshing]       = useState(false);
@@ -421,7 +421,7 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
               <h2 className="text-lg font-bold tracking-wide text-gray-900 dark:text-white">Cuadro de Dieciseisavos</h2>
               <p className="text-xs text-gray-400 dark:text-white/30 mt-1">Clasificación proyectada según posiciones actuales · Reglas oficiales FIFA Anexo C</p>
             </div>
-            <BracketView groups={groups} userTz={userTz} />
+            <BracketView groups={groups} userTz={userTz} fixtures={fixtures} />
           </div>
         )}
 
