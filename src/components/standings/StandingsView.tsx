@@ -169,25 +169,6 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
 
           <div className="flex-1" />
 
-          {/* Section tabs */}
-          <div className="flex items-center gap-1 rounded-xl bg-gray-100 dark:bg-white/[0.06] p-1">
-            {([['tabla', 'Grupos'], ['cuadro', 'R32'], ['simulador', 'Sim']] as const).map(([v, label]) => (
-              <button
-                key={v}
-                onClick={() => setView(v as View)}
-                className={[
-                  'rounded-lg px-3 py-1.5 text-xs font-bold tracking-wide transition-all duration-200',
-                  view === v
-                    ? 'bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm'
-                    : 'text-gray-400 dark:text-white/40 hover:text-gray-700 dark:hover:text-white/70',
-                ].join(' ')}
-              >
-                <span className="hidden sm:inline">{v === 'cuadro' ? 'Cuadro R32' : v === 'simulador' ? 'Simulador' : label}</span>
-                <span className="sm:hidden">{label}</span>
-              </button>
-            ))}
-          </div>
-
           {/* Right actions */}
           <div className="flex items-center gap-2">
             <a
@@ -216,8 +197,33 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
       {/* ── SHARED HERO BANNER ────────────────────────────────────────────────── */}
       <HeroBanner />
 
+      {/* ── SECTION TABS ──────────────────────────────────────────────────────── */}
+      <div className="border-b border-gray-200 dark:border-white/[0.06] bg-white dark:bg-bg-1">
+        <div className="mx-auto flex max-w-5xl items-center justify-center gap-1 px-4 sm:px-6">
+          {([
+            ['tabla',     'Grupos',     'Tabla de Grupos'],
+            ['cuadro',    'Cuadro R32', 'Cuadro R32'],
+            ['simulador', 'Simulador',  'Simulador'],
+          ] as const).map(([v, short, full]) => (
+            <button
+              key={v}
+              onClick={() => setView(v as View)}
+              className={[
+                'relative py-3.5 px-5 sm:px-8 text-sm font-bold tracking-wide transition-all duration-200 border-b-2 -mb-px',
+                view === v
+                  ? 'border-brand-orange text-brand-orange'
+                  : 'border-transparent text-gray-400 dark:text-white/40 hover:text-gray-700 dark:hover:text-white/70 hover:border-gray-300 dark:hover:border-white/20',
+              ].join(' ')}
+            >
+              <span className="hidden sm:inline">{full}</span>
+              <span className="sm:hidden">{short}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* ── MAIN CONTENT ──────────────────────────────────────────────────────── */}
-      <div className="mx-auto max-w-5xl px-4 pb-16 pt-8 sm:px-6">
+      <div className="mx-auto max-w-5xl px-4 pb-16 pt-6 sm:px-6">
 
         {/* ─── GRUPOS TAB ─────────────────────────────────────────────────────── */}
         {view === 'tabla' && (
