@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import BracketView from './BracketView';
 import BracketSimulator from './BracketSimulator';
@@ -46,26 +47,6 @@ function isToday(iso: string, tz: string) {
   const d = new Date(iso).toLocaleDateString('es-MX', { timeZone: tz });
   const n = new Date().toLocaleDateString('es-MX', { timeZone: tz });
   return d === n;
-}
-
-// ── Mexico countdown hook ───────────────────────────────────────────────────────
-function useCountdown(targetDate: string | null) {
-  const [diff, setDiff] = useState(0);
-  useEffect(() => {
-    if (!targetDate) return;
-    const tick = () => setDiff(Math.max(0, new Date(targetDate).getTime() - Date.now()));
-    tick();
-    const id = setInterval(tick, 1_000);
-    return () => clearInterval(id);
-  }, [targetDate]);
-  const s = Math.floor(diff / 1000);
-  return {
-    days:  Math.floor(s / 86400),
-    hours: Math.floor((s % 86400) / 3600),
-    mins:  Math.floor((s % 3600) / 60),
-    secs:  s % 60,
-    total: diff,
-  };
 }
 
 // ── Types ───────────────────────────────────────────────────────────────────────
@@ -137,12 +118,6 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
   const jumboMode: 'live' | 'today' | 'upcoming' =
     allLive.length > 0 ? 'live' : allToday.length > 0 ? 'today' : 'upcoming';
 
-  // ── Mexico next match countdown ───────────────────────────────────────────────
-  const mexFixtures = fixtures.filter((f) => f.home.abbreviation === 'MEX' || f.away.abbreviation === 'MEX');
-  const mexLive   = mexFixtures.find((f) => f.status.state === 'in');
-  const mexNext   = mexFixtures.filter((f) => f.status.state === 'pre')
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
-  const countdown = useCountdown(mexNext?.date ?? null);
 
   // ── Download / share handlers ────────────────────────────────────────────────
   async function handleShare() {
@@ -175,21 +150,36 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
 
       {/* ── STICKY NAVBAR ─────────────────────────────────────────────────────── */}
       <nav className="sticky top-0 z-50 border-b border-gray-200/80 dark:border-white/[0.06] bg-white/95 dark:bg-bg-1/95 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
 
           {/* Logo */}
-          <Image
-            src="/acceso_futbol_logo_logo_transparent_bg.PNG"
-            alt="Acceso Futbol"
-            width={240}
-            height={80}
-            className="h-8 w-auto object-contain sm:h-10"
-            priority
-          />
+          <Link href="/" className="shrink-0">
+            <Image
+              src="/acceso_futbol_logo_logo_transparent_bg.PNG"
+              alt="Acceso Futbol"
+              width={240}
+              height={80}
+              className="h-8 w-auto object-contain sm:h-10"
+              priority
+            />
+          </Link>
 
-          {/* Tab navigation */}
+          {/* Page-level nav links */}
+          <div className="hidden sm:flex items-center gap-1 ml-1">
+            {([['/', 'Inicio'], ['/tabla', 'Mundial 2026'], ['/seleccion', 'Selección']] as const).map(([href, label]) => (
+              <Link key={href} href={href}
+                className="rounded-lg px-3 py-1.5 text-xs font-bold tracking-wide transition-all text-gray-400 dark:text-white/40 hover:text-gray-700 dark:hover:text-white/70 bg-brand-orange/10 text-brand-orange"
+                style={href === '/tabla' ? { color: 'var(--color-brand-orange)', background: 'rgba(240,120,32,0.10)' } : {}}>
+                {label}
+              </Link>
+            ))}
+          </div>
+
+          <div className="flex-1" />
+
+          {/* Section tabs */}
           <div className="flex items-center gap-1 rounded-xl bg-gray-100 dark:bg-white/[0.06] p-1">
-            {([['tabla', 'Grupos'], ['cuadro', 'R32'], ['simulador', 'Simulador']] as const).map(([v, label]) => (
+            {([['tabla', 'Grupos'], ['cuadro', 'R32'], ['simulador', 'Sim']] as const).map(([v, label]) => (
               <button
                 key={v}
                 onClick={() => setView(v as View)}
@@ -200,9 +190,7 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
                     : 'text-gray-400 dark:text-white/40 hover:text-gray-700 dark:hover:text-white/70',
                 ].join(' ')}
               >
-                <span className="hidden sm:inline">
-                  {v === 'cuadro' ? 'Cuadro R32' : label}
-                </span>
+                <span className="hidden sm:inline">{v === 'cuadro' ? 'Cuadro R32' : v === 'simulador' ? 'Simulador' : label}</span>
                 <span className="sm:hidden">{label}</span>
               </button>
             ))}
@@ -233,115 +221,12 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
         <div className="h-px" style={{ background: 'linear-gradient(to right, rgba(240,120,32,0.5), rgba(255,255,255,0.04), rgba(26,122,120,0.5))' }} />
       </nav>
 
-      {/* ── HERO ──────────────────────────────────────────────────────────────── */}
+      {/* ── JUMBOTRON — all-tournament games ─────────────────────────────────── */}
       <div className="relative overflow-hidden bg-gray-900 dark:bg-[#080d12]">
-        <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 80% at 50% -10%, rgba(26,122,120,0.35) 0%, transparent 65%)' }} />
+        <div className="pointer-events-none absolute inset-0 opacity-25"
+          style={{ background: 'radial-gradient(ellipse 70% 60% at 50% -10%, #f07820 0%, transparent 65%)' }} />
 
-        <div className="relative mx-auto max-w-6xl px-4 pt-6 pb-5 sm:px-6">
-
-          {/* Eyebrow */}
-          <p className="text-center text-[10px] font-bold tracking-[0.25em] uppercase text-white/30 mb-5">FIFA World Cup 2026</p>
-
-          {/* ── Mexico next match / live ──────────────────────────────────────── */}
-          {(mexLive || mexNext) && (() => {
-            const game    = mexLive ?? mexNext!;
-            const mexHome = game.home.abbreviation === 'MEX';
-            const rival   = mexHome ? game.away : game.home;
-            return (
-              <>
-                {mexLive && (
-                  <div className="mb-4 flex justify-center">
-                    <div className="inline-flex items-center gap-2 rounded-full border border-red-500/40 bg-red-500/10 px-4 py-1.5">
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
-                      <span className="text-xs font-bold text-red-400">En vivo · {game.status.shortDetail}</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Flags + countdown — responsive two-column */}
-                <div className="flex flex-col items-center gap-6 sm:flex-row sm:justify-between sm:gap-4">
-
-                  {/* Match */}
-                  <div className="flex flex-1 items-center justify-center gap-5 sm:justify-start">
-                    <div className="flex flex-col items-center gap-1.5">
-                      <span className="text-5xl leading-none">🇲🇽</span>
-                      <span className="text-xs font-bold text-white/60">México</span>
-                    </div>
-                    <div className="text-center">
-                      {mexLive ? (
-                        <p className="text-4xl font-bold tabular-nums text-white">
-                          {game.home.score}<span className="mx-1 text-white/30">–</span>{game.away.score}
-                        </p>
-                      ) : (
-                        <>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-1">Próximo partido</p>
-                          <p className="text-lg font-bold text-white/50">vs</p>
-                          <p className="text-[11px] text-white/30 mt-1">
-                            {new Date(game.date).toLocaleDateString('es-MX', { timeZone: userTz, weekday: 'long', day: 'numeric', month: 'long' })}
-                          </p>
-                          <p className="text-sm font-bold text-white">{fmtTime(game.date, userTz)}</p>
-                        </>
-                      )}
-                    </div>
-                    <div className="flex flex-col items-center gap-1.5">
-                      <span className="text-5xl leading-none">{flag(rival.abbreviation)}</span>
-                      <span className="text-xs font-bold text-white/60">{teamNameEs(rival.name)}</span>
-                    </div>
-                  </div>
-
-                  {/* Countdown */}
-                  {!mexLive && countdown.total > 0 && (
-                    <div className="flex items-end gap-2 sm:gap-3">
-                      {([['Días', countdown.days], ['Horas', countdown.hours], ['Min', countdown.mins], ['Seg', countdown.secs]] as const).map(([label, val], i) => (
-                        <div key={label} className="flex items-end gap-2 sm:gap-3">
-                          {i > 0 && <span className="mb-2 text-xl font-bold text-white/20 leading-none">:</span>}
-                          <div className="flex flex-col items-center">
-                            <span className="block text-4xl font-bold tabular-nums text-white sm:text-5xl leading-none">
-                              {String(val).padStart(2, '0')}
-                            </span>
-                            <span className="text-[9px] uppercase tracking-widest text-white/30 mt-1">{label}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Past Mexico results — inline pills */}
-                {mexFixtures.filter((f) => f.status.state === 'post').length > 0 && (
-                  <div className="mt-4 overflow-x-auto -mx-4 px-4">
-                    <div className="flex gap-2 min-w-max">
-                      {mexFixtures
-                        .filter((f) => f.status.state === 'post')
-                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                        .slice(0, 5)
-                        .map((f) => {
-                          const mH  = f.home.abbreviation === 'MEX';
-                          const mS  = mH ? Number(f.home.score) : Number(f.away.score);
-                          const rS  = mH ? Number(f.away.score) : Number(f.home.score);
-                          const rAb = mH ? f.away.abbreviation : f.home.abbreviation;
-                          const won = mS > rS; const drew = mS === rS;
-                          return (
-                            <span key={f.id} className={['flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold',
-                              won  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
-                                   : drew ? 'border-white/10 bg-white/5 text-white/50'
-                                   : 'border-red-500/30 bg-red-500/10 text-red-400'].join(' ')}>
-                              <span className="font-bold">{won ? 'G' : drew ? 'E' : 'P'}</span>
-                              🇲🇽 {mS}–{rS} {flag(rAb)}
-                            </span>
-                          );
-                        })}
-                    </div>
-                  </div>
-                )}
-              </>
-            );
-          })()}
-
-          {/* ── Divider ───────────────────────────────────────────────────────── */}
-          <div className="my-5 h-px bg-white/[0.06]" />
-
-          {/* ── All-games scoreboard ──────────────────────────────────────────── */}
+        <div className="relative mx-auto max-w-6xl px-4 py-4 sm:px-6">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               {jumboMode === 'live' && (

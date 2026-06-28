@@ -6,7 +6,8 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 const NAV_LINKS = [
-  { href: '/tabla',      label: 'Mundial 2026' },
+  { href: '/',          label: 'Inicio' },
+  { href: '/tabla',     label: 'Mundial 2026' },
   { href: '/seleccion', label: 'Selección' },
 ];
 
@@ -47,7 +48,7 @@ export default function SiteNav() {
         {/* Desktop nav */}
         <div className="hidden sm:flex items-center gap-1 ml-4">
           {NAV_LINKS.map(({ href, label }) => {
-            const active = pathname === href || pathname.startsWith(href + '/');
+            const active = href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/');
             return (
               <Link
                 key={href} href={href}
@@ -98,7 +99,7 @@ export default function SiteNav() {
       {mobileOpen && (
         <div className="sm:hidden border-t border-gray-100 dark:border-white/[0.06] bg-white dark:bg-bg-1 px-4 pb-4 pt-2">
           {NAV_LINKS.map(({ href, label }) => {
-            const active = pathname === href;
+            const active = href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/');
             return (
               <Link
                 key={href} href={href}
