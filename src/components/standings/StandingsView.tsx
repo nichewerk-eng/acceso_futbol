@@ -233,17 +233,116 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
         <div className="h-px" style={{ background: 'linear-gradient(to right, rgba(240,120,32,0.5), rgba(255,255,255,0.04), rgba(26,122,120,0.5))' }} />
       </nav>
 
-      {/* ── JUMBOTRON HERO ────────────────────────────────────────────────────── */}
+      {/* ── HERO ──────────────────────────────────────────────────────────────── */}
       <div className="relative overflow-hidden bg-gray-900 dark:bg-[#080d12]">
-        {/* Background glow */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-30"
-          style={{ background: 'radial-gradient(ellipse 70% 60% at 50% -10%, #f07820 0%, transparent 65%)' }}
-        />
+        <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 80% at 50% -10%, rgba(26,122,120,0.35) 0%, transparent 65%)' }} />
 
-        <div className="relative mx-auto max-w-6xl px-4 py-5 sm:px-6">
-          {/* Jumbotron label */}
-          <div className="mb-4 flex items-center justify-between">
+        <div className="relative mx-auto max-w-6xl px-4 pt-6 pb-5 sm:px-6">
+
+          {/* Eyebrow */}
+          <p className="text-center text-[10px] font-bold tracking-[0.25em] uppercase text-white/30 mb-5">FIFA World Cup 2026</p>
+
+          {/* ── Mexico next match / live ──────────────────────────────────────── */}
+          {(mexLive || mexNext) && (() => {
+            const game    = mexLive ?? mexNext!;
+            const mexHome = game.home.abbreviation === 'MEX';
+            const rival   = mexHome ? game.away : game.home;
+            return (
+              <>
+                {mexLive && (
+                  <div className="mb-4 flex justify-center">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-red-500/40 bg-red-500/10 px-4 py-1.5">
+                      <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+                      <span className="text-xs font-bold text-red-400">En vivo · {game.status.shortDetail}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Flags + countdown — responsive two-column */}
+                <div className="flex flex-col items-center gap-6 sm:flex-row sm:justify-between sm:gap-4">
+
+                  {/* Match */}
+                  <div className="flex flex-1 items-center justify-center gap-5 sm:justify-start">
+                    <div className="flex flex-col items-center gap-1.5">
+                      <span className="text-5xl leading-none">🇲🇽</span>
+                      <span className="text-xs font-bold text-white/60">México</span>
+                    </div>
+                    <div className="text-center">
+                      {mexLive ? (
+                        <p className="text-4xl font-bold tabular-nums text-white">
+                          {game.home.score}<span className="mx-1 text-white/30">–</span>{game.away.score}
+                        </p>
+                      ) : (
+                        <>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-1">Próximo partido</p>
+                          <p className="text-lg font-bold text-white/50">vs</p>
+                          <p className="text-[11px] text-white/30 mt-1">
+                            {new Date(game.date).toLocaleDateString('es-MX', { timeZone: userTz, weekday: 'long', day: 'numeric', month: 'long' })}
+                          </p>
+                          <p className="text-sm font-bold text-white">{fmtTime(game.date, userTz)}</p>
+                        </>
+                      )}
+                    </div>
+                    <div className="flex flex-col items-center gap-1.5">
+                      <span className="text-5xl leading-none">{flag(rival.abbreviation)}</span>
+                      <span className="text-xs font-bold text-white/60">{teamNameEs(rival.name)}</span>
+                    </div>
+                  </div>
+
+                  {/* Countdown */}
+                  {!mexLive && countdown.total > 0 && (
+                    <div className="flex items-end gap-2 sm:gap-3">
+                      {([['Días', countdown.days], ['Horas', countdown.hours], ['Min', countdown.mins], ['Seg', countdown.secs]] as const).map(([label, val], i) => (
+                        <div key={label} className="flex items-end gap-2 sm:gap-3">
+                          {i > 0 && <span className="mb-2 text-xl font-bold text-white/20 leading-none">:</span>}
+                          <div className="flex flex-col items-center">
+                            <span className="block text-4xl font-bold tabular-nums text-white sm:text-5xl leading-none">
+                              {String(val).padStart(2, '0')}
+                            </span>
+                            <span className="text-[9px] uppercase tracking-widest text-white/30 mt-1">{label}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Past Mexico results — inline pills */}
+                {mexFixtures.filter((f) => f.status.state === 'post').length > 0 && (
+                  <div className="mt-4 overflow-x-auto -mx-4 px-4">
+                    <div className="flex gap-2 min-w-max">
+                      {mexFixtures
+                        .filter((f) => f.status.state === 'post')
+                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                        .slice(0, 5)
+                        .map((f) => {
+                          const mH  = f.home.abbreviation === 'MEX';
+                          const mS  = mH ? Number(f.home.score) : Number(f.away.score);
+                          const rS  = mH ? Number(f.away.score) : Number(f.home.score);
+                          const rAb = mH ? f.away.abbreviation : f.home.abbreviation;
+                          const won = mS > rS; const drew = mS === rS;
+                          return (
+                            <span key={f.id} className={['flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold',
+                              won  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+                                   : drew ? 'border-white/10 bg-white/5 text-white/50'
+                                   : 'border-red-500/30 bg-red-500/10 text-red-400'].join(' ')}>
+                              <span className="font-bold">{won ? 'G' : drew ? 'E' : 'P'}</span>
+                              🇲🇽 {mS}–{rS} {flag(rAb)}
+                            </span>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
+
+          {/* ── Divider ───────────────────────────────────────────────────────── */}
+          <div className="my-5 h-px bg-white/[0.06]" />
+
+          {/* ── All-games scoreboard ──────────────────────────────────────────── */}
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               {jumboMode === 'live' && (
                 <span className="flex items-center gap-1.5">
@@ -251,99 +350,27 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
                   <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-red-400">En vivo</span>
                 </span>
               )}
-              {jumboMode === 'today' && (
-                <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40">Partidos de hoy</span>
-              )}
-              {jumboMode === 'upcoming' && (
-                <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40">Próximos partidos</span>
-              )}
+              {jumboMode === 'today' && <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40">Partidos de hoy</span>}
+              {jumboMode === 'upcoming' && <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40">Próximos partidos</span>}
             </div>
             <div className="flex items-center gap-3">
               <span className="text-[10px] text-white/25">
                 {lastUpdated.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: userTz })} {tzLabel(userTz)}
               </span>
-              <button
-                onClick={() => refresh(false)}
-                disabled={refreshing}
-                className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-white/30 transition hover:text-white/60 disabled:opacity-40"
-              >
+              <button onClick={() => refresh(false)} disabled={refreshing}
+                className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-white/30 transition hover:text-white/60 disabled:opacity-40">
                 <RefreshIcon spinning={refreshing} />
                 {refreshing ? 'Actualizando…' : 'Actualizar'}
               </button>
             </div>
           </div>
 
-          {/* Scoreboard cards — horizontal scroll */}
           {jumboFixtures.length === 0 ? (
-            <div className="py-6 text-center text-xs text-white/20">Sin partidos programados</div>
+            <div className="py-4 text-center text-xs text-white/20">Sin partidos programados</div>
           ) : (
             <div className="overflow-x-auto pb-1 -mx-4 px-4">
               <div className="flex gap-3 min-w-max">
-                {jumboFixtures.map((f) => (
-                  <JumboCard key={f.id} fixture={f} tz={userTz} />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ── Mexico countdown strip ─────────────────────────────────────────── */}
-          {(mexLive || mexNext) && (
-            <div className="mt-4 rounded-2xl border border-[#1a7a78]/40 bg-[#080d12]/60 backdrop-blur px-5 py-4">
-              <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
-
-                {/* Match info */}
-                <div className="flex items-center gap-3">
-                  {mexLive ? (
-                    <span className="flex items-center gap-1.5 rounded-full border border-red-500/40 bg-red-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-red-400">
-                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" /> En vivo
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#1a7a78]/80">🇲🇽 Próximo partido</span>
-                  )}
-                </div>
-
-                {(() => {
-                  const game = mexLive ?? mexNext!;
-                  const mexHome = game.home.abbreviation === 'MEX';
-                  const rival   = mexHome ? game.away : game.home;
-                  const rivalFlag = flag(rival.abbreviation);
-                  return (
-                    <div className="flex items-center gap-4 text-white">
-                      <span className="text-2xl">🇲🇽</span>
-                      <div className="text-center">
-                        <p className="text-sm font-bold">
-                          México vs {teamNameEs(rival.name)}
-                        </p>
-                        {mexLive ? (
-                          <p className="text-xs font-bold text-red-400 tabular-nums">
-                            {game.home.score} – {game.away.score}
-                            <span className="ml-2 text-white/30">{game.status.shortDetail}</span>
-                          </p>
-                        ) : (
-                          <p className="text-[11px] text-white/40">
-                            {new Date(game.date).toLocaleDateString('es-MX', { timeZone: userTz, weekday: 'long', day: 'numeric', month: 'long' })}
-                            {' · '}{fmtTime(game.date, userTz)}
-                          </p>
-                        )}
-                      </div>
-                      <span className="text-2xl">{rivalFlag}</span>
-                    </div>
-                  );
-                })()}
-
-                {/* Countdown blocks */}
-                {!mexLive && countdown.total > 0 && (
-                  <div className="flex items-center gap-3">
-                    {([['Días', countdown.days], ['Hrs', countdown.hours], ['Min', countdown.mins], ['Seg', countdown.secs]] as const).map(([label, val]) => (
-                      <div key={label} className="flex flex-col items-center">
-                        <span className="text-2xl font-bold tabular-nums text-white sm:text-3xl">
-                          {String(val).padStart(2, '0')}
-                        </span>
-                        <span className="text-[9px] uppercase tracking-widest text-white/30">{label}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                {jumboFixtures.map((f) => <JumboCard key={f.id} fixture={f} tz={userTz} />)}
               </div>
             </div>
           )}
