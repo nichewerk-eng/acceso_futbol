@@ -54,7 +54,7 @@ async function fetchFixtures(): Promise<LigaMXFixture[]> {
     if (!res.ok) return [];
     const raw = await res.json();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (raw.events ?? []).map((event: any) => {
+    const mapped = (raw.events ?? []).map((event: any) => {
       const comp = event.competitions?.[0];
       const competitors = comp?.competitors ?? [];
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -70,6 +70,9 @@ async function fetchFixtures(): Promise<LigaMXFixture[]> {
         away: { name: away?.team?.displayName ?? '', abbreviation: away?.team?.abbreviation ?? '', score: away?.score ?? null },
       };
     });
+    // If ESPN returned events but none have jornada info, treat as no useful data
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return mapped.some((f: any) => f.jornada !== null) ? mapped : [];
   } catch { return []; }
 }
 

@@ -11,7 +11,7 @@ import type { LigaMXFixture } from '@/app/api/ligamx/fixtures/route';
 // Using initials as fallback since Liga MX logos aren't flag emojis
 const TEAM_COLOR: Record<string, string> = {
   AME: '#f5b800', ATL: '#e00000', ALT: '#00539b', CAZ: '#003da5',
-  JUA: '#c8102e', GDL: '#c8102e', LEO: '##8b0000', MTY: '#003087',
+  JUA: '#c8102e', GDL: '#c8102e', LEO: '#8b0000',  MTY: '#003087',
   NEC: '#cc0000', PAC: '#000000', PUE: '#004a97', PUM: '#003087',
   QRO: '#004a97', SAN: '#007f3f', SLP: '#003087', TIG: '#fdbe01',
   TIJ: '#000000', TOL: '#cc0000',
@@ -52,9 +52,26 @@ interface Props {
   initialFixtures: LigaMXFixture[];
 }
 
+/** ESPN sometimes returns events without week numbers (off-season/wrong season data). */
+function hasJornadaData(list: LigaMXFixture[]) {
+  return list.some((f) => f.jornada !== null);
+}
+
+/** Merge ESPN live data over matching static fixtures; fall back to static when ESPN has no jornada info. */
+function mergeFixtures(espn: LigaMXFixture[]): LigaMXFixture[] {
+  if (!hasJornadaData(espn)) return APERTURA_2026_FIXTURES;
+  // Start with static schedule; replace any match ESPN has live/result data for
+  const espnById = new Map(espn.map((f) => [f.id, f]));
+  return APERTURA_2026_FIXTURES.map((s) => espnById.get(s.id) ?? s).concat(
+    espn.filter((f) => !APERTURA_2026_FIXTURES.find((s) => s.id === f.id)),
+  );
+}
+
 export default function LigaMXView({ initialTable, initialFixtures }: Props) {
-  // Merge server-fetched fixtures with static schedule as fallback
-  const baseFixtures = initialFixtures.length > 0 ? initialFixtures : APERTURA_2026_FIXTURES;
+  // Use static schedule as base; overlay ESPN fixtures when they have valid jornada data
+  const baseFixtures = hasJornadaData(initialFixtures)
+    ? mergeFixtures(initialFixtures)
+    : APERTURA_2026_FIXTURES;
 
   const [table, setTable]       = useState<LigaMXTable | null>(initialTable);
   const [fixtures, setFixtures] = useState<LigaMXFixture[]>(baseFixtures);
@@ -75,7 +92,7 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
     try {
       const [sr, fr] = await Promise.all([fetch('/api/ligamx/standings'), fetch('/api/ligamx/fixtures')]);
       if (sr.ok) { const d = await sr.json(); setTable(d); }
-      if (fr.ok) { const d = await fr.json(); const f = d.fixtures ?? []; setFixtures(f.length > 0 ? f : APERTURA_2026_FIXTURES); }
+      if (fr.ok) { const d = await fr.json(); setFixtures(mergeFixtures(d.fixtures ?? [])); }
       setLastUpdated(new Date());
     } finally { if (!silent) setRefreshing(false); }
   }, []);
