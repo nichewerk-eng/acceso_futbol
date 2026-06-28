@@ -679,9 +679,6 @@ export default function BracketView({ groups, userTz, fixtures = [] }: Props) {
         <LegendBadge cls="bg-white/5 dark:bg-white/5 bg-gray-100 text-gray-400 dark:text-white/25" label="Sin definir — jornada no iniciada" />
       </div>
 
-      {/* ── Best thirds live leaderboard ── */}
-      <BestThirdsTable groups={groups} />
-
       {/* ── Matches grouped by date ── */}
       {Object.entries(byDate).map(([date, matches]) => (
         <div key={date} className="mb-8">
@@ -820,6 +817,11 @@ export default function BracketView({ groups, userTz, fixtures = [] }: Props) {
       <p className="mt-4 text-center text-[10px] text-gray-400 dark:text-white/20">
         Proyecciones basadas en la tabla actual · Se actualiza cada 30 segundos
       </p>
+
+      {/* ── Best thirds live leaderboard ── */}
+      <div className="mt-8">
+        <BestThirdsTable groups={groups} />
+      </div>
     </div>
   );
 }
