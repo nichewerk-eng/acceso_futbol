@@ -48,6 +48,26 @@ function isToday(iso: string, tz: string) {
   return d === n;
 }
 
+// ── Mexico countdown hook ───────────────────────────────────────────────────────
+function useCountdown(targetDate: string | null) {
+  const [diff, setDiff] = useState(0);
+  useEffect(() => {
+    if (!targetDate) return;
+    const tick = () => setDiff(Math.max(0, new Date(targetDate).getTime() - Date.now()));
+    tick();
+    const id = setInterval(tick, 1_000);
+    return () => clearInterval(id);
+  }, [targetDate]);
+  const s = Math.floor(diff / 1000);
+  return {
+    days:  Math.floor(s / 86400),
+    hours: Math.floor((s % 86400) / 3600),
+    mins:  Math.floor((s % 3600) / 60),
+    secs:  s % 60,
+    total: diff,
+  };
+}
+
 // ── Types ───────────────────────────────────────────────────────────────────────
 interface Props { initialGroups: Group[]; initialFixtures: Fixture[]; }
 const GROUP_LETTERS = ['A','B','C','D','E','F','G','H','I','J','K','L'];
@@ -116,6 +136,13 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
     : allUpcoming.slice(0, 8);
   const jumboMode: 'live' | 'today' | 'upcoming' =
     allLive.length > 0 ? 'live' : allToday.length > 0 ? 'today' : 'upcoming';
+
+  // ── Mexico next match countdown ───────────────────────────────────────────────
+  const mexFixtures = fixtures.filter((f) => f.home.abbreviation === 'MEX' || f.away.abbreviation === 'MEX');
+  const mexLive   = mexFixtures.find((f) => f.status.state === 'in');
+  const mexNext   = mexFixtures.filter((f) => f.status.state === 'pre')
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+  const countdown = useCountdown(mexNext?.date ?? null);
 
   // ── Download / share handlers ────────────────────────────────────────────────
   async function handleShare() {
@@ -255,6 +282,68 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
                 {jumboFixtures.map((f) => (
                   <JumboCard key={f.id} fixture={f} tz={userTz} />
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Mexico countdown strip ─────────────────────────────────────────── */}
+          {(mexLive || mexNext) && (
+            <div className="mt-4 rounded-2xl border border-[#1a7a78]/40 bg-[#080d12]/60 backdrop-blur px-5 py-4">
+              <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
+
+                {/* Match info */}
+                <div className="flex items-center gap-3">
+                  {mexLive ? (
+                    <span className="flex items-center gap-1.5 rounded-full border border-red-500/40 bg-red-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-red-400">
+                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" /> En vivo
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#1a7a78]/80">🇲🇽 Próximo partido</span>
+                  )}
+                </div>
+
+                {(() => {
+                  const game = mexLive ?? mexNext!;
+                  const mexHome = game.home.abbreviation === 'MEX';
+                  const rival   = mexHome ? game.away : game.home;
+                  const rivalFlag = flag(rival.abbreviation);
+                  return (
+                    <div className="flex items-center gap-4 text-white">
+                      <span className="text-2xl">🇲🇽</span>
+                      <div className="text-center">
+                        <p className="text-sm font-bold">
+                          México vs {teamNameEs(rival.name)}
+                        </p>
+                        {mexLive ? (
+                          <p className="text-xs font-bold text-red-400 tabular-nums">
+                            {game.home.score} – {game.away.score}
+                            <span className="ml-2 text-white/30">{game.status.shortDetail}</span>
+                          </p>
+                        ) : (
+                          <p className="text-[11px] text-white/40">
+                            {new Date(game.date).toLocaleDateString('es-MX', { timeZone: userTz, weekday: 'long', day: 'numeric', month: 'long' })}
+                            {' · '}{fmtTime(game.date, userTz)}
+                          </p>
+                        )}
+                      </div>
+                      <span className="text-2xl">{rivalFlag}</span>
+                    </div>
+                  );
+                })()}
+
+                {/* Countdown blocks */}
+                {!mexLive && countdown.total > 0 && (
+                  <div className="flex items-center gap-3">
+                    {([['Días', countdown.days], ['Hrs', countdown.hours], ['Min', countdown.mins], ['Seg', countdown.secs]] as const).map(([label, val]) => (
+                      <div key={label} className="flex flex-col items-center">
+                        <span className="text-2xl font-bold tabular-nums text-white sm:text-3xl">
+                          {String(val).padStart(2, '0')}
+                        </span>
+                        <span className="text-[9px] uppercase tracking-widest text-white/30">{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
