@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { espnFetch, scoreboardUrl, SLUG } from '@/lib/espn';
 import { getCache, setCache } from '@/lib/apiCache';
+import { APERTURA_2026_FIXTURES } from '@/fixtures/ligamx-apertura-2026';
 
 // Apertura 2026: July → December 2026
 const DATE_RANGE = '20260701-20261231';
@@ -13,13 +14,17 @@ export async function GET() {
 
   try {
     const raw = await espnFetch(scoreboardUrl(SLUG.LIGA_MX, DATE_RANGE)) as { events?: EventRaw[] };
-    const fixtures = parseFixtures(raw);
+    const espnFixtures = parseFixtures(raw);
+
+    // If ESPN returns no data yet (season hasn't started), serve static schedule
+    const fixtures = espnFixtures.length > 0 ? espnFixtures : APERTURA_2026_FIXTURES;
     setCache(CACHE_KEY, fixtures);
     return NextResponse.json({ fixtures }, { headers: ccHeaders });
   } catch {
     const stale = getCache<ReturnType<typeof parseFixtures>>(CACHE_KEY, Infinity);
     if (stale) return NextResponse.json({ fixtures: stale, stale: true });
-    return NextResponse.json({ error: 'upstream_error' }, { status: 502 });
+    // Always fall back to static schedule rather than returning an error
+    return NextResponse.json({ fixtures: APERTURA_2026_FIXTURES }, { headers: ccHeaders });
   }
 }
 

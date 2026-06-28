@@ -3,16 +3,38 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { teamNameEs } from '@/components/standings/teamNames';
+import { APERTURA_2026_FIXTURES, getCurrentJornada } from '@/fixtures/ligamx-apertura-2026';
 import type { LigaMXTable, LigaMXEntry } from '@/app/api/ligamx/standings/route';
 import type { LigaMXFixture } from '@/app/api/ligamx/fixtures/route';
 
-// ── Liga MX flag map (abbreviations ESPN returns) ─────────────────────────────
-const FLAG: Record<string, string> = {
-  AME: '🦅', CHI: '🐘', GDL: '🏹', MTY: '⚡', TIG: '🐯', LDU: '🐢',
-  PUM: '🐾', SAN: '⚓', ATL: '🦁', PAC: '🦈', TIJ: '🦁', QRO: '🔱',
-  LEO: '🦁', TOL: '🐸', NEC: '🤖', JUA: '⚽', MAZ: '⚽', SLP: '⚽',
+// ── Liga MX team colors/icons by abbreviation ────────────────────────────────
+// Using initials as fallback since Liga MX logos aren't flag emojis
+const TEAM_COLOR: Record<string, string> = {
+  AME: '#f5b800', ATL: '#e00000', ALT: '#00539b', CAZ: '#003da5',
+  JUA: '#c8102e', GDL: '#c8102e', LEO: '##8b0000', MTY: '#003087',
+  NEC: '#cc0000', PAC: '#000000', PUE: '#004a97', PUM: '#003087',
+  QRO: '#004a97', SAN: '#007f3f', SLP: '#003087', TIG: '#fdbe01',
+  TIJ: '#000000', TOL: '#cc0000',
 };
-const teamFlag = (abbr: string) => FLAG[abbr] ?? '⚽';
+const teamInitial = (abbr: string) => abbr.slice(0, 3);
+const teamFlag = (abbr: string) => {
+  const color = TEAM_COLOR[abbr] ?? '#555';
+  return `<span style="background:${color};color:#fff;font-size:10px;font-weight:800;padding:1px 4px;border-radius:3px;">${teamInitial(abbr)}</span>`;
+};
+
+// Simple text badge component
+function TeamBadge({ abbr }: { abbr: string }) {
+  const color = TEAM_COLOR[abbr] ?? '#555';
+  return (
+    <span
+      style={{ background: color, color: '#fff', fontSize: 9, fontWeight: 800, padding: '1px 5px', borderRadius: 3, letterSpacing: '0.05em', flexShrink: 0 }}
+    >
+      {abbr}
+    </span>
+  );
+}
+
+void teamFlag; // exported for potential use
 
 // Liguilla zones
 const LIGUILLA_SPOTS  = 8;
@@ -31,12 +53,16 @@ interface Props {
 }
 
 export default function LigaMXView({ initialTable, initialFixtures }: Props) {
+  // Merge server-fetched fixtures with static schedule as fallback
+  const baseFixtures = initialFixtures.length > 0 ? initialFixtures : APERTURA_2026_FIXTURES;
+
   const [table, setTable]       = useState<LigaMXTable | null>(initialTable);
-  const [fixtures, setFixtures] = useState<LigaMXFixture[]>(initialFixtures);
+  const [fixtures, setFixtures] = useState<LigaMXFixture[]>(baseFixtures);
   const [tab, setTab]           = useState<'tabla' | 'jornada' | 'liguilla'>('tabla');
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [userTz, setUserTz]     = useState('America/Mexico_City');
+  const [selectedJornada, setSelectedJornada] = useState<number>(() => getCurrentJornada(baseFixtures));
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -49,7 +75,7 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
     try {
       const [sr, fr] = await Promise.all([fetch('/api/ligamx/standings'), fetch('/api/ligamx/fixtures')]);
       if (sr.ok) { const d = await sr.json(); setTable(d); }
-      if (fr.ok) { const d = await fr.json(); setFixtures(d.fixtures ?? []); }
+      if (fr.ok) { const d = await fr.json(); const f = d.fixtures ?? []; setFixtures(f.length > 0 ? f : APERTURA_2026_FIXTURES); }
       setLastUpdated(new Date());
     } finally { if (!silent) setRefreshing(false); }
   }, []);
@@ -65,6 +91,15 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
     const n = new Date().toLocaleDateString('es-MX', { timeZone: userTz });
     return d === n && f.status.state !== 'in';
   });
+
+  // All 17 jornadas available for navigation
+  const allJornadas = Array.from({ length: 17 }, (_, i) => i + 1);
+  const jornadaFixtures = fixtures.filter((f) => f.jornada === `Jornada ${selectedJornada}`)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const jornadaPast     = jornadaFixtures.filter((f) => f.status.state === 'post');
+  const jornadaLive     = jornadaFixtures.filter((f) => f.status.state === 'in');
+  const jornadaUpcoming = jornadaFixtures.filter((f) => f.status.state === 'pre');
+
   const upcomingFixtures = fixtures.filter((f) => f.status.state === 'pre')
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 10);
@@ -106,9 +141,9 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
                 <Link key={f.id} href={`/partido/liga-mx/${f.id}`}
                   className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500/20">
                   <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
-                  {teamFlag(f.home.abbreviation)} {f.home.abbreviation}
+                  <TeamBadge abbr={f.home.abbreviation} /> {f.home.abbreviation}
                   <span className="font-bold tabular-nums text-red-400">{f.home.score ?? 0}–{f.away.score ?? 0}</span>
-                  {f.away.abbreviation} {teamFlag(f.away.abbreviation)}
+                  {f.away.abbreviation} <TeamBadge abbr={f.away.abbreviation} />
                   <span className="text-[10px] text-red-400/70">{f.status.shortDetail}</span>
                 </Link>
               ))}
@@ -166,25 +201,77 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
 
         {/* ── CALENDARIO ── */}
         {tab === 'jornada' && (
-          <div className="grid gap-6 sm:grid-cols-2">
-            <section>
-              <SectionTitle label="Partidos de hoy" />
-              {todayFixtures.length === 0
-                ? <EmptyState text="Sin partidos hoy" />
-                : <div className="flex flex-col gap-2">{todayFixtures.map((f) => <FixtureCard key={f.id} fixture={f} tz={userTz} />)}</div>}
-            </section>
-            <section>
-              <SectionTitle label="Próximos partidos" />
-              {upcomingFixtures.length === 0
-                ? <EmptyState text="Sin próximos partidos" />
-                : <div className="flex flex-col gap-2">{upcomingFixtures.map((f) => <FixtureCard key={f.id} fixture={f} tz={userTz} />)}</div>}
-            </section>
-            <section className="sm:col-span-2">
-              <SectionTitle label="Resultados recientes" />
-              {pastFixtures.length === 0
-                ? <EmptyState text="Sin resultados" />
-                : <div className="grid gap-2 sm:grid-cols-2">{pastFixtures.map((f) => <FixtureCard key={f.id} fixture={f} tz={userTz} />)}</div>}
-            </section>
+          <div className="space-y-5">
+            {/* Jornada scroller */}
+            <div className="overflow-x-auto -mx-4 px-4">
+              <div className="flex gap-1.5 min-w-max">
+                {allJornadas.map((j) => {
+                  const jFixtures = fixtures.filter((f) => f.jornada === `Jornada ${j}`);
+                  const hasLive   = jFixtures.some((f) => f.status.state === 'in');
+                  const hasPast   = jFixtures.some((f) => f.status.state === 'post');
+                  const isActive  = j === selectedJornada;
+                  return (
+                    <button key={j} onClick={() => setSelectedJornada(j)}
+                      className={['relative rounded-xl px-3 py-2 text-xs font-bold transition-all',
+                        isActive ? 'bg-brand-orange text-white shadow-lg'
+                          : hasLive ? 'bg-red-500/10 text-red-500 border border-red-500/30'
+                          : hasPast ? 'bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-white/50'
+                          : 'text-gray-400 dark:text-white/40 hover:bg-gray-100 dark:hover:bg-white/[0.06]'].join(' ')}>
+                      {isActive && <span className="absolute inset-0 rounded-xl opacity-30 blur-md" style={{ background: '#f07820' }} />}
+                      <span className="relative">J{j}</span>
+                      {hasLive && !isActive && <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Jornada header */}
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-gray-900 dark:text-white">Jornada {selectedJornada}</h3>
+              {jornadaFixtures[0]?.date && (
+                <span className="text-xs text-gray-400 dark:text-white/30">
+                  {fmtDate(jornadaFixtures[0].date, userTz)} – {jornadaFixtures[jornadaFixtures.length - 1]?.date ? fmtDate(jornadaFixtures[jornadaFixtures.length - 1].date, userTz) : ''}
+                </span>
+              )}
+            </div>
+
+            {/* Live games */}
+            {jornadaLive.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-red-500">En vivo</span>
+                </div>
+                {jornadaLive.map((f) => <FixtureCard key={f.id} fixture={f} tz={userTz} />)}
+              </div>
+            )}
+
+            {/* Today's games */}
+            {todayFixtures.filter((f) => f.jornada === `Jornada ${selectedJornada}`).length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-white/40">Hoy</p>
+                {todayFixtures.filter((f) => f.jornada === `Jornada ${selectedJornada}`).map((f) => <FixtureCard key={f.id} fixture={f} tz={userTz} />)}
+              </div>
+            )}
+
+            {/* Upcoming */}
+            {jornadaUpcoming.length > 0 && (
+              <div className="space-y-2">
+                {jornadaUpcoming.length > 0 && <p className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-white/40">Próximos</p>}
+                {jornadaUpcoming.map((f) => <FixtureCard key={f.id} fixture={f} tz={userTz} />)}
+              </div>
+            )}
+
+            {/* Results */}
+            {jornadaPast.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-white/40">Resultados</p>
+                {jornadaPast.map((f) => <FixtureCard key={f.id} fixture={f} tz={userTz} />)}
+              </div>
+            )}
+
+            {jornadaFixtures.length === 0 && <EmptyState text={`No hay partidos registrados para Jornada ${selectedJornada}`} />}
           </div>
         )}
 
@@ -220,7 +307,7 @@ function StandingsRow({ entry, idx, total }: { entry: LigaMXEntry; idx: number; 
         </span>
       </div>
       <div className="flex items-center gap-2 min-w-0">
-        <span className="text-base leading-none shrink-0">{teamFlag(entry.team.abbreviation)}</span>
+        <TeamBadge abbr={entry.team.abbreviation} />
         <span className="truncate text-xs sm:text-sm font-semibold text-gray-800 dark:text-white/85">
           {teamNameEs(entry.team.name)}
         </span>
@@ -273,7 +360,7 @@ function LliguillaTracker({ entries }: { entries: LigaMXEntry[] }) {
               className={['px-5 py-3', idx < entries.length - 1 ? 'border-b border-gray-100 dark:border-white/[0.04]' : ''].join(' ')}>
               <div className="flex items-center gap-3 mb-1.5">
                 <span className="w-4 text-xs text-gray-400 dark:text-white/30 text-right shrink-0">{entry.position}</span>
-                <span className="text-sm shrink-0">{teamFlag(entry.team.abbreviation)}</span>
+                <TeamBadge abbr={entry.team.abbreviation} />
                 <span className="text-sm font-semibold min-w-0 truncate">{teamNameEs(entry.team.name)}</span>
                 <span className="ml-auto text-sm font-bold shrink-0">{entry.pts} pts</span>
                 {inL && <span className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase bg-brand-teal/15 text-brand-teal">Liguilla</span>}
@@ -326,7 +413,7 @@ function FixtureCard({ fixture: f, tz }: { fixture: LigaMXFixture; tz: string })
       </div>
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 flex-1 items-center gap-1.5">
-          <span className="text-base">{teamFlag(f.home.abbreviation)}</span>
+          <TeamBadge abbr={f.home.abbreviation} />
           <span className={['truncate text-sm font-semibold', homeWin ? 'text-gray-900 dark:text-white' : isDone ? 'text-gray-400 dark:text-white/50' : 'text-gray-600 dark:text-white/70'].join(' ')}>
             {teamNameEs(f.home.name)}
           </span>
@@ -335,7 +422,7 @@ function FixtureCard({ fixture: f, tz }: { fixture: LigaMXFixture; tz: string })
           ? <span className="shrink-0 text-lg font-bold tracking-wider text-brand-orange tabular-nums">{f.home.score}–{f.away.score}</span>
           : <span className="shrink-0 text-sm font-bold text-gray-300 dark:text-white/20">vs</span>}
         <div className="flex min-w-0 flex-1 flex-row-reverse items-center gap-1.5">
-          <span className="text-base">{teamFlag(f.away.abbreviation)}</span>
+          <TeamBadge abbr={f.away.abbreviation} />
           <span className={['truncate text-right text-sm font-semibold', awayWin ? 'text-gray-900 dark:text-white' : isDone ? 'text-gray-400 dark:text-white/50' : 'text-gray-600 dark:text-white/70'].join(' ')}>
             {teamNameEs(f.away.name)}
           </span>

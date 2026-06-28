@@ -181,6 +181,37 @@ export const TEAM_NAME_ES: Record<string, string> = {
   // ── Uzbekistan / Uzbekistán ───────────────────────────────────────────────
   'Uzbekistan':                       'Uzbekistán',
 
+  // ── Liga MX clubs ─────────────────────────────────────────────────────────
+  'Club América':                     'Club América',
+  'Atlas':                            'Atlas',
+  'Atlante':                          'Atlante',
+  'Cruz Azul':                        'Cruz Azul',
+  'FC Juárez':                        'FC Juárez',
+  'Juarez':                           'FC Juárez',
+  'FC Juarez':                        'FC Juárez',
+  'Guadalajara':                      'Chivas',
+  'Chivas':                           'Chivas',
+  'Club Guadalajara':                 'Chivas',
+  'León':                             'León',
+  'Leon':                             'León',
+  'Monterrey':                        'Monterrey',
+  'Necaxa':                           'Necaxa',
+  'Pachuca':                          'Pachuca',
+  'Puebla':                           'Puebla',
+  'Pumas UNAM':                       'Pumas UNAM',
+  'Pumas':                            'Pumas UNAM',
+  'Querétaro':                        'Querétaro',
+  'Queretaro':                        'Querétaro',
+  'Santos Laguna':                    'Santos Laguna',
+  'San Luis':                         'San Luis',
+  'Atlético de San Luis':             'San Luis',
+  'Atletico de San Luis':             'San Luis',
+  'Tigres UANL':                      'Tigres',
+  'Tigres':                           'Tigres',
+  'Club Tijuana':                     'Tijuana',
+  'Tijuana':                          'Tijuana',
+  'Toluca':                           'Toluca',
+
 };
 
 /** Returns the Spanish name for a team, or the original name if no override exists. */
