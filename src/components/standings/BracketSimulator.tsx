@@ -333,7 +333,10 @@ export default function BracketSimulator({ fixtures = [] }: { fixtures?: Fixture
       // Skip if still 0-0 (data not yet populated)
       if (homeScore === 0 && awayScore === 0) return;
       const key = `0-${idx}`;
-      newPicks[key] = homeScore >= awayScore ? 'home' : 'away';
+      // Use ESPN's winner flag — correctly reflects penalty shootout results
+      // Fall back to score comparison only if winner flags are absent
+      const homeWins = fixture.home.winner || (!fixture.away.winner && homeScore > awayScore);
+      newPicks[key] = homeWins ? 'home' : 'away';
       newLocked.add(key);
       newScores[key] = { home: String(homeScore), away: String(awayScore) };
     });

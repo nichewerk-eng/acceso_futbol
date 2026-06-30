@@ -33,6 +33,7 @@ export interface FixtureTeam {
   name: string;
   abbreviation: string;
   score: string | null;
+  winner: boolean; // true for the team that actually won (incl. via penalties)
 }
 
 export interface Fixture {

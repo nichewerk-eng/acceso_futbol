@@ -47,12 +47,12 @@ function parseFixtures(raw: { events?: EventRaw[] }) {
       },
       venue: comp?.venue?.fullName ?? null,
       city:  comp?.venue?.address?.city ?? null,
-      home: { name: home?.team?.displayName ?? '', abbreviation: home?.team?.abbreviation ?? '', score: home?.score ?? null },
-      away: { name: away?.team?.displayName ?? '', abbreviation: away?.team?.abbreviation ?? '', score: away?.score ?? null },
+      home: { name: home?.team?.displayName ?? '', abbreviation: home?.team?.abbreviation ?? '', score: home?.score ?? null, winner: home?.winner ?? false },
+      away: { name: away?.team?.displayName ?? '', abbreviation: away?.team?.abbreviation ?? '', score: away?.score ?? null, winner: away?.winner ?? false },
     };
   });
 }
 
-interface CompetitorRaw { homeAway: 'home' | 'away'; team: { displayName: string; abbreviation: string }; score?: string }
+interface CompetitorRaw { homeAway: 'home' | 'away'; team: { displayName: string; abbreviation: string }; score?: string; winner?: boolean }
 interface CompetitionRaw { competitors: CompetitorRaw[]; venue?: { fullName: string; address?: { city?: string } } }
 interface EventRaw { id: string; date: string; status?: { displayClock?: string; type?: { completed?: boolean; state?: string; description?: string; shortDetail?: string } }; competitions?: CompetitionRaw[] }
