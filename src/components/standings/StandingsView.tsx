@@ -386,26 +386,33 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
                       <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
                       <span className="text-xs font-bold tracking-[0.2em] uppercase text-red-500 dark:text-red-400">En vivo ahora</span>
                     </div>
-                    <div className="flex flex-col gap-3">
+                    <div className="grid gap-3 sm:grid-cols-2">
                       {liveFixtures.map((f) => <LiveFixtureCard key={f.id} fixture={f} tz={userTz} />)}
                     </div>
                   </div>
                 )}
 
                 {/* Fixtures grid */}
-                <div className="grid gap-6 sm:grid-cols-2">
-                  <section>
-                    <SectionTitle label="Resultados" />
-                    {pastFixtures.length === 0
-                      ? <EmptyState text="Sin partidos disputados aún" />
-                      : <div className="flex flex-col gap-2">{pastFixtures.map((f) => <ResultCard key={f.id} fixture={f} tz={userTz} />)}</div>}
-                  </section>
-                  <section>
-                    <SectionTitle label="Próximos partidos" />
-                    {upcomingFixtures.length === 0
-                      ? <EmptyState text="No hay más partidos programados" />
-                      : <div className="flex flex-col gap-2">{upcomingFixtures.map((f) => <UpcomingCard key={f.id} fixture={f} tz={userTz} />)}</div>}
-                  </section>
+                <div className="flex flex-col gap-6">
+                  {pastFixtures.length > 0 && (
+                    <section>
+                      <SectionTitle label="Resultados" />
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {pastFixtures.map((f) => <ResultCard key={f.id} fixture={f} tz={userTz} />)}
+                      </div>
+                    </section>
+                  )}
+                  {upcomingFixtures.length > 0 && (
+                    <section>
+                      <SectionTitle label="Próximos partidos" />
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {upcomingFixtures.map((f) => <UpcomingCard key={f.id} fixture={f} tz={userTz} />)}
+                      </div>
+                    </section>
+                  )}
+                  {pastFixtures.length === 0 && upcomingFixtures.length === 0 && (
+                    <EmptyState text="Sin partidos para hoy" />
+                  )}
                 </div>
               </>
             ) : (
