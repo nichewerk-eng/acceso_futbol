@@ -142,7 +142,7 @@ function computeBracket(r32: BMatch[], picks: Picks): RoundData[] {
   return rounds;
 }
 
-interface LockedScore { home: string; away: string }
+interface LockedScore { home: string; away: string; homePen?: string; awayPen?: string }
 
 // ── Match card ───────────────────────────────────────────────────────────────
 function MatchCard({
@@ -172,6 +172,7 @@ function MatchCard({
     const isLoser  = picked && picked !== side;
     const isTbd    = !team;
     const score    = lockedScore ? (side === 'home' ? lockedScore.home : lockedScore.away) : null;
+    const penScore = lockedScore ? (side === 'home' ? lockedScore.homePen : lockedScore.awayPen) : null;
 
     return (
       <button
@@ -213,9 +214,12 @@ function MatchCard({
         </span>
 
         {/* Score (locked) or winner check (user pick) */}
-        {isWinner && locked && score !== null && (
-          <span className="text-[11px] font-bold tabular-nums text-gray-500 dark:text-white/50 shrink-0">
+        {locked && score !== null && (
+          <span className="text-[11px] font-bold tabular-nums text-gray-500 dark:text-white/50 shrink-0 flex items-baseline gap-0.5">
             {score}
+            {penScore && (
+              <span className="text-[9px] font-semibold text-gray-400 dark:text-white/30">({penScore})</span>
+            )}
           </span>
         )}
         {isWinner && !locked && (
@@ -341,7 +345,12 @@ export default function BracketSimulator({ fixtures = [] }: { fixtures?: Fixture
       const homeWins = fixture.home.winner || (!fixture.away.winner && homeScore > awayScore);
       newPicks[key] = homeWins ? 'home' : 'away';
       newLocked.add(key);
-      newScores[key] = { home: String(homeScore), away: String(awayScore) };
+      newScores[key] = {
+        home: String(homeScore),
+        away: String(awayScore),
+        homePen: fixture.home.penaltyScore ?? undefined,
+        awayPen: fixture.away.penaltyScore ?? undefined,
+      };
     });
 
     if (newLocked.size === 0) return;

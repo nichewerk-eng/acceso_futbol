@@ -33,6 +33,7 @@ export interface FixtureTeam {
   name: string;
   abbreviation: string;
   score: string | null;
+  penaltyScore: string | null; // set only for games decided by shootout
   winner: boolean; // true for the team that actually won (incl. via penalties)
 }
 
