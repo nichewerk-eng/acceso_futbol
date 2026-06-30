@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
-import type { Group, TeamEntry, Fixture } from './types';
+import { useState, useMemo, useEffect, Fragment } from 'react';
+import type { Fixture } from './types';
 import { teamNameEs } from './teamNames';
 
 // ── Flag map ────────────────────────────────────────────────────────────────
@@ -15,112 +15,42 @@ const FLAG: Record<string, string> = {
 };
 const flag = (a: string) => FLAG[a] ?? '🏳️';
 
-// ── Annex C (same table as BracketView) ─────────────────────────────────────
-const ANNEX_C_WINNERS = ['A','B','D','E','G','I','K','L'] as const;
-const ANNEX_C_ROWS: readonly string[] = [
- 'EJIFHGLK','HGIDJFLK','EJIDHGLK','EJIDHFLK','EGIDJFLK','EGJDHFLK','EGIDHFLK',
- 'EGJDHFLI','EGJDHFIK','HGICJFLK','EJICHGLK','EJICHFLK','EGICJFLK','EGJCHFLK',
- 'EGICHFLK','EGJCHFLI','EGJCHFIK','HGICJDLK','CJIDHFLK','CGIDJFLK','CGJDHFLK',
- 'CGIDHFLK','CGJDHFLI','CGJDHFIK','EJICHDLK','EGICJDLK','EGJCHDLK','EGICHDLK',
- 'EGJCHDLI','EGJCHDIK','CJEDIFLK','CJEDHFLK','CEIDHFLK','CJEDHFLI','CJEDHFIK',
- 'CGEDJFLK','CGEDIFLK','CGEDJFLI','CGEDJFIK','CGEDHFLK','CGJDHFLE','CGJDHFEK',
- 'CGEDHFLI','CGEDHFIK','CGJDHFEI','HJBFIGLK','EJIBHGLK','EJBFIHLK','EJBFIGLK',
- 'EJBFHGLK','EGBFIHLK','EJBFHGLI','EJBFHGIK','HJBDIGLK','HJBDIFLK','IGBDJFLK',
- 'HGBDJFLK','HGBDIFLK','HGBDJFLI','HGBDJFIK','EJBDIHLK','EJBDIGLK','EJBDHGLK',
- 'EGBDIHLK','EJBDHGLI','EJBDHGIK','EJBDIFLK','EJBDHFLK','EIBDHFLK','EJBDHFLI',
- 'EJBDHFIK','EGBDJFLK','EGBDIFLK','EGBDJFLI','EGBDJFIK','EGBDHFLK','HGBDJFLE',
- 'HGBDJFEK','EGBDHFLI','EGBDHFIK','HGBDJFEI','HJBCIGLK','HJBCIFLK','IGBCJFLK',
- 'HGBCJFLK','HGBCIFLK','HGBCJFLI','HGBCJFIK','EJBCIHLK','EJBCIGLK','EJBCHGLK',
- 'EGBCIHLK','EJBCHGLI','EJBCHGIK','EJBCIFLK','EJBCHFLK','EIBCHFLK','EJBCHFLI',
- 'EJBCHFIK','EGBCJFLK','EGBCIFLK','EGBCJFLI','EGBCJFIK','EGBCHFLK','HGBCJFLE',
- 'HGBCJFEK','EGBCHFLI','EGBCHFIK','HGBCJFEI','HJBCIDLK','IGBCJDLK','HGBCJDLK',
- 'HGBCIDLK','HGBCJDLI','HGBCJDIK','CJBDIFLK','CJBDHFLK','CIBDHFLK','CJBDHFLI',
- 'CJBDHFIK','CGBDJFLK','CGBDIFLK','CGBDJFLI','CGBDJFIK','CGBDHFLK','CGBDHFLJ',
- 'HGBCJFDK','CGBDHFLI','CGBDHFIK','HGBCJFDI','EJBCIDLK','EJBCHDLK','EIBCHDLK',
- 'EJBCHDLI','EJBCHDIK','EGBCJDLK','EGBCIDLK','EGBCJDLI','EGBCJDIK','EGBCHDLK',
- 'HGBCJDLE','HGBCJDEK','EGBCHDLI','EGBCHDIK','HGBCJDEI','CJBDEFLK','CEBDIFLK',
- 'CJBDEFLI','CJBDEFIK','CEBDHFLK','CJBDHFLE','CJBDHFEK','CEBDHFLI','CEBDHFIK',
- 'CJBDHFEI','CGBDEFLK','CGBDJFLE','CGBDJFEK','CGBDEFLI','CGBDEFIK','CGBDJFEI',
- 'CGBDHFLE','CGBDHFEK','HGBCJFDE','CGBDHFEI','HJIFAGLK','EJIAHGLK','EJIFAHLK',
- 'EJIFAGLK','EGJFAHLK','EGIFAHLK','EGJFAHLI','EGJFAHIK','HJIDAGLK','HJIDAFLK',
- 'IGJDAFLK','HGJDAFLK','HGIDAFLK','HGJDAFLI','HGJDAFIK','EJIDAHLK','EJIDAGLK',
- 'EGJDAHLK','EGIDAHLK','EGJDAHLI','EGJDAHIK','EJIDAFLK','HJEDAFLK','HEIDAFLK',
- 'HJEDAFLI','HJEDAFIK','EGJDAFLK','EGIDAFLK','EGJDAFLI','EGJDAFIK','HGEDAFLK',
- 'HGJDAFLE','HGJDAFEK','HGEDAFLI','HGEDAFIK','HGJDAFEI','HJICAGLK','HJICAFLK',
- 'IGJCAFLK','HGJCAFLK','HGICAFLK','HGJCAFLI','HGJCAFIK','EJICAHLK','EJICAGLK',
- 'EGJCAHLK','EGICAHLK','EGJCAHLI','EGJCAHIK','EJICAFLK','HJECAFLK','HEICAFLK',
- 'HJECAFLI','HJECAFIK','EGJCAFLK','EGICAFLK','EGJCAFLI','EGJCAFIK','HGECAFLK',
- 'HGJCAFLE','HGJCAFEK','HGECAFLI','HGECAFIK','HGJCAFEI','HJICADLK','IGJCADLK',
- 'HGJCADLK','HGICADLK','HGJCADLI','HGJCADIK','CJIDAFLK','HJFCADLK','HFICADLK',
- 'HJFCADLI','HJFCADIK','CGJDAFLK','CGIDAFLK','CGJDAFLI','CGJDAFIK','HGFCADLK',
- 'CGJDAFLH','HGJCAFDK','HGFCADLI','HGFCADIK','HGJCAFDI','EJICADLK','HJECADLK',
- 'HEICADLK','HJECADLI','HJECADIK','EGJCADLK','EGICADLK','EGJCADLI','EGJCADIK',
- 'HGECADLK','HGJCADLE','HGJCADEK','HGECADLI','HGECADIK','HGJCADEI','CJEDAFLK',
- 'CEIDAFLK','CJEDAFLI','CJEDAFIK','HEFCADLK','HJFCADLE','HJECAFDK','HEFCADLI',
- 'HEFCADIK','HJECAFDI','CGEDAFLK','CGJDAFLE','CGJDAFEK','CGEDAFLI','CGEDAFIK',
- 'CGJDAFEI','HGFCADLE','HGECAFDK','HGJCAFDE','HGECAFDI','HJBAIGLK','HJBAIFLK',
- 'IJBFAGLK','HJBFAGLK','HGBAIFLK','HJBFAGLI','HJBFAGIK','EJBAIHLK','EJBAIGLK',
- 'EJBAHGLK','EGBAIHLK','EJBAHGLI','EJBAHGIK','EJBAIFLK','EJBFAHLK','EIBFAHLK',
- 'EJBFAHLI','EJBFAHIK','EJBFAGLK','EGBAIFLK','EJBFAGLI','EJBFAGIK','EGBFAHLK',
- 'HJBFAGLE','HJBFAGEK','EGBFAHLI','EGBFAHIK','HJBFAGEI','IJBDAHLK','IJBDAGLK',
- 'HJBDAGLK','IGBDAHLK','HJBDAGLI','HJBDAGIK','IJBDAFLK','HJBDAFLK','HIBDAFLK',
- 'HJBDAFLI','HJBDAFIK','FJBDAGLK','IGBDAFLK','FJBDAGLI','FJBDAGIK','HGBDAFLK',
- 'HGBDAFLJ','HGBDAFJK','HGBDAFLI','HGBDAFIK','HGBDAFIJ','EJBAIDLK','EJBDAHLK',
- 'EIBDAHLK','EJBDAHLI','EJBDAHIK','EJBDAGLK','EGBAIDLK','EJBDAGLI','EJBDAGIK',
- 'EGBDAHLK','HJBDAGLE','HJBDAGEK','EGBDAHLI','EGBDAHIK','HJBDAGEI','EJBDAFLK',
- 'EIBDAFLK','EJBDAFLI','EJBDAFIK','HEBDAFLK','HJBDAFLE','HJBDAFEK','HEBDAFLI',
- 'HEBDAFIK','HJBDAFEI','EGBDAFLK','EGBDAFLJ','EGBDAFJK','EGBDAFLI','EGBDAFIK',
- 'EGBDAFIJ','HGBDAFLE','HGBDAFEK','HGBDAFEJ','HGBDAFEI','IJBCAHLK','IJBCAGLK',
- 'HJBCAGLK','IGBCAHLK','HJBCAGLI','HJBCAGIK','IJBCAFLK','HJBCAFLK','HIBCAFLK',
- 'HJBCAFLI','HJBCAFIK','CJBFAGLK','IGBCAFLK','CJBFAGLI','CJBFAGIK','HGBCAFLK',
- 'HGBCAFLJ','HGBCAFJK','HGBCAFLI','HGBCAFIK','HGBCAFIJ','EJBAICLK','EJBCAHLK',
- 'EIBCAHLK','EJBCAHLI','EJBCAHIK','EJBCAGLK','EGBAICLK','EJBCAGLI','EJBCAGIK',
- 'EGBCAHLK','HJBCAGLE','HJBCAGEK','EGBCAHLI','EGBCAHIK','HJBCAGEI','EJBCAFLK',
- 'EIBCAFLK','EJBCAFLI','EJBCAFIK','HEBCAFLK','HJBCAFLE','HJBCAFEK','HEBCAFLI',
- 'HEBCAFIK','HJBCAFEI','EGBCAFLK','EGBCAFLJ','EGBCAFJK','EGBCAFLI','EGBCAFIK',
- 'EGBCAFIJ','HGBCAFLE','HGBCAFEK','HGBCAFEJ','HGBCAFEI','IJBCADLK','HJBCADLK',
- 'HIBCADLK','HJBCADLI','HJBCADIK','CJBDAGLK','IGBCADLK','CJBDAGLI','CJBDAGIK',
- 'HGBCADLK','HGBCADLJ','HGBCADJK','HGBCADLI','HGBCADIK','HGBCADIJ','CJBDAFLK',
- 'CIBDAFLK','CJBDAFLI','CJBDAFIK','HFBCADLK','CJBDAFLH','HJBCAFDK','HFBCADLI',
- 'HFBCADIK','HJBCAFDI','CGBDAFLK','CGBDAFLJ','CGBDAFJK','CGBDAFLI','CGBDAFIK',
- 'CGBDAFIJ','CGBDAFLH','HGBCAFDK','HGBCAFDJ','HGBCAFDI','EJBCADLK','EIBCADLK',
- 'EJBCADLI','EJBCADIK','HEBCADLK','HJBCADLE','HJBCADEK','HEBCADLI','HEBCADIK',
- 'HJBCADEI','EGBCADLK','EGBCADLJ','EGBCADJK','EGBCADLI','EGBCADIK','EGBCADIJ',
- 'HGBCADLE','HGBCADEK','HGBCADEJ','HGBCADEI','CEBDAFLK','CJBDAFLE','CJBDAFEK',
- 'CEBDAFLI','CEBDAFIK','CJBDAFEI','HFBCADLE','HEBCAFDK','HJBCAFDE','HEBCAFDI',
- 'CGBDAFLE','CGBDAFEK','CGBDAFEJ','CGBDAFEI','HGBCAFDE',
-];
 
-const WINNER_TO_SLOT: Record<string, string> = {
-  A:'T:CEFHI', B:'T:EFGIJ', D:'T:BEFIJ', E:'T:ABCDF',
-  G:'T:AEHIJ', I:'T:CDFGH', K:'T:DEIJL', L:'T:EHIJK',
-};
-const THIRD_SLOTS = ['T:ABCDF','T:CDFGH','T:CEFHI','T:EHIJK','T:AEHIJ','T:BEFIJ','T:EFGIJ','T:DEIJL'] as const;
-
-// ── R32 bracket definition (UTC kickoff times for fixture matching) ───────────
+// ── R32 bracket definition — ESPN bracket positions (event IDs 760486–760501) ─
+// Adjacent pairs (0,1), (2,3), ... feed the same R16 match.
+// LEFT half  → R16 matches 0-3 → feeds left SF → left side of dual bracket
+// RIGHT half → R16 matches 4-7 → feeds right SF → right side of dual bracket
 const R32_DEFS = [
-  { id:'r01', date:'2026-06-28T19:00Z', homeSlot:'A2',  awaySlot:'B2',      label:'16vos · 28 Jun' },
-  { id:'r02', date:'2026-06-29T17:00Z', homeSlot:'C1',  awaySlot:'F2',      label:'16vos · 29 Jun' },
-  { id:'r03', date:'2026-06-29T20:30Z', homeSlot:'E1',  awaySlot:'T:ABCDF', label:'16vos · 29 Jun' },
-  { id:'r04', date:'2026-06-30T01:00Z', homeSlot:'F1',  awaySlot:'C2',      label:'16vos · 29 Jun' },
-  { id:'r05', date:'2026-06-30T17:00Z', homeSlot:'E2',  awaySlot:'I2',      label:'16vos · 30 Jun' },
-  { id:'r06', date:'2026-06-30T21:00Z', homeSlot:'I1',  awaySlot:'T:CDFGH', label:'16vos · 30 Jun' },
-  { id:'r07', date:'2026-07-01T01:00Z', homeSlot:'A1',  awaySlot:'T:CEFHI', label:'16vos · 30 Jun' },
-  { id:'r08', date:'2026-07-01T16:00Z', homeSlot:'L1',  awaySlot:'T:EHIJK', label:'16vos · 1 Jul'  },
-  { id:'r09', date:'2026-07-01T20:00Z', homeSlot:'G1',  awaySlot:'T:AEHIJ', label:'16vos · 1 Jul'  },
-  { id:'r10', date:'2026-07-02T00:00Z', homeSlot:'D1',  awaySlot:'T:BEFIJ', label:'16vos · 2 Jul'  },
-  { id:'r11', date:'2026-07-02T19:00Z', homeSlot:'H1',  awaySlot:'J2',      label:'16vos · 2 Jul'  },
-  { id:'r12', date:'2026-07-02T23:00Z', homeSlot:'K2',  awaySlot:'L2',      label:'16vos · 2 Jul'  },
-  { id:'r13', date:'2026-07-03T03:00Z', homeSlot:'B1',  awaySlot:'T:EFGIJ', label:'16vos · 3 Jul'  },
-  { id:'r14', date:'2026-07-03T18:00Z', homeSlot:'D2',  awaySlot:'G2',      label:'16vos · 3 Jul'  },
-  { id:'r15', date:'2026-07-03T22:00Z', homeSlot:'J1',  awaySlot:'H2',      label:'16vos · 3 Jul'  },
-  { id:'r16', date:'2026-07-04T01:30Z', homeSlot:'K1',  awaySlot:'T:DEIJL', label:'16vos · 4 Jul'  },
+  // LEFT — R16-1: Canada (pos 1) vs NED/MAR winner (pos 3)
+  { id:'r01', date:'2026-06-28T19:00Z', label:'16vos · 28 Jun' }, // RSA vs CAN
+  { id:'r02', date:'2026-06-30T01:00Z', label:'16vos · 29 Jun' }, // NED vs MAR
+  // LEFT — R16-2: GER/PAR winner (pos 2) vs CIV/NOR winner (pos 5)
+  { id:'r03', date:'2026-06-29T20:30Z', label:'16vos · 29 Jun' }, // GER vs PAR
+  { id:'r04', date:'2026-06-30T17:00Z', label:'16vos · 30 Jun' }, // CIV vs NOR
+  // LEFT — R16-3: Brazil (pos 4) vs MEX/ECU winner (pos 6)
+  { id:'r05', date:'2026-06-29T17:00Z', label:'16vos · 29 Jun' }, // BRA vs JPN
+  { id:'r06', date:'2026-07-01T01:00Z', label:'16vos · 30 Jun' }, // MEX vs ECU
+  // LEFT — R16-4: FRA/SWE winner (pos 7) vs BEL/SEN winner (pos 8)
+  { id:'r07', date:'2026-06-30T21:00Z', label:'16vos · 30 Jun' }, // FRA vs SWE
+  { id:'r08', date:'2026-07-01T20:00Z', label:'16vos · 1 Jul'  }, // BEL vs SEN
+  // RIGHT — R16-5: POR/CRO winner (pos 11) vs ESP/AUT winner (pos 12)
+  { id:'r09', date:'2026-07-02T23:00Z', label:'16vos · 2 Jul'  }, // POR vs CRO
+  { id:'r10', date:'2026-07-02T19:00Z', label:'16vos · 2 Jul'  }, // ESP vs AUT
+  // RIGHT — R16-6: USA/BIH winner (pos 9) vs ENG/COD winner (pos 10)
+  { id:'r11', date:'2026-07-02T00:00Z', label:'16vos · 2 Jul'  }, // USA vs BIH
+  { id:'r12', date:'2026-07-01T16:00Z', label:'16vos · 1 Jul'  }, // ENG vs COD
+  // RIGHT — R16-7: AUS/EGY winner (pos 14) vs COL/GHA winner (pos 16)
+  { id:'r13', date:'2026-07-03T18:00Z', label:'16vos · 3 Jul'  }, // AUS vs EGY
+  { id:'r14', date:'2026-07-04T01:30Z', label:'16vos · 4 Jul'  }, // COL vs GHA
+  // RIGHT — R16-8: SUI/ALG winner (pos 13) vs ARG/CPV winner (pos 15)
+  { id:'r15', date:'2026-07-03T03:00Z', label:'16vos · 3 Jul'  }, // SUI vs ALG
+  { id:'r16', date:'2026-07-03T22:00Z', label:'16vos · 3 Jul'  }, // ARG vs CPV
 ];
 
 // R16 pairings: each pair of R32 match winners
 // R16-i = Winner(R32[2i]) vs Winner(R32[2i+1])
-const R16_LABELS = ['Oct · 5 Jul','Oct · 5 Jul','Oct · 6 Jul','Oct · 6 Jul','Oct · 7 Jul','Oct · 7 Jul','Oct · 8 Jul','Oct · 8 Jul'];
-const QF_LABELS  = ['Ctos · 11 Jul','Ctos · 11 Jul','Ctos · 12 Jul','Ctos · 12 Jul'];
+const R16_LABELS = ['Oct · 4 Jul','Oct · 4 Jul','Oct · 5 Jul','Oct · 5 Jul','Oct · 6 Jul','Oct · 6 Jul','Oct · 7 Jul','Oct · 7 Jul'];
+const QF_LABELS  = ['Ctos · 9 Jul','Ctos · 9 Jul','Ctos · 10 Jul','Ctos · 10 Jul'];
 const SF_LABELS  = ['Semis · 15 Jul','Semis · 16 Jul'];
 const F_LABEL    = 'Final · 19 Jul';
 
@@ -142,97 +72,26 @@ type Side = 'home' | 'away';
 // picks key: `${roundIdx}-${matchIdx}` → side picked
 type Picks = Record<string, Side>;
 
-// ── Slot → TeamEntry resolution ──────────────────────────────────────────────
-function resolveTeam(slot: string, groupMap: Map<string, Group>, thirds: Map<string, TeamEntry | null>): BTeam | null {
-  const entryToTeam = (e: TeamEntry | null | undefined): BTeam | null => {
-    if (!e) return null;
-    return {
-      name: teamNameEs(e.team.name),
-      abbr: e.team.abbreviation,
-      flag: flag(e.team.abbreviation),
-    };
-  };
-
-  if (/^[A-L]1$/.test(slot)) {
-    const g = groupMap.get(slot[0]);
-    return entryToTeam(g?.entries.find(e => e.position === 1));
-  }
-  if (/^[A-L]2$/.test(slot)) {
-    const g = groupMap.get(slot[0]);
-    return entryToTeam(g?.entries.find(e => e.position === 2));
-  }
-  if (slot.startsWith('T:')) {
-    return entryToTeam(thirds.get(slot) ?? null);
-  }
-  return null;
-}
-
-function computeThirds(groups: Group[]): Map<string, TeamEntry | null> {
-  const teamToGroup = new Map<string, string>();
-  for (const g of groups) {
-    const letter = g.abbreviation.replace('Group ', '');
-    for (const e of g.entries) teamToGroup.set(e.team.id, letter);
-  }
-
-  const allThirds = groups
-    .flatMap(g => g.entries.filter(e => e.position === 3))
-    .sort((a, b) => {
-      if (b.pts !== a.pts) return b.pts - a.pts;
-      const diff = Number(b.gd) - Number(a.gd);
-      return diff !== 0 ? diff : b.gf - a.gf;
-    });
-
-  const top8 = allThirds.slice(0, 8);
-  const thirdByGroup = new Map<string, TeamEntry>();
-  const comboLetters: string[] = [];
-  for (const t of top8) {
-    const gl = teamToGroup.get(t.team.id);
-    if (gl) { thirdByGroup.set(gl, t); comboLetters.push(gl); }
-  }
-
-  const assignments = new Map<string, TeamEntry | null>();
-  const combo = new Set(comboLetters);
-
-  if (combo.size === 8) {
-    for (const row of ANNEX_C_ROWS) {
-      const rowSet = new Set(row);
-      if (rowSet.size === 8 && [...rowSet].every(c => combo.has(c))) {
-        ANNEX_C_WINNERS.forEach((winner, i) => {
-          const slot = WINNER_TO_SLOT[winner];
-          assignments.set(slot, thirdByGroup.get(row[i]) ?? null);
-        });
-        return assignments;
-      }
+// ── Build R32 from ESPN fixture data ─────────────────────────────────────────
+// Each R32_DEF is matched to a real fixture by kickoff time (±3 h).
+// Team names come directly from ESPN — no slot-based resolution needed
+// now that the group stage is complete.
+function buildR32(fixtures: Fixture[]): BMatch[] {
+  return R32_DEFS.map(def => {
+    const defMs = new Date(def.date).getTime();
+    const fixture = fixtures.find(
+      f => Math.abs(new Date(f.date).getTime() - defMs) < 3 * 60 * 60 * 1000
+    );
+    if (fixture?.home.name && fixture?.away.name) {
+      return {
+        id: def.id,
+        label: def.label,
+        home: { name: teamNameEs(fixture.home.name), abbr: fixture.home.abbreviation, flag: flag(fixture.home.abbreviation) },
+        away: { name: teamNameEs(fixture.away.name), abbr: fixture.away.abbreviation, flag: flag(fixture.away.abbreviation) },
+      };
     }
-  }
-
-  const usedIds = new Set<string>();
-  for (const slot of THIRD_SLOTS) {
-    const eligible = new Set(slot.slice(2).split(''));
-    const best = top8.find(t => {
-      const gl = teamToGroup.get(t.team.id);
-      return gl && eligible.has(gl) && !usedIds.has(t.team.id);
-    }) ?? null;
-    assignments.set(slot, best);
-    if (best) usedIds.add(best.team.id);
-  }
-  return assignments;
-}
-
-function buildR32(groups: Group[]): BMatch[] {
-  const groupMap = new Map<string, Group>();
-  for (const g of groups) {
-    const letter = g.abbreviation.replace('Group ', '');
-    groupMap.set(letter, g);
-  }
-  const thirds = computeThirds(groups);
-
-  return R32_DEFS.map(def => ({
-    id: def.id,
-    label: def.label,
-    home: resolveTeam(def.homeSlot, groupMap, thirds),
-    away: resolveTeam(def.awaySlot, groupMap, thirds),
-  }));
+    return { id: def.id, label: def.label, home: null, away: null };
+  });
 }
 
 // ── Bracket computation ──────────────────────────────────────────────────────
@@ -454,7 +313,7 @@ function findR32Fixture(defDate: string, fixtures: Fixture[]): Fixture | undefin
 }
 
 // ── Main component ───────────────────────────────────────────────────────────
-export default function BracketSimulator({ groups, fixtures = [] }: { groups: Group[]; fixtures?: Fixture[] }) {
+export default function BracketSimulator({ fixtures = [] }: { fixtures?: Fixture[] }) {
   const [picks, setPicks] = useState<Picks>({});
   const [lockedKeys, setLockedKeys] = useState<Set<string>>(new Set());
   const [lockedScores, setLockedScores] = useState<Record<string, LockedScore>>({});
@@ -486,7 +345,7 @@ export default function BracketSimulator({ groups, fixtures = [] }: { groups: Gr
     setLockedScores(newScores);
   }, [fixtures]);
 
-  const r32 = useMemo(() => buildR32(groups), [groups]);
+  const r32 = useMemo(() => buildR32(fixtures), [fixtures]);
   const bracket = useMemo(() => computeBracket(r32, picks), [r32, picks]);
 
   const champion = useMemo(() => {
@@ -560,39 +419,42 @@ export default function BracketSimulator({ groups, fixtures = [] }: { groups: Gr
       {/* Champion banner */}
       {champion && <ChampionBanner team={champion} />}
 
-      {/* Bracket — horizontal scroll */}
+      {/* ── Dual-sided bracket ──────────────────────────────────────────── */}
+      {/* Layout: [R32L | R16L | QFL | SFL] ── [Final] ── [SFR | QFR | R16R | R32R] */}
       <div className="overflow-x-auto -mx-4 px-4">
         <div className="flex min-w-max items-start">
-          {bracket.map((round, rIdx) => {
-            const isLast     = rIdx === bracket.length - 1;
-            const matchCount = round.matches.length;
-            const layout     = bracketLayout(rIdx);
-            const prevLayout = rIdx > 0 ? bracketLayout(rIdx - 1) : null;
+
+          {/* ── LEFT HALF: R32 → R16 → QF → SF ──────────────────────────── */}
+          {([0, 1, 2, 3] as const).map(rIdx => {
+            const halfCount = bracket[rIdx].matches.length / 2;
+            const matches   = bracket[rIdx].matches.slice(0, halfCount);
+            const layout    = bracketLayout(rIdx);
+            const prevLay   = rIdx > 0 ? bracketLayout(rIdx - 1) : null;
+            const LLABELS   = ['16vos', 'Octavos', 'Cuartos', 'Semis'] as const;
+            const mx        = CONN_W / 2;
 
             return (
-              <div key={round.name} className="flex items-start">
-                {/* ── SVG bracket connector ─────────────────────────────── */}
-                {rIdx > 0 && prevLayout && (
+              <Fragment key={`L${rIdx}`}>
+                {/* Left-side connector: parent = left column, child = current */}
+                {rIdx > 0 && prevLay && (
                   <div style={{ width: CONN_W, flexShrink: 0 }}>
-                    {/* Spacer matches the label row height so SVG y=0 aligns with card tops */}
                     <div style={{ height: LABEL_H }} />
                     <svg
                       width={CONN_W}
-                      height={layout.paddingTop + matchCount * CARD_H + Math.max(0, matchCount - 1) * layout.gap}
+                      height={prevLay.paddingTop + (2 * halfCount - 1) * (CARD_H + prevLay.gap) + CARD_H}
                       className="text-gray-300 dark:text-white/[0.08] overflow-visible"
                     >
                       <g stroke="currentColor" strokeWidth="1" fill="none">
-                        {round.matches.map((_, mIdx) => {
-                          const y0 = prevLayout.paddingTop + (2 * mIdx) * (CARD_H + prevLayout.gap) + CARD_H / 2;
-                          const y1 = prevLayout.paddingTop + (2 * mIdx + 1) * (CARD_H + prevLayout.gap) + CARD_H / 2;
-                          const yC = layout.paddingTop + mIdx * (CARD_H + layout.gap) + CARD_H / 2;
-                          const mx = CONN_W / 2;
+                        {Array.from({ length: halfCount }, (_, i) => {
+                          const y0 = prevLay.paddingTop + (2*i)   * (CARD_H + prevLay.gap) + CARD_H/2;
+                          const y1 = prevLay.paddingTop + (2*i+1) * (CARD_H + prevLay.gap) + CARD_H/2;
+                          const yC = layout.paddingTop  + i       * (CARD_H + layout.gap)  + CARD_H/2;
                           return (
-                            <g key={mIdx}>
-                              <line x1={0}    y1={y0} x2={mx}     y2={y0} />
-                              <line x1={0}    y1={y1} x2={mx}     y2={y1} />
-                              <line x1={mx}   y1={y0} x2={mx}     y2={y1} />
-                              <line x1={mx}   y1={yC} x2={CONN_W} y2={yC} />
+                            <g key={i}>
+                              <line x1={0}      y1={y0} x2={mx}     y2={y0} />
+                              <line x1={0}      y1={y1} x2={mx}     y2={y1} />
+                              <line x1={mx}     y1={y0} x2={mx}     y2={y1} />
+                              <line x1={mx}     y1={yC} x2={CONN_W} y2={yC} />
                             </g>
                           );
                         })}
@@ -601,31 +463,120 @@ export default function BracketSimulator({ groups, fixtures = [] }: { groups: Gr
                   </div>
                 )}
 
-                {/* ── Round column ──────────────────────────────────────── */}
-                <div className="flex flex-col items-stretch" style={{ width: 152 }}>
-                  {/* Label — fixed height so SVG offsets are exact */}
-                  <div
-                    className="text-center flex items-center justify-center"
-                    style={{ height: LABEL_H }}
-                  >
+                {/* Round column */}
+                <div style={{ width: 152, flexShrink: 0 }}>
+                  <div style={{ height: LABEL_H }} className="flex items-center justify-center">
                     <span className="text-[9px] font-bold tracking-[0.15em] uppercase text-gray-400 dark:text-white/30">
-                      {round.shortName}
+                      {LLABELS[rIdx]}
                     </span>
                   </div>
-
-                  {/* Match cards */}
                   <div className="flex flex-col" style={{ paddingTop: layout.paddingTop, gap: layout.gap }}>
-                    {round.matches.map((match, mIdx) => {
-                      const matchKey = `${rIdx}-${mIdx}`;
+                    {matches.map((match, relIdx) => {
+                      const matchKey = `${rIdx}-${relIdx}`;
                       return (
                         <MatchCard
                           key={match.id}
                           match={match}
                           roundIdx={rIdx}
-                          matchIdx={mIdx}
+                          matchIdx={relIdx}
                           picks={picks}
                           onPick={handlePick}
-                          isChampionship={isLast}
+                          locked={lockedKeys.has(matchKey)}
+                          lockedScore={lockedScores[matchKey]}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              </Fragment>
+            );
+          })}
+
+          {/* ── CENTER: Final ─────────────────────────────────────────────── */}
+          {(() => {
+            const sfLay   = bracketLayout(3);          // SF has 1 match per side
+            const sfY     = sfLay.paddingTop + CARD_H / 2;
+            const svgH    = sfLay.paddingTop + CARD_H;
+            const finalMatch = bracket[4]?.matches[0];
+            const finalKey   = '4-0';
+            return (
+              <Fragment key="final">
+                {/* Entry line from left SF */}
+                <div style={{ width: CONN_W, flexShrink: 0 }}>
+                  <div style={{ height: LABEL_H }} />
+                  <svg width={CONN_W} height={svgH} className="text-gray-300 dark:text-white/[0.08] overflow-visible">
+                    <line x1={0} y1={sfY} x2={CONN_W} y2={sfY} stroke="currentColor" strokeWidth="1" />
+                  </svg>
+                </div>
+
+                {/* Final column */}
+                <div style={{ width: 152, flexShrink: 0 }}>
+                  <div style={{ height: LABEL_H }} className="flex items-center justify-center">
+                    <span className="text-[9px] font-bold tracking-[0.15em] uppercase text-yellow-500 dark:text-yellow-400">
+                      Final · 19 Jul
+                    </span>
+                  </div>
+                  <div style={{ paddingTop: sfLay.paddingTop }}>
+                    {finalMatch && (
+                      <MatchCard
+                        match={finalMatch}
+                        roundIdx={4}
+                        matchIdx={0}
+                        picks={picks}
+                        onPick={handlePick}
+                        isChampionship
+                        locked={lockedKeys.has(finalKey)}
+                        lockedScore={lockedScores[finalKey]}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                {/* Exit line to right SF */}
+                <div style={{ width: CONN_W, flexShrink: 0 }}>
+                  <div style={{ height: LABEL_H }} />
+                  <svg width={CONN_W} height={svgH} className="text-gray-300 dark:text-white/[0.08] overflow-visible">
+                    <line x1={0} y1={sfY} x2={CONN_W} y2={sfY} stroke="currentColor" strokeWidth="1" />
+                  </svg>
+                </div>
+              </Fragment>
+            );
+          })()}
+
+          {/* ── RIGHT HALF: SF → QF → R16 → R32 (mirror) ─────────────────── */}
+          {[3, 2, 1, 0].map((rIdx, displayIdx) => {
+            const halfCount  = bracket[rIdx].matches.length / 2;
+            const absStart   = halfCount;
+            const matches    = bracket[rIdx].matches.slice(absStart);
+            const layout     = bracketLayout(rIdx);
+            const RLABELS    = ['Semis', 'Cuartos', 'Octavos', '16vos'];
+            const mx         = CONN_W / 2;
+
+            // outer round = one step further from center (more matches, to the right)
+            const outerRIdx  = displayIdx < 3 ? [3, 2, 1, 0][displayIdx + 1] : -1;
+            const outerLay   = outerRIdx >= 0 ? bracketLayout(outerRIdx) : null;
+
+            return (
+              <Fragment key={`R${rIdx}`}>
+                {/* Round column */}
+                <div style={{ width: 152, flexShrink: 0 }}>
+                  <div style={{ height: LABEL_H }} className="flex items-center justify-center">
+                    <span className="text-[9px] font-bold tracking-[0.15em] uppercase text-gray-400 dark:text-white/30">
+                      {RLABELS[displayIdx]}
+                    </span>
+                  </div>
+                  <div className="flex flex-col" style={{ paddingTop: layout.paddingTop, gap: layout.gap }}>
+                    {matches.map((match, relIdx) => {
+                      const absIdx   = absStart + relIdx;
+                      const matchKey = `${rIdx}-${absIdx}`;
+                      return (
+                        <MatchCard
+                          key={match.id}
+                          match={match}
+                          roundIdx={rIdx}
+                          matchIdx={absIdx}
+                          picks={picks}
+                          onPick={handlePick}
                           locked={lockedKeys.has(matchKey)}
                           lockedScore={lockedScores[matchKey]}
                         />
@@ -634,38 +585,37 @@ export default function BracketSimulator({ groups, fixtures = [] }: { groups: Gr
                   </div>
                 </div>
 
-                {/* ── Exit connector + trophy after Final ───────────────── */}
-                {isLast && champion && (() => {
-                  const finalLayout = bracketLayout(bracket.length - 1);
-                  const troW = 108;
-                  const yC   = finalLayout.paddingTop + CARD_H / 2;
-                  return (
-                    <div className="flex items-start" style={{ flexShrink: 0 }}>
-                      {/* short horizontal to trophy */}
-                      <div style={{ width: CONN_W, flexShrink: 0 }}>
-                        <div style={{ height: LABEL_H }} />
-                        <svg width={CONN_W} height={finalLayout.paddingTop + CARD_H} className="text-yellow-400/40 overflow-visible">
-                          <line x1={0} y1={yC} x2={CONN_W} y2={yC} stroke="currentColor" strokeWidth="1" />
-                        </svg>
-                      </div>
-                      {/* trophy card */}
-                      <div style={{ paddingTop: LABEL_H + finalLayout.paddingTop }}>
-                        <div
-                          style={{ height: CARD_H, width: troW }}
-                          className="flex flex-col items-center justify-center rounded-xl border border-yellow-400/40 bg-yellow-400/10 px-3"
-                        >
-                          <div className="text-2xl leading-none mb-1">🏆</div>
-                          <div className="text-[10px] font-black text-yellow-500 dark:text-yellow-400 truncate max-w-full text-center">
-                            {champion.name}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
+                {/* Right-side connector: parent = outer (right), child = current (left) */}
+                {outerLay && (
+                  <div style={{ width: CONN_W, flexShrink: 0 }}>
+                    <div style={{ height: LABEL_H }} />
+                    <svg
+                      width={CONN_W}
+                      height={outerLay.paddingTop + (2 * halfCount - 1) * (CARD_H + outerLay.gap) + CARD_H}
+                      className="text-gray-300 dark:text-white/[0.08] overflow-visible"
+                    >
+                      <g stroke="currentColor" strokeWidth="1" fill="none">
+                        {Array.from({ length: halfCount }, (_, i) => {
+                          const y0 = outerLay.paddingTop + (2*i)   * (CARD_H + outerLay.gap) + CARD_H/2;
+                          const y1 = outerLay.paddingTop + (2*i+1) * (CARD_H + outerLay.gap) + CARD_H/2;
+                          const yC = layout.paddingTop   + i       * (CARD_H + layout.gap)   + CARD_H/2;
+                          return (
+                            <g key={i}>
+                              <line x1={CONN_W} y1={y0} x2={mx}     y2={y0} />
+                              <line x1={CONN_W} y1={y1} x2={mx}     y2={y1} />
+                              <line x1={mx}     y1={y0} x2={mx}     y2={y1} />
+                              <line x1={mx}     y1={yC} x2={0}      y2={yC} />
+                            </g>
+                          );
+                        })}
+                      </g>
+                    </svg>
+                  </div>
+                )}
+              </Fragment>
             );
           })}
+
         </div>
       </div>
 

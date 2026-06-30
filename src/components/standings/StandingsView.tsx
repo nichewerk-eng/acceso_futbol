@@ -427,7 +427,7 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
 
         {/* ─── SIMULADOR TAB ──────────────────────────────────────────────────── */}
         {view === 'simulador' && (
-          <BracketSimulator groups={groups} fixtures={fixtures} />
+          <BracketSimulator fixtures={fixtures} />
         )}
 
         {/* Footer */}
