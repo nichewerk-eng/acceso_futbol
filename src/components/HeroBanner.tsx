@@ -103,50 +103,50 @@ function GameCard({ f, tz }: { f: BannerFixture; tz: string }) {
   const awayWin = isDone && f.away.winner;
 
   return (
-    <div className={['flex flex-col gap-2 rounded-xl border px-3.5 py-3 min-w-[155px]',
+    <div className={['flex flex-col gap-3 rounded-xl border px-5 py-4 min-w-[240px]',
       isLive ? 'border-red-500/30 bg-red-500/5'
              : 'border-white/[0.07] bg-white/[0.03]'].join(' ')}>
       {/* Status */}
-      <div className="flex items-center justify-between gap-1">
+      <div className="flex items-center justify-between gap-2">
         {isLive ? (
-          <span className="flex items-center gap-1 text-[10px] font-bold text-red-400">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+          <span className="flex items-center gap-1.5 text-xs font-bold text-red-400">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
             {f.status.shortDetail}
           </span>
         ) : isDone ? (
-          <span className="rounded bg-white/[0.08] px-1.5 py-0.5 text-[10px] font-bold text-white/40">{hasPens ? 'FT-Pens' : 'FT'}</span>
+          <span className="rounded bg-white/[0.08] px-2 py-0.5 text-xs font-bold text-white/40">{hasPens ? 'FT-Pens' : 'FT'}</span>
         ) : (
-          <span className="rounded bg-[#1a7a78]/20 px-1.5 py-0.5 text-[10px] font-bold text-[#1a7a78]">{fmtTime(f.date, tz)}</span>
+          <span className="rounded bg-[#1a7a78]/20 px-2 py-0.5 text-xs font-bold text-[#1a7a78]">{fmtTime(f.date, tz)}</span>
         )}
-        <span className="text-[9px] text-white/20">{new Date(f.date).toLocaleDateString('es-MX', { timeZone: tz, day: 'numeric', month: 'short' })}</span>
+        <span className="text-[11px] text-white/20">{new Date(f.date).toLocaleDateString('es-MX', { timeZone: tz, day: 'numeric', month: 'short' })}</span>
       </div>
       {/* Home */}
-      <div className="flex items-center justify-between gap-1">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <span className="text-sm leading-none shrink-0">{flag(f.home.abbreviation)}</span>
-          <span className={['truncate text-[11px] font-semibold max-w-[80px]', homeWin ? 'text-white' : isDone ? 'text-white/40' : 'text-white/75'].join(' ')}>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-xl leading-none shrink-0">{flag(f.home.abbreviation)}</span>
+          <span className={['truncate text-sm font-semibold max-w-[110px]', homeWin ? 'text-white' : isDone ? 'text-white/40' : 'text-white/75'].join(' ')}>
             {teamNameEs(f.home.name)}
           </span>
         </div>
         {(isLive || isDone) && (
-          <span className={['text-sm font-bold tabular-nums flex items-baseline gap-0.5', homeWin ? 'text-white' : 'text-white/40'].join(' ')}>
+          <span className={['text-base font-bold tabular-nums flex items-baseline gap-0.5', homeWin ? 'text-white' : 'text-white/40'].join(' ')}>
             {f.home.score ?? 0}
-            {hasPens && <span className="text-[10px] font-semibold opacity-60">({f.home.penaltyScore})</span>}
+            {hasPens && <span className="text-xs font-semibold opacity-60">({f.home.penaltyScore})</span>}
           </span>
         )}
       </div>
       {/* Away */}
-      <div className="flex items-center justify-between gap-1">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <span className="text-sm leading-none shrink-0">{flag(f.away.abbreviation)}</span>
-          <span className={['truncate text-[11px] font-semibold max-w-[80px]', awayWin ? 'text-white' : isDone ? 'text-white/40' : 'text-white/75'].join(' ')}>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-xl leading-none shrink-0">{flag(f.away.abbreviation)}</span>
+          <span className={['truncate text-sm font-semibold max-w-[110px]', awayWin ? 'text-white' : isDone ? 'text-white/40' : 'text-white/75'].join(' ')}>
             {teamNameEs(f.away.name)}
           </span>
         </div>
         {(isLive || isDone) && (
-          <span className={['text-sm font-bold tabular-nums flex items-baseline gap-0.5', awayWin ? 'text-white' : 'text-white/40'].join(' ')}>
+          <span className={['text-base font-bold tabular-nums flex items-baseline gap-0.5', awayWin ? 'text-white' : 'text-white/40'].join(' ')}>
             {f.away.score ?? 0}
-            {hasPens && <span className="text-[10px] font-semibold opacity-60">({f.away.penaltyScore})</span>}
+            {hasPens && <span className="text-xs font-semibold opacity-60">({f.away.penaltyScore})</span>}
           </span>
         )}
       </div>
