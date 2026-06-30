@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useMemo, useEffect, Fragment } from 'react';
 import type { Fixture } from './types';
 import { teamNameEs } from './teamNames';
@@ -400,16 +401,25 @@ export default function BracketSimulator({ fixtures = [] }: { fixtures?: Fixture
     <div className="pb-10">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h2 className="text-sm font-bold text-gray-900 dark:text-white tracking-wide">
-            Simulador de Bracket
-          </h2>
-          <p className="text-xs text-gray-400 dark:text-white/40 mt-0.5">
-            {lockedCount > 0
-              ? `${lockedCount} resultado${lockedCount > 1 ? 's' : ''} oficial${lockedCount > 1 ? 'es' : ''} · ${filledCount - lockedCount}/${totalMatches - lockedCount} simulados`
-              : `Toca un equipo para avanzarlo. ${filledCount}/${totalMatches} partidos simulados.`
-            }
-          </p>
+        <div className="flex items-center gap-3">
+          <Image
+            src="/world_cup_2026.png"
+            alt="FIFA World Cup 2026"
+            width={36}
+            height={36}
+            className="h-9 w-9 object-contain shrink-0"
+          />
+          <div>
+            <h2 className="text-sm font-bold text-gray-900 dark:text-white tracking-wide">
+              Simulador de Bracket
+            </h2>
+            <p className="text-xs text-gray-400 dark:text-white/40 mt-0.5">
+              {lockedCount > 0
+                ? `${lockedCount} resultado${lockedCount > 1 ? 's' : ''} oficial${lockedCount > 1 ? 'es' : ''} · ${filledCount - lockedCount}/${totalMatches - lockedCount} simulados`
+                : `Toca un equipo para avanzarlo. ${filledCount}/${totalMatches} partidos simulados.`
+              }
+            </p>
+          </div>
         </div>
         {filledCount > lockedCount && (
           <button
@@ -516,7 +526,8 @@ export default function BracketSimulator({ fixtures = [] }: { fixtures?: Fixture
 
                 {/* Final column */}
                 <div style={{ width: 152, flexShrink: 0 }}>
-                  <div style={{ height: LABEL_H }} className="flex items-center justify-center">
+                  <div style={{ height: LABEL_H }} className="flex items-center justify-center gap-1.5">
+                    <Image src="/world_cup_2026.png" alt="FIFA World Cup 2026" width={14} height={14} className="h-3.5 w-3.5 object-contain shrink-0" />
                     <span className="text-[9px] font-bold tracking-[0.15em] uppercase text-yellow-500 dark:text-yellow-400">
                       Final · 19 Jul
                     </span>

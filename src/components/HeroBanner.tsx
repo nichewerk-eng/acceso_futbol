@@ -233,16 +233,19 @@ export default function HeroBanner() {
         {mexGame && rival ? (
           <div className="flex flex-col items-center text-center gap-4">
 
-            {/* Live badge */}
-            {mexLive && (
-              <div className="flex items-center gap-2 rounded-full border border-red-500/40 bg-red-500/10 px-4 py-1.5">
-                <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
-                <span className="text-xs font-bold tracking-widest uppercase text-red-400">En vivo · {mexLive.status.shortDetail}</span>
-              </div>
-            )}
-            {!mexLive && (
-              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/30">Próximo partido</p>
-            )}
+            {/* WC logo + live/upcoming badge */}
+            <div className="flex items-center gap-2">
+              <Image src="/world_cup_2026.png" alt="FIFA World Cup 2026" width={28} height={28} className="h-7 w-7 object-contain opacity-70" />
+              {mexLive ? (
+                <div className="flex items-center gap-2 rounded-full border border-red-500/40 bg-red-500/10 px-4 py-1.5">
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+                  <span className="text-xs font-bold tracking-widest uppercase text-red-400">En vivo · {mexLive.status.shortDetail}</span>
+                </div>
+              ) : (
+                <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/30">Próximo partido</p>
+              )}
+              <Image src="/world_cup_2026.png" alt="" aria-hidden width={28} height={28} className="h-7 w-7 object-contain opacity-70" />
+            </div>
 
             {/* Crests + score/vs */}
             <div className="flex items-center justify-center gap-6 sm:gap-12">
