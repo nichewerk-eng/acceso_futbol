@@ -58,8 +58,8 @@ function isToday(iso: string, tz: string) {
 interface BannerFixture {
   id: string; date: string;
   status: { state: string; shortDetail: string; completed: boolean };
-  home: { name: string; abbreviation: string; score: string | null };
-  away: { name: string; abbreviation: string; score: string | null };
+  home: { name: string; abbreviation: string; score: string | null; penaltyScore: string | null; winner: boolean };
+  away: { name: string; abbreviation: string; score: string | null; penaltyScore: string | null; winner: boolean };
 }
 
 // ── Goal event helpers ────────────────────────────────────────────────────────
@@ -98,8 +98,9 @@ function useCountdown(target: string | null) {
 function GameCard({ f, tz }: { f: BannerFixture; tz: string }) {
   const isLive = f.status.state === 'in';
   const isDone = f.status.state === 'post';
-  const homeWin = isDone && Number(f.home.score) > Number(f.away.score);
-  const awayWin = isDone && Number(f.away.score) > Number(f.home.score);
+  const hasPens = isDone && f.home.penaltyScore !== null;
+  const homeWin = isDone && f.home.winner;
+  const awayWin = isDone && f.away.winner;
 
   return (
     <div className={['flex flex-col gap-2 rounded-xl border px-3.5 py-3 min-w-[155px]',
@@ -113,7 +114,7 @@ function GameCard({ f, tz }: { f: BannerFixture; tz: string }) {
             {f.status.shortDetail}
           </span>
         ) : isDone ? (
-          <span className="rounded bg-white/[0.08] px-1.5 py-0.5 text-[10px] font-bold text-white/40">FT</span>
+          <span className="rounded bg-white/[0.08] px-1.5 py-0.5 text-[10px] font-bold text-white/40">{hasPens ? 'FT-Pens' : 'FT'}</span>
         ) : (
           <span className="rounded bg-[#1a7a78]/20 px-1.5 py-0.5 text-[10px] font-bold text-[#1a7a78]">{fmtTime(f.date, tz)}</span>
         )}
@@ -128,7 +129,10 @@ function GameCard({ f, tz }: { f: BannerFixture; tz: string }) {
           </span>
         </div>
         {(isLive || isDone) && (
-          <span className={['text-sm font-bold tabular-nums', homeWin ? 'text-white' : 'text-white/40'].join(' ')}>{f.home.score ?? 0}</span>
+          <span className={['text-sm font-bold tabular-nums flex items-baseline gap-0.5', homeWin ? 'text-white' : 'text-white/40'].join(' ')}>
+            {f.home.score ?? 0}
+            {hasPens && <span className="text-[10px] font-semibold opacity-60">({f.home.penaltyScore})</span>}
+          </span>
         )}
       </div>
       {/* Away */}
@@ -140,7 +144,10 @@ function GameCard({ f, tz }: { f: BannerFixture; tz: string }) {
           </span>
         </div>
         {(isLive || isDone) && (
-          <span className={['text-sm font-bold tabular-nums', awayWin ? 'text-white' : 'text-white/40'].join(' ')}>{f.away.score ?? 0}</span>
+          <span className={['text-sm font-bold tabular-nums flex items-baseline gap-0.5', awayWin ? 'text-white' : 'text-white/40'].join(' ')}>
+            {f.away.score ?? 0}
+            {hasPens && <span className="text-[10px] font-semibold opacity-60">({f.away.penaltyScore})</span>}
+          </span>
         )}
       </div>
     </div>

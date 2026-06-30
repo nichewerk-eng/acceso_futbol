@@ -694,8 +694,11 @@ export default function BracketView({ groups, userTz, fixtures = [] }: Props) {
               const isDone  = fixture?.status.state === 'post';
               const homeScore = fixture?.home.score ?? null;
               const awayScore = fixture?.away.score ?? null;
-              const homeWin = isDone && Number(homeScore) > Number(awayScore);
-              const awayWin = isDone && Number(awayScore) > Number(homeScore);
+              const homePen = fixture?.home.penaltyScore ?? null;
+              const awayPen = fixture?.away.penaltyScore ?? null;
+              const hasPens = isDone && homePen !== null;
+              const homeWin = isDone && (fixture?.home.winner ?? false);
+              const awayWin = isDone && (fixture?.away.winner ?? false);
 
               const mexInvolved =
                 home.team?.team.abbreviation === 'MEX' ||
@@ -729,7 +732,7 @@ export default function BracketView({ groups, userTz, fixtures = [] }: Props) {
                           {fixture?.status.shortDetail ?? 'En vivo'}
                         </span>
                       ) : isDone ? (
-                        <span className="rounded bg-gray-100 dark:bg-white/[0.07] px-2 py-0.5 text-[10px] font-bold text-gray-500 dark:text-white/40">FT</span>
+                        <span className="rounded bg-gray-100 dark:bg-white/[0.07] px-2 py-0.5 text-[10px] font-bold text-gray-500 dark:text-white/40">{hasPens ? 'FT-Pens' : 'FT'}</span>
                       ) : (
                         <span className={['rounded px-2 py-0.5 text-[10px] font-bold',
                           mexInvolved
@@ -758,10 +761,15 @@ export default function BracketView({ groups, userTz, fixtures = [] }: Props) {
                     {/* Score / vs */}
                     <div className="shrink-0 text-center px-1">
                       {(isLive || isDone) && homeScore !== null ? (
-                        <span className={['text-2xl font-bold tabular-nums',
+                        <div className={['text-2xl font-bold tabular-nums leading-none',
                           isLive ? 'text-red-400' : 'text-gray-900 dark:text-white'].join(' ')}>
                           {homeScore}<span className="mx-1 text-gray-300 dark:text-white/20">–</span>{awayScore}
-                        </span>
+                          {hasPens && (
+                            <div className="mt-0.5 text-[10px] font-semibold text-gray-400 dark:text-white/40 tracking-wide">
+                              ({homePen}) – ({awayPen})
+                            </div>
+                          )}
+                        </div>
                       ) : (
                         <span className="text-sm font-bold text-gray-300 dark:text-white/20">vs</span>
                       )}

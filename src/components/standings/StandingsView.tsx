@@ -448,8 +448,9 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
 function JumboCard({ fixture: f, tz }: { fixture: Fixture; tz: string }) {
   const isLive = f.status.state === 'in';
   const isDone = f.status.state === 'post';
-  const homeWin = isDone && Number(f.home.score) > Number(f.away.score);
-  const awayWin = isDone && Number(f.away.score) > Number(f.home.score);
+  const hasPens = isDone && f.home.penaltyScore !== null;
+  const homeWin = isDone && f.home.winner;
+  const awayWin = isDone && f.away.winner;
 
   return (
     <div className={[
@@ -470,7 +471,7 @@ function JumboCard({ fixture: f, tz }: { fixture: Fixture; tz: string }) {
             </span>
           </div>
         ) : isDone ? (
-          <span className="rounded bg-white/[0.08] px-1.5 py-0.5 text-[10px] font-bold text-white/40">FT</span>
+          <span className="rounded bg-white/[0.08] px-1.5 py-0.5 text-[10px] font-bold text-white/40">{hasPens ? 'FT-Pens' : 'FT'}</span>
         ) : (
           <span className="rounded bg-brand-teal/20 px-1.5 py-0.5 text-[10px] font-bold text-brand-teal">{fmtTime(f.date, tz)}</span>
         )}
@@ -483,6 +484,7 @@ function JumboCard({ fixture: f, tz }: { fixture: Fixture; tz: string }) {
           abbr={f.home.abbreviation}
           name={teamNameEs(f.home.name)}
           score={f.home.score}
+          penaltyScore={f.home.penaltyScore}
           isWinner={homeWin}
           isLive={isLive}
           isDone={isDone}
@@ -491,6 +493,7 @@ function JumboCard({ fixture: f, tz }: { fixture: Fixture; tz: string }) {
           abbr={f.away.abbreviation}
           name={teamNameEs(f.away.name)}
           score={f.away.score}
+          penaltyScore={f.away.penaltyScore}
           isWinner={awayWin}
           isLive={isLive}
           isDone={isDone}
@@ -500,8 +503,8 @@ function JumboCard({ fixture: f, tz }: { fixture: Fixture; tz: string }) {
   );
 }
 
-function TeamScoreRow({ abbr, name, score, isWinner, isLive, isDone }: {
-  abbr: string; name: string; score: string | null;
+function TeamScoreRow({ abbr, name, score, penaltyScore, isWinner, isLive, isDone }: {
+  abbr: string; name: string; score: string | null; penaltyScore?: string | null;
   isWinner: boolean; isLive: boolean; isDone: boolean;
 }) {
   return (
@@ -514,9 +517,12 @@ function TeamScoreRow({ abbr, name, score, isWinner, isLive, isDone }: {
         </span>
       </div>
       {(isLive || isDone) && (
-        <span className={['text-sm font-bold tabular-nums shrink-0',
+        <span className={['text-sm font-bold tabular-nums shrink-0 flex items-baseline gap-0.5',
           isWinner ? 'text-white' : 'text-white/40'].join(' ')}>
           {score ?? 0}
+          {isDone && penaltyScore && (
+            <span className="text-[10px] font-semibold opacity-60">({penaltyScore})</span>
+          )}
         </span>
       )}
     </div>
@@ -543,13 +549,14 @@ function LegendDot({ color, label }: { color: 'brand-orange' | 'brand-teal'; lab
   );
 }
 function ResultCard({ fixture: f, tz }: { fixture: Fixture; tz: string }) {
-  const homeWin = Number(f.home.score) > Number(f.away.score);
-  const awayWin = Number(f.away.score) > Number(f.home.score);
+  const hasPens = f.home.penaltyScore !== null;
+  const homeWin = f.home.winner;
+  const awayWin = f.away.winner;
   return (
     <div className="group rounded-xl border border-gray-200 dark:border-white/[0.05] bg-gray-50 dark:bg-white/[0.02] px-4 py-3 transition hover:border-gray-300 dark:hover:border-white/[0.1] hover:bg-white dark:hover:bg-white/[0.04]">
       <div className="mb-1.5 flex items-center justify-between">
         <span className="text-[10px] text-gray-400 dark:text-white/30">{fmtDate(f.date, tz)}</span>
-        <span className="rounded bg-gray-100 dark:bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-bold text-gray-500 dark:text-white/40">FT</span>
+        <span className="rounded bg-gray-100 dark:bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-bold text-gray-500 dark:text-white/40">{hasPens ? 'FT-Pens' : 'FT'}</span>
       </div>
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 flex-1 items-center gap-1.5">
@@ -557,7 +564,13 @@ function ResultCard({ fixture: f, tz }: { fixture: Fixture; tz: string }) {
           <span className={['truncate text-sm font-semibold', homeWin ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-white/50'].join(' ')}>{teamNameEs(f.home.name)}</span>
         </div>
         <div className="shrink-0 text-center">
-          <span className="text-lg font-bold tracking-wider text-brand-orange">{f.home.score}<span className="mx-1 text-gray-300 dark:text-white/20">–</span>{f.away.score}</span>
+          <span className="text-lg font-bold tracking-wider text-brand-orange">
+            {f.home.score}
+            {hasPens && <span className="text-sm font-semibold opacity-60"> ({f.home.penaltyScore})</span>}
+            <span className="mx-1 text-gray-300 dark:text-white/20">–</span>
+            {hasPens && <span className="text-sm font-semibold opacity-60">({f.away.penaltyScore}) </span>}
+            {f.away.score}
+          </span>
         </div>
         <div className="flex min-w-0 flex-1 flex-row-reverse items-center gap-1.5">
           <span className="text-base">{flag(f.away.abbreviation)}</span>
