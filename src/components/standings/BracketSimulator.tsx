@@ -16,41 +16,43 @@ const FLAG: Record<string, string> = {
 const flag = (a: string) => FLAG[a] ?? '🏳️';
 
 
-// ── R32 bracket definition — ESPN bracket positions (event IDs 760486–760501) ─
+// ── R32 bracket definition — verified from Fox Sports / ESPN live bracket ─────
 // Adjacent pairs (0,1), (2,3), ... feed the same R16 match.
-// LEFT half  → R16 matches 0-3 → feeds left SF → left side of dual bracket
-// RIGHT half → R16 matches 4-7 → feeds right SF → right side of dual bracket
+// LEFT half  [0-7]  → R16-A,B,C,D → 2 QFs → left SF  (Canada's side)
+// RIGHT half [8-15] → R16-E,F,G,H → 2 QFs → right SF (Brazil/Mexico side)
+// Canada (RSA/CAN, idx 2) and Brazil (BRA/JPN, idx 8) can only meet in the FINAL.
 const R32_DEFS = [
-  // LEFT — R16-1: Canada (pos 1) vs NED/MAR winner (pos 3)
-  { id:'r01', date:'2026-06-28T19:00Z', label:'16vos · 28 Jun' }, // RSA vs CAN
-  { id:'r02', date:'2026-06-30T01:00Z', label:'16vos · 29 Jun' }, // NED vs MAR
-  // LEFT — R16-2: GER/PAR winner (pos 2) vs CIV/NOR winner (pos 5)
-  { id:'r03', date:'2026-06-29T20:30Z', label:'16vos · 29 Jun' }, // GER vs PAR
-  { id:'r04', date:'2026-06-30T17:00Z', label:'16vos · 30 Jun' }, // CIV vs NOR
-  // LEFT — R16-3: Brazil (pos 4) vs MEX/ECU winner (pos 6)
-  { id:'r05', date:'2026-06-29T17:00Z', label:'16vos · 29 Jun' }, // BRA vs JPN
-  { id:'r06', date:'2026-07-01T01:00Z', label:'16vos · 30 Jun' }, // MEX vs ECU
-  // LEFT — R16-4: FRA/SWE winner (pos 7) vs BEL/SEN winner (pos 8)
-  { id:'r07', date:'2026-06-30T21:00Z', label:'16vos · 30 Jun' }, // FRA vs SWE
+  // LEFT — R16-A: GER/PAR winner vs FRA/SWE winner (Jul 4, 21:00 UTC)
+  { id:'r01', date:'2026-06-29T20:30Z', label:'16vos · 29 Jun' }, // GER vs PAR
+  { id:'r02', date:'2026-06-30T21:00Z', label:'16vos · 30 Jun' }, // FRA vs SWE
+  // LEFT — R16-B: RSA/CAN winner vs NED/MAR winner (Jul 4, 17:00 UTC)
+  { id:'r03', date:'2026-06-28T19:00Z', label:'16vos · 28 Jun' }, // RSA vs CAN
+  { id:'r04', date:'2026-06-30T01:00Z', label:'16vos · 29 Jun' }, // NED vs MAR
+  // LEFT — R16-C: POR/CRO winner vs ESP/AUT winner (Jul 6)
+  { id:'r05', date:'2026-07-02T23:00Z', label:'16vos · 2 Jul'  }, // POR vs CRO
+  { id:'r06', date:'2026-07-02T19:00Z', label:'16vos · 2 Jul'  }, // ESP vs AUT
+  // LEFT — R16-D: USA/BIH winner vs BEL/SEN winner (Jul 6)
+  { id:'r07', date:'2026-07-02T00:00Z', label:'16vos · 2 Jul'  }, // USA vs BIH
   { id:'r08', date:'2026-07-01T20:00Z', label:'16vos · 1 Jul'  }, // BEL vs SEN
-  // RIGHT — R16-5: POR/CRO winner (pos 11) vs ESP/AUT winner (pos 12)
-  { id:'r09', date:'2026-07-02T23:00Z', label:'16vos · 2 Jul'  }, // POR vs CRO
-  { id:'r10', date:'2026-07-02T19:00Z', label:'16vos · 2 Jul'  }, // ESP vs AUT
-  // RIGHT — R16-6: USA/BIH winner (pos 9) vs ENG/COD winner (pos 10)
-  { id:'r11', date:'2026-07-02T00:00Z', label:'16vos · 2 Jul'  }, // USA vs BIH
+  // RIGHT — R16-E: BRA/JPN winner vs CIV/NOR winner (Jul 5, 20:00 UTC)
+  { id:'r09', date:'2026-06-29T17:00Z', label:'16vos · 29 Jun' }, // BRA vs JPN
+  { id:'r10', date:'2026-06-30T17:00Z', label:'16vos · 30 Jun' }, // CIV vs NOR
+  // RIGHT — R16-F: MEX/ECU winner vs ENG/COD winner (Jul 5-6)
+  { id:'r11', date:'2026-07-01T01:00Z', label:'16vos · 30 Jun' }, // MEX vs ECU
   { id:'r12', date:'2026-07-01T16:00Z', label:'16vos · 1 Jul'  }, // ENG vs COD
-  // RIGHT — R16-7: AUS/EGY winner (pos 14) vs COL/GHA winner (pos 16)
-  { id:'r13', date:'2026-07-03T18:00Z', label:'16vos · 3 Jul'  }, // AUS vs EGY
-  { id:'r14', date:'2026-07-04T01:30Z', label:'16vos · 4 Jul'  }, // COL vs GHA
-  // RIGHT — R16-8: SUI/ALG winner (pos 13) vs ARG/CPV winner (pos 15)
+  // RIGHT — R16-G: ARG/CPV winner vs AUS/EGY winner (Jul 7)
+  { id:'r13', date:'2026-07-03T22:00Z', label:'16vos · 3 Jul'  }, // ARG vs CPV
+  { id:'r14', date:'2026-07-03T18:00Z', label:'16vos · 3 Jul'  }, // AUS vs EGY
+  // RIGHT — R16-H: SUI/ALG winner vs COL/GHA winner (Jul 7)
   { id:'r15', date:'2026-07-03T03:00Z', label:'16vos · 3 Jul'  }, // SUI vs ALG
-  { id:'r16', date:'2026-07-03T22:00Z', label:'16vos · 3 Jul'  }, // ARG vs CPV
+  { id:'r16', date:'2026-07-04T01:30Z', label:'16vos · 4 Jul'  }, // COL vs GHA
 ];
 
-// R16 pairings: each pair of R32 match winners
-// R16-i = Winner(R32[2i]) vs Winner(R32[2i+1])
-const R16_LABELS = ['Oct · 4 Jul','Oct · 4 Jul','Oct · 5 Jul','Oct · 5 Jul','Oct · 6 Jul','Oct · 6 Jul','Oct · 7 Jul','Oct · 7 Jul'];
-const QF_LABELS  = ['Ctos · 9 Jul','Ctos · 9 Jul','Ctos · 10 Jul','Ctos · 10 Jul'];
+// R16 pairings: R16-i = Winner(R32[2i]) vs Winner(R32[2i+1])
+// Left half: R16-A(0) · R16-B(1) → QF-left-top; R16-C(2) · R16-D(3) → QF-left-bot
+// Right half: R16-E(4) · R16-F(5) → QF-right-top; R16-G(6) · R16-H(7) → QF-right-bot
+const R16_LABELS = ['Oct · 4 Jul','Oct · 4 Jul','Oct · 6 Jul','Oct · 6 Jul','Oct · 5 Jul','Oct · 5 Jul','Oct · 7 Jul','Oct · 7 Jul'];
+const QF_LABELS  = ['Ctos · 9 Jul','Ctos · 10 Jul','Ctos · 11 Jul','Ctos · 12 Jul'];
 const SF_LABELS  = ['Semis · 15 Jul','Semis · 16 Jul'];
 const F_LABEL    = 'Final · 19 Jul';
 
