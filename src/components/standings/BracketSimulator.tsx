@@ -154,6 +154,8 @@ function MatchCard({
   isChampionship,
   locked,
   lockedScore,
+  liveScore,
+  isLive,
 }: {
   match: BMatch;
   roundIdx: number;
@@ -163,6 +165,8 @@ function MatchCard({
   isChampionship?: boolean;
   locked?: boolean;
   lockedScore?: LockedScore;
+  liveScore?: LockedScore;
+  isLive?: boolean;
 }) {
   const key = `${roundIdx}-${matchIdx}`;
   const picked = picks[key];
@@ -171,7 +175,11 @@ function MatchCard({
     const isWinner = picked === side;
     const isLoser  = picked && picked !== side;
     const isTbd    = !team;
-    const score    = lockedScore ? (side === 'home' ? lockedScore.home : lockedScore.away) : null;
+    const score    = lockedScore
+      ? (side === 'home' ? lockedScore.home : lockedScore.away)
+      : liveScore
+        ? (side === 'home' ? liveScore.home : liveScore.away)
+        : null;
     const penScore = lockedScore ? (side === 'home' ? lockedScore.homePen : lockedScore.awayPen) : null;
 
     return (
@@ -213,7 +221,7 @@ function MatchCard({
           {isTbd ? '—' : team.name}
         </span>
 
-        {/* Score (locked) or winner check (user pick) */}
+        {/* Score: locked (official) | live (in-progress) | user pick (checkmark) */}
         {locked && score !== null && (
           <span className="text-[11px] font-bold tabular-nums text-gray-500 dark:text-white/50 shrink-0 flex items-baseline gap-0.5">
             {score}
@@ -222,7 +230,10 @@ function MatchCard({
             )}
           </span>
         )}
-        {isWinner && !locked && (
+        {!locked && isLive && score !== null && (
+          <span className="text-[11px] font-bold tabular-nums text-red-500 dark:text-red-400 shrink-0">{score}</span>
+        )}
+        {isWinner && !locked && !isLive && (
           <svg className="h-3 w-3 text-brand-teal shrink-0" viewBox="0 0 12 12" fill="currentColor">
             <path d="M10 3L5 8.5 2 5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
           </svg>
@@ -249,7 +260,13 @@ function MatchCard({
         <span className="text-[9px] font-bold tracking-widest uppercase text-gray-400 dark:text-white/25">
           {match.label}
         </span>
-        {locked && (
+        {isLive && (
+          <span className="flex items-center gap-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+            <span className="text-[8px] font-bold tracking-wide uppercase text-red-400">En vivo</span>
+          </span>
+        )}
+        {locked && !isLive && (
           <span className="text-[8px] font-bold tracking-wide uppercase text-gray-400 dark:text-white/25">
             Final
           </span>
@@ -324,40 +341,53 @@ export default function BracketSimulator({ fixtures = [] }: { fixtures?: Fixture
   const [picks, setPicks] = useState<Picks>({});
   const [lockedKeys, setLockedKeys] = useState<Set<string>>(new Set());
   const [lockedScores, setLockedScores] = useState<Record<string, LockedScore>>({});
+  const [liveKeys, setLiveKeys] = useState<Set<string>>(new Set());
+  const [liveScores, setLiveScores] = useState<Record<string, LockedScore>>({});
 
-  // Auto-fill picks from completed R32 fixtures
+  // Sync picks/scores from live ESPN fixture data every time fixtures refresh
   useEffect(() => {
     if (!fixtures.length) return;
-    const newLocked = new Set<string>();
-    const newScores: Record<string, LockedScore> = {};
+    const newLocked  = new Set<string>();
+    const newLockedScores: Record<string, LockedScore> = {};
     const newPicks: Picks = {};
+    const newLive  = new Set<string>();
+    const newLiveScores: Record<string, LockedScore> = {};
 
     R32_DEFS.forEach((def, idx) => {
       const fixture = findR32Fixture(def.date, fixtures);
-      if (!fixture || fixture.status.state !== 'post') return;
+      if (!fixture) return;
       const homeScore = Number(fixture.home.score ?? 0);
       const awayScore = Number(fixture.away.score ?? 0);
-      // Skip if still 0-0 (data not yet populated)
-      if (homeScore === 0 && awayScore === 0) return;
       const key = `0-${idx}`;
-      // Use ESPN's winner flag — correctly reflects penalty shootout results
-      // Fall back to score comparison only if winner flags are absent
-      const homeWins = fixture.home.winner || (!fixture.away.winner && homeScore > awayScore);
-      newPicks[key] = homeWins ? 'home' : 'away';
-      newLocked.add(key);
-      newScores[key] = {
-        home: String(homeScore),
-        away: String(awayScore),
-        homePen: fixture.home.penaltyScore ?? undefined,
-        awayPen: fixture.away.penaltyScore ?? undefined,
-      };
-    });
 
-    if (newLocked.size === 0) return;
+      if (fixture.status.state === 'post') {
+        // Skip if still 0-0 (score not yet populated by ESPN)
+        if (homeScore === 0 && awayScore === 0) return;
+        // Use ESPN winner flag — correctly reflects penalty shootout outcomes
+        const homeWins = fixture.home.winner || (!fixture.away.winner && homeScore > awayScore);
+        newPicks[key] = homeWins ? 'home' : 'away';
+        newLocked.add(key);
+        newLockedScores[key] = {
+          home: String(homeScore),
+          away: String(awayScore),
+          homePen: fixture.home.penaltyScore ?? undefined,
+          awayPen: fixture.away.penaltyScore ?? undefined,
+        };
+      } else if (fixture.status.state === 'in') {
+        // Game in progress — show live score, don't lock the pick
+        newLive.add(key);
+        newLiveScores[key] = {
+          home: String(homeScore),
+          away: String(awayScore),
+        };
+      }
+    });
 
     setPicks(prev => ({ ...prev, ...newPicks }));
     setLockedKeys(newLocked);
-    setLockedScores(newScores);
+    setLockedScores(newLockedScores);
+    setLiveKeys(newLive);
+    setLiveScores(newLiveScores);
   }, [fixtures]);
 
   const r32 = useMemo(() => buildR32(fixtures), [fixtures]);
@@ -417,6 +447,7 @@ export default function BracketSimulator({ fixtures = [] }: { fixtures?: Fixture
             width={36}
             height={36}
             className="h-9 w-9 object-contain shrink-0"
+            unoptimized
           />
           <div>
             <h2 className="text-sm font-bold text-gray-900 dark:text-white tracking-wide">
@@ -507,6 +538,8 @@ export default function BracketSimulator({ fixtures = [] }: { fixtures?: Fixture
                           onPick={handlePick}
                           locked={lockedKeys.has(matchKey)}
                           lockedScore={lockedScores[matchKey]}
+                          liveScore={liveScores[matchKey]}
+                          isLive={liveKeys.has(matchKey)}
                         />
                       );
                     })}
@@ -536,7 +569,7 @@ export default function BracketSimulator({ fixtures = [] }: { fixtures?: Fixture
                 {/* Final column */}
                 <div style={{ width: 152, flexShrink: 0 }}>
                   <div style={{ height: LABEL_H }} className="flex items-center justify-center gap-1.5">
-                    <Image src="/world_cup_2026.png" alt="FIFA World Cup 2026" width={14} height={14} className="h-3.5 w-3.5 object-contain shrink-0" />
+                    <Image src="/world_cup_2026.png" alt="FIFA World Cup 2026" width={14} height={14} className="h-3.5 w-3.5 object-contain shrink-0" unoptimized />
                     <span className="text-[9px] font-bold tracking-[0.15em] uppercase text-yellow-500 dark:text-yellow-400">
                       Final · 19 Jul
                     </span>
@@ -552,6 +585,8 @@ export default function BracketSimulator({ fixtures = [] }: { fixtures?: Fixture
                         isChampionship
                         locked={lockedKeys.has(finalKey)}
                         lockedScore={lockedScores[finalKey]}
+                        liveScore={liveScores[finalKey]}
+                        isLive={liveKeys.has(finalKey)}
                       />
                     )}
                   </div>
@@ -604,6 +639,8 @@ export default function BracketSimulator({ fixtures = [] }: { fixtures?: Fixture
                           onPick={handlePick}
                           locked={lockedKeys.has(matchKey)}
                           lockedScore={lockedScores[matchKey]}
+                          liveScore={liveScores[matchKey]}
+                          isLive={liveKeys.has(matchKey)}
                         />
                       );
                     })}
