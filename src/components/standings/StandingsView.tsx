@@ -424,7 +424,7 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
 
         {/* ─── KO ROUNDS TAB ──────────────────────────────────────────────────── */}
         {view === 'ko' && (() => {
-          const KO_START = new Date('2026-07-04T00:00:00Z').getTime();
+          const KO_START = new Date('2026-07-04T12:00:00Z').getTime();
           const koFixtures = fixtures
             .filter(f => new Date(f.date).getTime() >= KO_START)
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
