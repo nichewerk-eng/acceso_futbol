@@ -53,14 +53,14 @@ function isToday(iso: string, tz: string) {
 // ── Types ───────────────────────────────────────────────────────────────────────
 interface Props { initialGroups: Group[]; initialFixtures: Fixture[]; }
 const GROUP_LETTERS = ['A','B','C','D','E','F','G','H','I','J','K','L'];
-type View = 'tabla' | 'cuadro' | 'simulador';
+type View = 'tabla' | 'ko' | 'cuadro' | 'simulador';
 
 // ── Main component ─────────────────────────────────────────────────────────────
 export default function StandingsView({ initialGroups, initialFixtures }: Props) {
   const [groups, setGroups]               = useState<Group[]>(initialGroups);
   const [fixtures, setFixtures]           = useState<Fixture[]>(initialFixtures);
   const [selectedGroup, setSelectedGroup] = useState('A');
-  const [view, setView]                   = useState<View>('cuadro');
+  const [view, setView]                   = useState<View>('ko');
   const [theme, setTheme]                 = useState<'dark' | 'light'>('dark');
   const [lastUpdated, setLastUpdated]     = useState(new Date());
   const [refreshing, setRefreshing]       = useState(false);
@@ -191,9 +191,10 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
       <div className="border-b border-gray-200 dark:border-white/[0.06] bg-white dark:bg-bg-1">
         <div className="mx-auto flex max-w-5xl items-center justify-center gap-1 px-4 sm:px-6">
           {([
-            ['tabla',     'Grupos',     'Tabla de Grupos'],
-            ['cuadro',    'Cuadro R32', 'Cuadro R32'],
-            ['simulador', 'Simulador',  'Simulador'],
+            ['tabla',     'Grupos',    'Tabla de Grupos'],
+            ['ko',        'Octavos',   'Eliminación Directa'],
+            ['cuadro',    'Cuadro',    'Cuadro'],
+            ['simulador', 'Simulador', 'Simulador'],
           ] as const).map(([v, short, full]) => (
             <button
               key={v}
@@ -420,6 +421,94 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
             )}
           </>
         )}
+
+        {/* ─── KO ROUNDS TAB ──────────────────────────────────────────────────── */}
+        {view === 'ko' && (() => {
+          const KO_START = new Date('2026-07-04T00:00:00Z').getTime();
+          const koFixtures = fixtures
+            .filter(f => new Date(f.date).getTime() >= KO_START)
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+          const ROUNDS: { label: string; shortLabel: string; start: string; end: string }[] = [
+            { label: 'Octavos de Final',  shortLabel: 'Octavos',  start: '2026-07-04', end: '2026-07-08' },
+            { label: 'Cuartos de Final',  shortLabel: 'Cuartos',  start: '2026-07-09', end: '2026-07-13' },
+            { label: 'Semifinales',        shortLabel: 'Semis',    start: '2026-07-14', end: '2026-07-17' },
+            { label: 'Final',              shortLabel: 'Final',    start: '2026-07-18', end: '2026-07-20' },
+          ];
+
+          const liveCount = koFixtures.filter(f => f.status.state === 'in').length;
+
+          return (
+            <div>
+              <div className="mb-6 flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-bold tracking-wide text-gray-900 dark:text-white flex items-center gap-2">
+                    Fase de Eliminación
+                    {liveCount > 0 && (
+                      <span className="flex items-center gap-1.5 rounded-full bg-red-500/10 border border-red-500/25 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-400">
+                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+                        En vivo
+                      </span>
+                    )}
+                  </h2>
+                  <p className="text-xs text-gray-400 dark:text-white/30 mt-1">Horarios en {tzLabel(userTz)}</p>
+                </div>
+                <div className="flex items-center gap-2 text-[10px] text-gray-400 dark:text-white/30">
+                  {refreshing ? <span>Actualizando…</span> : (
+                    <span>{lastUpdated.toLocaleTimeString('es-MX', { timeZone: userTz, hour: '2-digit', minute: '2-digit' })}</span>
+                  )}
+                </div>
+              </div>
+
+              {koFixtures.length === 0 ? (
+                <div className="rounded-xl border border-gray-200 dark:border-white/[0.05] p-8 text-center text-sm text-gray-400 dark:text-white/30">
+                  Los partidos de eliminación directa comienzan el 4 de julio
+                </div>
+              ) : (
+                <div className="flex flex-col gap-10">
+                  {ROUNDS.map(({ label, start, end }) => {
+                    const startTs = new Date(start + 'T00:00:00Z').getTime();
+                    const endTs   = new Date(end   + 'T00:00:00Z').getTime();
+                    const roundFixtures = koFixtures.filter(f => {
+                      const t = new Date(f.date).getTime();
+                      return t >= startTs && t < endTs;
+                    });
+                    if (roundFixtures.length === 0) return null;
+
+                    const liveFx   = roundFixtures.filter(f => f.status.state === 'in');
+                    const doneFx   = roundFixtures.filter(f => f.status.state === 'post');
+                    const preFx    = roundFixtures.filter(f => f.status.state === 'pre');
+                    const allDone  = doneFx.length === roundFixtures.length;
+
+                    return (
+                      <section key={label}>
+                        <div className="mb-3 flex items-center gap-3">
+                          <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-gray-500 dark:text-white/50">{label}</h3>
+                          {allDone && <span className="text-[10px] text-gray-400 dark:text-white/30">Completo</span>}
+                        </div>
+                        {liveFx.length > 0 && (
+                          <div className="mb-3 grid gap-3 sm:grid-cols-2">
+                            {liveFx.map(f => <LiveFixtureCard key={f.id} fixture={f} tz={userTz} />)}
+                          </div>
+                        )}
+                        {doneFx.length > 0 && (
+                          <div className="mb-3 grid gap-2 sm:grid-cols-2">
+                            {doneFx.map(f => <ResultCard key={f.id} fixture={f} tz={userTz} />)}
+                          </div>
+                        )}
+                        {preFx.length > 0 && (
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            {preFx.map(f => <UpcomingCard key={f.id} fixture={f} tz={userTz} />)}
+                          </div>
+                        )}
+                      </section>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* ─── CUADRO R32 TAB ─────────────────────────────────────────────────── */}
         {view === 'cuadro' && (

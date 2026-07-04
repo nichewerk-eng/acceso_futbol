@@ -353,6 +353,7 @@ export default function BracketSimulator({ fixtures = [] }: { fixtures?: Fixture
     const newLive  = new Set<string>();
     const newLiveScores: Record<string, LockedScore> = {};
 
+    // ── R32: match by kickoff timestamp ──────────────────────────────────────
     R32_DEFS.forEach((def, idx) => {
       const fixture = findR32Fixture(def.date, fixtures);
       if (!fixture) return;
@@ -361,27 +362,62 @@ export default function BracketSimulator({ fixtures = [] }: { fixtures?: Fixture
       const key = `0-${idx}`;
 
       if (fixture.status.state === 'post') {
-        // Skip if still 0-0 (score not yet populated by ESPN)
         if (homeScore === 0 && awayScore === 0) return;
-        // Use ESPN winner flag — correctly reflects penalty shootout outcomes
         const homeWins = fixture.home.winner || (!fixture.away.winner && homeScore > awayScore);
         newPicks[key] = homeWins ? 'home' : 'away';
         newLocked.add(key);
         newLockedScores[key] = {
-          home: String(homeScore),
-          away: String(awayScore),
+          home: String(homeScore), away: String(awayScore),
           homePen: fixture.home.penaltyScore ?? undefined,
           awayPen: fixture.away.penaltyScore ?? undefined,
         };
       } else if (fixture.status.state === 'in') {
-        // Game in progress — show live score, don't lock the pick
         newLive.add(key);
-        newLiveScores[key] = {
-          home: String(homeScore),
-          away: String(awayScore),
-        };
+        newLiveScores[key] = { home: String(homeScore), away: String(awayScore) };
       }
     });
+
+    // ── R16 → Final: match by team abbreviations ─────────────────────────────
+    // After each round we recompute so the next round's team names are updated.
+    for (let roundIdx = 1; roundIdx <= 4; roundIdx++) {
+      const tempBracket = computeBracket(buildR32(fixtures), newPicks);
+      const round = tempBracket[roundIdx];
+      if (!round) break;
+
+      round.matches.forEach((match, matchIdx) => {
+        if (!match.home?.abbr || !match.away?.abbr) return;
+        const homeAbbr = match.home.abbr;
+        const awayAbbr = match.away.abbr;
+        const fixture = fixtures.find(f => {
+          const ha = f.home.abbreviation;
+          const aa = f.away.abbreviation;
+          return (ha === homeAbbr && aa === awayAbbr) || (ha === awayAbbr && aa === homeAbbr);
+        });
+        if (!fixture) return;
+
+        const fhIsMatchHome = fixture.home.abbreviation === homeAbbr;
+        const rawHome = Number(fixture.home.score ?? 0);
+        const rawAway = Number(fixture.away.score ?? 0);
+        const matchHome = fhIsMatchHome ? rawHome : rawAway;
+        const matchAway = fhIsMatchHome ? rawAway : rawHome;
+        const key = `${roundIdx}-${matchIdx}`;
+
+        if (fixture.status.state === 'post') {
+          if (rawHome === 0 && rawAway === 0) return;
+          const fhWins = fixture.home.winner || (!fixture.away.winner && rawHome > rawAway);
+          newPicks[key] = (fhIsMatchHome ? fhWins : !fhWins) ? 'home' : 'away';
+          newLocked.add(key);
+          newLockedScores[key] = {
+            home: String(matchHome), away: String(matchAway),
+            homePen: (fhIsMatchHome ? fixture.home.penaltyScore : fixture.away.penaltyScore) ?? undefined,
+            awayPen: (fhIsMatchHome ? fixture.away.penaltyScore : fixture.home.penaltyScore) ?? undefined,
+          };
+        } else if (fixture.status.state === 'in') {
+          newLive.add(key);
+          newLiveScores[key] = { home: String(matchHome), away: String(matchAway) };
+        }
+      });
+    }
 
     setPicks(prev => ({ ...prev, ...newPicks }));
     setLockedKeys(newLocked);
