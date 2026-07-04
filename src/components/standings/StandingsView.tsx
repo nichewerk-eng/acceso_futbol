@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import HeroBanner from '@/components/HeroBanner';
 import BracketView from './BracketView';
 import BracketSimulator from './BracketSimulator';
@@ -97,6 +97,7 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
   }, []);
 
   useEffect(() => {
+    refresh(true); // immediate fresh fetch on mount
     intervalRef.current = setInterval(() => refresh(true), 30_000);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [refresh]);
@@ -108,6 +109,32 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
   const pastFixtures = groupFixtures.filter((f) => f.status.state === 'post').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const liveFixtures = groupFixtures.filter((f) => f.status.state === 'in');
   const upcomingFixtures = groupFixtures.filter((f) => f.status.state === 'pre').sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  // ── Derived: KO round fixtures ───────────────────────────────────────────────
+  const KO_ROUNDS = [
+    { label: 'Octavos de Final', start: '2026-07-04T12:00:00Z', end: '2026-07-08T00:00:00Z' },
+    { label: 'Cuartos de Final', start: '2026-07-09T00:00:00Z', end: '2026-07-13T00:00:00Z' },
+    { label: 'Semifinales',       start: '2026-07-14T00:00:00Z', end: '2026-07-17T00:00:00Z' },
+    { label: 'Final',             start: '2026-07-18T00:00:00Z', end: '2026-07-20T00:00:00Z' },
+  ] as const;
+
+  const koRounds = useMemo(() => {
+    return KO_ROUNDS.map(({ label, start, end }) => {
+      const s = new Date(start).getTime();
+      const e = new Date(end).getTime();
+      const all = fixtures
+        .filter(f => { const t = new Date(f.date).getTime(); return t >= s && t < e; })
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      return {
+        label,
+        live:     all.filter(f => f.status.state === 'in'),
+        done:     all.filter(f => f.status.state === 'post'),
+        upcoming: all.filter(f => f.status.state === 'pre'),
+        total:    all.length,
+      };
+    }).filter(r => r.total > 0);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fixtures]);
 
 
 
@@ -423,92 +450,64 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
         )}
 
         {/* ─── KO ROUNDS TAB ──────────────────────────────────────────────────── */}
-        {view === 'ko' && (() => {
-          const KO_START = new Date('2026-07-04T12:00:00Z').getTime();
-          const koFixtures = fixtures
-            .filter(f => new Date(f.date).getTime() >= KO_START)
-            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-          const ROUNDS: { label: string; shortLabel: string; start: string; end: string }[] = [
-            { label: 'Octavos de Final',  shortLabel: 'Octavos',  start: '2026-07-04', end: '2026-07-08' },
-            { label: 'Cuartos de Final',  shortLabel: 'Cuartos',  start: '2026-07-09', end: '2026-07-13' },
-            { label: 'Semifinales',        shortLabel: 'Semis',    start: '2026-07-14', end: '2026-07-17' },
-            { label: 'Final',              shortLabel: 'Final',    start: '2026-07-18', end: '2026-07-20' },
-          ];
-
-          const liveCount = koFixtures.filter(f => f.status.state === 'in').length;
-
-          return (
-            <div>
-              <div className="mb-6 flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-bold tracking-wide text-gray-900 dark:text-white flex items-center gap-2">
-                    Fase de Eliminación
-                    {liveCount > 0 && (
-                      <span className="flex items-center gap-1.5 rounded-full bg-red-500/10 border border-red-500/25 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-400">
-                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
-                        En vivo
-                      </span>
-                    )}
-                  </h2>
-                  <p className="text-xs text-gray-400 dark:text-white/30 mt-1">Horarios en {tzLabel(userTz)}</p>
-                </div>
-                <div className="flex items-center gap-2 text-[10px] text-gray-400 dark:text-white/30">
-                  {refreshing ? <span>Actualizando…</span> : (
-                    <span>{lastUpdated.toLocaleTimeString('es-MX', { timeZone: userTz, hour: '2-digit', minute: '2-digit' })}</span>
+        {view === 'ko' && (
+          <div>
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold tracking-wide text-gray-900 dark:text-white flex items-center gap-2">
+                  Fase de Eliminación
+                  {koRounds.some(r => r.live.length > 0) && (
+                    <span className="flex items-center gap-1.5 rounded-full bg-red-500/10 border border-red-500/25 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-400">
+                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+                      En vivo
+                    </span>
                   )}
-                </div>
+                </h2>
+                <p className="text-xs text-gray-400 dark:text-white/30 mt-1">Horarios en {tzLabel(userTz)}</p>
               </div>
-
-              {koFixtures.length === 0 ? (
-                <div className="rounded-xl border border-gray-200 dark:border-white/[0.05] p-8 text-center text-sm text-gray-400 dark:text-white/30">
-                  Los partidos de eliminación directa comienzan el 4 de julio
-                </div>
-              ) : (
-                <div className="flex flex-col gap-10">
-                  {ROUNDS.map(({ label, start, end }) => {
-                    const startTs = new Date(start + 'T00:00:00Z').getTime();
-                    const endTs   = new Date(end   + 'T00:00:00Z').getTime();
-                    const roundFixtures = koFixtures.filter(f => {
-                      const t = new Date(f.date).getTime();
-                      return t >= startTs && t < endTs;
-                    });
-                    if (roundFixtures.length === 0) return null;
-
-                    const liveFx   = roundFixtures.filter(f => f.status.state === 'in');
-                    const doneFx   = roundFixtures.filter(f => f.status.state === 'post');
-                    const preFx    = roundFixtures.filter(f => f.status.state === 'pre');
-                    const allDone  = doneFx.length === roundFixtures.length;
-
-                    return (
-                      <section key={label}>
-                        <div className="mb-3 flex items-center gap-3">
-                          <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-gray-500 dark:text-white/50">{label}</h3>
-                          {allDone && <span className="text-[10px] text-gray-400 dark:text-white/30">Completo</span>}
-                        </div>
-                        {liveFx.length > 0 && (
-                          <div className="mb-3 grid gap-3 sm:grid-cols-2">
-                            {liveFx.map(f => <LiveFixtureCard key={f.id} fixture={f} tz={userTz} />)}
-                          </div>
-                        )}
-                        {doneFx.length > 0 && (
-                          <div className="mb-3 grid gap-2 sm:grid-cols-2">
-                            {doneFx.map(f => <ResultCard key={f.id} fixture={f} tz={userTz} />)}
-                          </div>
-                        )}
-                        {preFx.length > 0 && (
-                          <div className="grid gap-2 sm:grid-cols-2">
-                            {preFx.map(f => <UpcomingCard key={f.id} fixture={f} tz={userTz} />)}
-                          </div>
-                        )}
-                      </section>
-                    );
-                  })}
-                </div>
-              )}
+              <div className="flex items-center gap-2 text-[10px] text-gray-400 dark:text-white/30">
+                {refreshing ? <span>Actualizando…</span> : (
+                  <span>{lastUpdated.toLocaleTimeString('es-MX', { timeZone: userTz, hour: '2-digit', minute: '2-digit' })}</span>
+                )}
+              </div>
             </div>
-          );
-        })()}
+
+            {koRounds.length === 0 ? (
+              <div className="rounded-xl border border-gray-200 dark:border-white/[0.05] p-8 text-center text-sm text-gray-400 dark:text-white/30">
+                Los partidos de eliminación directa comienzan el 4 de julio
+              </div>
+            ) : (
+              <div className="flex flex-col gap-10">
+                {koRounds.map(({ label, live, done, upcoming }) => {
+                  const allDone = done.length > 0 && live.length === 0 && upcoming.length === 0;
+                  return (
+                    <section key={label}>
+                      <div className="mb-3 flex items-center gap-3">
+                        <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-gray-500 dark:text-white/50">{label}</h3>
+                        {allDone && <span className="text-[10px] text-gray-400 dark:text-white/30">Completo</span>}
+                      </div>
+                      {live.length > 0 && (
+                        <div className="mb-3 grid gap-3 sm:grid-cols-2">
+                          {live.map(f => <LiveFixtureCard key={f.id} fixture={f} tz={userTz} />)}
+                        </div>
+                      )}
+                      {done.length > 0 && (
+                        <div className="mb-3 grid gap-2 sm:grid-cols-2">
+                          {done.map(f => <ResultCard key={f.id} fixture={f} tz={userTz} />)}
+                        </div>
+                      )}
+                      {upcoming.length > 0 && (
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {upcoming.map(f => <UpcomingCard key={f.id} fixture={f} tz={userTz} />)}
+                        </div>
+                      )}
+                    </section>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ─── CUADRO R32 TAB ─────────────────────────────────────────────────── */}
         {view === 'cuadro' && (
