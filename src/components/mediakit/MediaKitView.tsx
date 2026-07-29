@@ -266,7 +266,7 @@ function CoverSection({
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-gray-600 sm:text-xl">
             Marca de medios en español enfocada en Liga MX y la Selección
             Mexicana, hecha para la afición mexicana y latina en Estados
-            Unidos.
+            Unidos y México.
           </p>
         </Reveal>
 
