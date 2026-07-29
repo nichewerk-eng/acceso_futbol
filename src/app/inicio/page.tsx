@@ -43,10 +43,10 @@ export default function Home() {
             {/* Wordmark logo */}
             <Link href="/tabla" className="shrink-0">
               <Image
-                src="/acceso_futbol_logo_logo_transparent_bg.PNG"
+                src="/logo.png"
                 alt="Acceso Futbol"
-                width={240}
-                height={80}
+                width={512}
+                height={331}
                 className="h-9 w-auto object-contain sm:h-11"
                 priority
               />

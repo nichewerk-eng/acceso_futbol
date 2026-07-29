@@ -11,8 +11,8 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: '#f07820',
     orientation: 'portrait-primary',
     icons: [
-      { src: '/logo.png',   sizes: '192x192', type: 'image/png', purpose: 'maskable' },
-      { src: '/logo.png',   sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: '/AccesoFutbol_Primary_Color_Transparent.png',   sizes: '1254x1254', type: 'image/png', purpose: 'maskable' },
+      { src: '/logo.png',   sizes: '512x331', type: 'image/png', purpose: 'any' },
     ],
     categories: ['sports', 'entertainment'],
     lang: 'es-MX',

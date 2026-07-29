@@ -148,7 +148,7 @@ export async function downloadGroupImage(
 
   // ── 4. Top logo ────────────────────────────────────────────────────────────
   try {
-    const topLogo = await loadImage('/acceso_futbol_logo_logo_transparent_bg.PNG');
+    const topLogo = await loadImage('/logo.png');
     const LOGO_H = 192;
     const LOGO_W = (topLogo.width / topLogo.height) * LOGO_H;
     ctx.globalAlpha = 0.90;
@@ -503,7 +503,7 @@ export async function downloadGroupImage(
 
   // Acceso Futbol logo
   try {
-    const logo = await loadImage('/acceso_futbol_logo_logo_transparent_bg.PNG');
+    const logo = await loadImage('/logo.png');
     const LOGO_H = 72;
     const LOGO_W = (logo.width / logo.height) * LOGO_H;
     ctx.globalAlpha = 0.80;
@@ -760,7 +760,7 @@ export async function downloadGroupImageWithPhoto(
 
   // Acceso Futbol logo
   try {
-    const logo = await loadImage('/acceso_futbol_logo_logo_transparent_bg.PNG');
+    const logo = await loadImage('/logo.png');
     const LH   = 90;
     const LW   = logo.width * (LH / logo.height);
     ctx.drawImage(logo, (W - LW) / 2, FOOTER_Y, LW, LH);

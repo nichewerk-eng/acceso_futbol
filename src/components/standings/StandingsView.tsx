@@ -174,10 +174,10 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
           {/* Logo */}
           <Link href="/" className="shrink-0">
             <Image
-              src="/acceso_futbol_logo_logo_transparent_bg.PNG"
+              src={dark ? "/logo.png" : "/logo-dark.png"}
               alt="Acceso Futbol"
-              width={240}
-              height={80}
+              width={512}
+              height={331}
               className="h-8 w-auto object-contain sm:h-10"
               priority
             />
@@ -528,8 +528,8 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
         {/* Footer */}
         <footer className="mt-12 flex flex-col items-center gap-2 text-center text-xs text-gray-400 dark:text-white/20">
           <Image
-            src="/acceso_futbol_logo_logo_transparent_bg.PNG"
-            alt="Acceso Futbol" width={160} height={54}
+            src={dark ? "/logo.png" : "/logo-dark.png"}
+            alt="Acceso Futbol" width={512} height={331}
             className="h-10 w-auto object-contain opacity-50"
           />
           <span>Datos via ESPN · Se actualiza cada 30 segundos</span>

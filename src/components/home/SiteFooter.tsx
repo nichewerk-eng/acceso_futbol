@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { siteConfig } from "@/config/site";
 
 export function SiteFooter() {
@@ -14,6 +15,12 @@ export function SiteFooter() {
           <p className="mt-1 text-sm text-white/50">
             Fundado {siteConfig.founded}
           </p>
+          <Link
+            href="/mediakit"
+            className="mt-3 inline-block text-sm font-semibold text-white/60 transition hover:text-brand-orange"
+          >
+            Media Kit →
+          </Link>
         </div>
 
         <div className="flex flex-col gap-2 text-sm text-white/60 sm:items-end">

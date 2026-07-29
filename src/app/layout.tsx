@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     locale: "es_MX",
     type: "website",
     images: [
-      { url: "/logo.png", width: 512, height: 512, alt: siteConfig.name },
+      { url: "/logo.png", width: 512, height: 331, alt: siteConfig.name },
     ],
   },
   twitter: {
@@ -39,10 +39,6 @@ export const metadata: Metadata = {
     title: "Acceso Futbol | Liga MX y Mundial 2026",
     description: siteConfig.description,
     images: ["/logo.png"],
-  },
-  icons: {
-    icon: [{ url: "/favicon.ico", sizes: "32x32" }],
-    apple: [{ url: "/logo.png", sizes: "180x180", type: "image/png" }],
   },
 };
 

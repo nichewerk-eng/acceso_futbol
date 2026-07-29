@@ -35,9 +35,9 @@ export default function SiteNav() {
         {/* Logo */}
         <Link href="/tabla" className="shrink-0">
           <Image
-            src="/acceso_futbol_logo_logo_transparent_bg.PNG"
+            src={dark ? "/logo.png" : "/logo-dark.png"}
             alt="Acceso Futbol"
-            width={200} height={66}
+            width={512} height={331}
             className="h-8 w-auto object-contain sm:h-9"
             priority
           />

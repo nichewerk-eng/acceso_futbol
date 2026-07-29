@@ -7,7 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
 const source = path.join(
   root,
-  "public/acceso_futbol_logo_logo_transparent_bg.PNG",
+  "public/AccesoFutbol_Primary_Color_Transparent.png",
 );
 
 /** Remove leftover black or teal matte pixels so the logo is truly transparent. */
@@ -39,12 +39,41 @@ async function cleanTransparency(inputPath) {
   return sharp(data, { raw: { width, height, channels } }).png();
 }
 
+/** Recolor near-white/light-gray pixels to dark navy, for use on light backgrounds. */
+async function makeDarkVariant(inputPath) {
+  const image = sharp(inputPath).ensureAlpha();
+  const { data, info } = await image.raw().toBuffer({ resolveWithObject: true });
+  const { width, height, channels } = info;
+
+  for (let i = 0; i < data.length; i += channels) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const a = data[i + 3];
+    if (a === 0) continue;
+
+    const isLight = r > 150 && g > 150 && b > 150 && Math.abs(r - g) < 20 && Math.abs(g - b) < 20;
+    if (isLight) {
+      data[i] = 17;
+      data[i + 1] = 24;
+      data[i + 2] = 39; // gray-900
+    }
+  }
+
+  return sharp(data, { raw: { width, height, channels } }).png();
+}
+
 async function main() {
   const cleaned = await cleanTransparency(source);
   const trimmed = cleaned.trim({ threshold: 10 });
 
   const logoPath = path.join(root, "public/logo.png");
   await trimmed.clone().resize(512, 512, { fit: "inside" }).png().toFile(logoPath);
+
+  // Dark-text variant for light backgrounds (e.g. the media kit's white nav).
+  const darkVariant = await makeDarkVariant(logoPath);
+  const logoDarkPath = path.join(root, "public/logo-dark.png");
+  await darkVariant.clone().resize(512, 512, { fit: "inside" }).png().toFile(logoDarkPath);
 
   const iconPath = path.join(root, "src/app/icon.png");
   await trimmed
@@ -90,7 +119,7 @@ async function main() {
   const publicFavicon = path.join(root, "public/favicon.ico");
   await writeFile(publicFavicon, await readFile(faviconPath));
 
-  console.log("Created:", logoPath, iconPath, appleIconPath, faviconPath);
+  console.log("Created:", logoPath, logoDarkPath, iconPath, appleIconPath, faviconPath);
 }
 
 main().catch((err) => {
