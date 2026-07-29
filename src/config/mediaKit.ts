@@ -22,6 +22,11 @@ export type ProofPoint = {
   tag?: string;
 };
 
+export type VerticalFit = {
+  name: string;
+  rationale: string;
+};
+
 export const mediaKit = {
   meta: {
     title: "Acceso Futbol · Media Kit",
@@ -99,12 +104,27 @@ export const mediaKit = {
     instagram: { age25to54: 70, splitNote: "Dividido en partes iguales entre México y Estados Unidos" },
     summary: "Audiencia adulta de alto poder adquisitivo, no una audiencia adolescente.",
     verticals: [
-      "Apuestas deportivas",
-      "Cerveza",
-      "Telecomunicaciones",
-      "Automotriz",
-      "Servicios financieros",
-    ],
+      {
+        name: "Apuestas deportivas",
+        rationale: "Cobertura diaria de previas, pronósticos y resultados en las cuatro plataformas.",
+      },
+      {
+        name: "Cerveza",
+        rationale: "89% de audiencia masculina, edad ideal para patrocinios de consumo social y deportivo.",
+      },
+      {
+        name: "Telecomunicaciones",
+        rationale: "Audiencia binacional que sigue fútbol en vivo tanto en México como en Estados Unidos.",
+      },
+      {
+        name: "Automotriz",
+        rationale: "73.5% de la audiencia tiene 35 años o más, edad de mayor poder de compra vehicular.",
+      },
+      {
+        name: "Servicios financieros",
+        rationale: "Audiencia adulta de alto poder adquisitivo, no una base adolescente.",
+      },
+    ] satisfies VerticalFit[],
   },
 
   geography: {
@@ -141,7 +161,7 @@ export const mediaKit = {
     {
       label: "Pico Mundial 2026",
       value: "2.5M",
-      detail: "vistas en 28 días, +196% de crecimiento sobre el periodo anterior",
+      detail: "vistas en 30 días, +196% de crecimiento sobre el periodo anterior",
       tag: "Capacidad de pico, no línea base",
     },
     {
