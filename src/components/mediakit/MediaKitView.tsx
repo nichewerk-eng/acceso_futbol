@@ -194,6 +194,15 @@ function Tag({ children }: { children: React.ReactNode }) {
   );
 }
 
+function EngagementBadge({ value, label }: { value: string; label: string }) {
+  return (
+    <span className="inline-flex items-baseline gap-2 border border-brand-orange/40 bg-brand-orange/5 px-4 py-2">
+      <span className="font-display text-xl font-bold text-brand-orange sm:text-2xl">{value}</span>
+      <span className="text-xs font-semibold uppercase tracking-wider text-gray-600">{label}</span>
+    </span>
+  );
+}
+
 function Reveal({
   children,
   delay = 0,
@@ -272,13 +281,28 @@ function CoverSection({
 
         <Reveal delay={120} className="mt-10 flex flex-wrap items-end gap-x-10 gap-y-6">
           <BigStat
-            value={formatNumber(mediaKit.headline.totalReach)}
-            label="Impresiones + vistas combinadas, 4 plataformas"
+            value={formatNumber(mediaKit.headline.facebookReach)}
+            label={`Personas alcanzadas en Facebook · ${mediaKit.headline.facebookOrganicNote}`}
             accent
           />
         </Reveal>
 
-        <Reveal delay={220} className="mt-12 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-gray-200 pt-6 text-sm text-gray-500">
+        <Reveal delay={180} className="mt-6 flex flex-wrap items-center gap-3">
+          {mediaKit.headline.engagementBadges.map((b) => (
+            <EngagementBadge key={b.label} value={b.value} label={b.label} />
+          ))}
+        </Reveal>
+
+        <Reveal delay={220}>
+          <p className="mt-6 flex flex-wrap items-baseline gap-x-2 text-gray-400">
+            <span className="font-display text-2xl font-bold text-gray-600 sm:text-3xl">
+              {formatNumber(mediaKit.headline.totalReach)}
+            </span>
+            <span className="text-xs sm:text-sm">de alcance total combinado en 4 plataformas</span>
+          </p>
+        </Reveal>
+
+        <Reveal delay={260} className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-gray-200 pt-6 text-sm text-gray-500">
           <span className="font-semibold text-gray-900">
             Media Kit · {mediaKit.meta.updated}
           </span>
@@ -326,20 +350,43 @@ function ReachSection({ setRef }: { setRef: SetRef }) {
       </Reveal>
 
       <Reveal delay={100} className="mt-10">
-        <BigStat value={formatNumber(headline.totalReach)} label="Impresiones + vistas combinadas, 4 plataformas" accent />
+        <BigStat
+          value={formatNumber(headline.facebookReach)}
+          label="Personas reales alcanzadas en Facebook"
+          accent
+        />
+        <p className="mt-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
+          {headline.facebookOrganicNote}
+        </p>
+      </Reveal>
+
+      <Reveal delay={160} className="mt-8 grid gap-8 sm:grid-cols-2">
+        <BigStat
+          size="md"
+          value={formatNumber(headline.facebookEngagements)}
+          label="Interacciones en Facebook: reacciones, comentarios, compartidos"
+        />
+        <BigStat
+          size="md"
+          value={formatNumber(headline.combinedAudience)}
+          label={`Seguidores combinados, 4 plataformas · +${formatNumber(headline.netNewFollowers)} nuevos`}
+        />
+      </Reveal>
+
+      <Reveal delay={230} className="mt-10 border border-gray-200 bg-white/60 p-5">
+        <BigStat
+          size="md"
+          value={formatNumber(headline.totalReach)}
+          label="Alcance + vistas combinadas, 4 plataformas"
+        />
         <p className="mt-3 max-w-xl text-xs leading-relaxed text-gray-400">{headline.methodologyNote}</p>
       </Reveal>
 
-      <Reveal delay={180} className="mt-8 grid gap-8 sm:grid-cols-2">
-        <BigStat size="md" value={formatNumber(headline.combinedAudience)} label="Seguidores combinados, 4 plataformas" />
-        <BigStat size="md" value={`+${formatNumber(headline.netNewFollowers)}`} label="Nuevos seguidores netos" />
-      </Reveal>
-
-      <Reveal delay={260} className="mt-10 inline-flex items-center gap-2 border border-brand-orange/50 bg-brand-orange/5 px-4 py-2 text-xs font-bold uppercase tracking-wider text-brand-orange">
+      <Reveal delay={290} className="mt-10 inline-flex items-center gap-2 border border-brand-orange/50 bg-brand-orange/5 px-4 py-2 text-xs font-bold uppercase tracking-wider text-brand-orange">
         {headline.creatorRewards}
       </Reveal>
 
-      <Reveal delay={320}>
+      <Reveal delay={340}>
         <p className="mt-10 max-w-3xl border-l-2 border-gray-300 pl-4 text-sm leading-relaxed text-gray-500">
           {windowInfo.note}
         </p>
@@ -398,6 +445,12 @@ function PlatformsSection({ setRef }: { setRef: SetRef }) {
               </p>
             </div>
 
+            {p.reachValue && (
+              <p className="mt-1.5 text-sm text-gray-500">
+                <strong className="text-gray-900">{formatNumber(p.reachValue)}</strong> {p.reachLabel}
+              </p>
+            )}
+
             <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-gray-200 pt-4 text-sm">
               <span className="text-gray-600">
                 <strong className="text-gray-900">{formatNumber(p.followers)}</strong> {p.followersLabel}
@@ -412,6 +465,10 @@ function PlatformsSection({ setRef }: { setRef: SetRef }) {
                 </span>
               )}
             </div>
+
+            <p className="mt-4 border-t border-gray-200 pt-4 text-sm font-semibold text-gray-700">
+              {p.positioning}
+            </p>
           </Reveal>
         ))}
       </div>
@@ -540,13 +597,16 @@ function GeographySection({ setRef }: { setRef: SetRef }) {
       </Reveal>
 
       <Reveal delay={200} className="mt-10 border border-gray-200 bg-gray-50 p-6">
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-orange">Foco: Austin</p>
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-orange">Foco: Texas</p>
         <div className="mt-4 grid gap-6 sm:grid-cols-3">
-          <BigStat size="md" value={`${g.austin.igShare}%`} label="Audiencia de Instagram" />
           <BigStat size="md" value={`${g.austin.texasShare}%`} label="De la audiencia total es Texas" />
-          <BigStat size="md" value={`#${g.austin.tiktokRank}`} label="Ciudad TikTok a nivel mundial" />
+          <BigStat size="md" value={g.austin.texasCitiesInTop5} label="Principales ciudades en EE. UU. son de Texas" />
+          <BigStat size="md" value={`${g.austin.igShare}%`} label="Audiencia de Instagram en Austin" />
         </div>
-        <p className="mt-5 text-sm text-gray-600">{g.activationNote}</p>
+        <p className="mt-6 border-t border-gray-200 pt-5 text-sm font-semibold text-gray-800">
+          {g.proofStat}
+        </p>
+        <p className="mt-3 text-sm text-gray-600">{g.activationNote}</p>
       </Reveal>
     </SectionShell>
   );
@@ -669,7 +729,39 @@ function ProofSection({ setRef }: { setRef: SetRef }) {
           {mediaKit.proofNote}
         </p>
       </Reveal>
+
+      <Reveal delay={mediaKit.proof.length * 90 + 140} className="mt-12">
+        <CaseStudy />
+      </Reveal>
     </SectionShell>
+  );
+}
+
+function CaseStudy() {
+  const { caseStudy } = mediaKit;
+  return (
+    <div className="border border-gray-200 bg-white p-6 sm:p-8">
+      <span className="inline-block border border-brand-orange/50 bg-brand-orange/5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-brand-orange">
+        {caseStudy.tag}
+      </span>
+      <h3 className="mt-4 font-display text-2xl font-bold uppercase tracking-tight text-gray-900 sm:text-3xl">
+        {caseStudy.title}
+      </h3>
+      <div className="mt-6 grid gap-6 sm:grid-cols-3">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-400">Objetivo</p>
+          <p className="mt-2 text-sm leading-relaxed text-gray-700">{caseStudy.objective}</p>
+        </div>
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-400">Qué producimos</p>
+          <p className="mt-2 text-sm leading-relaxed text-gray-700">{caseStudy.produced}</p>
+        </div>
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-orange">Resultado</p>
+          <p className="mt-2 text-sm font-semibold leading-relaxed text-gray-900">{caseStudy.result}</p>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -722,6 +814,10 @@ function PartnerSection({
         <p className="mt-8 max-w-2xl text-gray-600">{p.openInventory}</p>
       </Reveal>
 
+      <Reveal delay={220} className="mt-12">
+        <RateCard />
+      </Reveal>
+
       <Reveal delay={260} className="mt-12 border border-gray-200 bg-white p-8">
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-orange">Contacto</p>
         <a
@@ -744,6 +840,53 @@ function PartnerSection({
         </button>
       </Reveal>
     </SectionShell>
+  );
+}
+
+function RateCard() {
+  const { rateCard, contact } = mediaKit;
+  return (
+    <div className="border border-gray-200 bg-white">
+      <div className="h-1 bg-brand-orange" />
+      <div className="p-6 sm:p-8">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-orange">Paquetes</p>
+        <h3 className="mt-2 max-w-xl font-display text-2xl font-bold uppercase tracking-tight text-gray-900 sm:text-3xl">
+          Qué puedes patrocinar
+        </h3>
+
+        <div className="mt-8 grid gap-4 sm:grid-cols-2">
+          {rateCard.packages.map((pkg, i) => (
+            <div key={pkg.name} className="border border-gray-200 bg-gray-50 p-5">
+              <div className="flex items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-gray-200 bg-white text-brand-orange">
+                  <RateIcon index={i} />
+                </span>
+                <p className="pt-1.5 font-display font-bold uppercase tracking-wide text-gray-900">
+                  {pkg.name}
+                </p>
+              </div>
+              <p className="mt-3 text-sm leading-relaxed text-gray-500">{pkg.includes}</p>
+              <div className="mt-4 border-t border-gray-200 pt-3">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">
+                  Alcance de referencia
+                </p>
+                <p className="mt-1 text-sm font-semibold text-brand-orange">{pkg.reach}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-gray-200 pt-6">
+          <p className="max-w-md text-sm text-gray-500">{rateCard.note}</p>
+          <a
+            href={`mailto:${contact.email}?subject=Tarifa%20Acceso%20Futbol`}
+            className="inline-flex shrink-0 items-center gap-2 border border-brand-orange bg-brand-orange px-6 py-3 text-sm font-bold uppercase tracking-wider text-white transition hover:bg-white hover:text-brand-orange"
+          >
+            Solicita tarifa
+          </a>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -846,6 +989,57 @@ function BankIcon() {
       <path d="M3 10.5 12 4l9 6.5" />
       <path d="M5 10.5V19M10 10.5V19M14 10.5V19M19 10.5V19" />
       <path d="M3 20.5h18" />
+    </svg>
+  );
+}
+function RateIcon({ index }: { index: number }) {
+  const icons = [PlayIcon, EventIcon, BroadcastIcon, CreatorIcon, BracketIcon];
+  const IconComponent = icons[index % icons.length];
+  return <IconComponent />;
+}
+
+function PlayIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="3" y="4" width="18" height="14" rx="1" />
+      <path d="M3 18v2M21 18v2" />
+      <path d="M10 8.5v5l4.5-2.5z" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+function EventIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="3.5" y="5" width="17" height="16" rx="1" />
+      <path d="M3.5 9.5h17M8 3v4M16 3v4" />
+      <path d="M12 13.5l1.1 2.2 2.4.35-1.75 1.7.4 2.4-2.15-1.13-2.15 1.13.4-2.4-1.75-1.7 2.4-.35z" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+function BroadcastIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="3" y="5.5" width="18" height="12" rx="1" />
+      <path d="M8 21h8M12 17.5V21" />
+      <path d="M7.5 12l2.2-2.5M16.5 12l-2.2-2.5" />
+    </svg>
+  );
+}
+function CreatorIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="9" y="3" width="6" height="10" rx="3" />
+      <path d="M5.5 11a6.5 6.5 0 0 0 13 0" />
+      <path d="M12 17.5V21M8.5 21h7" />
+    </svg>
+  );
+}
+function BracketIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M4 5h4v4H4zM4 15h4v4H4z" />
+      <path d="M8 7h4v10H8" />
+      <path d="M12 12h4v-5h4M12 12h4v5h4" />
     </svg>
   );
 }
