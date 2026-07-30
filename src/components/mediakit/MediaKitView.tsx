@@ -1,5 +1,6 @@
 "use client";
 
+import "flag-icons/css/flag-icons.min.css";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -592,8 +593,8 @@ function GeographySection({ setRef }: { setRef: SetRef }) {
       </Reveal>
 
       <Reveal delay={100} className="mt-10 grid gap-6 sm:grid-cols-2">
-        <RankedMetroList flag="🇲🇽" title="México" items={g.mexicoMetros} />
-        <RankedMetroList flag="🇺🇸" title="Estados Unidos" items={g.usMetros} />
+        <RankedMetroList countryCode="mx" title="México" items={g.mexicoMetros} />
+        <RankedMetroList countryCode="us" title="Estados Unidos" items={g.usMetros} />
       </Reveal>
 
       <Reveal delay={200} className="mt-10 border border-gray-200 bg-gray-50 p-6">
@@ -613,18 +614,18 @@ function GeographySection({ setRef }: { setRef: SetRef }) {
 }
 
 function RankedMetroList({
-  flag,
+  countryCode,
   title,
   items,
 }: {
-  flag: string;
+  countryCode: string;
   title: string;
   items: readonly string[];
 }) {
   return (
     <div>
       <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-gray-400">
-        <span aria-hidden className="text-base leading-none">{flag}</span> {title}
+        <span aria-hidden className={`fi fi-${countryCode} rounded-[1px]`} /> {title}
       </p>
       <div className="mt-3 border border-gray-200 bg-white">
         {items.map((item, i) => (
@@ -674,8 +675,8 @@ function ContentSection({ setRef }: { setRef: SetRef }) {
 
       <div className="mt-10 grid gap-3">
         {c.formats.map((f, i) => (
-          <Reveal key={f} delay={i * 70} className="flex items-start gap-3 border border-gray-200 bg-white px-5 py-4">
-            <span className="mt-1 h-1.5 w-1.5 shrink-0 bg-brand-orange" />
+          <Reveal key={f} delay={i * 70} className="flex items-center gap-3 border border-gray-200 bg-white px-5 py-4">
+            <span className="h-1.5 w-1.5 shrink-0 self-center bg-brand-orange" />
             <span className="text-gray-700">{f}</span>
           </Reveal>
         ))}
