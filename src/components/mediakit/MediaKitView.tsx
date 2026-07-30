@@ -258,79 +258,150 @@ function CoverSection({
 }) {
   return (
     <SectionShell id="portada" setRef={setRef} className="print:pt-8">
-      <div className="flex min-h-[70vh] flex-col justify-center print:min-h-0">
-        <Reveal>
-          <Image
-            src="/logo-dark.png"
-            alt="Acceso Futbol"
-            width={512}
-            height={331}
-            className="h-16 w-auto object-contain sm:h-20"
-            priority
-          />
+      <div className="grid min-h-[70vh] items-center gap-12 py-10 print:min-h-0 print:py-0 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="flex flex-col justify-center">
+          <Reveal>
+            <Image
+              src="/logo-dark.png"
+              alt="Acceso Futbol"
+              width={512}
+              height={331}
+              className="h-16 w-auto object-contain sm:h-20"
+              priority
+            />
 
-          <h1 className="mt-8 font-display text-5xl font-bold uppercase leading-[0.95] tracking-[0.02em] sm:text-7xl">
-            Acceso <span className="text-brand-orange">Futbol</span>
-          </h1>
+            <h1 className="mt-8 font-display text-5xl font-bold uppercase leading-[0.95] tracking-[0.02em] sm:text-7xl">
+              Acceso <span className="text-brand-orange">Futbol</span>
+            </h1>
 
-          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-gray-600 sm:text-xl">
-            Marca de medios en español enfocada en Liga MX y la Selección
-            Mexicana, hecha para la afición mexicana y latina en Estados
-            Unidos y México.
-          </p>
-        </Reveal>
+            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-gray-600 sm:text-xl">
+              Marca de medios en español enfocada en Liga MX y la Selección
+              Mexicana, hecha para la afición mexicana y latina en Estados
+              Unidos y México.
+            </p>
+          </Reveal>
 
-        <Reveal delay={120} className="mt-10 flex flex-wrap items-end gap-x-10 gap-y-6">
-          <BigStat
-            value={formatNumber(mediaKit.headline.facebookReach)}
-            label={`Personas alcanzadas en Facebook · ${mediaKit.headline.facebookOrganicNote}`}
-            accent
-          />
-        </Reveal>
+          <CoverContentShowcaseMobile />
 
-        <Reveal delay={180} className="mt-6 flex flex-wrap items-center gap-3">
-          {mediaKit.headline.engagementBadges.map((b) => (
-            <EngagementBadge key={b.label} value={b.value} label={b.label} />
-          ))}
-        </Reveal>
+          <Reveal delay={120} className="mt-10 flex flex-wrap items-end gap-x-10 gap-y-6">
+            <BigStat
+              value={formatNumber(mediaKit.headline.facebookReach)}
+              label={`Personas alcanzadas en Facebook · ${mediaKit.headline.facebookOrganicNote}`}
+              accent
+            />
+          </Reveal>
 
-        <Reveal delay={220}>
-          <p className="mt-6 flex flex-wrap items-baseline gap-x-2 text-gray-400">
-            <span className="font-display text-2xl font-bold text-gray-600 sm:text-3xl">
-              {formatNumber(mediaKit.headline.totalReach)}
+          <Reveal delay={180} className="mt-6 flex flex-wrap items-center gap-3">
+            {mediaKit.headline.engagementBadges.map((b) => (
+              <EngagementBadge key={b.label} value={b.value} label={b.label} />
+            ))}
+          </Reveal>
+
+          <Reveal delay={220}>
+            <p className="mt-6 flex flex-wrap items-baseline gap-x-2 text-gray-400">
+              <span className="font-display text-2xl font-bold text-gray-600 sm:text-3xl">
+                {formatNumber(mediaKit.headline.totalReach)}
+              </span>
+              <span className="text-xs sm:text-sm">de alcance total combinado en 4 plataformas</span>
+            </p>
+          </Reveal>
+
+          <Reveal delay={260} className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-gray-200 pt-6 text-sm text-gray-500">
+            <span className="font-semibold text-gray-900">
+              Media Kit · {mediaKit.meta.updated}
             </span>
-            <span className="text-xs sm:text-sm">de alcance total combinado en 4 plataformas</span>
-          </p>
-        </Reveal>
+            <span className="text-gray-300">/</span>
+            <span>{mediaKit.contact.site}</span>
+            <span className="text-gray-300">/</span>
+            <a
+              href={mediaKit.contact.tiktokUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition hover:text-brand-orange"
+            >
+              {mediaKit.contact.handle}
+            </a>
+          </Reveal>
 
-        <Reveal delay={260} className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-gray-200 pt-6 text-sm text-gray-500">
-          <span className="font-semibold text-gray-900">
-            Media Kit · {mediaKit.meta.updated}
-          </span>
-          <span className="text-gray-300">/</span>
-          <span>{mediaKit.contact.site}</span>
-          <span className="text-gray-300">/</span>
-          <a
-            href={mediaKit.contact.tiktokUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="transition hover:text-brand-orange"
-          >
-            {mediaKit.contact.handle}
-          </a>
-        </Reveal>
+          <Reveal delay={300}>
+            <button
+              onClick={onDownload}
+              className="print:hidden mt-10 inline-flex w-fit items-center gap-2 border border-brand-orange bg-brand-orange px-6 py-3 text-sm font-bold uppercase tracking-wider text-white transition hover:bg-white hover:text-brand-orange"
+            >
+              <DownloadIcon />
+              Descargar PDF
+            </button>
+          </Reveal>
+        </div>
 
-        <Reveal delay={300}>
-          <button
-            onClick={onDownload}
-            className="print:hidden mt-10 inline-flex w-fit items-center gap-2 border border-brand-orange bg-brand-orange px-6 py-3 text-sm font-bold uppercase tracking-wider text-white transition hover:bg-white hover:text-brand-orange"
-          >
-            <DownloadIcon />
-            Descargar PDF
-          </button>
-        </Reveal>
+        <CoverContentShowcase />
       </div>
     </SectionShell>
+  );
+}
+
+function CoverContentShowcase() {
+  return (
+    <div className="relative mx-auto hidden h-[380px] w-full max-w-[300px] print:hidden sm:block lg:h-[440px]">
+      <CoverContentCard
+        src="/luis.jpg"
+        alt="Clip de Acceso Futbol sobre la Liga MX en Austin, Texas"
+        className="absolute left-0 top-6 w-[62%] -rotate-6"
+      />
+      <CoverContentCard
+        src="/jonathang.jpg"
+        alt="Clip de Acceso Futbol: rumbo al título del Mundial 2026"
+        className="absolute right-0 top-0 w-[62%] rotate-4"
+        priority
+      />
+    </div>
+  );
+}
+
+function CoverContentShowcaseMobile() {
+  return (
+    <div className="mt-8 flex gap-4 print:hidden sm:hidden">
+      <CoverContentCard
+        src="/luis.jpg"
+        alt="Clip de Acceso Futbol sobre la Liga MX en Austin, Texas"
+        className="w-1/2 -rotate-2"
+      />
+      <CoverContentCard
+        src="/jonathang.jpg"
+        alt="Clip de Acceso Futbol: rumbo al título del Mundial 2026"
+        className="w-1/2 rotate-2"
+        priority
+      />
+    </div>
+  );
+}
+
+function CoverContentCard({
+  src,
+  alt,
+  className = "",
+  priority = false,
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+  priority?: boolean;
+}) {
+  return (
+    <div
+      className={`overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_20px_45px_rgba(15,23,42,0.18)] transition duration-500 hover:-translate-y-1 hover:rotate-0 ${className}`}
+    >
+      <div className="relative aspect-[1320/2626] w-full">
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          sizes="(min-width: 1024px) 200px, 180px"
+          className="object-cover"
+          priority={priority}
+        />
+      </div>
+    </div>
   );
 }
 
