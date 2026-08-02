@@ -39,19 +39,28 @@ const ABBR_TO_ID: Record<string, string> = {
   LEO: 'leon',
   MTY: 'monterrey',
   NCX: 'necaxa',
+  NXA: 'necaxa', // Sportmonks
   NEC: 'necaxa',
   PAC: 'pachuca',
+  PCH: 'pachuca', // Sportmonks
   PUE: 'puebla',
   UNAM: 'pumas',
   PUM: 'pumas',
   QRO: 'queretaro',
+  QUE: 'queretaro', // Sportmonks
   ASL: 'san-luis',
   SLP: 'san-luis',
   SAN: 'santos',
+  SLA: 'santos', // Sportmonks Santos Laguna
   UANL: 'tigres',
   TIG: 'tigres',
+  TUA: 'tigres', // Sportmonks
   TIJ: 'tijuana',
   TOL: 'toluca',
+  MTY: 'monterrey',
+  MNT: 'monterrey', // Sportmonks
+  GDL: 'chivas',
+  GUA: 'chivas', // Sportmonks Guadalajara
   MAZ: 'mazatlan',
   MEX: 'el-tri',
   TRI: 'el-tri',

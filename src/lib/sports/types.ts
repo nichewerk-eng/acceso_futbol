@@ -10,15 +10,32 @@ export interface TeamRef {
   score?: string | null;
 }
 
+export type LiveEventKind =
+  | 'goal'
+  | 'own_goal'
+  | 'penalty'
+  | 'yellow'
+  | 'red'
+  | 'sub'
+  | 'var'
+  | 'other';
+
 export interface LiveEvent {
   id: string;
   period: number;
   clock: string;
   minute?: number;
+  /** Extra minutes (e.g. 90+2 → extraMinute 2). */
+  extraMinute?: number;
+  /** Short Spanish label: Gol, Amarilla, Cambio… */
   type: string;
+  /** Machine kind for UI filters / peaks. */
+  kind?: LiveEventKind;
   text: string;
   teamAbbr?: string;
+  side?: 'home' | 'away';
   playerName?: string;
+  relatedPlayerName?: string;
 }
 
 export interface CommentaryLine {
@@ -63,10 +80,71 @@ export interface Fixture {
   };
 }
 
+export type LineupRole = 'starter' | 'bench';
+export type LineupPos = 'GK' | 'DEF' | 'MID' | 'FWD' | '?';
+
+export interface LineupPlayer {
+  id: string;
+  name: string;
+  jersey?: number | null;
+  position: LineupPos;
+  positionLabel: string;
+  role: LineupRole;
+  side: 'home' | 'away';
+}
+
+export interface TeamLineup {
+  side: 'home' | 'away';
+  teamName: string;
+  abbreviation: string;
+  formation?: string | null;
+  starters: LineupPlayer[];
+  bench: LineupPlayer[];
+}
+
+/** W = win, D = draw, L = loss from this team's perspective. */
+export type FormResult = 'W' | 'D' | 'L';
+
+export interface FormMatch {
+  id: string;
+  date: string;
+  opponentAbbr: string;
+  opponentName: string;
+  homeScore: string;
+  awayScore: string;
+  /** Whether this team was home in that fixture. */
+  playedHome: boolean;
+  result: FormResult;
+}
+
+export interface HeadToHeadMeeting {
+  id: string;
+  date: string;
+  homeAbbr: string;
+  awayAbbr: string;
+  homeName: string;
+  awayName: string;
+  homeScore: string;
+  awayScore: string;
+}
+
+export interface HeadToHeadSummary {
+  played: number;
+  homeWins: number;
+  draws: number;
+  awayWins: number;
+  meetings: HeadToHeadMeeting[];
+}
+
 export interface MatchSnapshot extends Fixture {
   events: LiveEvent[];
   comments: CommentaryLine[];
   stats?: { label: string; home: string; away: string }[];
+  lineups?: TeamLineup[];
+  referee?: string | null;
+  /** Last finished matches for home / away (most recent first). */
+  form?: { home: FormMatch[]; away: FormMatch[] };
+  headToHead?: HeadToHeadSummary | null;
 }
 
 export interface PulsePayload {

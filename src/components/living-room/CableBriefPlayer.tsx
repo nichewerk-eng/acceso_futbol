@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { RADIO_STYLES, type RadioStyle } from '@/lib/radio/personas';
 
 type Beat = {
   id: string;
@@ -20,15 +19,10 @@ type BriefPayload = {
   beats?: Beat[];
 };
 
-const STYLE_KEY = 'af-radio-style';
-const LABELS: Record<RadioStyle, string> = {
-  caliente: 'Caliente',
-  tactico: 'Táctico',
-  puente: 'Puente',
-};
+/** Single Acceso voice for now. */
+const RADIO_STYLE = 'caliente';
 
 export function CableBriefPlayer() {
-  const [style, setStyle] = useState<RadioStyle>('caliente');
   const [playing, setPlaying] = useState(false);
   const [payload, setPayload] = useState<BriefPayload | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,22 +33,13 @@ export function CableBriefPlayer() {
   const playingRef = useRef(false);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STYLE_KEY) as RadioStyle | null;
-      if (saved && RADIO_STYLES.includes(saved)) setStyle(saved);
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  useEffect(() => {
     playingRef.current = playing;
   }, [playing]);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetch(`/api/radio/cable-brief?style=${style}`)
+    fetch(`/api/radio/cable-brief?style=${RADIO_STYLE}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d: BriefPayload | null) => {
         if (!cancelled) {
@@ -71,7 +56,7 @@ export function CableBriefPlayer() {
     return () => {
       cancelled = true;
     };
-  }, [style]);
+  }, []);
 
   function speakFallback(text: string, onEnd: () => void) {
     if (typeof window === 'undefined' || !window.speechSynthesis) {
@@ -92,7 +77,7 @@ export function CableBriefPlayer() {
     const next = queue.find((b) => !spokenRef.current.has(b.id));
     if (!next) {
       setPlaying(false);
-      setLine('Briefing completo. Vuelve al cable o cambia de voz.');
+      setLine('Briefing completo. Vuelve al cable.');
       return;
     }
 
@@ -122,20 +107,6 @@ export function CableBriefPlayer() {
     playNext(payload?.beats ?? []);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- queue driver
   }, [playing, payload?.beats]);
-
-  function pick(s: RadioStyle) {
-    setStyle(s);
-    try {
-      localStorage.setItem(STYLE_KEY, s);
-    } catch {
-      /* ignore */
-    }
-    spokenRef.current = new Set();
-    busyRef.current = false;
-    audioRef.current?.pause();
-    if (typeof window !== 'undefined') window.speechSynthesis?.cancel();
-    setPlaying(false);
-  }
 
   function toggle() {
     if (playing) {
@@ -177,33 +148,15 @@ export function CableBriefPlayer() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {RADIO_STYLES.map((s) => (
-            <button
-              key={s}
-              type="button"
-              data-testid={`cable-brief-style-${s}`}
-              onClick={() => pick(s)}
-              className={[
-                'af-tele border px-2.5 py-1.5 transition',
-                style === s
-                  ? 'border-signal bg-signal text-on-signal'
-                  : 'border-line text-muted hover:border-foreground hover:text-foreground',
-              ].join(' ')}
-            >
-              {LABELS[s]}
-            </button>
-          ))}
-          <button
-            type="button"
-            data-testid="cable-brief-play"
-            onClick={toggle}
-            disabled={!ready && !loading}
-            className="af-cta !py-2 disabled:opacity-40"
-          >
-            {playing ? 'Pausa' : '▶ Escuchar'}
-          </button>
-        </div>
+        <button
+          type="button"
+          data-testid="cable-brief-play"
+          onClick={toggle}
+          disabled={!ready && !loading}
+          className="af-cta !py-2 disabled:opacity-40"
+        >
+          {playing ? 'Pausa' : '▶ Escuchar'}
+        </button>
       </div>
 
       <p

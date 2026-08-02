@@ -12,9 +12,12 @@ export async function GET(
     return NextResponse.json({ error: 'invalid_league' }, { status: 400 });
   }
 
-  const CACHE_KEY = `sports-match-${league}-${id}`;
+  const CACHE_KEY = `sports-match-v8-${league}-${id}`;
   const cached = getCache<MatchSnapshot>(CACHE_KEY, 12_000);
-  if (cached) {
+  // Don't serve a stale empty crónica when a richer payload may be available.
+  const cachedHasStory =
+    (cached?.comments?.length ?? 0) > 0 || (cached?.events?.length ?? 0) > 0;
+  if (cached && (cachedHasStory || cached.state === 'pre')) {
     return NextResponse.json(cached, {
       headers: { 'Cache-Control': 'public, s-maxage=12, stale-while-revalidate=20' },
     });

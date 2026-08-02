@@ -1,5 +1,5 @@
 import { APERTURA_2026_FIXTURES } from '@/fixtures/ligamx-apertura-2026';
-import { mexicoDayKey } from '@/lib/radio/phases';
+import { dayPairKey, scheduleAbbr } from './ligaMxAbbr';
 
 /** Minimal fixture shape shared by API + Liga MX UI. */
 export type LigaMxScheduleFixture = {
@@ -20,59 +20,59 @@ export type LigaMxScheduleFixture = {
   away: { name: string; abbreviation: string; score: string | null };
 };
 
-/** Legacy aliases → current ESPN / schedule codes (Apertura 2026). */
-const ESPN_ABBR: Record<string, string> = {
-  NEC: 'NCX',
-  PUM: 'UNAM',
-  TIG: 'UANL',
-  SLP: 'ASL',
-  ALT: 'ATL', // old static Atlante code
-  CHI: 'GDL',
-};
-
-function espnAbbr(abbr: string): string {
-  return ESPN_ABBR[abbr] ?? abbr;
+function jornadaNum(label: string | null | undefined): number | null {
+  if (!label) return null;
+  const m = label.match(/(\d+)/);
+  return m ? Number(m[1]) : null;
 }
 
-function dayPairKey(dateIso: string, homeAbbr: string, awayAbbr: string): string {
-  return `${mexicoDayKey(new Date(dateIso))}|${homeAbbr}|${awayAbbr}`;
+function jornadaPairKey(
+  jornada: string | null | undefined,
+  homeAbbr: string,
+  awayAbbr: string
+): string | null {
+  const n = jornadaNum(jornada);
+  if (n === null) return null;
+  return `${n}|${scheduleAbbr(homeAbbr)}|${scheduleAbbr(awayAbbr)}`;
 }
 
 /**
  * Static schedule owns jornada labels + full calendar.
- * ESPN overlays live state, scores, and real event ids (matched by MX day + abbr).
+ * Live provider (Sportmonks / ESPN) overlays state, scores, and real fixture ids.
  */
-export function mergeLigaMxSchedule(espn: LigaMxScheduleFixture[]): LigaMxScheduleFixture[] {
-  if (espn.length === 0) return APERTURA_2026_FIXTURES;
+export function mergeLigaMxSchedule(live: LigaMxScheduleFixture[]): LigaMxScheduleFixture[] {
+  if (live.length === 0) return APERTURA_2026_FIXTURES;
 
-  const byKey = new Map(
-    espn.map((f) => [
-      dayPairKey(f.date, espnAbbr(f.home.abbreviation), espnAbbr(f.away.abbreviation)),
-      f,
-    ])
+  const byDay = new Map(
+    live.map((f) => [dayPairKey(f.date, f.home.abbreviation, f.away.abbreviation), f])
   );
-  const used = new Set<string>();
+  const byJornada = new Map<string, LigaMxScheduleFixture>();
+  for (const f of live) {
+    const jk = jornadaPairKey(f.jornada, f.home.abbreviation, f.away.abbreviation);
+    if (jk) byJornada.set(jk, f);
+  }
+  const usedLive = new Set<string>();
 
   const merged = APERTURA_2026_FIXTURES.map((s) => {
-    const key = dayPairKey(s.date, s.home.abbreviation, s.away.abbreviation);
-    const live = byKey.get(key);
-    if (!live) return s;
-    used.add(key);
+    const dayKey = dayPairKey(s.date, s.home.abbreviation, s.away.abbreviation);
+    const jk = jornadaPairKey(s.jornada, s.home.abbreviation, s.away.abbreviation);
+    const overlay = byDay.get(dayKey) ?? (jk ? byJornada.get(jk) : undefined);
+    if (!overlay) return s;
+    usedLive.add(overlay.id);
     return {
       ...s,
-      id: live.id,
-      date: live.date,
-      status: live.status,
-      venue: live.venue ?? s.venue,
-      city: live.city ?? s.city,
-      home: { ...s.home, score: live.home.score },
-      away: { ...s.away, score: live.away.score },
+      id: overlay.id,
+      date: overlay.date,
+      status: overlay.status,
+      venue: overlay.venue ?? s.venue,
+      city: overlay.city ?? s.city,
+      home: { ...s.home, score: overlay.home.score },
+      away: { ...s.away, score: overlay.away.score },
     };
   });
 
-  for (const f of espn) {
-    const key = dayPairKey(f.date, espnAbbr(f.home.abbreviation), espnAbbr(f.away.abbreviation));
-    if (!used.has(key) && f.jornada) merged.push(f);
+  for (const f of live) {
+    if (!usedLive.has(f.id) && f.jornada) merged.push(f);
   }
 
   return merged;

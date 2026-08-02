@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { RitualSlot } from '@/components/ritual/RitualSlot';
-import { RADIO_STYLES, type RadioStyle } from '@/lib/radio/personas';
 
 type Beat = {
   id: string;
@@ -12,15 +11,10 @@ type Beat = {
   createdAt: number;
 };
 
-const STYLE_KEY = 'af-radio-style';
-const LABELS: Record<RadioStyle, string> = {
-  caliente: 'Caliente',
-  tactico: 'Táctico',
-  puente: 'Puente',
-};
+/** Single Acceso voice for now. */
+const RADIO_STYLE = 'caliente';
 
 export function RadioCompanion({ league, matchId }: { league: string; matchId: string }) {
-  const [style, setStyle] = useState<RadioStyle>('caliente');
   const [playing, setPlaying] = useState(false);
   const [beats, setBeats] = useState<Beat[]>([]);
   const [delaySec, setDelaySec] = useState(30);
@@ -33,20 +27,13 @@ export function RadioCompanion({ league, matchId }: { league: string; matchId: s
   const playingRef = useRef(false);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STYLE_KEY) as RadioStyle | null;
-      if (saved && RADIO_STYLES.includes(saved)) setStyle(saved);
-    } catch { /* ignore */ }
-  }, []);
-
-  useEffect(() => {
     playingRef.current = playing;
   }, [playing]);
 
   useEffect(() => {
     let cancelled = false;
     const load = () => {
-      fetch(`/api/radio/match/${league}/${matchId}?style=${style}`)
+      fetch(`/api/radio/match/${league}/${matchId}?style=${RADIO_STYLE}`)
         .then((r) => (r.ok ? r.json() : null))
         .then((d) => {
           if (cancelled || !d) return;
@@ -65,7 +52,7 @@ export function RadioCompanion({ league, matchId }: { league: string; matchId: s
       cancelled = true;
       clearInterval(t);
     };
-  }, [league, matchId, style]);
+  }, [league, matchId]);
 
   function speakFallback(text: string, onEnd: () => void) {
     if (typeof window === 'undefined' || !window.speechSynthesis) {
@@ -113,15 +100,6 @@ export function RadioCompanion({ league, matchId }: { league: string; matchId: s
     // eslint-disable-next-line react-hooks/exhaustive-deps -- queue driver
   }, [playing, beats]);
 
-  function pick(s: RadioStyle) {
-    setStyle(s);
-    try { localStorage.setItem(STYLE_KEY, s); } catch { /* ignore */ }
-    spokenRef.current = new Set();
-    busyRef.current = false;
-    audioRef.current?.pause();
-    window.speechSynthesis?.cancel();
-  }
-
   function toggle() {
     if (playing) {
       setPlaying(false);
@@ -163,30 +141,12 @@ export function RadioCompanion({ league, matchId }: { league: string; matchId: s
         </button>
       </div>
 
-      <div className="flex flex-wrap gap-2 px-4 py-3">
-        {RADIO_STYLES.map((s) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => pick(s)}
-            className={[
-              'border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] transition',
-              style === s
-                ? 'border-signal bg-signal text-on-signal'
-                : 'border-line text-muted hover:text-foreground',
-            ].join(' ')}
-          >
-            {LABELS[s]}
-          </button>
-        ))}
-      </div>
-
       <div className="border-t border-line px-4 py-4">
         <p className="font-display text-lg font-semibold uppercase leading-snug tracking-wide text-foreground">
           {line}
         </p>
         <p className="mt-2 text-[10px] uppercase tracking-[0.14em] text-muted">
-          {beats.length} segmentos · {LABELS[style]}
+          {beats.length} segmentos
           {beats.some((b) => b.audioPath) ? ' · ElevenLabs' : ' · voz del navegador'}
         </p>
       </div>

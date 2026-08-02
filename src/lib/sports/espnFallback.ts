@@ -1,19 +1,14 @@
 import { espnFetch, scoreboardUrl, SLUG } from '@/lib/espn';
 import { APERTURA_2026_FIXTURES } from '@/fixtures/ligamx-apertura-2026';
-import { mexicoDayKey } from '@/lib/radio/phases';
+import { dayPairKey, scheduleAbbr } from './ligaMxAbbr';
+import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
+import {
+  fetchLigaMxSeasonFixtures,
+  sportmonksEnabled,
+} from './sportmonks';
 import type { Fixture, FixtureScorer, MatchState } from './types';
 
 const DATE_RANGE = '20260701-20261231';
-
-/** Legacy aliases → current ESPN / schedule codes (Apertura 2026). */
-const ESPN_ABBR: Record<string, string> = {
-  NEC: 'NCX',
-  PUM: 'UNAM',
-  TIG: 'UANL',
-  SLP: 'ASL',
-  ALT: 'ATL', // old static Atlante code
-  CHI: 'GDL',
-};
 
 interface CompetitorRaw {
   homeAway: 'home' | 'away';
@@ -110,13 +105,13 @@ function mapEvent(event: EventRaw): Fixture {
     date: event.date,
     jornada: event.week?.number ? `Jornada ${event.week.number}` : null,
     state,
-    statusLabel:
-      event.status?.type?.shortDetail ||
-      event.status?.type?.description ||
-      (state === 'in' ? 'EN VIVO' : state === 'post' ? 'Final' : 'Próximo'),
+    statusLabel: localizeStatus(
+      event.status?.type?.shortDetail || event.status?.type?.description || null,
+      state
+    ),
     clock: event.status?.displayClock,
-    venue: comp?.venue?.fullName ?? null,
-    city: comp?.venue?.address?.city ?? null,
+    venue: localizeVenue(comp?.venue?.fullName),
+    city: localizeCity(comp?.venue?.address?.city),
     winnerSide: winnerSideOf(home, away, state),
     scorers: mapScorers(comp?.details, homeId, awayId),
     home: {
@@ -134,14 +129,6 @@ function mapEvent(event: EventRaw): Fixture {
       score: away?.score ?? null,
     },
   };
-}
-
-function espnAbbr(abbr: string): string {
-  return ESPN_ABBR[abbr] ?? abbr;
-}
-
-function dayPairKey(dateIso: string, homeAbbr: string, awayAbbr: string): string {
-  return `${mexicoDayKey(new Date(dateIso))}|${homeAbbr}|${awayAbbr}`;
 }
 
 function mapStatic(): Fixture[] {
@@ -175,50 +162,72 @@ function mapStatic(): Fixture[] {
  * Static schedule owns jornada labels; ESPN overlays live state, scores, and real ids.
  * Match by Mexico-City calendar day + normalized abbreviations (ESPN abbrs differ).
  */
-function mergeEspnOntoStatic(espn: Fixture[]): Fixture[] {
-  const byKey = new Map(
-    espn.map((f) => [
-      dayPairKey(f.date, espnAbbr(f.home.abbreviation), espnAbbr(f.away.abbreviation)),
+function jornadaNum(label: string | null | undefined): number | null {
+  if (!label) return null;
+  const m = label.match(/(\d+)/);
+  return m ? Number(m[1]) : null;
+}
+
+function jornadaPairKey(
+  jornada: string | null | undefined,
+  homeAbbr: string,
+  awayAbbr: string
+): string | null {
+  const n = jornadaNum(jornada);
+  if (n === null) return null;
+  return `${n}|${scheduleAbbr(homeAbbr)}|${scheduleAbbr(awayAbbr)}`;
+}
+
+function mergeLiveOntoStatic(live: Fixture[]): Fixture[] {
+  const byDay = new Map(
+    live.map((f) => [
+      dayPairKey(f.date, scheduleAbbr(f.home.abbreviation), scheduleAbbr(f.away.abbreviation)),
       f,
     ])
   );
-  const used = new Set<string>();
+  const byJornada = new Map<string, Fixture>();
+  for (const f of live) {
+    const jk = jornadaPairKey(f.jornada, f.home.abbreviation, f.away.abbreviation);
+    if (jk) byJornada.set(jk, f);
+  }
+  const usedLive = new Set<string>();
 
   const merged = mapStatic().map((s) => {
-    const key = dayPairKey(s.date, s.home.abbreviation, s.away.abbreviation);
-    const live = byKey.get(key);
-    if (!live) return s;
-    used.add(key);
+    const dayKey = dayPairKey(s.date, s.home.abbreviation, s.away.abbreviation);
+    const jk = jornadaPairKey(s.jornada, s.home.abbreviation, s.away.abbreviation);
+    const overlay = byDay.get(dayKey) ?? (jk ? byJornada.get(jk) : undefined);
+    if (!overlay) return s;
+    usedLive.add(overlay.id);
     return {
       ...s,
-      id: live.id,
-      date: live.date,
-      state: live.state,
-      statusLabel: live.statusLabel,
-      clock: live.clock,
-      venue: live.venue ?? s.venue,
-      city: live.city ?? s.city,
-      winnerSide: live.winnerSide,
-      scorers: live.scorers,
+      id: overlay.id,
+      provider: overlay.provider,
+      date: overlay.date,
+      state: overlay.state,
+      statusLabel: overlay.statusLabel,
+      clock: overlay.clock,
+      jornada: s.jornada ?? overlay.jornada,
+      venue: overlay.venue ?? s.venue,
+      city: overlay.city ?? s.city,
+      winnerSide: overlay.winnerSide,
+      scorers: overlay.scorers,
       home: {
         ...s.home,
-        id: live.home.id,
-        logo: live.home.logo,
-        score: live.home.score,
+        id: overlay.home.id,
+        logo: overlay.home.logo,
+        score: overlay.home.score,
       },
       away: {
         ...s.away,
-        id: live.away.id,
-        logo: live.away.logo,
-        score: live.away.score,
+        id: overlay.away.id,
+        logo: overlay.away.logo,
+        score: overlay.away.score,
       },
     };
   });
 
-  // Keep ESPN-only events (e.g. midweek cups) without inventing a jornada
-  for (const f of espn) {
-    const key = dayPairKey(f.date, espnAbbr(f.home.abbreviation), espnAbbr(f.away.abbreviation));
-    if (!used.has(key)) merged.push(f);
+  for (const f of live) {
+    if (!usedLive.has(f.id) && f.jornada) merged.push(f);
   }
 
   return merged;
@@ -229,8 +238,26 @@ export async function fetchEspnLigaMxFixtures(): Promise<{ fixtures: Fixture[]; 
     const raw = (await espnFetch(scoreboardUrl(SLUG.LIGA_MX, DATE_RANGE))) as { events?: EventRaw[] };
     const espn = (raw.events ?? []).map(mapEvent);
     if (espn.length === 0) return { fixtures: mapStatic(), source: 'static' };
-    return { fixtures: mergeEspnOntoStatic(espn), source: 'espn' };
+    return { fixtures: mergeLiveOntoStatic(espn), source: 'espn' };
   } catch {
     return { fixtures: mapStatic(), source: 'static' };
   }
+}
+
+/** Prefer Sportmonks season board; ESPN/static only if token missing or SM empty. */
+export async function fetchLigaMxFixtures(): Promise<{
+  fixtures: Fixture[];
+  source: 'sportmonks' | 'espn' | 'static';
+}> {
+  if (sportmonksEnabled()) {
+    try {
+      const sm = await fetchLigaMxSeasonFixtures();
+      if (sm.length > 0) {
+        return { fixtures: mergeLiveOntoStatic(sm), source: 'sportmonks' };
+      }
+    } catch {
+      /* fall through */
+    }
+  }
+  return fetchEspnLigaMxFixtures();
 }

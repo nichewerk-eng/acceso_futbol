@@ -4,15 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useGravity } from '@/contexts/GravityContext';
 import { leaguePath } from '@/lib/radio/phases';
-import { RADIO_STYLES, type RadioStyle } from '@/lib/radio/personas';
 import type { DayGame, GamesOfDayPayload } from '@/lib/sports';
-
-const STYLE_KEY = 'af-radio-style';
-const STYLE_LABEL: Record<RadioStyle, string> = {
-  caliente: 'Caliente',
-  tactico: 'Táctico',
-  puente: 'Puente',
-};
 
 function kickLabel(iso: string) {
   try {
@@ -40,16 +32,6 @@ export function GamesOfDayBanner() {
   const { matchesGravity, club, elTri } = useGravity();
   const [payload, setPayload] = useState<GamesOfDayPayload | null>(null);
   const [loading, setLoading] = useState(true);
-  const [style, setStyle] = useState<RadioStyle>('caliente');
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STYLE_KEY) as RadioStyle | null;
-      if (saved && RADIO_STYLES.includes(saved)) setStyle(saved);
-    } catch {
-      /* ignore */
-    }
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -98,15 +80,6 @@ export function GamesOfDayBanner() {
 
   const openCount = sorted.filter((g) => g.radioAvailable).length;
 
-  function pick(s: RadioStyle) {
-    setStyle(s);
-    try {
-      localStorage.setItem(STYLE_KEY, s);
-    } catch {
-      /* ignore */
-    }
-  }
-
   return (
     <section
       id="hoy"
@@ -142,41 +115,8 @@ export function GamesOfDayBanner() {
                 ? `${openCount} al aire`
                 : club || elTri
                   ? `LOCK ${(club?.abbreviation ?? '') + (elTri ? '+TRI' : '')}`
-                  : 'Elige voz'}
+                  : 'Cabina'}
           </p>
-        </div>
-
-        {/* Voice picker — cabina identity, not scores */}
-        <div className="mb-8" data-testid="hoy-style-picker">
-          <p className="hoy-telemetry mb-3">Canal de voz</p>
-          <div className="grid gap-2 sm:grid-cols-3">
-            {RADIO_STYLES.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => pick(s)}
-                data-testid={`hoy-style-${s}`}
-                className={[
-                  'border px-4 py-3 text-left transition',
-                  style === s
-                    ? 'border-[var(--signal)] bg-[var(--signal)] text-[var(--on-signal)]'
-                    : 'border-[var(--hoy-line)] text-[var(--hoy-paper)] hover:border-[var(--hoy-paper)]',
-                ].join(' ')}
-              >
-                <span className="block font-display text-lg font-bold uppercase tracking-wide">
-                  {STYLE_LABEL[s]}
-                </span>
-                <span
-                  className={[
-                    'mt-1 block font-mono text-[10px] uppercase tracking-[0.14em]',
-                    style === s ? 'text-[var(--on-signal)]/80' : 'text-[var(--hoy-dim)]',
-                  ].join(' ')}
-                >
-                  {style === s ? 'Activo' : 'Seleccionar'}
-                </span>
-              </button>
-            ))}
-          </div>
         </div>
 
         {loading && sorted.length === 0 ? (
@@ -192,7 +132,7 @@ export function GamesOfDayBanner() {
               Cabina en espera
             </p>
             <p className="mt-2 font-mono text-[12px] text-[var(--hoy-dim)]">
-              Cuando haya partidos hoy, aquí entra el audio. Voz guardada: {STYLE_LABEL[style]}.
+              Cuando haya partidos hoy, aquí entra el audio.
             </p>
           </div>
         ) : (
@@ -225,9 +165,7 @@ export function GamesOfDayBanner() {
                       <span className="mx-2 text-[var(--hoy-dim)]">vs</span>
                       {g.away.name}
                     </p>
-                    <p className="mt-1 font-mono text-[11px] text-[var(--hoy-dim)]">
-                      {line.note} · {STYLE_LABEL[style]}
-                    </p>
+                    <p className="mt-1 font-mono text-[11px] text-[var(--hoy-dim)]">{line.note}</p>
                   </div>
                   {line.ready ? (
                     <Link

@@ -81,13 +81,16 @@ function nameHits(hay: string, club: GravityClub): boolean {
 function abbrHits(abbr: string, club: GravityClub): boolean {
   const a = abbr.toUpperCase();
   if (a === club.abbreviation) return true;
-  if (club.id === 'chivas' && (a === 'GDL' || a === 'CHI')) return true;
+  if (club.id === 'chivas' && (a === 'GDL' || a === 'CHI' || a === 'GUA')) return true;
   if (club.id === 'san-luis' && (a === 'ASL' || a === 'SLP')) return true;
-  if (club.id === 'necaxa' && (a === 'NCX' || a === 'NEC')) return true;
+  if (club.id === 'necaxa' && (a === 'NCX' || a === 'NEC' || a === 'NXA')) return true;
   if (club.id === 'pumas' && (a === 'UNAM' || a === 'PUM')) return true;
-  if (club.id === 'tigres' && (a === 'UANL' || a === 'TIG')) return true;
+  if (club.id === 'tigres' && (a === 'UANL' || a === 'TIG' || a === 'TUA')) return true;
   if (club.id === 'atlas' && a === 'ATS') return true;
   if (club.id === 'atlante' && (a === 'ATL' || a === 'ALT')) return true;
+  if (club.id === 'santos' && (a === 'SAN' || a === 'SLA')) return true;
+  if (club.id === 'monterrey' && (a === 'MTY' || a === 'MNT')) return true;
+  if (club.id === 'pachuca' && (a === 'PAC' || a === 'PCH')) return true;
   return false;
 }
 

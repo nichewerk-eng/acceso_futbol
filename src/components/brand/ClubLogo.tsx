@@ -1,12 +1,13 @@
 import { ligaMxLogoSrc } from '@/config/ligaMxLogos';
 
-type Size = 'xs' | 'sm' | 'md' | 'lg';
+type Size = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 const PX: Record<Size, number> = {
   xs: 22,
   sm: 28,
   md: 36,
   lg: 52,
+  xl: 72,
 };
 
 type Props = {

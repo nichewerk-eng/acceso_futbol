@@ -1,4 +1,5 @@
 import { mexicoDayKey } from '@/lib/radio/phases';
+import { scheduleAbbr } from '@/lib/sports/ligaMxAbbr';
 import type { Fixture } from '@/lib/sports/types';
 
 export type TvChannelId = 'tudn' | 'vix' | 'canal-5' | 'layvtime' | 'univision';
@@ -61,9 +62,13 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
   },
 };
 
+function normAbbr(abbr: string): string {
+  return scheduleAbbr(abbr);
+}
+
 function pairKey(dateIso: string, homeAbbr: string, awayAbbr: string): string {
   const day = mexicoDayKey(new Date(dateIso));
-  const pair = [homeAbbr.toUpperCase(), awayAbbr.toUpperCase()].sort().join('|');
+  const pair = [normAbbr(homeAbbr), normAbbr(awayAbbr)].sort().join('|');
   return `${day}|${pair}`;
 }
 

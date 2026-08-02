@@ -2,10 +2,16 @@ export type {
   CommentaryLine,
   EditorialWeather,
   Fixture,
+  FormMatch,
+  FormResult,
+  HeadToHeadMeeting,
+  HeadToHeadSummary,
+  LineupPlayer,
   LiveEvent,
   MatchSnapshot,
   MatchState,
   PulsePayload,
+  TeamLineup,
   TeamRef,
 } from './types';
 
@@ -15,4 +21,12 @@ export { getGamesOfDay } from './gamesOfDay';
 export type { DayGame, GamesOfDayPayload } from './gamesOfDay';
 export { getJornadaOverview } from './jornada';
 export type { JornadaOverview } from './jornada';
-export { sportmonksEnabled, fetchMatchSnapshot, ligaMxLeagueId } from './sportmonks';
+export {
+  sportmonksEnabled,
+  fetchMatchSnapshot,
+  ligaMxLeagueId,
+  ligaMxSeasonId,
+  fetchLigaMxSeasonFixtures,
+  fetchLigaMxStandings,
+} from './sportmonks';
+export { fetchLigaMxFixtures } from './espnFallback';

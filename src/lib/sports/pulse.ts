@@ -44,7 +44,7 @@ export async function getPulse(): Promise<PulsePayload> {
         weather,
       };
     } catch {
-      // fall through to ESPN
+      // Sportmonks down → ESPN below
     }
   }
 

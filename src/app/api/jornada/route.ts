@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getCache, setCache } from '@/lib/apiCache';
 import { getJornadaOverview, type JornadaOverview } from '@/lib/sports/jornada';
 
-const CACHE_KEY = 'jornada-overview-v3';
+const CACHE_KEY = 'jornada-overview-v5-sm';
 const TTL_MS = 30_000;
 
 export async function GET() {

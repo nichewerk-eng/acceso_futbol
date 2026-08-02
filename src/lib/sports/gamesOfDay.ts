@@ -8,6 +8,7 @@ import {
 } from '@/lib/radio/phases';
 import type { Fixture, MatchState } from './types';
 import { fetchEspnLigaMxFixtures } from './espnFallback';
+import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
 import { fetchFixturesByDate, fetchLivescores, sportmonksEnabled } from './sportmonks';
 import { fetchSeleccionGamesOfDay } from './seleccion';
 
@@ -96,13 +97,13 @@ function mapBoardEvent(event: BoardEvent): Fixture {
     date: event.date,
     jornada: event.week?.number ? `Jornada ${event.week.number}` : null,
     state,
-    statusLabel:
-      event.status?.type?.shortDetail ||
-      event.status?.type?.description ||
-      (state === 'in' ? 'EN VIVO' : state === 'post' ? 'Final' : 'Próximo'),
+    statusLabel: localizeStatus(
+      event.status?.type?.shortDetail || event.status?.type?.description || null,
+      state
+    ),
     clock: event.status?.displayClock,
-    venue: comp?.venue?.fullName ?? null,
-    city: comp?.venue?.address?.city ?? null,
+    venue: localizeVenue(comp?.venue?.fullName),
+    city: localizeCity(comp?.venue?.address?.city),
     home: {
       id: home?.team?.id ?? home?.team?.abbreviation ?? 'home',
       name: home?.team?.displayName ?? 'Local',
@@ -151,9 +152,9 @@ async function ligaMxForDay(
           byId.set(f.id, attachDondeVer(f));
         }
       }
-      if (byId.size > 0) return { fixtures: [...byId.values()], source: 'sportmonks' };
+      return { fixtures: [...byId.values()], source: 'sportmonks' };
     } catch {
-      /* fall through */
+      /* Sportmonks down → ESPN below */
     }
   }
 

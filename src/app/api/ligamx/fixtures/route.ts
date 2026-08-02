@@ -3,29 +3,54 @@ import { espnFetch, scoreboardUrl, SLUG } from '@/lib/espn';
 import { getCache, setCache } from '@/lib/apiCache';
 import { APERTURA_2026_FIXTURES } from '@/fixtures/ligamx-apertura-2026';
 import { mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
+import { localizeCity, localizeVenue } from '@/lib/sports/localizeEs';
+import {
+  fetchLigaMxSeasonFixtures,
+  sportmonksEnabled,
+} from '@/lib/sports/sportmonks';
+import type { Fixture } from '@/lib/sports/types';
 
 // Apertura 2026: July → December 2026
 const DATE_RANGE = '20260701-20261231';
-const CACHE_KEY = 'ligamx-fixtures-v2';
+const CACHE_KEY = 'ligamx-fixtures-v8-es';
 const TTL_MS = 30_000;
 
 export async function GET() {
   const cached = getCache<LigaMXFixture[]>(CACHE_KEY, TTL_MS);
-  if (cached) return NextResponse.json({ fixtures: cached }, { headers: ccHeaders });
+  if (cached) return NextResponse.json({ fixtures: cached, source: 'cache' }, { headers: ccHeaders });
 
   try {
-    const raw = (await espnFetch(scoreboardUrl(SLUG.LIGA_MX, DATE_RANGE))) as {
-      events?: EventRaw[];
-    };
-    const espnFixtures = parseFixtures(raw);
+    let live: LigaMXFixture[] = [];
+    let source: 'sportmonks' | 'espn' | 'static' = 'static';
+
+    if (sportmonksEnabled()) {
+      try {
+        const sm = await fetchLigaMxSeasonFixtures();
+        if (sm.length > 0) {
+          live = sm.map(fixtureToSchedule);
+          source = 'sportmonks';
+        }
+      } catch {
+        /* fall through */
+      }
+    }
+
+    if (live.length === 0) {
+      const raw = (await espnFetch(scoreboardUrl(SLUG.LIGA_MX, DATE_RANGE))) as {
+        events?: EventRaw[];
+      };
+      live = parseFixtures(raw);
+      source = live.length > 0 ? 'espn' : 'static';
+    }
+
     const fixtures =
-      espnFixtures.length > 0 ? mergeLigaMxSchedule(espnFixtures) : APERTURA_2026_FIXTURES;
+      live.length > 0 ? mergeLigaMxSchedule(live) : APERTURA_2026_FIXTURES;
     setCache(CACHE_KEY, fixtures);
-    return NextResponse.json({ fixtures }, { headers: ccHeaders });
+    return NextResponse.json({ fixtures, source }, { headers: ccHeaders });
   } catch {
     const stale = getCache<LigaMXFixture[]>(CACHE_KEY, Infinity);
     if (stale) return NextResponse.json({ fixtures: stale, stale: true });
-    return NextResponse.json({ fixtures: APERTURA_2026_FIXTURES }, { headers: ccHeaders });
+    return NextResponse.json({ fixtures: APERTURA_2026_FIXTURES, source: 'static' }, { headers: ccHeaders });
   }
 }
 
@@ -49,6 +74,34 @@ export interface LigaMXFixture {
   away: { name: string; abbreviation: string; score: string | null };
 }
 
+function fixtureToSchedule(f: Fixture): LigaMXFixture {
+  return {
+    id: f.id,
+    date: f.date,
+    league: 'liga-mx',
+    jornada: f.jornada,
+    status: {
+      completed: f.state === 'post',
+      state: f.state,
+      description: f.statusLabel,
+      shortDetail: f.statusLabel,
+      displayClock: f.clock ?? '',
+    },
+    venue: f.venue,
+    city: f.city,
+    home: {
+      name: f.home.name,
+      abbreviation: f.home.abbreviation,
+      score: f.home.score,
+    },
+    away: {
+      name: f.away.name,
+      abbreviation: f.away.abbreviation,
+      score: f.away.score,
+    },
+  };
+}
+
 function parseFixtures(raw: { events?: EventRaw[] }): LigaMXFixture[] {
   return (raw.events ?? []).map((event) => {
     const comp = event.competitions?.[0];
@@ -67,8 +120,8 @@ function parseFixtures(raw: { events?: EventRaw[] }): LigaMXFixture[] {
         shortDetail: event.status?.type?.shortDetail ?? '',
         displayClock: event.status?.displayClock ?? '',
       },
-      venue: comp?.venue?.fullName ?? null,
-      city: comp?.venue?.address?.city ?? null,
+      venue: localizeVenue(comp?.venue?.fullName),
+      city: localizeCity(comp?.venue?.address?.city),
       home: {
         name: home?.team?.displayName ?? '',
         abbreviation: home?.team?.abbreviation ?? '',

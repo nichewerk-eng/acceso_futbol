@@ -46,7 +46,7 @@ export const MOMENTS: Moment[] = [
     kind: 'take',
     tag: 'Acceso Radio',
     headline: 'El partido en tu oído.',
-    body: 'Elige tu narrador (Caliente, Táctico o Puente) y escucha Acceso con ~30s de retraso, como la radio de toda la vida.',
+    body: 'Escucha Acceso Radio con ~30s de retraso, como la radio de toda la vida.',
     href: '/momento/radio-teaser',
   },
   {

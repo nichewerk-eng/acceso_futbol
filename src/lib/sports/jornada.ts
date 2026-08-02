@@ -1,12 +1,12 @@
 import { isMexicoDay, mexicoDayKey } from '@/lib/radio/phases';
 import type { Fixture } from './types';
-import { fetchEspnLigaMxFixtures } from './espnFallback';
+import { fetchLigaMxFixtures } from './espnFallback';
 
 export type JornadaOverview = {
   label: string;
   number: number;
   generatedAt: string;
-  source: 'espn' | 'static';
+  source: 'sportmonks' | 'espn' | 'static';
   live: Fixture[];
   played: Fixture[];
   upcoming: Fixture[];
@@ -59,7 +59,7 @@ function pickActiveJornada(fixtures: Fixture[], now = new Date()): number | null
 }
 
 export async function getJornadaOverview(now = new Date()): Promise<JornadaOverview | null> {
-  const { fixtures, source } = await fetchEspnLigaMxFixtures();
+  const { fixtures, source } = await fetchLigaMxFixtures();
   const n = pickActiveJornada(fixtures, now);
   if (n === null) return null;
 
