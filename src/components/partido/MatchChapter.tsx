@@ -188,13 +188,12 @@ function kickoffCopy(iso: string, tz: string): { day: string; time: string } {
   }
 }
 
-function formatMeetingDay(iso: string, tz: string): string {
+function formatMeetingShort(iso: string, tz: string): string {
   try {
     return new Date(iso).toLocaleDateString('es-MX', {
       timeZone: tz,
       day: 'numeric',
       month: 'short',
-      year: 'numeric',
     });
   } catch {
     return '';
@@ -241,23 +240,31 @@ function FormRow({
   );
 }
 
-function FormDetail({ side, form, tz }: { side: string; form: FormMatch[]; tz: string }) {
+function FormDetail({ side, form }: { side: string; form: FormMatch[] }) {
   if (!form.length) return null;
   return (
     <div className="match-form-detail">
-      <p className="af-tele">{side}</p>
+      <div className="match-form-detail-head">
+        <ClubLogo abbr={side} size="sm" />
+        <span className="match-form-detail-abbr">{side}</span>
+        <div className="match-form-marks" aria-hidden>
+          {form.map((f) => (
+            <span key={f.id} className={`match-form-mark is-${f.result.toLowerCase()}`}>
+              {FORM_LETTER[f.result]}
+            </span>
+          ))}
+        </div>
+      </div>
       <ul>
         {form.map((f) => (
-          <li key={f.id}>
+          <li key={f.id} title={`${FORM_TITLE[f.result]} · ${f.opponentName}`}>
             <span className={`match-form-mark is-${f.result.toLowerCase()}`}>
               {FORM_LETTER[f.result]}
             </span>
-            <span className="match-form-detail-score">
-              {f.playedHome
-                ? `${side} ${f.homeScore}–${f.awayScore} ${f.opponentAbbr}`
-                : `${f.opponentAbbr} ${f.homeScore}–${f.awayScore} ${side}`}
+            <span className="match-form-detail-opp">vs {f.opponentAbbr}</span>
+            <span className="match-form-detail-score tabular-nums">
+              {f.homeScore}–{f.awayScore}
             </span>
-            <span className="match-form-detail-day">{formatMeetingDay(f.date, tz)}</span>
           </li>
         ))}
       </ul>
@@ -279,34 +286,48 @@ function H2HBlock({
   const total = h2h.homeWins + h2h.draws + h2h.awayWins || 1;
   return (
     <section className="match-h2h">
-      <p className="af-kicker">
-        <span className="af-tele">Cara a cara</span>
-      </p>
-      <p className="match-h2h-record">
-        <span>
-          <strong>{h2h.homeWins}</strong> {homeAbbr}
-        </span>
-        <span className="match-h2h-draws">
-          <strong>{h2h.draws}</strong> empates
-        </span>
-        <span>
-          <strong>{h2h.awayWins}</strong> {awayAbbr}
-        </span>
-      </p>
+      <p className="af-tele match-contexto-label">Cara a cara · últimos {h2h.played}</p>
+      <div className="match-h2h-board" aria-label={`${homeAbbr} ${h2h.homeWins}, ${h2h.draws} empates, ${awayAbbr} ${h2h.awayWins}`}>
+        <div className="match-h2h-stat">
+          <strong>{h2h.homeWins}</strong>
+          <span>{homeAbbr}</span>
+        </div>
+        <div className="match-h2h-stat is-draw">
+          <strong>{h2h.draws}</strong>
+          <span>Emp</span>
+        </div>
+        <div className="match-h2h-stat">
+          <strong>{h2h.awayWins}</strong>
+          <span>{awayAbbr}</span>
+        </div>
+      </div>
       <div className="match-h2h-bar" aria-hidden>
         <i className="is-home" style={{ width: `${(h2h.homeWins / total) * 100}%` }} />
         <i className="is-draw" style={{ width: `${(h2h.draws / total) * 100}%` }} />
         <i className="is-away" style={{ width: `${(h2h.awayWins / total) * 100}%` }} />
       </div>
       <ul className="match-h2h-list">
-        {h2h.meetings.slice(0, 5).map((m) => (
-          <li key={m.id}>
-            <span className="match-h2h-day">{formatMeetingDay(m.date, tz)}</span>
-            <span className="match-h2h-score">
-              {m.homeAbbr} {m.homeScore}–{m.awayScore} {m.awayAbbr}
-            </span>
-          </li>
-        ))}
+        {h2h.meetings.slice(0, 4).map((m) => {
+          const hs = Number(m.homeScore);
+          const as = Number(m.awayScore);
+          const tip =
+            Number.isFinite(hs) && Number.isFinite(as) && hs !== as
+              ? hs > as
+                ? m.homeAbbr
+                : m.awayAbbr
+              : null;
+          return (
+            <li key={m.id} className={tip === homeAbbr ? 'is-home-win' : tip === awayAbbr ? 'is-away-win' : ''}>
+              <span className="match-h2h-score tabular-nums">
+                {m.homeScore}–{m.awayScore}
+              </span>
+              <span className="match-h2h-pair">
+                {m.homeAbbr} <span aria-hidden>·</span> {m.awayAbbr}
+              </span>
+              <span className="match-h2h-day">{formatMeetingShort(m.date, tz)}</span>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
@@ -684,17 +705,6 @@ export function MatchChapter({ league, id }: Props) {
 
           {tab === 'contexto' && (
             <div className="match-contexto">
-              <section className="match-contexto-lead">
-                <p className="af-kicker">
-                  <span className="af-tele">Por qué importa esta noche</span>
-                </p>
-                <p className="match-contexto-copy">
-                  {pre
-                    ? `${match.home.name} recibe a ${match.away.name}${match.venue ? ` en ${match.venue}` : ''}. Forma reciente y el historial directo, antes de que abra la cabina.`
-                    : `El historial y la forma que trajeron ${match.home.abbreviation} y ${match.away.abbreviation} a este marcador.`}
-                </p>
-              </section>
-
               {h2h && h2h.meetings.length > 0 && (
                 <H2HBlock
                   h2h={h2h}
@@ -705,15 +715,17 @@ export function MatchChapter({ league, id }: Props) {
               )}
 
               {(homeForm.length > 0 || awayForm.length > 0) && (
-                <section>
-                  <p className="af-kicker">
-                    <span className="af-tele">Últimos cinco</span>
-                  </p>
+                <section className="match-form-section">
+                  <p className="af-tele match-contexto-label">Forma · últimos 5</p>
                   <div className="match-form-panels">
-                    <FormDetail side={match.home.abbreviation} form={homeForm} tz={userTz} />
-                    <FormDetail side={match.away.abbreviation} form={awayForm} tz={userTz} />
+                    <FormDetail side={match.home.abbreviation} form={homeForm} />
+                    <FormDetail side={match.away.abbreviation} form={awayForm} />
                   </div>
                 </section>
+              )}
+
+              {!h2h?.meetings.length && homeForm.length === 0 && awayForm.length === 0 && (
+                <p className="match-empty">Sin historial ni forma aún para este duelo.</p>
               )}
             </div>
           )}
