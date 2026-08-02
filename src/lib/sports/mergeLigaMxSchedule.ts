@@ -20,14 +20,14 @@ export type LigaMxScheduleFixture = {
   away: { name: string; abbreviation: string; score: string | null };
 };
 
-/** ESPN abbreviations → static Apertura schedule abbreviations. */
+/** Legacy aliases → current ESPN / schedule codes (Apertura 2026). */
 const ESPN_ABBR: Record<string, string> = {
-  NCX: 'NEC',
-  UNAM: 'PUM',
-  UANL: 'TIG',
-  ASL: 'SLP',
-  ATS: 'ATL', // Atlas
-  ATL: 'ALT', // Atlante (ESPN); static Atlas stays ATL
+  NEC: 'NCX',
+  PUM: 'UNAM',
+  TIG: 'UANL',
+  SLP: 'ASL',
+  ALT: 'ATL', // old static Atlante code
+  CHI: 'GDL',
 };
 
 function espnAbbr(abbr: string): string {

@@ -2,8 +2,10 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { ClubLogo } from '@/components/brand/ClubLogo';
 import { useGravity } from '@/contexts/GravityContext';
 import { teamNameEs } from '@/components/standings/teamNames';
+import { ligaMxLeagueLogoSrc } from '@/config/ligaMxLogos';
 import { getCurrentJornada } from '@/fixtures/ligamx-apertura-2026';
 import type { LigaMXTable, LigaMXEntry } from '@/app/api/ligamx/standings/route';
 import type { LigaMXFixture } from '@/app/api/ligamx/fixtures/route';
@@ -102,9 +104,19 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="af-tele text-foreground">
-                <span className="text-signal">AF</span>
-                ://LIGA MX
+              <p className="af-tele flex items-center gap-2 text-foreground">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={ligaMxLeagueLogoSrc()}
+                  alt=""
+                  width={22}
+                  height={22}
+                  className="club-logo club-logo-sm"
+                />
+                <span>
+                  <span className="text-signal">AF</span>
+                  ://LIGA MX
+                </span>
               </p>
               <h1
                 className="mt-2 font-display text-4xl font-bold uppercase tracking-wide sm:text-6xl"
@@ -150,11 +162,17 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
                     <span className="hoy-live-dot" aria-hidden />
                     {f.status.displayClock || 'LIVE'}
                   </span>
-                  <span className="hero-band-home">{f.home.abbreviation}</span>
+                  <span className="hero-band-home inline-flex items-center gap-2">
+                    <ClubLogo abbr={f.home.abbreviation} name={f.home.name} size="sm" />
+                    {f.home.abbreviation}
+                  </span>
                   <span className="hero-band-center">
                     {f.home.score ?? 0}:{f.away.score ?? 0}
                   </span>
-                  <span className="hero-band-away">{f.away.abbreviation}</span>
+                  <span className="hero-band-away inline-flex items-center justify-end gap-2">
+                    {f.away.abbreviation}
+                    <ClubLogo abbr={f.away.abbreviation} name={f.away.name} size="sm" />
+                  </span>
                 </Link>
               ))}
             </div>
@@ -383,17 +401,24 @@ function StandingsRow({ entry, mine }: { entry: LigaMXEntry; mine: boolean }) {
       >
         {entry.position}
       </span>
-      <div className="min-w-0">
-        <p
-          className={[
-            'truncate font-display text-base font-bold uppercase tracking-wide sm:text-lg',
-            mine ? 'text-signal' : 'text-foreground',
-          ].join(' ')}
-        >
-          {entry.team.abbreviation}
-          {mine && <span className="ml-2 af-tele !text-signal">LOCK</span>}
-        </p>
-        <p className="truncate text-xs text-muted">{teamNameEs(entry.team.name)}</p>
+      <div className="flex min-w-0 items-center gap-2.5">
+        <ClubLogo
+          abbr={entry.team.abbreviation}
+          name={entry.team.name}
+          size="md"
+        />
+        <div className="min-w-0">
+          <p
+            className={[
+              'truncate font-display text-base font-bold uppercase tracking-wide sm:text-lg',
+              mine ? 'text-signal' : 'text-foreground',
+            ].join(' ')}
+          >
+            {entry.team.abbreviation}
+            {mine && <span className="ml-2 af-tele !text-signal">LOCK</span>}
+          </p>
+          <p className="truncate text-xs text-muted">{teamNameEs(entry.team.name)}</p>
+        </div>
       </div>
       <span className="text-center text-xs text-muted">{entry.gp}</span>
       <span className="text-center text-xs text-muted">{entry.w}</span>
@@ -463,11 +488,23 @@ function MatchStamp({
       )}
       {!done && !live && <p className="jor-stamp-score opacity-40">VS</p>}
       <div className="jor-stamp-teams">
-        <span className={homeWin ? 'jor-team-win' : awayWin ? 'jor-team-lose' : draw ? 'jor-team-draw' : ''}>
+        <span
+          className={[
+            'inline-flex items-center gap-1.5',
+            homeWin ? 'jor-team-win' : awayWin ? 'jor-team-lose' : draw ? 'jor-team-draw' : '',
+          ].join(' ')}
+        >
+          <ClubLogo abbr={f.home.abbreviation} name={f.home.name} size="xs" />
           {f.home.abbreviation}
         </span>
-        <span className={awayWin ? 'jor-team-win' : homeWin ? 'jor-team-lose' : draw ? 'jor-team-draw' : ''}>
+        <span
+          className={[
+            'inline-flex items-center justify-end gap-1.5',
+            awayWin ? 'jor-team-win' : homeWin ? 'jor-team-lose' : draw ? 'jor-team-draw' : '',
+          ].join(' ')}
+        >
           {f.away.abbreviation}
+          <ClubLogo abbr={f.away.abbreviation} name={f.away.name} size="xs" />
         </span>
       </div>
       <p className="jor-stamp-scorers">{fmtDate(f.date, tz)}</p>

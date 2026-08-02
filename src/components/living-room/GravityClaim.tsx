@@ -1,5 +1,6 @@
 'use client';
 
+import { ClubLogo } from '@/components/brand/ClubLogo';
 import { EL_TRI, LIGA_MX_CLUBS, useGravity } from '@/contexts/GravityContext';
 
 export function GravityClaim() {
@@ -78,7 +79,8 @@ export function GravityClaim() {
                 className={['af-club-btn', active ? 'is-on' : ''].join(' ')}
                 aria-pressed={active}
               >
-                {c.abbreviation}
+                <ClubLogo clubId={c.id} abbr={c.abbreviation} name={c.name} size="md" />
+                <span>{c.abbreviation}</span>
               </button>
             );
           })}

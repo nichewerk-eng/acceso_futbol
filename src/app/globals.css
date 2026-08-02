@@ -522,8 +522,8 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 7.5rem;
-  max-height: 7.5rem;
+  min-height: 8.25rem;
+  max-height: 8.25rem;
   padding: 0.7rem 0.85rem 0.75rem;
   background: var(--bg-2);
   border: 1px solid var(--line);
@@ -587,10 +587,10 @@ body {
 
 .jor-stamp-teams {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  margin-top: 0.35rem;
+  margin-top: 0.4rem;
   font-family: var(--font-oswald), sans-serif;
   font-weight: 700;
   font-size: 1.05rem;
@@ -815,14 +815,19 @@ body {
 }
 
 .af-club-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
   background: var(--bg-1);
   color: var(--muted);
   font-family: var(--font-oswald), sans-serif;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.8rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 0.85rem 0.25rem;
+  padding: 0.7rem 0.25rem 0.65rem;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
@@ -832,6 +837,48 @@ body {
 }
 
 .af-club-btn.is-on {
+  background: var(--signal);
+  color: var(--on-signal);
+}
+
+.club-logo {
+  display: inline-block;
+  object-fit: contain;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.club-logo-xs {
+  width: 22px;
+  height: 22px;
+}
+
+.club-logo-sm {
+  width: 28px;
+  height: 28px;
+}
+
+.club-logo-md {
+  width: 36px;
+  height: 36px;
+}
+
+.club-logo-lg {
+  width: 52px;
+  height: 52px;
+}
+
+.af-ink .af-club-btn {
+  background: #141414;
+  color: rgba(246, 245, 242, 0.55);
+}
+
+.af-ink .af-club-btn:hover {
+  background: #1c1c1c;
+  color: #f6f5f2;
+}
+
+.af-ink .af-club-btn.is-on {
   background: var(--signal);
   color: var(--on-signal);
 }

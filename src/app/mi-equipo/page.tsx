@@ -2,31 +2,13 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { ClubLogo } from '@/components/brand/ClubLogo';
 import { useTeam } from '@/contexts/TeamContext';
+import { LIGA_MX_CLUBS } from '@/config/clubs';
 import { teamNameEs } from '@/components/standings/teamNames';
 import SiteNav from '@/components/SiteNav';
 
-// Hard-coded Liga MX teams so users can browse without needing live API data
-const LIGAMX_TEAMS = [
-  { id: 'america',    name: 'Club América',       abbreviation: 'AME', league: 'liga-mx' as const },
-  { id: 'chivas',     name: 'Chivas',              abbreviation: 'CHI', league: 'liga-mx' as const },
-  { id: 'guadalajara',name: 'Guadalajara',         abbreviation: 'GDL', league: 'liga-mx' as const },
-  { id: 'tigres',     name: 'Tigres',              abbreviation: 'TIG', league: 'liga-mx' as const },
-  { id: 'monterrey',  name: 'Monterrey',           abbreviation: 'MTY', league: 'liga-mx' as const },
-  { id: 'pumas',      name: 'Pumas UNAM',          abbreviation: 'PUM', league: 'liga-mx' as const },
-  { id: 'santos',     name: 'Santos Laguna',       abbreviation: 'SAN', league: 'liga-mx' as const },
-  { id: 'atlas',      name: 'Atlas',               abbreviation: 'ATL', league: 'liga-mx' as const },
-  { id: 'pachuca',    name: 'Pachuca',             abbreviation: 'PAC', league: 'liga-mx' as const },
-  { id: 'tijuana',    name: 'Xolos Tijuana',       abbreviation: 'TIJ', league: 'liga-mx' as const },
-  { id: 'queretaro',  name: 'Querétaro',           abbreviation: 'QRO', league: 'liga-mx' as const },
-  { id: 'leon',       name: 'León',                abbreviation: 'LEO', league: 'liga-mx' as const },
-  { id: 'toluca',     name: 'Toluca',              abbreviation: 'TOL', league: 'liga-mx' as const },
-  { id: 'necaxa',     name: 'Necaxa',              abbreviation: 'NEC', league: 'liga-mx' as const },
-  { id: 'juarez',     name: 'FC Juárez',           abbreviation: 'JUA', league: 'liga-mx' as const },
-  { id: 'mazatlan',   name: 'Mazatlán FC',         abbreviation: 'MAZ', league: 'liga-mx' as const },
-  { id: 'slp',        name: 'San Luis',            abbreviation: 'SLP', league: 'liga-mx' as const },
-  { id: 'atletico',   name: 'Atlético de San Luis', abbreviation: 'LDU', league: 'liga-mx' as const },
-];
+const LIGAMX_TEAMS = LIGA_MX_CLUBS;
 
 export default function MiEquipoPage() {
   const { favorites, addFavorite, removeFavorite, isFavorite } = useTeam();
@@ -63,7 +45,9 @@ export default function MiEquipoPage() {
                       className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 dark:bg-white/10 text-gray-400 text-[10px] hover:bg-red-100 hover:text-red-500 transition"
                       aria-label="Quitar"
                     >✕</button>
-                    <span className="block text-3xl mb-1.5">⚽</span>
+                    <span className="mb-1.5 flex justify-center">
+                      <ClubLogo clubId={team.id} abbr={team.abbreviation} name={team.name} size="lg" />
+                    </span>
                     <p className="text-xs font-semibold text-gray-900 dark:text-white">{teamNameEs(team.name)}</p>
                     <p className="text-[10px] text-gray-400 dark:text-white/30 mt-0.5">Liga MX</p>
                     <Link
@@ -88,11 +72,22 @@ export default function MiEquipoPage() {
                 return (
                   <button
                     key={team.id}
-                    onClick={() => fav ? removeFavorite(team.id) : addFavorite(team)}
+                    onClick={() =>
+                      fav
+                        ? removeFavorite(team.id)
+                        : addFavorite({
+                            id: team.id,
+                            name: team.name,
+                            abbreviation: team.abbreviation,
+                            league: 'liga-mx',
+                          })
+                    }
                     className={['rounded-xl border px-3 py-3 text-left transition group',
                       fav ? 'border-brand-orange/40 bg-brand-orange/5' : 'border-gray-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] hover:border-brand-orange/30 hover:bg-brand-orange/5'].join(' ')}
                   >
-                    <span className="block text-2xl mb-1.5">⚽</span>
+                    <span className="mb-1.5 flex">
+                      <ClubLogo clubId={team.id} abbr={team.abbreviation} name={team.name} size="md" />
+                    </span>
                     <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">{teamNameEs(team.name)}</p>
                     <p className="text-[10px] mt-1 font-semibold transition">
                       {fav ? <span className="text-brand-orange">Siguiendo ✓</span> : <span className="text-gray-400 dark:text-white/30 group-hover:text-brand-orange">+ Seguir</span>}

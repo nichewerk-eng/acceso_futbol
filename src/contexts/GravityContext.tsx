@@ -71,8 +71,24 @@ function nameHits(hay: string, club: GravityClub): boolean {
     h.includes(club.name.toLowerCase()) ||
     h.includes(club.abbreviation.toLowerCase()) ||
     (club.id === 'chivas' && (h.includes('guadalajara') || h.includes('chivas'))) ||
-    (club.id === 'america' && (h.includes('américa') || h.includes('america')))
+    (club.id === 'america' && (h.includes('américa') || h.includes('america'))) ||
+    (club.id === 'atlante' && h.includes('atlante')) ||
+    (club.id === 'san-luis' && (h.includes('san luis') || h.includes('sanluis')))
   );
+}
+
+/** ESPN Apertura 2026 abbr (+ legacy aliases) for this gravity club. */
+function abbrHits(abbr: string, club: GravityClub): boolean {
+  const a = abbr.toUpperCase();
+  if (a === club.abbreviation) return true;
+  if (club.id === 'chivas' && (a === 'GDL' || a === 'CHI')) return true;
+  if (club.id === 'san-luis' && (a === 'ASL' || a === 'SLP')) return true;
+  if (club.id === 'necaxa' && (a === 'NCX' || a === 'NEC')) return true;
+  if (club.id === 'pumas' && (a === 'UNAM' || a === 'PUM')) return true;
+  if (club.id === 'tigres' && (a === 'UANL' || a === 'TIG')) return true;
+  if (club.id === 'atlas' && a === 'ATS') return true;
+  if (club.id === 'atlante' && (a === 'ATL' || a === 'ALT')) return true;
+  return false;
 }
 
 export function GravityProvider({ children }: { children: ReactNode }) {
@@ -118,8 +134,8 @@ export function GravityProvider({ children }: { children: ReactNode }) {
       return (
         nameHits(homeName, club) ||
         nameHits(awayName, club) ||
-        homeAbbr.toUpperCase() === club.abbreviation ||
-        awayAbbr.toUpperCase() === club.abbreviation
+        abbrHits(homeAbbr, club) ||
+        abbrHits(awayAbbr, club)
       );
     },
     [club, state.elTri]

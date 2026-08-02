@@ -7,7 +7,7 @@ import { fetchTudnStories } from './tudn';
 import type { StoriesPayload, Story, StorySourceId } from './types';
 
 const MX_HINT =
-  /liga\s*mx|apertura|clausura|chivas|américa|america|tigres|rayados|cruz azul|pumas|atlas|toluca|santos|xolos|necaxa|mazatl[aá]n|quer[eé]taro|le[oó]n|pachuca|ju[aá]rez|puebla|san luis|femenil|selecci[oó]n|el tri|futbol mexicano|fútbol mexicano/i;
+  /liga\s*mx|apertura|clausura|chivas|américa|america|tigres|rayados|cruz azul|pumas|atlas|atlante|toluca|santos|xolos|necaxa|quer[eé]taro|le[oó]n|pachuca|ju[aá]rez|puebla|san luis|femenil|selecci[oó]n|el tri|futbol mexicano|fútbol mexicano/i;
 
 type SourceDef = {
   id: StorySourceId;

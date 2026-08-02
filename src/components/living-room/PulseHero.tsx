@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { ClubLogo } from '@/components/brand/ClubLogo';
 import { useGravity } from '@/contexts/GravityContext';
 import { leaguePath } from '@/lib/radio/phases';
 import type { Story } from '@/lib/news/types';
@@ -188,9 +189,16 @@ export function PulseHero({ leadStory }: Props) {
 
             <div className="hero-stage-grid">
               <div className="min-w-0 text-left">
-                <p className="hero-stage-abbr truncate group-hover:text-signal">
-                  {stage.home.abbreviation}
-                </p>
+                <div className="flex items-center gap-2.5">
+                  <ClubLogo
+                    abbr={stage.home.abbreviation}
+                    name={stage.home.name}
+                    size="lg"
+                  />
+                  <p className="hero-stage-abbr truncate group-hover:text-signal">
+                    {stage.home.abbreviation}
+                  </p>
+                </div>
                 <p className="mt-1 truncate font-mono text-[11px] text-muted">
                   {stage.home.name}
                 </p>
@@ -199,9 +207,16 @@ export function PulseHero({ leadStory }: Props) {
                 {bandMeta(stage).center}
               </div>
               <div className="min-w-0 text-right">
-                <p className="hero-stage-abbr truncate group-hover:text-signal">
-                  {stage.away.abbreviation}
-                </p>
+                <div className="flex items-center justify-end gap-2.5">
+                  <p className="hero-stage-abbr truncate group-hover:text-signal">
+                    {stage.away.abbreviation}
+                  </p>
+                  <ClubLogo
+                    abbr={stage.away.abbreviation}
+                    name={stage.away.name}
+                    size="lg"
+                  />
+                </div>
                 <p className="mt-1 truncate font-mono text-[11px] text-muted">
                   {stage.away.name}
                 </p>
@@ -264,11 +279,17 @@ export function PulseHero({ leadStory }: Props) {
                       {meta.kind === 'live' && <span className="hoy-live-dot mr-2" aria-hidden />}
                       {meta.stamp}
                     </span>
-                    <span className="hero-band-home">{g.home.abbreviation}</span>
+                    <span className="hero-band-home inline-flex items-center gap-2">
+                      <ClubLogo abbr={g.home.abbreviation} name={g.home.name} size="sm" />
+                      {g.home.abbreviation}
+                    </span>
                     <span className="hero-band-center" data-testid={`hero-band-score-${g.id}`}>
                       {meta.center}
                     </span>
-                    <span className="hero-band-away">{g.away.abbreviation}</span>
+                    <span className="hero-band-away inline-flex items-center justify-end gap-2">
+                      {g.away.abbreviation}
+                      <ClubLogo abbr={g.away.abbreviation} name={g.away.name} size="sm" />
+                    </span>
                     {mine && <span className="hero-band-lock af-tele text-signal">LOCK</span>}
                   </Link>
                 );

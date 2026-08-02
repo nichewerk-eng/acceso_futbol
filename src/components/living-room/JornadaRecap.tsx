@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState, type CSSProperties } from 'react';
+import { ClubLogo } from '@/components/brand/ClubLogo';
 import { useGravity } from '@/contexts/GravityContext';
 import type { Fixture } from '@/lib/sports';
 import type { JornadaOverview } from '@/lib/sports/jornada';
@@ -71,8 +72,14 @@ function ResultStamp({ f, mine }: { f: Fixture; mine: boolean }) {
           <span className={awayCls}>{f.away.score ?? 0}</span>
         </p>
         <div className="jor-stamp-teams">
-          <span className={homeCls}>{f.home.abbreviation}</span>
-          <span className={awayCls}>{f.away.abbreviation}</span>
+          <span className={['inline-flex items-center gap-2', homeCls].join(' ')}>
+            <ClubLogo abbr={f.home.abbreviation} name={f.home.name} size="sm" />
+            {f.home.abbreviation}
+          </span>
+          <span className={['inline-flex items-center justify-end gap-2', awayCls].join(' ')}>
+            {f.away.abbreviation}
+            <ClubLogo abbr={f.away.abbreviation} name={f.away.name} size="sm" />
+          </span>
         </div>
         {scorers ? (
           <p className="jor-stamp-scorers" title={scorers}>
@@ -98,9 +105,15 @@ function NextCard({ f, mine }: { f: Fixture; mine: boolean }) {
         {mine && <span className="af-tele !text-signal">LOCK</span>}
       </div>
       <div className="jor-next-vs">
-        <span className="jor-next-abbr">{f.home.abbreviation}</span>
+        <span className="jor-next-abbr inline-flex items-center gap-2">
+          <ClubLogo abbr={f.home.abbreviation} name={f.home.name} size="sm" />
+          {f.home.abbreviation}
+        </span>
         <span className="jor-next-mid">VS</span>
-        <span className="jor-next-abbr">{f.away.abbreviation}</span>
+        <span className="jor-next-abbr inline-flex items-center justify-end gap-2">
+          {f.away.abbreviation}
+          <ClubLogo abbr={f.away.abbreviation} name={f.away.name} size="sm" />
+        </span>
       </div>
       <p className="jor-next-when mt-4">Ficha · radio al kick</p>
     </Link>

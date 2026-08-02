@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { ClubLogo } from '@/components/brand/ClubLogo';
 import type { DayGame, GamesOfDayPayload } from '@/lib/sports';
 import { leaguePath } from '@/lib/radio/phases';
 
@@ -81,10 +82,12 @@ export function EngagementDock() {
               `HOY · ${String(count).padStart(2, '0')}`
             )}
           </p>
-          <p className="truncate font-display text-lg font-bold uppercase tracking-wide text-[#f6f5f2]">
+          <p className="flex items-center gap-2 truncate font-display text-lg font-bold uppercase tracking-wide text-[#f6f5f2]">
+            <ClubLogo abbr={game.home.abbreviation} name={game.home.name} size="sm" />
             {game.home.abbreviation}
-            <span className="mx-1.5 text-white/40">{score}</span>
+            <span className="mx-0.5 text-white/40">{score}</span>
             {game.away.abbreviation}
+            <ClubLogo abbr={game.away.abbreviation} name={game.away.name} size="sm" />
           </p>
         </div>
         {game.radioAvailable ? (
