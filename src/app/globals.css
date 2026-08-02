@@ -147,13 +147,4 @@ body {
     print-color-adjust: exact !important;
     color-adjust: exact !important;
   }
-
-  .mediakit-page {
-    break-after: page;
-    break-inside: avoid;
-  }
-
-  .mediakit-page:last-of-type {
-    break-after: auto;
-  }
 }
