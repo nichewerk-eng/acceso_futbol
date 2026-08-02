@@ -782,6 +782,10 @@ body {
   overflow: hidden;
 }
 
+[data-testid='jornada-upcoming'] .jor-next {
+  padding: 0.9rem 0.75rem 0.95rem;
+}
+
 .jor-next:hover {
   border-color: rgba(246, 245, 242, 0.55);
   transform: translateY(-2px);
@@ -860,10 +864,18 @@ body {
     padding: 0.85rem 0.45rem 0.9rem;
   }
 
+  [data-testid='jornada-upcoming'] .jor-next {
+    padding: 0.7rem 0.3rem 0.75rem;
+  }
+
   .jor-mosaic .jor-next-vs {
     margin-top: 0.85rem;
     gap: 0.3rem;
     align-items: center;
+  }
+
+  [data-testid='jornada-upcoming'] .jor-next-vs {
+    margin-top: 0.65rem;
   }
 
   /* Stack crest above abbr so 2-col cards keep all content inside */
@@ -884,7 +896,7 @@ body {
   }
 
   .jor-mosaic .jor-next-cta {
-    margin-top: 0.65rem;
+    display: none;
   }
 
   .jor-mosaic .jor-next .club-logo-sm {
