@@ -35,7 +35,8 @@ function briefBucket(now = Date.now()) {
 }
 
 export function cableBriefId(style: RadioStyle, now = Date.now()) {
-  return `cable-brief-v2-${briefBucket(now)}-${style}`;
+  // v3: spoken podcast voice (human host, not news-wire readout)
+  return `cable-brief-v3-${briefBucket(now)}-${style}`;
 }
 
 function pickStories(stories: Story[], limit = 6): Story[] {
@@ -47,9 +48,9 @@ function pickStories(stories: Story[], limit = 6): Story[] {
 function storyBlurb(s: Story): string {
   const deck = s.summary?.trim();
   const take = s.accesoLine?.trim();
-  if (deck && take) return `${s.title}. ${deck} Toma Acceso: ${take}`;
+  if (deck && take) return `${s.title}. ${deck} Y la lectura Acceso: ${take}`;
   if (deck) return `${s.title}. ${deck}`;
-  if (take) return `${s.title}. Toma Acceso: ${take}`;
+  if (take) return `${s.title}. ${take}`;
   return s.title;
 }
 
@@ -57,16 +58,16 @@ function jornadaBlurb(j: JornadaOverview | null): string {
   if (!j) return '';
   const left = j.upcoming
     .slice(0, 3)
-    .map((f) => `${f.home.abbreviation} contra ${f.away.abbreviation}`)
+    .map((f) => `${f.home.name} contra ${f.away.name}`)
     .join(', ');
   const sealed = j.played
     .slice(0, 3)
-    .map((f) => `${f.home.abbreviation} ${f.home.score ?? 0}-${f.away.score ?? 0} ${f.away.abbreviation}`)
-    .join('; ');
+    .map((f) => `${f.home.name} ${f.home.score ?? 0} a ${f.away.score ?? 0} frente a ${f.away.name}`)
+    .join('. ');
   const parts = [
-    `${j.label}: ${j.played.length + j.live.length} sellados, ${j.upcoming.length} por jugar.`,
-    sealed ? `Entre lo jugado: ${sealed}.` : '',
-    left ? `Quedan: ${left}.` : 'Fecha casi cerrada.',
+    `En la ${j.label} ya van ${j.played.length + j.live.length} partidos sellados y quedan ${j.upcoming.length} por jugar.`,
+    sealed ? `De lo que ya se jugó: ${sealed}.` : '',
+    left ? `Todavía faltan ${left}.` : 'La fecha ya casi se cierra.',
   ];
   return parts.filter(Boolean).join(' ');
 }
@@ -83,16 +84,16 @@ export function templateCableBrief(
 
   const open =
     style === 'caliente'
-      ? `Acceso Radio, briefing del cable. Cinco minutos para enterarte de lo que prende en Liga MX y El Tri sin ahogarte en el scroll. Titulares con nombre y apellido de la fuente, toma Acceso al final de cada corte. Arrancamos.`
+      ? `Oye, bienvenido a Acceso. Esto es el briefing del cable: unos minutos contigo, como si estuviéramos en el coche o en la cocina, poniéndonos al día de Liga MX y El Tri sin ahogarnos en el scroll. Yo te platico lo que prende, con nombre de la fuente, y tú decides si te metes al artículo. Arrancamos.`
       : style === 'tactico'
-        ? `Briefing Acceso. Lectura fría del cable: qué dicen ESPN, Mediotiempo, TUDN y Marca, qué implica para la fecha, y dónde poner la atención. Sin inventar goles. Sin leer el artículo completo. Empezamos.`
-        : `Desde México y Estados Unidos, Acceso abre el cable. Un briefing para la afición binacional: lo que se discute en la CDMX y lo que se vive en Texas, California o Chicago. Micrófono abierto.`;
+        ? `Hola. Acceso Radio, briefing del cable. Vamos a leer con calma lo que están soltando ESPN, Mediotiempo, TUDN y Marca: qué importa de verdad para la fecha y dónde vale la pena poner el ojo. Sin inventar, sin gritar. Como un podcast corto antes de la jornada. Empezamos.`
+        : `Desde este lado del puente — México o Estados Unidos, da igual — Acceso abre el micrófono. Un rato de cable para la afición binacional: lo que se discute en la CDMX y lo que se vive en Texas, California o Chicago. Siéntate un minuto. Te lo platico.`;
 
   const leadSeg = lead
     ? style === 'tactico'
-      ? `Apertura del briefing. ${lead.sourceLabel} marca el tono de la jornada mediática: ${storyBlurb(lead)}. Quédate con la señal, no con el clickbait. Si te importa el detalle, toca la fuente; aquí te dejamos el marco.`
-      : `Lo que prende arriba del cable: según ${lead.sourceLabel}, ${storyBlurb(lead)}. Eso es portada. Lee allá si quieres el texto largo; aquí te dejamos el pulso y la toma para que no llegues en frío a la sobremesa.`
-    : `El cable viene corto hoy, pero la cabina sigue abierta. Cuando falten decks, Acceso no inventa: marca el silencio y apunta a la cancha.`;
+      ? `Mira, ${lead.sourceLabel} está marcando el tono del día. ${storyBlurb(lead)}. Quédate con el marco, no con el clickbait. Si quieres el detalle fino, abre la fuente; aquí te dejo la lectura para que no llegues en frío.`
+      : `Lo primero que te quiero contar: según ${lead.sourceLabel}, ${storyBlurb(lead)}. Eso es lo que está arriba del cable. Si te late el tema, léelo completo allá; yo te dejo el pulso para la sobremesa.`
+    : `Hoy el cable viene un poco corto, y está bien. Cuando no hay decks, Acceso no inventa: te digo la verdad y te mando la mirada a la cancha.`;
 
   const chunks: ShowSegment[] = [
     { id: 'brief-1', text: open },
@@ -100,12 +101,19 @@ export function templateCableBrief(
   ];
 
   const rest = picks.slice(1);
+  const bridges = [
+    'Ojo con esto también.',
+    'Y fíjate en otra cosa.',
+    'Sigo, porque hay más en el cable.',
+    'Una más que vale la pena.',
+  ];
   for (let i = 0; i < rest.length; i += 2) {
     const a = rest[i];
     const b = rest[i + 1];
+    const bridge = bridges[chunks.length % bridges.length];
     const body = b
-      ? `Seguimos el cable. Primero, ${a.sourceLabel}: ${storyBlurb(a)}. Segundo corte, ${b.sourceLabel}: ${storyBlurb(b)}. Dos señales, una lectura: qué se está negociando en la conversación del fútbol mexicano ahora mismo.`
-      : `Otro punto del cable. ${a.sourceLabel}: ${storyBlurb(a)}. Guárdalo: es de esos titulares que después aparecen en la cabina y en el grupo del WhatsApp.`;
+      ? `${bridge} ${a.sourceLabel} trae esto: ${storyBlurb(a)}. Y del otro lado, ${b.sourceLabel} dice: ${storyBlurb(b)}. Dos conversaciones distintas, misma liga: esto es lo que se está cocinando en el fútbol mexicano ahorita.`
+      : `${bridge} ${a.sourceLabel}: ${storyBlurb(a)}. Guárdalo. Es de esos temas que luego te llegan en el WhatsApp del grupo y ya vas un paso adelante.`;
     chunks.push({ id: `brief-${chunks.length + 1}`, text: body });
   }
 
@@ -114,8 +122,8 @@ export function templateCableBrief(
       id: `brief-${chunks.length + 1}`,
       text:
         style === 'tactico'
-          ? `Corte a la cancha. ${jLine} Eso ancla el ruido del cable a resultados y pendientes. Si tu club ya selló, el debate es lectura; si falta por jugar, la cabina todavía tiene trabajo.`
-          : `Y ahora la fecha, porque el cable sin cancha es puro humo. ${jLine} El pulso, la jornada y la cabina siguen vivos en Acceso cuando quieras entrar.`,
+          ? `Bajemos un segundo a la cancha, que el cable sin resultados se queda a medias. ${jLine} Si tu club ya jugó, el debate es lectura; si todavía falta, la cabina sigue con trabajo.`
+          : `Y ya, un giro a la cancha, porque sin partido el cable es puro humo. ${jLine} Cuando quieras entrar a la cabina o al pulso, aquí estamos.`,
     });
   }
 
@@ -123,8 +131,8 @@ export function templateCableBrief(
     id: `brief-${chunks.length + 1}`,
     text:
       style === 'puente'
-        ? `Cierre del briefing Acceso. Titulares con atribución: tocas la fuente, no republicamos el artículo. Si estás en México o del otro lado del puente, el cable es el mismo y la toma también. Vuelve en un par de horas por el siguiente corte, o métete a la cabina cuando juegue tu gente.`
-        : `Eso es el briefing Acceso. Fuentes afuera, voz aquí, cancha al centro. Vuelve al cable para leer, o entra a la cabina cuando tu club pida micrófono. Nos escuchamos en el próximo corte.`,
+        ? `Te dejo hasta aquí. Fuentes afuera, voz aquí: tocas el artículo si te late, nosotros no te lo leemos entero. Estés en México o del otro lado del puente, el cable es el mismo. Vuelve en un par de horas por el siguiente corte, o métete a la cabina cuando juegue tu gente. Nos escuchamos.`
+        : `Eso fue el briefing. Gracias por escucharnos de verdad, no solo por pasar el feed. Fuentes afuera, voz aquí, cancha al centro. Vuelve al cable cuando quieras, o entra a la cabina si tu club pide micrófono. Hasta el próximo corte.`,
   });
 
   return chunks;
@@ -140,21 +148,41 @@ async function rewriteCableBrief(
 
   try {
     const persona = PERSONAS[style];
+    const voiceHint =
+      style === 'caliente'
+        ? 'Energía de amigo que te habla del partido: cálido, opinado, sin gritar todo el tiempo.'
+        : style === 'tactico'
+          ? 'Host analítico de podcast: calmado, claro, como si explicaras en la mesa.'
+          : 'Host binacional: cercano, puente MX–US, como conversación en el coche.';
     const raw = await anthropicChat({
-      system: `${persona.system.replace(/Máximo 2 oraciones\./gi, 'Bloques de radio más largos.')} Escribes un podcast briefing del CABLE Acceso (~5 minutos). ${draft.length} bloques. Cada bloque: 3 a 5 oraciones en español mexicano. Atribuye fuentes por nombre (ESPN, Mediotiempo, TUDN, Marca). No inventes goles, declaraciones ni hechos. No leas artículos completos: usa solo titulares, decks y tomas Acceso. Responde SOLO JSON: [{"id":"...","text":"..."}]`,
+      system: `${persona.system.replace(/Máximo 2 oraciones\./gi, 'Bloques hablados de podcast.')}
+
+Eres el host de un PODCAST corto de Acceso Futbol llamado "Briefing del cable" (~5 minutos). ${voiceHint}
+
+REGLAS DE VOZ (crítico):
+- Suena a persona hablando a un micrófono, NO a boletín ni a titular leído.
+- Habla en segunda persona (tú / oye / mira / fíjate). Usa contracciones y ritmo oral del español mexicano.
+- Cada bloque fluye al siguiente; evita listas, "primero/segundo/tercer punto", y jerga de productora ("corte", "señal", "deck") salvo que suene natural.
+- Puedes hacer una pregunta retórica corta o un aparte ("la neta…", "ojo…") si ayuda.
+- ${draft.length} bloques. Cada bloque: 4 a 7 oraciones habladas, para oídos.
+- Atribuye fuentes por nombre (ESPN, Mediotiempo, TUDN, Marca). No inventes goles, citas ni hechos.
+- No leas artículos enteros: solo titulares, resúmenes y tomas Acceso del input.
+- Reescribe el draft para que suene más humano; conserva los hechos.
+- Responde SOLO JSON: [{"id":"...","text":"..."}]`,
       user: JSON.stringify({
-        kind: 'cable-brief',
+        kind: 'cable-brief-podcast',
+        goal: 'El oyente debe sentir que escucha un podcast, no un resumen de noticias.',
         jornada: jornada
           ? {
               label: jornada.label,
               played: jornada.played.length,
               live: jornada.live.length,
               upcoming: jornada.upcoming.map(
-                (f) => `${f.home.abbreviation}-${f.away.abbreviation}`
+                (f) => `${f.home.name} vs ${f.away.name}`
               ),
               results: jornada.played.slice(0, 5).map(
                 (f) =>
-                  `${f.home.abbreviation} ${f.home.score ?? 0}-${f.away.score ?? 0} ${f.away.abbreviation}`
+                  `${f.home.name} ${f.home.score ?? 0}-${f.away.score ?? 0} ${f.away.name}`
               ),
             }
           : null,
@@ -166,8 +194,8 @@ async function rewriteCableBrief(
         })),
         draft,
       }),
-      temperature: 0.65,
-      maxTokens: 1400,
+      temperature: 0.8,
+      maxTokens: 1800,
     });
     if (!raw) return draft;
     const start = raw.indexOf('[');
