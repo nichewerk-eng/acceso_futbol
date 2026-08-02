@@ -14,6 +14,7 @@ const BY_ID: Record<string, string> = {
   monterrey: `${LOGO_DIR}/monterrey-logo.png`,
   necaxa: `${LOGO_DIR}/necaxa-logo.png`,
   pachuca: `${LOGO_DIR}/pachuca-logo.png`,
+  puebla: `${LOGO_DIR}/puebla-logo.png`,
   pumas: `${LOGO_DIR}/pumas-unam-logo.png`,
   queretaro: `${LOGO_DIR}/queretaro-fc-logo.png`,
   'san-luis': `${LOGO_DIR}/atletico-san-luis.png`,
