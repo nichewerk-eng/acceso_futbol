@@ -1,13 +1,15 @@
 import { Metadata } from 'next';
-import SiteNav from '@/components/SiteNav';
-import LiveTicker from '@/components/LiveTicker';
+import { SiteFooter } from '@/components/home/SiteFooter';
 import LigaMXView from '@/components/ligamx/LigaMXView';
+import { PulseNav } from '@/components/living-room/PulseNav';
 import type { LigaMXTable } from '@/app/api/ligamx/standings/route';
 import type { LigaMXFixture } from '@/app/api/ligamx/fixtures/route';
+import { mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
 
 export const metadata: Metadata = {
   title: 'Liga MX | Tabla de Posiciones Apertura 2026',
-  description: 'Tabla de posiciones, calendario y tracker de Liguilla de la Liga MX Apertura 2026 en tiempo real.',
+  description:
+    'Tabla de posiciones, calendario y tracker de Liguilla de la Liga MX Apertura 2026 en tiempo real.',
   openGraph: {
     title: 'Liga MX Apertura 2026 | Acceso Futbol',
     description: 'Posiciones, resultados y clasificación a Liguilla en tiempo real.',
@@ -21,35 +23,46 @@ async function fetchTable(): Promise<LigaMXTable | null> {
   try {
     const res = await fetch(
       'https://site.api.espn.com/apis/v2/sports/soccer/mex.1/standings',
-      { next: { revalidate: 60 } },
+      { next: { revalidate: 60 } }
     );
     if (!res.ok) return null;
     const raw = await res.json();
     const entries = raw.standings?.entries ?? raw.children?.[0]?.standings?.entries ?? [];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mapped = entries.map((entry: any) => {
+    const mapped = entries
+      .map((entry: any) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const sm = Object.fromEntries(entry.stats.map((s: any) => [s.abbreviation, s]));
+        return {
+          position: Number(sm['R']?.value ?? sm['POS']?.value ?? 0),
+          team: {
+            id: entry.team.id,
+            name: entry.team.displayName,
+            abbreviation: entry.team.abbreviation,
+          },
+          gp: Number(sm['GP']?.value ?? 0),
+          w: Number(sm['W']?.value ?? 0),
+          d: Number(sm['D']?.value ?? 0),
+          l: Number(sm['L']?.value ?? 0),
+          gf: Number(sm['F']?.value ?? sm['GF']?.value ?? 0),
+          ga: Number(sm['A']?.value ?? sm['GA']?.value ?? 0),
+          gd: sm['GD']?.displayValue ?? '0',
+          pts: Number(sm['P']?.value ?? sm['PTS']?.value ?? 0),
+        };
+      })
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const sm = Object.fromEntries(entry.stats.map((s: any) => [s.abbreviation, s]));
-      return {
-        position: Number(sm['R']?.value ?? sm['POS']?.value ?? 0),
-        team: { id: entry.team.id, name: entry.team.displayName, abbreviation: entry.team.abbreviation },
-        gp: Number(sm['GP']?.value ?? 0), w: Number(sm['W']?.value ?? 0),
-        d: Number(sm['D']?.value ?? 0),   l: Number(sm['L']?.value ?? 0),
-        gf: Number(sm['F']?.value ?? sm['GF']?.value ?? 0),
-        ga: Number(sm['A']?.value ?? sm['GA']?.value ?? 0),
-        gd: sm['GD']?.displayValue ?? '0', pts: Number(sm['P']?.value ?? sm['PTS']?.value ?? 0),
-      };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    }).sort((a: any, b: any) => a.position - b.position);
+      .sort((a: any, b: any) => a.position - b.position);
     return { season: raw.season?.displayName ?? 'Apertura 2026', entries: mapped };
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 async function fetchFixtures(): Promise<LigaMXFixture[]> {
   try {
     const res = await fetch(
       'https://site.web.api.espn.com/apis/site/v2/sports/soccer/mex.1/scoreboard?dates=20260701-20261231&limit=200',
-      { next: { revalidate: 60 } },
+      { next: { revalidate: 60 } }
     );
     if (!res.ok) return [];
     const raw = await res.json();
@@ -62,27 +75,48 @@ async function fetchFixtures(): Promise<LigaMXFixture[]> {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const away = competitors.find((c: any) => c.homeAway === 'away') ?? competitors[1];
       return {
-        id: event.id, date: event.date, league: 'liga-mx',
+        id: event.id,
+        date: event.date,
+        league: 'liga-mx' as const,
         jornada: event.week?.number ? `Jornada ${event.week.number}` : null,
-        status: { completed: event.status?.type?.completed ?? false, state: event.status?.type?.state ?? 'pre', description: event.status?.type?.description ?? '', shortDetail: event.status?.type?.shortDetail ?? '', displayClock: event.status?.displayClock ?? '' },
-        venue: comp?.venue?.fullName ?? null, city: comp?.venue?.address?.city ?? null,
-        home: { name: home?.team?.displayName ?? '', abbreviation: home?.team?.abbreviation ?? '', score: home?.score ?? null },
-        away: { name: away?.team?.displayName ?? '', abbreviation: away?.team?.abbreviation ?? '', score: away?.score ?? null },
+        status: {
+          completed: event.status?.type?.completed ?? false,
+          state: event.status?.type?.state ?? 'pre',
+          description: event.status?.type?.description ?? '',
+          shortDetail: event.status?.type?.shortDetail ?? '',
+          displayClock: event.status?.displayClock ?? '',
+        },
+        venue: comp?.venue?.fullName ?? null,
+        city: comp?.venue?.address?.city ?? null,
+        home: {
+          name: home?.team?.displayName ?? '',
+          abbreviation: home?.team?.abbreviation ?? '',
+          score: home?.score ?? null,
+        },
+        away: {
+          name: away?.team?.displayName ?? '',
+          abbreviation: away?.team?.abbreviation ?? '',
+          score: away?.score ?? null,
+        },
       };
     });
-    // If ESPN returned events but none have jornada info, treat as no useful data
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return mapped.some((f: any) => f.jornada !== null) ? mapped : [];
-  } catch { return []; }
+    // Return ESPN rows even without week/jornada — client/API merge onto static calendar.
+    return mapped;
+  } catch {
+    return [];
+  }
 }
 
 export default async function LigaMXPage() {
-  const [table, fixtures] = await Promise.all([fetchTable(), fetchFixtures()]);
+  const [table, espnFixtures] = await Promise.all([fetchTable(), fetchFixtures()]);
+  const fixtures = mergeLigaMxSchedule(espnFixtures);
   return (
-    <>
-      <SiteNav />
-      <LiveTicker />
-      <LigaMXView initialTable={table} initialFixtures={fixtures} />
-    </>
+    <div className="flex min-h-screen flex-col bg-bg-1 text-foreground">
+      <PulseNav />
+      <main className="flex-1">
+        <LigaMXView initialTable={table} initialFixtures={fixtures} />
+      </main>
+      <SiteFooter />
+    </div>
   );
 }

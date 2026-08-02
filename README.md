@@ -1,19 +1,24 @@
 # Acceso Fútbol
 
-Landing page and TikTok embed widget for [accesofutbol.com](https://accesofutbol.com).
+Where fútbol mexicano lives — [accesofutbol.com](https://accesofutbol.com).
 
+Brand vision: [`docs/AF_BRAND_VISION.md`](docs/AF_BRAND_VISION.md)  
 TikTok: [@accesofutbolmx](https://www.tiktok.com/@accesofutbolmx)
 
 ## Features
 
-- Homepage with TikTok profile embed (official TikTok widget)
-- Optional featured videos via TikTok iframe player
-- Standalone embed route at `/embed/tiktok` for GoDaddy or other site builders
+- **Pulso home** (`/`) — living room: tonight’s story, gravity, Moments, show, ritual inventory
+- **Match chapters** (`/partido/...`) — crónica, datos, Acceso Radio
+- **Acceso Radio** — Caliente / Táctico / Puente (~30s delay; browser voice without keys; OpenAI + ElevenLabs when configured)
+- **Momentos** (`/momento/[id]`) — sharable editorial units
+- Liga MX table / Mundial tools / Media kit
+- Sportmonks-ready sports layer (ESPN fallback until `SPORTMONKS_API_TOKEN` is set)
 
 ## Setup
 
 ```bash
 npm install
+cp .env.example .env.local   # optional Sportmonks / Radio keys
 npm run dev
 ```
 

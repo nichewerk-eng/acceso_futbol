@@ -5,28 +5,28 @@ export function SiteFooter() {
   const { username, profileUrl } = siteConfig.tiktok;
 
   return (
-    <footer className="border-t border-white/10 bg-bg-3">
+    <footer className="border-t border-line bg-bg-3">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-10 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="font-display text-lg font-bold uppercase tracking-[0.1em] text-white">
+          <p className="font-display text-lg font-bold uppercase tracking-[0.1em] text-foreground">
             {siteConfig.name}
           </p>
-          <p className="mt-1 text-sm text-white/50">{siteConfig.legalName}</p>
-          <p className="mt-1 text-sm text-white/50">
+          <p className="mt-1 text-sm text-muted">{siteConfig.legalName}</p>
+          <p className="mt-1 text-sm text-muted">
             Fundado {siteConfig.founded}
           </p>
           <Link
             href="/mediakit"
-            className="mt-3 inline-block text-sm font-semibold text-white/60 transition hover:text-brand-orange"
+            className="mt-3 inline-block text-sm font-semibold text-muted transition hover:text-signal"
           >
             Media Kit →
           </Link>
         </div>
 
-        <div className="flex flex-col gap-2 text-sm text-white/60 sm:items-end">
+        <div className="flex flex-col gap-2 text-sm text-muted sm:items-end">
           <a
             href={`mailto:${siteConfig.email}`}
-            className="transition hover:text-brand-orange"
+            className="transition hover:text-signal"
           >
             {siteConfig.email}
           </a>
@@ -34,11 +34,11 @@ export function SiteFooter() {
             href={profileUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="transition hover:text-brand-orange"
+            className="transition hover:text-signal"
           >
             @{username} en TikTok
           </a>
-          <p className="text-white/40">
+          <p className="text-muted/70">
             © {new Date().getFullYear()} {siteConfig.legalName}
           </p>
         </div>

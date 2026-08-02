@@ -41,7 +41,7 @@ export default function Home() {
           <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 py-3">
 
             {/* Wordmark logo */}
-            <Link href="/tabla" className="shrink-0">
+            <Link href="/" className="shrink-0">
               <Image
                 src="/logo.png"
                 alt="Acceso Futbol"
@@ -54,14 +54,12 @@ export default function Home() {
 
             {/* Nav items */}
             <nav className="flex items-center gap-2">
-
-              {/* Tabla de Posiciones */}
               <Link
-                href="/tabla"
+                href="/liga-mx"
                 className="flex items-center gap-2 rounded-lg border border-white/[0.08] px-3 py-2 text-xs font-bold tracking-wider uppercase text-white/60 transition hover:border-brand-orange/40 hover:bg-white/[0.04] hover:text-brand-orange"
               >
                 <StandingsIcon />
-                <span className="hidden sm:inline">Tabla</span>
+                <span className="hidden sm:inline">Liga MX</span>
               </Link>
 
               {/* TikTok CTA */}

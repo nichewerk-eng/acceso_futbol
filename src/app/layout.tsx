@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Oswald } from "next/font/google";
+import { IBM_Plex_Mono, Oswald } from "next/font/google";
 import { siteConfig } from "@/config/site";
+import { GravityProvider } from "@/contexts/GravityContext";
 import { TeamProvider } from "@/contexts/TeamContext";
 import "./globals.css";
 
@@ -8,6 +9,12 @@ const oswald = Oswald({
   variable: "--font-oswald",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+});
+
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
@@ -21,8 +28,8 @@ export const metadata: Metadata = {
   alternates: {
     canonical: siteConfig.url,
   },
-  themeColor: '#f07820',
-  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'Acceso Futbol' },
+  themeColor: '#f6f5f2',
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Acceso Futbol' },
   openGraph: {
     title: "Acceso Futbol | Liga MX y El Tri en TikTok",
     description: siteConfig.description,
@@ -48,10 +55,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${oswald.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-bg-1 font-display text-white">
+    <html lang="es" className={`${oswald.variable} ${plexMono.variable} h-full antialiased`}>
+      <body className="min-h-full flex flex-col bg-bg-1 font-display text-foreground">
         <TeamProvider>
-          {children}
+          <GravityProvider>
+            {children}
+          </GravityProvider>
         </TeamProvider>
       </body>
     </html>

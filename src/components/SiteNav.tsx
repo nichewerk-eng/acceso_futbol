@@ -6,7 +6,8 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 const NAV_LINKS = [
-  { href: '/tabla', label: 'Mundial 2026' },
+  { href: '/', label: 'Pulso' },
+  { href: '/liga-mx', label: 'Liga MX' },
 ];
 
 export default function SiteNav() {
@@ -33,7 +34,7 @@ export default function SiteNav() {
     <nav className={`${dark ? 'dark' : ''} sticky top-0 z-50 border-b border-gray-200/80 dark:border-white/[0.06] bg-white/95 dark:bg-bg-1/95 backdrop-blur-md font-display`}>
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3 sm:px-6">
         {/* Logo */}
-        <Link href="/tabla" className="shrink-0">
+        <Link href="/" className="shrink-0">
           <Image
             src={dark ? "/logo.png" : "/logo-dark.png"}
             alt="Acceso Futbol"

@@ -1,26 +1,21 @@
-import { Metadata } from 'next';
-import SiteNav from '@/components/SiteNav';
-import LiveTicker from '@/components/LiveTicker';
-import MatchView from '@/components/partido/MatchView';
+import type { Metadata } from 'next';
+import { MatchChapter } from '@/components/partido/MatchChapter';
 
-interface PageParams { params: Promise<{ league: string; id: string }> }
+interface PageParams {
+  params: Promise<{ league: string; id: string }>;
+}
 
 export async function generateMetadata({ params }: PageParams): Promise<Metadata> {
   const { league, id } = await params;
-  const leagueLabel = league === 'liga-mx' ? 'Liga MX' : 'Mundial 2026';
+  const leagueLabel =
+    league === 'liga-mx' ? 'Liga MX' : league === 'seleccion' ? 'El Tri' : 'Fútbol';
   return {
-    title: `Partido ${id} | ${leagueLabel}`,
-    description: `Marcador en vivo, estadísticas y alineaciones del partido de ${leagueLabel}.`,
+    title: `Partido · ${leagueLabel}`,
+    description: `Capítulo en vivo, crónica y Acceso Radio. ${leagueLabel} (${id}).`,
   };
 }
 
 export default async function PartidoPage({ params }: PageParams) {
   const { league, id } = await params;
-  return (
-    <>
-      <SiteNav />
-      <LiveTicker />
-      <MatchView league={league} id={id} />
-    </>
-  );
+  return <MatchChapter league={league} id={id} />;
 }

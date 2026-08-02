@@ -4,8 +4,8 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Acceso Futbol',
     short_name: 'AccesoFutbol',
-    description: 'Liga MX, Selección Mexicana y Mundial 2026 en tiempo real',
-    start_url: '/tabla',
+    description: 'Liga MX y fútbol mexicano en tiempo real',
+    start_url: '/',
     display: 'standalone',
     background_color: '#030f10',
     theme_color: '#f07820',
@@ -18,9 +18,8 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: 'es-MX',
     dir: 'ltr',
     shortcuts: [
-      { name: 'Liga MX',       short_name: 'Liga MX',   url: '/liga-mx',   description: 'Tabla de posiciones Liga MX' },
-      { name: 'Selección',     short_name: 'El Tri',    url: '/seleccion', description: 'Selección Mexicana' },
-      { name: 'Mundial 2026',  short_name: 'Mundial',   url: '/tabla',     description: 'FIFA World Cup 2026' },
+      { name: 'Pulso',   short_name: 'Pulso',   url: '/',        description: 'Sala de estar Acceso' },
+      { name: 'Liga MX', short_name: 'Liga MX', url: '/liga-mx', description: 'Tabla y jornada Liga MX' },
     ],
   };
 }

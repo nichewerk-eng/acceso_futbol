@@ -141,13 +141,13 @@ export default function HomeView({ fixtures }: Props) {
 
         {/* CTAs */}
         <div className="flex flex-wrap justify-center gap-3">
-          <Link href="/tabla"
+          <Link href="/liga-mx"
             className="rounded-xl bg-brand-orange px-6 py-3 text-sm font-bold text-white shadow-[0_0_24px_rgba(240,120,32,0.35)] transition hover:bg-brand-orange/90">
-            Tabla de Grupos
+            Liga MX
           </Link>
-          <Link href="/seleccion"
+          <Link href="/"
             className="rounded-xl border border-white/10 bg-white/5 px-6 py-3 text-sm font-bold text-white/70 transition hover:bg-white/10 hover:text-white">
-            Selección Mexicana
+            Pulso
           </Link>
         </div>
       </div>
