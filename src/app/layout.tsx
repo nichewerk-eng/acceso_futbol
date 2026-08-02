@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Oswald } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { siteConfig } from "@/config/site";
 import { GravityProvider } from "@/contexts/GravityContext";
 import { TeamProvider } from "@/contexts/TeamContext";
@@ -62,6 +63,7 @@ export default function RootLayout({
             {children}
           </GravityProvider>
         </TeamProvider>
+        <Analytics />
       </body>
     </html>
   );
