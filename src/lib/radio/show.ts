@@ -15,8 +15,11 @@ function scoreLine(m: MatchSnapshot) {
 function statsBlurb(m: MatchSnapshot): string {
   if (!m.stats?.length) return '';
   return m.stats
-    .slice(0, 6)
-    .map((s) => `${s.label}: ${m.home.abbreviation} ${s.home}, ${m.away.abbreviation} ${s.away}`)
+    .slice(0, 5)
+    .map(
+      (s) =>
+        `${s.label}: ${m.home.name} ${s.home}, ${m.away.name} ${s.away}`
+    )
     .join('. ');
 }
 
@@ -28,6 +31,18 @@ function commentaryDigest(m: MatchSnapshot): string {
     .filter(Boolean)
     .slice(0, 18);
   return lines.join(' | ');
+}
+
+function scorersBlurb(m: MatchSnapshot): string {
+  const scorers = m.scorers ?? [];
+  if (!scorers.length) return '';
+  return scorers
+    .slice(0, 6)
+    .map((s) => {
+      const tag = s.pen ? ' de penal' : s.og ? ' en propia' : '';
+      return `${s.name} al ${s.minute}${tag}`;
+    })
+    .join(', ');
 }
 
 /** Template pre-show when Anthropic is off: ~podcast cold open + matchup. */
@@ -59,37 +74,45 @@ export function templatePreshow(match: MatchSnapshot, style: RadioStyle): ShowSe
   ];
 }
 
-/** Template post-game recap podcast. */
+/** Template post-game recap podcast — spoken host, not a results ticker. */
 export function templateRecap(match: MatchSnapshot, style: RadioStyle): ShowSegment[] {
   const score = scoreLine(match);
   const digest = commentaryDigest(match);
   const stats = statsBlurb(match);
+  const scorers = scorersBlurb(match);
   const hasFeed = hasCommentary(match);
+  const venue = [match.venue, match.city].filter(Boolean).join(', ');
 
   const open =
     style === 'caliente'
-      ? `Final en Acceso. ${score}. Así se vivió la noche.`
+      ? `Oye, se acabó. Acceso Radio, recap del partido. Terminó ${score}${venue ? ` en ${venue}` : ''}. Quédate un minuto: te platico la noche como si estuviéramos saliendo del estadio.`
       : style === 'tactico'
-        ? `Recap táctico. Marcador final: ${score}. Repasamos lo que inclinó el partido.`
-        : `Cierre Acceso, MX y US en la misma frecuencia. Terminó ${score}.`;
+        ? `Hola. Recap Acceso. Silbato final y el luminoso dice ${score}. Vamos a leer con calma qué inclinó el duelo, sin gritar, como un podcast corto postpartido.`
+        : `Desde México y Estados Unidos, Acceso cierra la cabina. Terminó ${score}. Si lo viviste allá o aquí, el micrófono es el mismo: te cuento cómo se sintió.`;
 
-  const mid = hasFeed
-    ? style === 'tactico'
-      ? `Momentos clave: ${digest.slice(0, 420) || 'el luminoso y las transiciones definieron'}. ${stats ? `Números: ${stats}` : ''}`
-      : `Lo que dejó huella: ${digest.slice(0, 420) || 'goles, tarjetas y el pulso del público'}. ${stats ? `Datos: ${stats}` : ''}`
-    : stats
-      ? `Sin crónica detallada en el cable, pero los números hablan. ${stats}`
-      : `Sin crónica completa en el cable. El resultado queda: ${score}. La toma Acceso: el partido ya es historia y debate.`;
+  let mid: string;
+  if (hasFeed) {
+    const moments = digest.slice(0, 380) || 'los goles, las tarjetas y el pulso del público';
+    mid =
+      style === 'tactico'
+        ? `Mira lo que inclinó el partido. ${moments}.${scorers ? ` En el luminoso anotaron ${scorers}.` : ''}${stats ? ` Y si miras los números: ${stats}.` : ''} Quédate con el marco, no solo con el grito del gol.`
+        : `Lo que dejó huella, la neta: ${moments}.${scorers ? ` Los que marcaron: ${scorers}.` : ''}${stats ? ` Datos para la sobremesa: ${stats}.` : ''} Eso es lo que vas a discutir en el grupo del WhatsApp.`;
+  } else if (stats || scorers) {
+    mid = `No nos llegó una crónica completa al cable, y está bien: no inventamos. ${scorers ? `Lo claro del luminoso: ${scorers}.` : ''} ${stats ? `Los números que sí tenemos: ${stats}.` : ''} El resultado queda ${score}, y el debate arranca ahora.`;
+  } else {
+    mid = `Sin crónica detallada en el cable esta noche. No relleno vacío: el marcador es ${score}, y la toma Acceso es que el partido ya es historia y conversación.`;
+  }
 
   const close =
     style === 'puente'
-      ? `Gracias por quedarte en Acceso Radio. Mañana hay más Liga MX y, cuando juegue El Tri, aquí también.`
-      : `Esto fue el recap Acceso. Vuelve al pulso para la siguiente noche.`;
+      ? `Te dejo hasta aquí. Gracias por escucharnos de verdad. Estés en México o del otro lado del puente, mañana hay más Liga MX — y cuando juegue El Tri, aquí también. Nos escuchamos.`
+      : `Eso fue el recap. Gracias por quedarte. Vuelve al pulso cuando quieras la siguiente noche, o métete a la cabina en el próximo partido. Hasta luego.`;
 
+  // v2 ids bust in-memory recap beats so new podcast voice regenerates
   return [
-    { id: 'recap-1', text: open },
-    { id: 'recap-2', text: mid.trim() },
-    { id: 'recap-3', text: close },
+    { id: 'recap-v2-1', text: open },
+    { id: 'recap-v2-2', text: mid.trim() },
+    { id: 'recap-v2-3', text: close },
   ];
 }
 
@@ -103,21 +126,51 @@ async function rewriteShow(
 
   try {
     const persona = PERSONAS[style];
+    const voiceHint =
+      style === 'caliente'
+        ? 'Energía de amigo saliendo del estadio: cálido, opinado, sin gritar todo el tiempo.'
+        : style === 'tactico'
+          ? 'Host analítico postpartido: calmado, claro, como explicación en la mesa.'
+          : 'Host binacional: cercano, puente MX–US, conversación en el coche.';
+
+    const system =
+      kind === 'recap'
+        ? `${persona.system.replace(/Máximo 2 oraciones\./gi, 'Bloques hablados de podcast.')}
+
+Eres el host de un PODCAST corto de Acceso Radio: "Recap" postpartido (~3 minutos). ${voiceHint}
+
+REGLAS DE VOZ (crítico):
+- Suena a persona hablando al micrófono, NO a boletín de resultados ni a ticker.
+- Segunda persona (tú / oye / mira / fíjate). Español mexicano oral, contracciones, ritmo hablado.
+- ${draft.length} bloques. Cada bloque: 4 a 7 oraciones para oídos. Fluye de uno al siguiente.
+- Evita jerga de productora ("corte", "señal") y listas rígidas.
+- Puedes usar un aparte corto ("la neta…", "ojo…") si ayuda.
+- No inventes goles, asistencias, tarjetas ni declaraciones. Solo hechos del input.
+- Reescribe el draft para que suene más humano; conserva el marcador y los hechos.
+- Responde SOLO JSON: [{"id":"...","text":"..."}]`
+        : `${persona.system.replace(/Máximo 2 oraciones\./gi, 'Bloques hablados de podcast.')} Escribes un pre-show corto de Acceso Radio (3 bloques). Cada bloque: 3 a 5 oraciones habladas en español mexicano, como podcast. Habla de tú. No inventes alineaciones ni goles. Responde SOLO JSON: [{"id":"...","text":"..."}]`;
+
     const raw = await anthropicChat({
-      system: `${persona.system} Escribes un podcast corto de radio (3 bloques). Cada bloque: 2 a 4 oraciones en español. No inventes goles ni tarjetas. Responde SOLO JSON: [{"id":"...","text":"..."}]`,
+      system,
       user: JSON.stringify({
-        kind,
+        kind: kind === 'recap' ? 'match-recap-podcast' : 'match-preshow-podcast',
+        goal:
+          kind === 'recap'
+            ? 'El oyente debe sentir que escucha un podcast postpartido, no un resumen de marcador.'
+            : 'El oyente debe sentir una cabina abriendo el partido, no un aviso genérico.',
         home: match.home.name,
         away: match.away.name,
         score: scoreLine(match),
+        scorers: match.scorers?.slice(0, 8) ?? [],
         venue: match.venue,
+        city: match.city,
         state: match.state,
         stats: match.stats?.slice(0, 8) ?? [],
         commentary: commentaryDigest(match).slice(0, 900),
         draft,
       }),
-      temperature: 0.7,
-      maxTokens: 700,
+      temperature: kind === 'recap' ? 0.8 : 0.75,
+      maxTokens: kind === 'recap' ? 1200 : 900,
     });
     if (!raw) return draft;
     const start = raw.indexOf('[');
@@ -128,7 +181,7 @@ async function rewriteShow(
     return parsed
       .filter((s) => s && typeof s.text === 'string' && s.text.trim().length > 12)
       .map((s, i) => ({
-        id: typeof s.id === 'string' ? s.id : `${kind}-${i + 1}`,
+        id: typeof s.id === 'string' ? s.id : `${kind}-v2-${i + 1}`,
         text: s.text.trim(),
       }));
   } catch {

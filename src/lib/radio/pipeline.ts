@@ -72,8 +72,13 @@ async function ensureShowBeats(
 ): Promise<RadioBeat[]> {
   const kindFilter = (b: RadioBeat) =>
     mode === 'preshow' ? b.kind === 'preshow' : b.kind === 'show' || b.kind === 'recap';
+  // Prefer podcast-voice recap ids (recap-v2-*) so older ticker-style clips regenerate.
   const existing = listBeats(match.id, style).filter(kindFilter);
-  if (existing.length >= 2) return existing;
+  const usable =
+    mode === 'recap'
+      ? existing.filter((b) => b.id.includes(':recap-v2-'))
+      : existing;
+  if (usable.length >= 2) return usable;
 
   const segments =
     mode === 'preshow'
@@ -88,7 +93,8 @@ async function ensureShowBeats(
       textOverride: seg.text,
     });
   }
-  return listBeats(match.id, style).filter(kindFilter);
+  const next = listBeats(match.id, style).filter(kindFilter);
+  return mode === 'recap' ? next.filter((b) => b.id.includes(':recap-v2-')) : next;
 }
 
 /**
