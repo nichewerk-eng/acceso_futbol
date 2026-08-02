@@ -77,8 +77,8 @@ export interface Fixture {
   dondeVer?: {
     mx?: string;
     us?: string;
-    mxChannels?: Array<'tudn' | 'vix' | 'canal-5' | 'layvtime' | 'univision'>;
-    usChannels?: Array<'tudn' | 'vix' | 'canal-5' | 'layvtime' | 'univision'>;
+    mxChannels?: Array<'tudn' | 'vix' | 'canal-5' | 'layvtime' | 'univision' | 'apple-tv'>;
+    usChannels?: Array<'tudn' | 'vix' | 'canal-5' | 'layvtime' | 'univision' | 'apple-tv'>;
   };
 }
 

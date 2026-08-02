@@ -137,9 +137,13 @@ export function GamesOfDayBanner() {
             <p className="font-display text-xl font-bold uppercase tracking-wide text-[var(--hoy-paper)]">
               Cabina en espera
             </p>
-            <p className="mt-2 font-mono text-[12px] text-[var(--hoy-dim)]">
-              Cuando haya partidos hoy, aquí entra el audio.
+            <p className="mt-2 max-w-lg font-mono text-[12px] leading-6 text-[var(--hoy-dim)]">
+              Sin partidos hoy para al aire. En ventana Leagues Cup, el tablero MX ↔ MLS está en
+              el canal cup.
             </p>
+            <Link href="/leagues-cup" className="hoy-cta hoy-cta-ghost mt-5 inline-flex">
+              Ver Leagues Cup
+            </Link>
           </div>
         ) : (
           <ul className="divide-y divide-[var(--hoy-line)] border-y border-[var(--hoy-line)]" data-testid="hoy-cabina-list">
@@ -164,6 +168,9 @@ export function GamesOfDayBanner() {
                     <p className="hoy-telemetry flex flex-wrap items-center gap-2 text-[var(--hoy-paper)]">
                       {g.phase === 'live' && <span className="hoy-live-dot" aria-hidden />}
                       {line.action}
+                      {g.league === 'leagues-cup' && (
+                        <span className="text-[var(--signal)]">· LEAGUES CUP</span>
+                      )}
                       {mine && <span className="text-[var(--signal)]">· TU CLUB</span>}
                     </p>
                     <p className="mt-1.5 font-display text-xl font-bold uppercase tracking-wide text-[var(--hoy-paper)] sm:text-2xl">

@@ -1,4 +1,5 @@
 import { ligaMxLogoSrc } from '@/config/ligaMxLogos';
+import { mlsLogoSrc } from '@/config/mlsLogos';
 
 type Size = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -14,15 +15,22 @@ type Props = {
   abbr?: string | null;
   clubId?: string | null;
   name?: string;
-  /** Remote crest (e.g. Sportmonks MLS) when local asset missing. */
+  /** Remote crest when local Liga MX / MLS asset missing. */
   logoUrl?: string | null;
   size?: Size;
   className?: string;
 };
 
-/** Local Liga MX crest, optional remote logo, then abbreviation text. */
+/** Local Liga MX / MLS crest, then remote logo, then abbreviation text. */
 export function ClubLogo({ abbr, clubId, name, logoUrl, size = 'sm', className = '' }: Props) {
-  const src = ligaMxLogoSrc(clubId) ?? ligaMxLogoSrc(abbr) ?? logoUrl ?? null;
+  // Resolve SM numeric ids via MLS before Liga MX abbr aliases (CHI = Chivas vs Chicago).
+  const src =
+    ligaMxLogoSrc(clubId) ??
+    mlsLogoSrc(clubId) ??
+    ligaMxLogoSrc(abbr) ??
+    mlsLogoSrc(abbr) ??
+    logoUrl ??
+    null;
   const px = PX[size];
   const label = name || abbr || 'Club';
 

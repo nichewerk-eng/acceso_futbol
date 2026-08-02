@@ -12,6 +12,7 @@ const LINKS = [
   { href: '/#jornada', label: 'Jornada' },
   { href: '/#noticias', label: 'Cable' },
   { href: '/liga-mx', label: 'Tabla' },
+  { href: '/leagues-cup', label: 'Leagues Cup' },
 ];
 
 export function PulseNav() {

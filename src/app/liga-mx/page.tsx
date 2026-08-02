@@ -2,18 +2,27 @@ import { Metadata } from 'next';
 import { SiteFooter } from '@/components/home/SiteFooter';
 import LigaMXView from '@/components/ligamx/LigaMXView';
 import { PulseNav } from '@/components/living-room/PulseNav';
+import { JsonLd } from '@/components/seo/JsonLd';
 import type { LigaMXTable } from '@/app/api/ligamx/standings/route';
 import type { LigaMXFixture } from '@/app/api/ligamx/fixtures/route';
+import { absoluteUrl, breadcrumbJsonLd } from '@/lib/seo';
 import { mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
 
 export const metadata: Metadata = {
-  title: 'Liga MX | Tabla de Posiciones Apertura 2026',
+  title: 'Liga MX Apertura 2026 · Tabla y jornada en vivo',
   description:
-    'Tabla de posiciones, calendario y tracker de Liguilla de la Liga MX Apertura 2026 en tiempo real.',
+    'Tabla de posiciones Liga MX Apertura 2026, jornada en curso, resultados y camino a Liguilla. Actualizado en tiempo real.',
+  alternates: { canonical: absoluteUrl('/liga-mx') },
   openGraph: {
-    title: 'Liga MX Apertura 2026 | Acceso Futbol',
+    title: 'Liga MX Apertura 2026 · Tabla y jornada',
     description: 'Posiciones, resultados y clasificación a Liguilla en tiempo real.',
-    images: [{ url: '/og-ligamx.png', width: 1200, height: 630 }],
+    url: absoluteUrl('/liga-mx'),
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Liga MX Apertura 2026 · Tabla y jornada',
+    description: 'Posiciones, resultados y clasificación a Liguilla en tiempo real.',
   },
 };
 
@@ -111,12 +120,20 @@ export default async function LigaMXPage() {
   const [table, espnFixtures] = await Promise.all([fetchTable(), fetchFixtures()]);
   const fixtures = mergeLigaMxSchedule(espnFixtures);
   return (
-    <div className="flex min-h-screen flex-col bg-bg-1 text-foreground">
-      <PulseNav />
-      <main className="flex-1">
-        <LigaMXView initialTable={table} initialFixtures={fixtures} />
-      </main>
-      <SiteFooter />
-    </div>
+    <>
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: 'Pulso', path: '/' },
+          { name: 'Liga MX', path: '/liga-mx' },
+        ])}
+      />
+      <div className="flex min-h-screen flex-col bg-bg-1 text-foreground">
+        <PulseNav />
+        <main className="flex-1">
+          <LigaMXView initialTable={table} initialFixtures={fixtures} />
+        </main>
+        <SiteFooter />
+      </div>
+    </>
   );
 }

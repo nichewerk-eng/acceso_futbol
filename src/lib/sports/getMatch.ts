@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { espnFetch, summaryUrl, SLUG } from '@/lib/espn';
 import { APERTURA_2026_FIXTURES } from '@/fixtures/ligamx-apertura-2026';
 import { attachDondeVer } from '@/config/dondeVer';
@@ -239,7 +240,7 @@ async function fromEspn(league: LeagueKey, id: string): Promise<MatchSnapshot | 
   }
 }
 
-export async function getMatch(league: string, id: string): Promise<MatchSnapshot | null> {
+async function getMatchUncached(league: string, id: string): Promise<MatchSnapshot | null> {
   const key = normalizeLeague(league);
 
   // Liga MX / Leagues Cup: Sportmonks while the token is present.
@@ -268,3 +269,6 @@ export async function getMatch(league: string, id: string): Promise<MatchSnapsho
   if (key === 'leagues-cup') return null;
   return fromEspn(key, id);
 }
+
+/** Deduped per request (metadata + page share one fetch). */
+export const getMatch = cache(getMatchUncached);

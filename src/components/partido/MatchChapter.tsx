@@ -567,7 +567,11 @@ export function MatchChapter({ league, id }: Props) {
   }, [league]);
 
   const back =
-    league === 'liga-mx' || league === 'seleccion' || league === 'leagues-cup' ? '/#hoy' : '/';
+    league === 'leagues-cup'
+      ? '/leagues-cup'
+      : league === 'liga-mx' || league === 'seleccion'
+        ? '/#hoy'
+        : '/';
   const backLabel =
     league === 'seleccion'
       ? 'El Tri'
@@ -654,12 +658,28 @@ export function MatchChapter({ league, id }: Props) {
             </p>
           </div>
 
-          <p className="match-chapter-kicker">{chapterKicker(match)}</p>
+          <h1 className="sr-only">
+            {match.home.name} vs {match.away.name}
+            {!pre && match.home.score != null && match.away.score != null
+              ? ` ${match.home.score}-${match.away.score}`
+              : ''}
+            {league === 'leagues-cup'
+              ? ' · Leagues Cup'
+              : league === 'liga-mx'
+                ? ' · Liga MX'
+                : league === 'seleccion'
+                  ? ' · El Tri'
+                  : ''}
+          </h1>
+          <p className="match-chapter-kicker" aria-hidden>
+            {chapterKicker(match)}
+          </p>
 
           <div className="match-scoreboard">
             <div className="match-side">
               <ClubLogo
                 abbr={match.home.abbreviation}
+                clubId={match.home.id}
                 name={match.home.name}
                 logoUrl={match.home.logo}
                 size="xl"
@@ -707,6 +727,7 @@ export function MatchChapter({ league, id }: Props) {
             <div className="match-side match-side-away">
               <ClubLogo
                 abbr={match.away.abbreviation}
+                clubId={match.away.id}
                 name={match.away.name}
                 logoUrl={match.away.logo}
                 size="xl"

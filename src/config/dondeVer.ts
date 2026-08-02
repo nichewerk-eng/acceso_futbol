@@ -2,7 +2,13 @@ import { mexicoDayKey } from '@/lib/radio/phases';
 import { scheduleAbbr } from '@/lib/sports/ligaMxAbbr';
 import type { Fixture } from '@/lib/sports/types';
 
-export type TvChannelId = 'tudn' | 'vix' | 'canal-5' | 'layvtime' | 'univision';
+export type TvChannelId =
+  | 'tudn'
+  | 'vix'
+  | 'canal-5'
+  | 'layvtime'
+  | 'univision'
+  | 'apple-tv';
 
 export type TvChannel = {
   id: TvChannelId;
@@ -38,6 +44,11 @@ export const TV_CHANNELS: Record<TvChannelId, TvChannel> = {
     id: 'univision',
     label: 'Univision',
     src: '/tv_logos/Uni_Vt_Pos_R_Sml_Flt_rgb.png',
+  },
+  'apple-tv': {
+    id: 'apple-tv',
+    label: 'Apple TV',
+    src: '/tv_logos/apple-tv.svg',
   },
 };
 
@@ -96,11 +107,12 @@ export function resolveDondeVer(
   }
 
   if (fixture.league === 'leagues-cup') {
+    // Every match streams on Apple TV; linear partners (Imagen / TelevisaUnivision / FS1) are select-only.
     return {
-      mx: 'Apple TV · partners MX',
-      us: 'Apple TV · MLS Season Pass',
-      mxChannels: ['tudn', 'vix'],
-      usChannels: ['tudn', 'univision'],
+      mx: 'Apple TV · Imagen / TUDN (selectos)',
+      us: 'Apple TV · Univision / TUDN / FS1 (selectos)',
+      mxChannels: ['apple-tv', 'tudn'],
+      usChannels: ['apple-tv', 'univision', 'tudn'],
     };
   }
 

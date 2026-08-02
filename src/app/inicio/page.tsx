@@ -1,40 +1,33 @@
+import type { Metadata } from "next";
 import { BroadcastTicker } from "@/components/home/BroadcastTicker";
 import { FinalCta } from "@/components/home/FinalCta";
 import { HeroSection } from "@/components/home/HeroSection";
 import { SiteFooter } from "@/components/home/SiteFooter";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { siteConfig } from "@/config/site";
 import { TikTokSection } from "@/components/tiktok/TikTokSection";
+import { absoluteUrl, organizationJsonLd } from "@/lib/seo";
 import Image from "next/image";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Landing · fútbol mexicano sin filtro",
+  description: siteConfig.description,
+  alternates: { canonical: absoluteUrl("/inicio") },
+  robots: { index: true, follow: true },
+  openGraph: {
+    title: "Acceso Futbol · el fútbol mexicano no espera",
+    description: siteConfig.description,
+    url: absoluteUrl("/inicio"),
+  },
+};
 
 export default function Home() {
   const { username, profileUrl } = siteConfig.tiktok;
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    name: siteConfig.name,
-    legalName: siteConfig.legalName,
-    url: siteConfig.url,
-    email: siteConfig.email,
-    foundingDate: String(siteConfig.founded),
-    description: siteConfig.description,
-    sameAs: [siteConfig.tiktok.profileUrl],
-    areaServed: ["MX", "US"],
-    knowsAbout: [
-      "Liga MX",
-      "Selección Mexicana",
-      "FIFA World Cup 2026",
-      "Mexican soccer",
-    ],
-  };
-
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLd data={organizationJsonLd()} />
 
       <div className="flex min-h-screen flex-col">
         <header className="sticky top-0 z-50 bg-bg-1/95 backdrop-blur-md">

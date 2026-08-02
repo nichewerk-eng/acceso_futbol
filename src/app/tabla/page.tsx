@@ -1,14 +1,23 @@
 import { Metadata } from 'next';
 import StandingsView from '@/components/standings/StandingsView';
 import type { Group, Fixture } from '@/components/standings/types';
+import { absoluteUrl } from '@/lib/seo';
 
 export const metadata: Metadata = {
-  title: 'Mundial 2026 | Tabla de Posiciones en Tiempo Real',
-  description: 'Sigue el Mundial 2026 en tiempo real: tabla de posiciones de los 12 grupos, resultados, próximos partidos y el cuadro de dieciseisavos.',
+  title: 'Mundial 2026 · Tabla de posiciones en tiempo real',
+  description:
+    'Sigue el Mundial 2026: tabla de los 12 grupos, resultados, próximos partidos y cuadro de dieciseisavos.',
+  alternates: { canonical: absoluteUrl('/tabla') },
   openGraph: {
-    title: 'FIFA World Cup 2026 | Tabla en Tiempo Real',
+    title: 'Mundial 2026 · Tabla en tiempo real',
     description: 'Grupos, resultados y bracket del Mundial 2026 actualizado al instante.',
-    images: [{ url: '/og-mundial.png', width: 1200, height: 630 }],
+    url: absoluteUrl('/tabla'),
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Mundial 2026 · Tabla en tiempo real',
+    description: 'Grupos, resultados y bracket del Mundial 2026 actualizado al instante.',
   },
 };
 

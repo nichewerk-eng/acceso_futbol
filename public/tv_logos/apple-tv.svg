@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 32" role="img" aria-label="Apple TV">
+  <text
+    x="60"
+    y="22"
+    text-anchor="middle"
+    font-family="ui-sans-serif, system-ui, -apple-system, Helvetica, Arial, sans-serif"
+    font-size="15"
+    font-weight="600"
+    fill="#111111"
+  >Apple TV</text>
+</svg>

@@ -142,6 +142,10 @@ export function PulseHero({ leadStory }: Props) {
               data-testid="hero-headline"
             >
               ACCESO
+              <span className="sr-only">
+                {' '}
+                Futbol · Liga MX, Leagues Cup y El Tri en vivo
+              </span>
             </h1>
             <p className="af-tele mt-2 text-muted" data-testid="hero-support">
               {loading && !payload
@@ -201,6 +205,7 @@ export function PulseHero({ leadStory }: Props) {
                 <div className="hero-stage-pair">
                   <ClubLogo
                     abbr={stage.home.abbreviation}
+                    clubId={stage.home.id}
                     name={stage.home.name}
                     logoUrl={stage.home.logo}
                     size="lg"
@@ -219,6 +224,7 @@ export function PulseHero({ leadStory }: Props) {
                 <div className="hero-stage-pair">
                   <ClubLogo
                     abbr={stage.away.abbreviation}
+                    clubId={stage.away.id}
                     name={stage.away.name}
                     logoUrl={stage.away.logo}
                     size="lg"
@@ -251,11 +257,16 @@ export function PulseHero({ leadStory }: Props) {
               Cancha en silencio
             </p>
             <p className="af-tele mt-3 text-muted">
-              Cuando arranque la jornada, los marcadores viven aquí.
+              Sin marcadores hoy. Leagues Cup (MLS × Liga MX) vive en el tablero cup.
             </p>
-            <a href="#noticias" className="af-cta mt-6 inline-flex" data-testid="hero-cta-cable">
-              Ver cable
-            </a>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              <Link href="/leagues-cup" className="af-cta inline-flex" data-testid="hero-cta-cup">
+                Leagues Cup
+              </Link>
+              <a href="#noticias" className="af-cta af-cta-ghost inline-flex" data-testid="hero-cta-cable">
+                Ver cable
+              </a>
+            </div>
           </div>
         )}
 
@@ -291,6 +302,7 @@ export function PulseHero({ leadStory }: Props) {
                     <span className="hero-band-home inline-flex items-center gap-2">
                       <ClubLogo
                         abbr={g.home.abbreviation}
+                        clubId={g.home.id}
                         name={g.home.name}
                         logoUrl={g.home.logo}
                         size="sm"
@@ -299,12 +311,15 @@ export function PulseHero({ leadStory }: Props) {
                     </span>
                     <span className="hero-band-center" data-testid={`hero-band-score-${g.id}`}>
                       {meta.center}
-                      {g.league === 'leagues-cup' ? ' · LC' : ''}
+                      {g.league === 'leagues-cup' ? (
+                        <span className="af-tele text-signal"> · CUP</span>
+                      ) : null}
                     </span>
                     <span className="hero-band-away inline-flex items-center justify-end gap-2">
                       {g.away.abbreviation}
                       <ClubLogo
                         abbr={g.away.abbreviation}
+                        clubId={g.away.id}
                         name={g.away.name}
                         logoUrl={g.away.logo}
                         size="sm"

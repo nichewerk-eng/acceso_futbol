@@ -22,6 +22,7 @@ import type {
 const BASE = 'https://api.sportmonks.com/v3/football';
 const TIMEOUT_MS = 12_000;
 const SEASON_CACHE_KEY = 'sm-ligamx-season-fixtures-v5-scorers';
+const LC_SEASON_CACHE_KEY = 'sm-leagues-cup-season-fixtures-v1';
 const SEASON_TTL_MS = 5 * 60_000;
 const STANDINGS_CACHE_KEY = 'sm-ligamx-standings-v1';
 const STANDINGS_TTL_MS = 60_000;
@@ -230,6 +231,13 @@ function winnerSideOf(
   return hs > as ? 'home' : 'away';
 }
 
+function leaguesCupPhaseLabel(dateIso: string): string {
+  const day = dateIso.slice(0, 10);
+  if (day >= '2026-08-04' && day <= '2026-08-13') return 'Fase 1';
+  if (day >= '2026-08-25' && day <= '2026-09-06') return 'Eliminación';
+  return 'Leagues Cup';
+}
+
 export function mapFixture(f: SmFixture): Fixture {
   const parts = f.participants ?? [];
   const homeP = parts.find((p) => participantSide(p) === 'home') ?? parts[0];
@@ -242,13 +250,16 @@ export function mapFixture(f: SmFixture): Fixture {
   const awayId = String(awayP?.id ?? 'away');
   const homeAbbr = scheduleAbbr(homeP?.short_code ?? 'LOC');
   const awayAbbr = scheduleAbbr(awayP?.short_code ?? 'VIS');
+  const league = mapLeagueId(f.league?.id);
+  const date = f.starting_at ? `${f.starting_at.replace(' ', 'T')}Z` : new Date().toISOString();
 
   const roundName = f.round?.name?.trim();
-  const jornada = roundName
-    ? /jornada/i.test(roundName)
-      ? roundName
-      : `Jornada ${roundName}`
-    : null;
+  let jornada: string | null = null;
+  if (league === 'leagues-cup') {
+    jornada = roundName && !/^jornada/i.test(roundName) ? roundName : leaguesCupPhaseLabel(date);
+  } else if (roundName) {
+    jornada = /jornada/i.test(roundName) ? roundName : `Jornada ${roundName}`;
+  }
 
   const events = mapEvents(f.events, homeId, awayId, homeAbbr, awayAbbr);
   const scorers = scorersFromEvents(events);
@@ -256,8 +267,8 @@ export function mapFixture(f: SmFixture): Fixture {
   return {
     id: String(f.id),
     provider: 'sportmonks',
-    league: mapLeagueId(f.league?.id),
-    date: f.starting_at ? `${f.starting_at.replace(' ', 'T')}Z` : new Date().toISOString(),
+    league,
+    date,
     jornada,
     state,
     statusLabel: localizeStatus(
@@ -569,6 +580,28 @@ export async function fetchLigaMxSeasonFixtures(): Promise<Fixture[]> {
   );
   const fixtures = (data.data?.fixtures ?? []).map(mapFixture);
   setCache(SEASON_CACHE_KEY, fixtures);
+  return fixtures;
+}
+
+/** Leagues Cup season — all fixtures; callers filter to MX-involved. */
+export async function fetchLeaguesCupSeasonFixtures(): Promise<Fixture[]> {
+  const cached = getCache<Fixture[]>(LC_SEASON_CACHE_KEY, SEASON_TTL_MS);
+  if (cached) return cached;
+
+  const data = await smFetch<{ data?: { fixtures?: SmFixture[] } }>(
+    `/seasons/${leaguesCupSeasonId()}`,
+    {
+      include:
+        'fixtures.participants;fixtures.scores;fixtures.state;fixtures.round;fixtures.venue;fixtures.league',
+    }
+  );
+  const fixtures = (data.data?.fixtures ?? []).map((f) =>
+    mapFixture({
+      ...f,
+      league: f.league?.id ? f.league : { id: leaguesCupLeagueId(), name: 'Leagues Cup' },
+    })
+  );
+  setCache(LC_SEASON_CACHE_KEY, fixtures);
   return fixtures;
 }
 

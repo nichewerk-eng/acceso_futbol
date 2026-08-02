@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, Oswald } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { siteConfig } from "@/config/site";
@@ -18,35 +18,49 @@ const plexMono = IBM_Plex_Mono({
   weight: ["400", "500", "600"],
 });
 
+export const viewport: Viewport = {
+  themeColor: "#f6f5f2",
+  width: "device-width",
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
   title: {
-    default: "Acceso Futbol | Liga MX, Selección Mexicana y Mundial 2026",
+    default: "Acceso Futbol | Liga MX, Leagues Cup y El Tri",
     template: `%s | Acceso Futbol`,
   },
   description: siteConfig.description,
   keywords: [...siteConfig.seoKeywords],
   metadataBase: new URL(siteConfig.url),
-  alternates: {
-    canonical: siteConfig.url,
+  applicationName: siteConfig.name,
+  authors: [{ name: siteConfig.name, url: siteConfig.url }],
+  creator: siteConfig.name,
+  publisher: siteConfig.legalName,
+  category: "sports",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
   },
-  themeColor: '#f6f5f2',
-  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Acceso Futbol' },
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "Acceso Futbol" },
   openGraph: {
-    title: "Acceso Futbol | Liga MX y El Tri en TikTok",
+    title: "Acceso Futbol | Liga MX, Leagues Cup y El Tri",
     description: siteConfig.description,
     url: siteConfig.url,
     siteName: siteConfig.name,
     locale: "es_MX",
     type: "website",
-    images: [
-      { url: "/logo.png", width: 512, height: 331, alt: siteConfig.name },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Acceso Futbol | Liga MX y Mundial 2026",
     description: siteConfig.description,
-    images: ["/logo.png"],
   },
 };
 

@@ -30,6 +30,7 @@ export {
   leaguesCupSeasonId,
   livingRoomLeagueIds,
   fetchLigaMxSeasonFixtures,
+  fetchLeaguesCupSeasonFixtures,
   fetchLigaMxStandings,
 } from './sportmonks';
 export { involvesLigaMxClub, isLigaMxSmTeamId } from './ligaMxTeams';
