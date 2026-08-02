@@ -91,13 +91,14 @@ export function GravityClaim() {
           onClick={() => setElTri(!elTri)}
           data-testid="gravity-el-tri"
           className={[
-            'mt-4 border px-4 py-3 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] transition',
+            'mt-4 inline-flex items-center gap-2.5 border px-4 py-3 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] transition',
             elTri
               ? 'border-signal bg-signal text-on-signal'
               : 'border-white/20 text-[#f6f5f2] hover:border-[#f6f5f2]',
           ].join(' ')}
           aria-pressed={elTri}
         >
+          <ClubLogo clubId={EL_TRI.id} abbr={EL_TRI.abbreviation} name={EL_TRI.name} size="md" />
           {EL_TRI.name} · TRI
         </button>
       </div>

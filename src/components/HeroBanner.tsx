@@ -7,7 +7,7 @@ import type { MatchEvent } from '@/app/api/match/[league]/[id]/route';
 
 // ── Team logo map — use uploaded crests when available ────────────────────────
 const TEAM_LOGO: Record<string, string> = {
-  MEX: '/seleccion_logo/mexico.png',
+  MEX: '/seleccion_logo/mexico-national-team-logo.png',
   ECU: '/seleccion_logo/ecuador.png',
 };
 

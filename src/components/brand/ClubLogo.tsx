@@ -39,7 +39,7 @@ export function ClubLogo({ abbr, clubId, name, size = 'sm', className = '' }: Pr
   }
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element -- heavy local SVGs; avoid next/image SVG cost
+    // eslint-disable-next-line @next/next/no-img-element -- local crest assets; keep simple img
     <img
       src={src}
       alt=""
