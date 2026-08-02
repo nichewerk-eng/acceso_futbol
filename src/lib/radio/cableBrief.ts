@@ -1,3 +1,4 @@
+import { anthropicChat, anthropicEnabled } from '@/lib/ai/anthropic';
 import type { Story } from '@/lib/news/types';
 import type { JornadaOverview } from '@/lib/sports/jornada';
 import {
@@ -135,61 +136,40 @@ async function rewriteCableBrief(
   jornada: JornadaOverview | null,
   draft: ShowSegment[]
 ): Promise<ShowSegment[]> {
-  const key = process.env.OPENAI_API_KEY?.trim();
-  if (!key) return draft;
+  if (!anthropicEnabled()) return draft;
 
   try {
     const persona = PERSONAS[style];
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${key}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: process.env.OPENAI_RADIO_MODEL ?? 'gpt-4o-mini',
-        temperature: 0.65,
-        max_tokens: 1400,
-        messages: [
-          {
-            role: 'system',
-            content: `${persona.system.replace(/Máximo 2 oraciones\./gi, 'Bloques de radio más largos.')} Escribes un podcast briefing del CABLE Acceso (~5 minutos). ${draft.length} bloques. Cada bloque: 3 a 5 oraciones en español mexicano. Atribuye fuentes por nombre (ESPN, Mediotiempo, TUDN, Marca). No inventes goles, declaraciones ni hechos. No leas artículos completos: usa solo titulares, decks y tomas Acceso. Responde SOLO JSON: [{"id":"...","text":"..."}]`,
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              kind: 'cable-brief',
-              jornada: jornada
-                ? {
-                    label: jornada.label,
-                    played: jornada.played.length,
-                    live: jornada.live.length,
-                    upcoming: jornada.upcoming.map(
-                      (f) => `${f.home.abbreviation}-${f.away.abbreviation}`
-                    ),
-                    results: jornada.played.slice(0, 5).map(
-                      (f) =>
-                        `${f.home.abbreviation} ${f.home.score ?? 0}-${f.away.score ?? 0} ${f.away.abbreviation}`
-                    ),
-                  }
-                : null,
-              stories: pickStories(stories, 6).map((s) => ({
-                source: s.sourceLabel,
-                title: s.title,
-                summary: s.summary?.slice(0, 220) ?? '',
-                accesoLine: s.accesoLine ?? '',
-              })),
-              draft,
-            }),
-          },
-        ],
+    const raw = await anthropicChat({
+      system: `${persona.system.replace(/Máximo 2 oraciones\./gi, 'Bloques de radio más largos.')} Escribes un podcast briefing del CABLE Acceso (~5 minutos). ${draft.length} bloques. Cada bloque: 3 a 5 oraciones en español mexicano. Atribuye fuentes por nombre (ESPN, Mediotiempo, TUDN, Marca). No inventes goles, declaraciones ni hechos. No leas artículos completos: usa solo titulares, decks y tomas Acceso. Responde SOLO JSON: [{"id":"...","text":"..."}]`,
+      user: JSON.stringify({
+        kind: 'cable-brief',
+        jornada: jornada
+          ? {
+              label: jornada.label,
+              played: jornada.played.length,
+              live: jornada.live.length,
+              upcoming: jornada.upcoming.map(
+                (f) => `${f.home.abbreviation}-${f.away.abbreviation}`
+              ),
+              results: jornada.played.slice(0, 5).map(
+                (f) =>
+                  `${f.home.abbreviation} ${f.home.score ?? 0}-${f.away.score ?? 0} ${f.away.abbreviation}`
+              ),
+            }
+          : null,
+        stories: pickStories(stories, 6).map((s) => ({
+          source: s.sourceLabel,
+          title: s.title,
+          summary: s.summary?.slice(0, 220) ?? '',
+          accesoLine: s.accesoLine ?? '',
+        })),
+        draft,
       }),
+      temperature: 0.65,
+      maxTokens: 1400,
     });
-    if (!res.ok) return draft;
-    const data = (await res.json()) as {
-      choices?: { message?: { content?: string } }[];
-    };
-    const raw = data.choices?.[0]?.message?.content?.trim() ?? '';
+    if (!raw) return draft;
     const start = raw.indexOf('[');
     const end = raw.lastIndexOf(']');
     if (start < 0 || end < 0) return draft;

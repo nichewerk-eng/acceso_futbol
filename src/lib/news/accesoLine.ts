@@ -1,6 +1,7 @@
+import { anthropicChat, anthropicEnabled } from '@/lib/ai/anthropic';
 import type { Story } from './types';
 
-/** Cheap deterministic Acceso framing when OpenAI is off. */
+/** Cheap deterministic Acceso framing when Anthropic is off. */
 export function templateAccesoLine(story: Story): string {
   const t = story.title.toLowerCase();
   if (t.includes('jornada') || t.includes('resultado')) {
@@ -19,8 +20,7 @@ export function templateAccesoLine(story: Story): string {
 }
 
 export async function maybeEnrichAccesoLines(stories: Story[]): Promise<Story[]> {
-  const key = process.env.OPENAI_API_KEY?.trim();
-  if (!key || stories.length === 0) {
+  if (!anthropicEnabled() || stories.length === 0) {
     return stories.map((s) => ({ ...s, accesoLine: s.accesoLine ?? templateAccesoLine(s) }));
   }
 
@@ -29,32 +29,14 @@ export async function maybeEnrichAccesoLines(stories: Story[]): Promise<Story[]>
   const rest = stories.slice(6).map((s) => ({ ...s, accesoLine: templateAccesoLine(s) }));
 
   try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${key}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: process.env.OPENAI_RADIO_MODEL ?? 'gpt-4o-mini',
-        temperature: 0.6,
-        max_tokens: 220,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'Eres editor de Acceso Futbol. Para cada titular escribe UNA línea corta (máx 14 palabras) con voz Acceso: opinión, urgencia, binacional MX-US. No inventes hechos. JSON array de strings en el mismo orden.',
-          },
-          {
-            role: 'user',
-            content: JSON.stringify(head.map((s) => ({ title: s.title, source: s.sourceLabel }))),
-          },
-        ],
-      }),
+    const raw = await anthropicChat({
+      system:
+        'Eres editor de Acceso Futbol. Para cada titular escribe UNA línea corta (máx 14 palabras) con voz Acceso: opinión, urgencia, binacional MX-US. No inventes hechos. JSON array de strings en el mismo orden.',
+      user: JSON.stringify(head.map((s) => ({ title: s.title, source: s.sourceLabel }))),
+      temperature: 0.6,
+      maxTokens: 220,
     });
-    if (!res.ok) throw new Error('openai');
-    const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-    const raw = data.choices?.[0]?.message?.content?.trim() ?? '[]';
+    if (!raw) throw new Error('anthropic');
     const start = raw.indexOf('[');
     const end = raw.lastIndexOf(']');
     const arr = JSON.parse(start >= 0 ? raw.slice(start, end + 1) : '[]') as string[];

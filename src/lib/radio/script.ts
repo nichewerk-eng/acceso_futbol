@@ -1,3 +1,4 @@
+import { anthropicChat, anthropicEnabled } from '@/lib/ai/anthropic';
 import type { MatchSnapshot } from '@/lib/sports';
 import { PERSONAS, type RadioStyle } from './personas';
 
@@ -16,7 +17,7 @@ function scoreLine(m: MatchSnapshot) {
   return `${m.home.name} ${hs}–${as} ${m.away.name}`;
 }
 
-/** Deterministic radio copy — always available without OpenAI. */
+/** Deterministic radio copy — always available without Anthropic. */
 export function templateScript(input: ScriptInput): string {
   const { style, kind, match, eventText, eventType, minute } = input;
   const score = scoreLine(match);
@@ -52,46 +53,27 @@ export function templateScript(input: ScriptInput): string {
 
 export async function generateScript(input: ScriptInput): Promise<string> {
   const fallback = templateScript(input);
-  const key = process.env.OPENAI_API_KEY?.trim();
-  if (!key) return fallback;
+  if (!anthropicEnabled()) return fallback;
 
   try {
     const persona = PERSONAS[input.style];
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${key}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: process.env.OPENAI_RADIO_MODEL ?? 'gpt-4o-mini',
-        temperature: 0.7,
-        max_tokens: 120,
-        messages: [
-          { role: 'system', content: persona.system },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              kind: input.kind,
-              score: scoreLine(input.match),
-              home: input.match.home.name,
-              away: input.match.away.name,
-              venue: input.match.venue,
-              city: input.match.city,
-              eventType: input.eventType,
-              eventText: input.eventText,
-              minute: input.minute,
-              draft: fallback,
-            }),
-          },
-        ],
+    const text = await anthropicChat({
+      system: persona.system,
+      user: JSON.stringify({
+        kind: input.kind,
+        score: scoreLine(input.match),
+        home: input.match.home.name,
+        away: input.match.away.name,
+        venue: input.match.venue,
+        city: input.match.city,
+        eventType: input.eventType,
+        eventText: input.eventText,
+        minute: input.minute,
+        draft: fallback,
       }),
+      temperature: 0.7,
+      maxTokens: 120,
     });
-    if (!res.ok) return fallback;
-    const data = (await res.json()) as {
-      choices?: { message?: { content?: string } }[];
-    };
-    const text = data.choices?.[0]?.message?.content?.trim();
     return text && text.length > 8 ? text.replace(/^["']|["']$/g, '') : fallback;
   } catch {
     return fallback;

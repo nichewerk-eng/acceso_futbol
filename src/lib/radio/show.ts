@@ -1,3 +1,4 @@
+import { anthropicChat, anthropicEnabled } from '@/lib/ai/anthropic';
 import type { MatchSnapshot } from '@/lib/sports';
 import { hasCommentary } from './phases';
 import { PERSONAS, type RadioStyle } from './personas';
@@ -29,7 +30,7 @@ function commentaryDigest(m: MatchSnapshot): string {
   return lines.join(' | ');
 }
 
-/** Template pre-show when OpenAI is off: ~podcast cold open + matchup. */
+/** Template pre-show when Anthropic is off: ~podcast cold open + matchup. */
 export function templatePreshow(match: MatchSnapshot, style: RadioStyle): ShowSegment[] {
   const venue = [match.venue, match.city].filter(Boolean).join(', ') || 'el estadio';
   const open =
@@ -98,48 +99,27 @@ async function rewriteShow(
   match: MatchSnapshot,
   draft: ShowSegment[]
 ): Promise<ShowSegment[]> {
-  const key = process.env.OPENAI_API_KEY?.trim();
-  if (!key) return draft;
+  if (!anthropicEnabled()) return draft;
 
   try {
     const persona = PERSONAS[style];
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${key}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: process.env.OPENAI_RADIO_MODEL ?? 'gpt-4o-mini',
-        temperature: 0.7,
-        max_tokens: 700,
-        messages: [
-          {
-            role: 'system',
-            content: `${persona.system} Escribes un podcast corto de radio (3 bloques). Cada bloque: 2 a 4 oraciones en español. No inventes goles ni tarjetas. Responde SOLO JSON: [{"id":"...","text":"..."}]`,
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              kind,
-              home: match.home.name,
-              away: match.away.name,
-              score: scoreLine(match),
-              venue: match.venue,
-              state: match.state,
-              stats: match.stats?.slice(0, 8) ?? [],
-              commentary: commentaryDigest(match).slice(0, 900),
-              draft,
-            }),
-          },
-        ],
+    const raw = await anthropicChat({
+      system: `${persona.system} Escribes un podcast corto de radio (3 bloques). Cada bloque: 2 a 4 oraciones en español. No inventes goles ni tarjetas. Responde SOLO JSON: [{"id":"...","text":"..."}]`,
+      user: JSON.stringify({
+        kind,
+        home: match.home.name,
+        away: match.away.name,
+        score: scoreLine(match),
+        venue: match.venue,
+        state: match.state,
+        stats: match.stats?.slice(0, 8) ?? [],
+        commentary: commentaryDigest(match).slice(0, 900),
+        draft,
       }),
+      temperature: 0.7,
+      maxTokens: 700,
     });
-    if (!res.ok) return draft;
-    const data = (await res.json()) as {
-      choices?: { message?: { content?: string } }[];
-    };
-    const raw = data.choices?.[0]?.message?.content?.trim() ?? '';
+    if (!raw) return draft;
     const start = raw.indexOf('[');
     const end = raw.lastIndexOf(']');
     if (start < 0 || end < 0) return draft;
