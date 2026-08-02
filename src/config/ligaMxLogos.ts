@@ -57,9 +57,7 @@ const ABBR_TO_ID: Record<string, string> = {
   TUA: 'tigres', // Sportmonks
   TIJ: 'tijuana',
   TOL: 'toluca',
-  MTY: 'monterrey',
   MNT: 'monterrey', // Sportmonks
-  GDL: 'chivas',
   GUA: 'chivas', // Sportmonks Guadalajara
   MAZ: 'mazatlan',
   MEX: 'el-tri',

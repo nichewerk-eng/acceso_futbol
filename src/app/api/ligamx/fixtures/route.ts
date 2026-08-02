@@ -79,7 +79,7 @@ function fixtureToSchedule(f: Fixture): LigaMXFixture {
     id: f.id,
     date: f.date,
     league: 'liga-mx',
-    jornada: f.jornada,
+    jornada: f.jornada ?? null,
     status: {
       completed: f.state === 'post',
       state: f.state,
@@ -87,17 +87,17 @@ function fixtureToSchedule(f: Fixture): LigaMXFixture {
       shortDetail: f.statusLabel,
       displayClock: f.clock ?? '',
     },
-    venue: f.venue,
-    city: f.city,
+    venue: f.venue ?? null,
+    city: f.city ?? null,
     home: {
       name: f.home.name,
       abbreviation: f.home.abbreviation,
-      score: f.home.score,
+      score: f.home.score ?? null,
     },
     away: {
       name: f.away.name,
       abbreviation: f.away.abbreviation,
-      score: f.away.score,
+      score: f.away.score ?? null,
     },
   };
 }
