@@ -72,11 +72,11 @@ function ResultStamp({ f, mine }: { f: Fixture; mine: boolean }) {
           <span className={awayCls}>{f.away.score ?? 0}</span>
         </p>
         <div className="jor-stamp-teams">
-          <span className={['inline-flex items-center gap-2', homeCls].join(' ')}>
+          <span className={['jor-stamp-home inline-flex items-center gap-2', homeCls].join(' ')}>
             <ClubLogo abbr={f.home.abbreviation} name={f.home.name} size="sm" />
             {f.home.abbreviation}
           </span>
-          <span className={['inline-flex items-center justify-end gap-2', awayCls].join(' ')}>
+          <span className={['jor-stamp-away inline-flex items-center justify-end gap-2', awayCls].join(' ')}>
             {f.away.abbreviation}
             <ClubLogo abbr={f.away.abbreviation} name={f.away.name} size="sm" />
           </span>
@@ -105,17 +105,17 @@ function NextCard({ f, mine }: { f: Fixture; mine: boolean }) {
         {mine && <span className="af-tele !text-signal">LOCK</span>}
       </div>
       <div className="jor-next-vs">
-        <span className="jor-next-abbr inline-flex items-center gap-2">
+        <span className="jor-next-side jor-next-home">
           <ClubLogo abbr={f.home.abbreviation} name={f.home.name} size="sm" />
-          {f.home.abbreviation}
+          <span className="jor-next-abbr">{f.home.abbreviation}</span>
         </span>
         <span className="jor-next-mid">VS</span>
-        <span className="jor-next-abbr inline-flex items-center justify-end gap-2">
-          {f.away.abbreviation}
+        <span className="jor-next-side jor-next-away">
           <ClubLogo abbr={f.away.abbreviation} name={f.away.name} size="sm" />
+          <span className="jor-next-abbr">{f.away.abbreviation}</span>
         </span>
       </div>
-      <p className="jor-next-when mt-4">Ficha · radio al kick</p>
+      <p className="jor-next-when jor-next-cta">Ficha · radio al kick</p>
     </Link>
   );
 }

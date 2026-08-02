@@ -188,38 +188,36 @@ export function PulseHero({ leadStory }: Props) {
             </div>
 
             <div className="hero-stage-grid">
-              <div className="min-w-0 text-left">
-                <div className="flex items-center gap-2.5">
+              <div className="hero-stage-side hero-stage-home">
+                <div className="hero-stage-pair">
                   <ClubLogo
                     abbr={stage.home.abbreviation}
                     name={stage.home.name}
                     size="lg"
+                    className="hero-stage-crest"
                   />
-                  <p className="hero-stage-abbr truncate group-hover:text-signal">
+                  <p className="hero-stage-abbr group-hover:text-signal">
                     {stage.home.abbreviation}
                   </p>
                 </div>
-                <p className="mt-1 truncate font-mono text-[11px] text-muted">
-                  {stage.home.name}
-                </p>
+                <p className="hero-stage-name">{stage.home.name}</p>
               </div>
               <div className="hero-stage-score" data-testid="hero-stage-score">
                 {bandMeta(stage).center}
               </div>
-              <div className="min-w-0 text-right">
-                <div className="flex items-center justify-end gap-2.5">
-                  <p className="hero-stage-abbr truncate group-hover:text-signal">
-                    {stage.away.abbreviation}
-                  </p>
+              <div className="hero-stage-side hero-stage-away">
+                <div className="hero-stage-pair">
                   <ClubLogo
                     abbr={stage.away.abbreviation}
                     name={stage.away.name}
                     size="lg"
+                    className="hero-stage-crest"
                   />
+                  <p className="hero-stage-abbr group-hover:text-signal">
+                    {stage.away.abbreviation}
+                  </p>
                 </div>
-                <p className="mt-1 truncate font-mono text-[11px] text-muted">
-                  {stage.away.name}
-                </p>
+                <p className="hero-stage-name">{stage.away.name}</p>
               </div>
             </div>
 
