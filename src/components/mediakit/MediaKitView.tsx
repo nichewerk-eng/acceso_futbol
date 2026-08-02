@@ -181,7 +181,7 @@ function HeroBand({ onDownload }: { onDownload: () => void }) {
   const { headline } = mediaKit;
 
   return (
-    <section className="print:break-inside-avoid">
+    <section>
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-center">
         <div>
           <Reveal>
@@ -314,8 +314,8 @@ function HeroContentCard({
 
 function PlatformsGrid() {
   return (
-    <section className="print:break-inside-avoid">
-      <Reveal>
+    <section>
+      <Reveal className="print:break-inside-avoid print:break-after-avoid">
         <Kicker label="Cuatro plataformas, cuatro audiencias" />
         <h2 className="max-w-2xl text-xl font-bold uppercase tracking-tight sm:text-2xl">
           Cada plataforma llega a un mercado distinto
@@ -324,7 +324,7 @@ function PlatformsGrid() {
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {mediaKit.platforms.map((p, i) => (
-          <Reveal key={p.id} delay={i * 60} className="flex flex-col border border-gray-200 bg-gray-50 p-4">
+          <Reveal key={p.id} delay={i * 60} className="flex flex-col border border-gray-200 bg-gray-50 p-4 print:break-inside-avoid">
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-2">
                 <span style={{ color: PLATFORM_COLORS[p.id] }}>
@@ -388,14 +388,14 @@ function AudienceGeoRow() {
   const { demographics: d, geography: g } = mediaKit;
 
   return (
-    <section className="grid gap-10 lg:grid-cols-2 print:break-inside-avoid">
+    <section className="grid gap-10 print:block lg:grid-cols-2">
       <div>
-        <Reveal>
+        <Reveal className="print:break-inside-avoid print:break-after-avoid">
           <Kicker label="Quién nos ve" />
           <h2 className="text-xl font-bold uppercase tracking-tight sm:text-2xl">{d.summary}</h2>
         </Reveal>
 
-        <Reveal delay={80} className="mt-5 overflow-hidden border border-gray-200">
+        <Reveal delay={80} className="mt-5 overflow-hidden border border-gray-200 print:break-inside-avoid">
           <table className="w-full border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50 text-[10px] font-bold uppercase tracking-wider text-gray-400">
@@ -434,7 +434,7 @@ function AudienceGeoRow() {
           </p>
           <div className="grid gap-2 sm:grid-cols-2">
             {d.verticals.map((v, i) => (
-              <div key={v.name} className="flex items-start gap-2.5 border border-gray-200 bg-white p-3">
+              <div key={v.name} className="flex items-start gap-2.5 border border-gray-200 bg-white p-3 print:break-inside-avoid">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center border border-gray-200 text-gray-500">
                   <VerticalIcon index={i} />
                 </span>
@@ -448,18 +448,18 @@ function AudienceGeoRow() {
         </Reveal>
       </div>
 
-      <div>
-        <Reveal>
+      <div className="print:mt-8">
+        <Reveal className="print:break-inside-avoid print:break-after-avoid">
           <Kicker label="Dónde nos ven" />
           <h2 className="text-xl font-bold uppercase tracking-tight sm:text-2xl">Concentración geográfica</h2>
         </Reveal>
 
-        <Reveal delay={80} className="mt-5 grid gap-4 sm:grid-cols-2">
+        <Reveal delay={80} className="mt-5 grid gap-4 sm:grid-cols-2 print:break-inside-avoid">
           <RankedMetroList countryCode="mx" title="México" items={g.mexicoMetros} />
           <RankedMetroList countryCode="us" title="Estados Unidos" items={g.usMetros} />
         </Reveal>
 
-        <Reveal delay={160} className="mt-4 border border-gray-200 bg-gray-50 p-4">
+        <Reveal delay={160} className="mt-4 border border-gray-200 bg-gray-50 p-4 print:break-inside-avoid">
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-brand-orange">Foco: Texas</p>
           <div className="mt-3 grid grid-cols-3 gap-3">
             <StatBlock size="sm" value={`${g.austin.texasShare}%`} label="Audiencia total es Texas" />
@@ -520,16 +520,16 @@ function ContentProofRow() {
   const { content: c } = mediaKit;
 
   return (
-    <section className="grid gap-10 lg:grid-cols-2 print:break-inside-avoid">
+    <section className="grid gap-10 print:block lg:grid-cols-2">
       <div>
-        <Reveal>
+        <Reveal className="print:break-inside-avoid print:break-after-avoid">
           <Kicker label="Lo que producimos" />
           <h2 className="text-xl font-bold uppercase tracking-tight sm:text-2xl">Formatos y cadencia</h2>
         </Reveal>
 
         <div className="mt-5 grid gap-2">
           {c.formats.map((f, i) => (
-            <Reveal key={f} delay={i * 50} className="flex items-center gap-2.5 border border-gray-200 bg-white px-3.5 py-2.5">
+            <Reveal key={f} delay={i * 50} className="flex items-center gap-2.5 border border-gray-200 bg-white px-3.5 py-2.5 print:break-inside-avoid">
               <span className="h-1.5 w-1.5 shrink-0 self-center bg-brand-orange" />
               <span className="text-xs leading-snug text-gray-700 sm:text-sm">{f}</span>
             </Reveal>
@@ -548,15 +548,15 @@ function ContentProofRow() {
         </Reveal>
       </div>
 
-      <div>
-        <Reveal>
+      <div className="print:mt-8">
+        <Reveal className="print:break-inside-avoid print:break-after-avoid">
           <Kicker label="Prueba de resultados" />
           <h2 className="text-xl font-bold uppercase tracking-tight sm:text-2xl">Resultados seleccionados</h2>
         </Reveal>
 
         <div className="mt-5 grid gap-2 sm:grid-cols-2">
           {mediaKit.proof.map((p, i) => (
-            <Reveal key={p.label} delay={i * 60} className="border border-gray-200 bg-gray-50 p-3.5">
+            <Reveal key={p.label} delay={i * 60} className="border border-gray-200 bg-gray-50 p-3.5 print:break-inside-avoid">
               {p.tag && (
                 <span className="mb-1.5 inline-block border border-brand-orange/50 bg-brand-orange/5 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-brand-orange">
                   {p.tag}
@@ -580,7 +580,7 @@ function ContentProofRow() {
 function CaseStudy() {
   const { caseStudy } = mediaKit;
   return (
-    <div className="border border-gray-200 bg-white p-4">
+    <div className="border border-gray-200 bg-white p-4 print:break-inside-avoid">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 className="font-display text-sm font-bold uppercase tracking-tight text-gray-900">
           {caseStudy.title}
@@ -615,13 +615,13 @@ function RateCardSection({ onDownload }: { onDownload: () => void }) {
   const { rateCard, contact, partners: p } = mediaKit;
 
   return (
-    <section className="print:break-inside-avoid">
-      <Reveal>
+    <section>
+      <Reveal className="print:break-inside-avoid print:break-after-avoid">
         <Kicker label="Trabajemos juntos" />
         <h2 className="text-xl font-bold uppercase tracking-tight sm:text-2xl">Qué puedes patrocinar</h2>
       </Reveal>
 
-      <Reveal delay={60} className="mt-5 overflow-hidden border border-gray-200">
+      <Reveal delay={60} className="mt-5 overflow-hidden border border-gray-200 print:break-inside-avoid">
         <table className="w-full border-collapse text-left text-sm">
           <thead>
             <tr className="border-b border-gray-200 bg-gray-50 text-[10px] font-bold uppercase tracking-wider text-gray-400">

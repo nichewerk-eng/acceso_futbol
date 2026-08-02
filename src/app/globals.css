@@ -136,6 +136,11 @@ body {
     margin: 0;
   }
 
+  html,
+  body {
+    background: #ffffff !important;
+  }
+
   .reveal {
     opacity: 1 !important;
     transform: none !important;
