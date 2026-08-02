@@ -45,7 +45,7 @@ export const mediaKit = {
 
   window: {
     label: "1 al 31 de julio de 2026",
-    note: "Datos de Windsor.ai: TikTok orgánico, Instagram, página de Facebook y canal de YouTube. Mes calendario completo, sin excluir ni ajustar picos.",
+    note: "Datos: TikTok orgánico, Instagram, página de Facebook y canal de YouTube. Mes calendario completo, sin excluir ni ajustar picos.",
   },
 
   headline: {

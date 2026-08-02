@@ -182,7 +182,7 @@ function HeroBand({ onDownload }: { onDownload: () => void }) {
 
   return (
     <section className="print:break-inside-avoid">
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-center">
         <div>
           <Reveal>
             <div className="flex items-center justify-between gap-4">
@@ -263,7 +263,7 @@ function HeroBand({ onDownload }: { onDownload: () => void }) {
 
 function HeroContentShowcase() {
   return (
-    <div className="relative mx-auto hidden h-[220px] w-full max-w-[240px] pt-3 print:hidden sm:block sm:pt-4">
+    <div className="relative mx-auto hidden h-[220px] w-full max-w-[240px] print:hidden sm:block">
       <HeroContentCard
         src="/luis.jpg"
         alt="Clip de Acceso Futbol sobre la Liga MX en Austin, Texas"
