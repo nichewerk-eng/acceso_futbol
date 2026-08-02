@@ -48,7 +48,7 @@ export const TV_CHANNELS: Record<TvChannelId, TvChannel> = {
   'apple-tv': {
     id: 'apple-tv',
     label: 'Apple TV',
-    src: '/tv_logos/apple-tv.svg',
+    src: '/tv_logos/AppleTV-iOS.png',
   },
 };
 

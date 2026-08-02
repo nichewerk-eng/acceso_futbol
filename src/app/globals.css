@@ -1405,12 +1405,13 @@ body {
 }
 
 .tv-channel[data-channel='apple-tv'] {
-  width: 3.4rem;
+  width: 1.35rem;
 }
 
 .tv-channel[data-channel='apple-tv'] .tv-channel-logo {
-  max-height: 0.85rem;
-  max-width: 3.2rem;
+  max-height: 1.25rem;
+  max-width: 1.25rem;
+  border-radius: 0.28rem;
 }
 
 .tv-channel-compact[data-channel='vix'] {
@@ -1445,12 +1446,13 @@ body {
 }
 
 .tv-channel-compact[data-channel='apple-tv'] {
-  width: 2.9rem;
+  width: 1.15rem;
 }
 
 .tv-channel-compact[data-channel='apple-tv'] .tv-channel-logo {
-  max-height: 0.7rem;
-  max-width: 2.7rem;
+  max-height: 1.05rem;
+  max-width: 1.05rem;
+  border-radius: 0.22rem;
 }
 
 .tv-channel-logo-invert {
