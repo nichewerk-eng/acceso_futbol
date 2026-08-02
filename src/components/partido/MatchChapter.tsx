@@ -640,7 +640,9 @@ export function MatchChapter({ league, id }: Props) {
           <div className="match-scoreboard">
             <div className="match-side">
               <ClubLogo abbr={match.home.abbreviation} name={match.home.name} size="xl" className="match-crest" />
-              <p className="match-club">{match.home.name}</p>
+              <p className="match-club" title={match.home.name}>
+                {match.home.name}
+              </p>
               <p className="match-abbr">{match.home.abbreviation}</p>
               {!pre && homeLines.length > 0 && (
                 <ul className="match-scorers">
@@ -679,7 +681,9 @@ export function MatchChapter({ league, id }: Props) {
 
             <div className="match-side match-side-away">
               <ClubLogo abbr={match.away.abbreviation} name={match.away.name} size="xl" className="match-crest" />
-              <p className="match-club">{match.away.name}</p>
+              <p className="match-club" title={match.away.name}>
+                {match.away.name}
+              </p>
               <p className="match-abbr">{match.away.abbreviation}</p>
               {!pre && awayLines.length > 0 && (
                 <ul className="match-scorers">
@@ -698,7 +702,10 @@ export function MatchChapter({ league, id }: Props) {
             <div className="match-form-strip" aria-label="Forma y cara a cara">
               {(homeForm.length > 0 || awayForm.length > 0) && (
                 <>
-                  <p className="af-tele match-form-strip-label">Últimos 5 · G ganó · E empató · P perdió</p>
+                  <p className="af-tele match-form-strip-label">
+                    <span className="match-form-strip-label-full">Últimos 5 · G ganó · E empató · P perdió</span>
+                    <span className="match-form-strip-label-short">Últimos 5 · G / E / P</span>
+                  </p>
                   <FormRow label={match.home.abbreviation} abbr={match.home.abbreviation} form={homeForm} />
                   <FormRow label={match.away.abbreviation} abbr={match.away.abbreviation} form={awayForm} />
                 </>
