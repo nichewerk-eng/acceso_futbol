@@ -213,6 +213,10 @@ function HeroBand({ onDownload }: { onDownload: () => void }) {
             </p>
           </Reveal>
 
+          <Reveal delay={40} className="mt-6 print:hidden sm:hidden">
+            <HeroContentShowcaseMobile />
+          </Reveal>
+
           <Reveal delay={80} className="mt-8 grid grid-cols-2 gap-x-6 gap-y-6 sm:grid-cols-4">
             <StatBlock
               size="lg"
@@ -273,6 +277,24 @@ function HeroContentShowcase() {
         src="/jonathang.jpg"
         alt="Clip de Acceso Futbol: rumbo al título del Mundial 2026"
         className="absolute right-0 top-0 w-[58%] rotate-4"
+        priority
+      />
+    </div>
+  );
+}
+
+function HeroContentShowcaseMobile() {
+  return (
+    <div className="flex gap-3">
+      <HeroContentCard
+        src="/luis.jpg"
+        alt="Clip de Acceso Futbol sobre la Liga MX en Austin, Texas"
+        className="w-1/2 -rotate-2"
+      />
+      <HeroContentCard
+        src="/jonathang.jpg"
+        alt="Clip de Acceso Futbol: rumbo al título del Mundial 2026"
+        className="w-1/2 rotate-2"
         priority
       />
     </div>
