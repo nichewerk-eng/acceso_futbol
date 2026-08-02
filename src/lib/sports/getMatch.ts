@@ -10,7 +10,7 @@ import {
   sportmonksEnabled,
 } from './sportmonks';
 
-type LeagueKey = 'liga-mx' | 'mundial' | 'seleccion';
+type LeagueKey = 'liga-mx' | 'mundial' | 'seleccion' | 'leagues-cup';
 
 function espnSlug(league: LeagueKey) {
   return league === 'liga-mx' ? SLUG.LIGA_MX : SLUG.WORLD_CUP;
@@ -19,6 +19,7 @@ function espnSlug(league: LeagueKey) {
 function normalizeLeague(league: string): LeagueKey {
   if (league === 'liga-mx') return 'liga-mx';
   if (league === 'seleccion') return 'seleccion';
+  if (league === 'leagues-cup') return 'leagues-cup';
   return 'mundial';
 }
 
@@ -241,19 +242,18 @@ async function fromEspn(league: LeagueKey, id: string): Promise<MatchSnapshot | 
 export async function getMatch(league: string, id: string): Promise<MatchSnapshot | null> {
   const key = normalizeLeague(league);
 
-  // Liga MX: Sportmonks only while the token is present. ESPN is last-resort
-  // when the API is unavailable (no token / SM hard-fail with no snapshot).
-  if (key === 'liga-mx' && sportmonksEnabled()) {
+  // Liga MX / Leagues Cup: Sportmonks while the token is present.
+  if ((key === 'liga-mx' || key === 'leagues-cup') && sportmonksEnabled()) {
     try {
       let fixtureId = id;
-      if (looksLikeEspnEventId(id) || id.startsWith('static-')) {
+      if (key === 'liga-mx' && (looksLikeEspnEventId(id) || id.startsWith('static-'))) {
         const resolved = await resolveSportmonksFixtureId(id);
         if (resolved) fixtureId = resolved;
       }
 
       let sm = await fetchMatchSnapshot(fixtureId);
       if (!sm && fixtureId !== id) sm = await fetchMatchSnapshot(id);
-      if (!sm) {
+      if (!sm && key === 'liga-mx') {
         const resolved = await resolveSportmonksFixtureId(id);
         if (resolved) sm = await fetchMatchSnapshot(resolved);
       }
@@ -261,9 +261,10 @@ export async function getMatch(league: string, id: string): Promise<MatchSnapsho
       // Token present but fixture missing — do not serve ESPN match content.
       return null;
     } catch {
-      // Sportmonks API unavailable → fall through to ESPN.
+      // Sportmonks API unavailable → fall through to ESPN (Liga MX only).
     }
   }
 
+  if (key === 'leagues-cup') return null;
   return fromEspn(key, id);
 }

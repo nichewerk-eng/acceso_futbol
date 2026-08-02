@@ -9,7 +9,13 @@ import {
 import type { Fixture, MatchState } from './types';
 import { fetchEspnLigaMxFixtures } from './espnFallback';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
-import { fetchFixturesByDate, fetchLivescores, sportmonksEnabled } from './sportmonks';
+import { involvesLigaMxClub } from './ligaMxTeams';
+import {
+  fetchFixturesByDate,
+  fetchLivescores,
+  livingRoomLeagueIds,
+  sportmonksEnabled,
+} from './sportmonks';
 import { fetchSeleccionGamesOfDay } from './seleccion';
 
 export type DayGame = Fixture & {
@@ -133,24 +139,30 @@ async function fetchEspnDayBoard(dayKey: string): Promise<Fixture[]> {
   }
 }
 
+function keepLivingRoomFixture(f: Fixture): boolean {
+  if (f.league === 'leagues-cup') return involvesLigaMxClub(f.home, f.away);
+  return true;
+}
+
 async function ligaMxForDay(
   dayKey: string
 ): Promise<{ fixtures: Fixture[]; source: GamesOfDayPayload['source'] }> {
   if (sportmonksEnabled()) {
     try {
+      const leagues = livingRoomLeagueIds();
       const next = new Date(`${dayKey}T12:00:00Z`);
       next.setUTCDate(next.getUTCDate() + 1);
       const nextKey = next.toISOString().slice(0, 10);
       const [live, a, b] = await Promise.all([
-        fetchLivescores(),
-        fetchFixturesByDate(dayKey),
-        fetchFixturesByDate(nextKey),
+        fetchLivescores(leagues),
+        fetchFixturesByDate(dayKey, leagues),
+        fetchFixturesByDate(nextKey, leagues),
       ]);
       const byId = new Map<string, Fixture>();
       for (const f of [...live, ...a, ...b]) {
-        if (isMexicoDay(f.date, dayKey) || f.state === 'in') {
-          byId.set(f.id, attachDondeVer(f));
-        }
+        if (!(isMexicoDay(f.date, dayKey) || f.state === 'in')) continue;
+        if (!keepLivingRoomFixture(f)) continue;
+        byId.set(f.id, attachDondeVer(f));
       }
       return { fixtures: [...byId.values()], source: 'sportmonks' };
     } catch {

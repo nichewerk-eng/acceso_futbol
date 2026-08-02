@@ -2417,12 +2417,25 @@ body {
 
 .match-lineup-list li {
   display: grid;
-  grid-template-columns: 2rem 1fr auto;
-  gap: 0.65rem;
-  align-items: baseline;
+  grid-template-columns: 1.75rem 2rem minmax(0, 1fr) auto;
+  gap: 0.5rem 0.55rem;
+  align-items: center;
   padding: 0.4rem 0;
   border-bottom: 1px solid var(--line);
   font-size: 0.875rem;
+}
+
+.match-player-face {
+  width: 1.75rem;
+  height: 1.75rem;
+  object-fit: cover;
+  border-radius: 50%;
+  background: var(--bg-3);
+}
+
+.match-player-face.is-empty {
+  display: block;
+  border: 1px solid var(--line);
 }
 
 .match-lineup-list.is-bench li {

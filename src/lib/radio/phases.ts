@@ -60,6 +60,7 @@ export function radioPhaseLabel(phase: RadioPhase): string {
 /** League path for match / radio URLs. */
 export function leaguePath(league: Fixture['league']): string {
   if (league === 'seleccion') return 'seleccion';
+  if (league === 'leagues-cup') return 'leagues-cup';
   if (league === 'liga-mx' || league === 'liga-mx-femenil') return 'liga-mx';
   return 'liga-mx';
 }

@@ -26,7 +26,11 @@ export {
   fetchMatchSnapshot,
   ligaMxLeagueId,
   ligaMxSeasonId,
+  leaguesCupLeagueId,
+  leaguesCupSeasonId,
+  livingRoomLeagueIds,
   fetchLigaMxSeasonFixtures,
   fetchLigaMxStandings,
 } from './sportmonks';
+export { involvesLigaMxClub, isLigaMxSmTeamId } from './ligaMxTeams';
 export { fetchLigaMxFixtures } from './espnFallback';

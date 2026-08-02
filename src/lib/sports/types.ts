@@ -36,6 +36,7 @@ export interface LiveEvent {
   side?: 'home' | 'away';
   playerName?: string;
   relatedPlayerName?: string;
+  playerPhoto?: string;
 }
 
 export interface CommentaryLine {
@@ -52,6 +53,7 @@ export interface FixtureScorer {
   side: 'home' | 'away';
   pen?: boolean;
   og?: boolean;
+  photo?: string;
 }
 
 export interface Fixture {
@@ -91,6 +93,8 @@ export interface LineupPlayer {
   positionLabel: string;
   role: LineupRole;
   side: 'home' | 'away';
+  /** Sportmonks player headshot when available. */
+  photo?: string;
 }
 
 export interface TeamLineup {

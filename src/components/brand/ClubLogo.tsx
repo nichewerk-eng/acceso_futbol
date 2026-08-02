@@ -14,13 +14,15 @@ type Props = {
   abbr?: string | null;
   clubId?: string | null;
   name?: string;
+  /** Remote crest (e.g. Sportmonks MLS) when local asset missing. */
+  logoUrl?: string | null;
   size?: Size;
   className?: string;
 };
 
-/** Local Liga MX crest. Falls back to abbreviation text if unknown. */
-export function ClubLogo({ abbr, clubId, name, size = 'sm', className = '' }: Props) {
-  const src = ligaMxLogoSrc(clubId) ?? ligaMxLogoSrc(abbr);
+/** Local Liga MX crest, optional remote logo, then abbreviation text. */
+export function ClubLogo({ abbr, clubId, name, logoUrl, size = 'sm', className = '' }: Props) {
+  const src = ligaMxLogoSrc(clubId) ?? ligaMxLogoSrc(abbr) ?? logoUrl ?? null;
   const px = PX[size];
   const label = name || abbr || 'Club';
 
@@ -34,13 +36,13 @@ export function ClubLogo({ abbr, clubId, name, size = 'sm', className = '' }: Pr
         ].join(' ')}
         aria-hidden={!abbr}
       >
-        {abbr ?? '—'}
+        {abbr ?? '-'}
       </span>
     );
   }
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element -- local crest assets; keep simple img
+    // eslint-disable-next-line @next/next/no-img-element -- local/remote crests; keep simple img
     <img
       src={src}
       alt=""

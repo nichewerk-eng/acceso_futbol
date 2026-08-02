@@ -36,6 +36,33 @@ export function ligaMxSeasonId(): number {
   return 28009;
 }
 
+/** Sportmonks Leagues Cup league id (MLS × Liga MX). */
+export function leaguesCupLeagueId(): number {
+  return 3211;
+}
+
+/** Leagues Cup 2026 season. */
+export function leaguesCupSeasonId(): number {
+  return 27500;
+}
+
+/** Living-room boards: domestic Liga MX + Leagues Cup. */
+export function livingRoomLeagueIds(): number[] {
+  return [ligaMxLeagueId(), leaguesCupLeagueId()];
+}
+
+function mapLeagueId(leagueId?: number | null): Fixture['league'] {
+  if (leagueId === leaguesCupLeagueId()) return 'leagues-cup';
+  if (leagueId === ligaMxLeagueId()) return 'liga-mx';
+  return 'liga-mx';
+}
+
+/** Drop Sportmonks placeholder silhouettes. */
+function playerPhoto(path?: string | null): string | undefined {
+  if (!path || /placeholder/i.test(path)) return undefined;
+  return path;
+}
+
 export function sportmonksEnabled(): boolean {
   return Boolean(process.env.SPORTMONKS_API_TOKEN?.trim());
 }
@@ -88,6 +115,12 @@ interface SmEvent {
   section?: string | null;
   participant_id?: number;
   type?: { id?: number; name?: string; code?: string; developer_name?: string };
+  player?: {
+    display_name?: string;
+    name?: string;
+    common_name?: string;
+    image_path?: string;
+  };
 }
 
 interface SmComment {
@@ -117,7 +150,12 @@ interface SmLineup {
   player_name?: string | null;
   jersey_number?: number | null;
   type?: { id?: number; name?: string; code?: string; developer_name?: string };
-  player?: { display_name?: string; name?: string; common_name?: string };
+  player?: {
+    display_name?: string;
+    name?: string;
+    common_name?: string;
+    image_path?: string;
+  };
 }
 
 interface SmRefereeRow {
@@ -218,7 +256,7 @@ export function mapFixture(f: SmFixture): Fixture {
   return {
     id: String(f.id),
     provider: 'sportmonks',
-    league: 'liga-mx',
+    league: mapLeagueId(f.league?.id),
     date: f.starting_at ? `${f.starting_at.replace(' ', 'T')}Z` : new Date().toISOString(),
     jornada,
     state,
@@ -300,7 +338,9 @@ function mapEvents(
     .map((e) => {
       const kind = eventKind(e.type?.developer_name, e.type?.code);
       const type = eventTypeLabel(kind, e.type?.name || e.info);
-      const player = shortName(e.player_name);
+      const player = shortName(
+        e.player_name || e.player?.display_name || e.player?.name || e.player?.common_name
+      );
       const related = shortName(e.related_player_name);
       let text = player || type;
       if (kind === 'sub' && player && related) text = `${player} entra por ${related}`;
@@ -339,6 +379,7 @@ function mapEvents(
         side,
         playerName: player || undefined,
         relatedPlayerName: related || undefined,
+        playerPhoto: playerPhoto(e.player?.image_path),
       };
     })
     .sort((a, b) => {
@@ -357,6 +398,7 @@ function scorersFromEvents(events: LiveEvent[]): FixtureScorer[] {
       side: e.side === 'away' ? 'away' : 'home',
       pen: e.kind === 'penalty',
       og: e.kind === 'own_goal',
+      photo: e.playerPhoto,
     }));
 }
 
@@ -443,6 +485,7 @@ function mapLineups(
         positionLabel: label,
         role,
         side,
+        photo: playerPhoto(l.player?.image_path),
       };
     });
 
@@ -492,7 +535,7 @@ function mapStatistics(
 
 /** In-play + near kickoff fixtures for selected leagues. */
 export async function fetchLivescores(leagueIds: number[] = [ligaMxLeagueId()]): Promise<Fixture[]> {
-  const include = 'participants;scores;state;venue;round;league';
+  const include = 'participants;scores;state;venue;round;league;events.type';
   const data = await smFetch<{ data?: SmFixture[] }>('/livescores', {
     include,
     filters: `fixtureLeagues:${leagueIds.join(',')}`,
@@ -680,7 +723,7 @@ async function fetchTeamForm(teamId: string, limit = 5): Promise<FormMatch[]> {
 
 export async function fetchMatchSnapshot(fixtureId: string): Promise<MatchSnapshot | null> {
   const include =
-    'participants;scores;state;venue;round;events.type;comments;statistics.type;lineups.type;lineups.player;referees.referee;formations';
+    'participants;scores;state;venue;round;league;events.type;events.player;comments;statistics.type;lineups.type;lineups.player;referees.referee;formations';
   try {
     const data = await smFetch<{ data?: SmFixture }>(`/fixtures/${fixtureId}`, { include });
     if (!data.data) return null;

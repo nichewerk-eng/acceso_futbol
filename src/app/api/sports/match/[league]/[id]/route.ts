@@ -8,11 +8,11 @@ export async function GET(
   { params }: { params: Promise<{ league: string; id: string }> }
 ) {
   const { league, id } = await params;
-  if (!['liga-mx', 'mundial', 'seleccion'].includes(league)) {
+  if (!['liga-mx', 'mundial', 'seleccion', 'leagues-cup'].includes(league)) {
     return NextResponse.json({ error: 'invalid_league' }, { status: 400 });
   }
 
-  const CACHE_KEY = `sports-match-v8-${league}-${id}`;
+  const CACHE_KEY = `sports-match-v9-${league}-${id}`;
   const cached = getCache<MatchSnapshot>(CACHE_KEY, 12_000);
   // Don't serve a stale empty crónica when a richer payload may be available.
   const cachedHasStory =

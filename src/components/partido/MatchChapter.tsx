@@ -391,6 +391,14 @@ function MatchTabla({
   );
 }
 
+function PlayerFace({ src, name }: { src?: string; name: string }) {
+  if (!src) return <span className="match-player-face is-empty" aria-hidden />;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={src} alt="" title={name} className="match-player-face" loading="lazy" decoding="async" />
+  );
+}
+
 function LineupSide({ team }: { team: TeamLineup }) {
   return (
     <div className="match-lineup-side">
@@ -405,6 +413,7 @@ function LineupSide({ team }: { team: TeamLineup }) {
       <ul className="match-lineup-list">
         {team.starters.map((p) => (
           <li key={p.id}>
+            <PlayerFace src={p.photo} name={p.name} />
             <span className="match-jersey">{p.jersey ?? '-'}</span>
             <span className="match-player-name">{p.name}</span>
             <span className="match-player-pos">{p.positionLabel}</span>
@@ -417,6 +426,7 @@ function LineupSide({ team }: { team: TeamLineup }) {
           <ul className="match-lineup-list is-bench">
             {team.bench.map((p) => (
               <li key={p.id}>
+                <PlayerFace src={p.photo} name={p.name} />
                 <span className="match-jersey">{p.jersey ?? '-'}</span>
                 <span className="match-player-name">{p.name}</span>
                 <span className="match-player-pos">{p.positionLabel}</span>
@@ -556,8 +566,16 @@ export function MatchChapter({ league, id }: Props) {
     };
   }, [league]);
 
-  const back = league === 'liga-mx' || league === 'seleccion' ? '/#hoy' : '/';
-  const backLabel = league === 'seleccion' ? 'El Tri' : league === 'liga-mx' ? 'Liga MX' : 'Pulso';
+  const back =
+    league === 'liga-mx' || league === 'seleccion' || league === 'leagues-cup' ? '/#hoy' : '/';
+  const backLabel =
+    league === 'seleccion'
+      ? 'El Tri'
+      : league === 'leagues-cup'
+        ? 'Leagues Cup'
+        : league === 'liga-mx'
+          ? 'Liga MX'
+          : 'Pulso';
 
   const tabs = useMemo(() => {
     if (!match) return [] as { id: TabId; label: string }[];
@@ -632,6 +650,7 @@ export function MatchChapter({ league, id }: Props) {
               AF://CAPÍTULO
               {match.jornada ? ` · ${match.jornada}` : ''}
               {league === 'liga-mx' ? ' · Liga MX' : ''}
+              {league === 'leagues-cup' ? ' · Leagues Cup' : ''}
             </p>
           </div>
 
@@ -639,7 +658,13 @@ export function MatchChapter({ league, id }: Props) {
 
           <div className="match-scoreboard">
             <div className="match-side">
-              <ClubLogo abbr={match.home.abbreviation} name={match.home.name} size="xl" className="match-crest" />
+              <ClubLogo
+                abbr={match.home.abbreviation}
+                name={match.home.name}
+                logoUrl={match.home.logo}
+                size="xl"
+                className="match-crest"
+              />
               <p className="match-club" title={match.home.name}>
                 {match.home.name}
               </p>
@@ -680,7 +705,13 @@ export function MatchChapter({ league, id }: Props) {
             </div>
 
             <div className="match-side match-side-away">
-              <ClubLogo abbr={match.away.abbreviation} name={match.away.name} size="xl" className="match-crest" />
+              <ClubLogo
+                abbr={match.away.abbreviation}
+                name={match.away.name}
+                logoUrl={match.away.logo}
+                size="xl"
+                className="match-crest"
+              />
               <p className="match-club" title={match.away.name}>
                 {match.away.name}
               </p>

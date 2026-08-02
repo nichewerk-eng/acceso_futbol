@@ -191,6 +191,9 @@ export function PulseHero({ leadStory }: Props) {
               {stage.league === 'seleccion' && (
                 <span className="af-tele text-signal">EL TRI</span>
               )}
+              {stage.league === 'leagues-cup' && (
+                <span className="af-tele text-signal">LEAGUES CUP</span>
+              )}
             </div>
 
             <div className="hero-stage-grid">
@@ -199,6 +202,7 @@ export function PulseHero({ leadStory }: Props) {
                   <ClubLogo
                     abbr={stage.home.abbreviation}
                     name={stage.home.name}
+                    logoUrl={stage.home.logo}
                     size="lg"
                     className="hero-stage-crest"
                   />
@@ -216,6 +220,7 @@ export function PulseHero({ leadStory }: Props) {
                   <ClubLogo
                     abbr={stage.away.abbreviation}
                     name={stage.away.name}
+                    logoUrl={stage.away.logo}
                     size="lg"
                     className="hero-stage-crest"
                   />
@@ -284,15 +289,26 @@ export function PulseHero({ leadStory }: Props) {
                       {meta.stamp}
                     </span>
                     <span className="hero-band-home inline-flex items-center gap-2">
-                      <ClubLogo abbr={g.home.abbreviation} name={g.home.name} size="sm" />
+                      <ClubLogo
+                        abbr={g.home.abbreviation}
+                        name={g.home.name}
+                        logoUrl={g.home.logo}
+                        size="sm"
+                      />
                       {g.home.abbreviation}
                     </span>
                     <span className="hero-band-center" data-testid={`hero-band-score-${g.id}`}>
                       {meta.center}
+                      {g.league === 'leagues-cup' ? ' · LC' : ''}
                     </span>
                     <span className="hero-band-away inline-flex items-center justify-end gap-2">
                       {g.away.abbreviation}
-                      <ClubLogo abbr={g.away.abbreviation} name={g.away.name} size="sm" />
+                      <ClubLogo
+                        abbr={g.away.abbreviation}
+                        name={g.away.name}
+                        logoUrl={g.away.logo}
+                        size="sm"
+                      />
                     </span>
                     {mine && <span className="hero-band-lock af-tele text-signal">LOCK</span>}
                   </Link>

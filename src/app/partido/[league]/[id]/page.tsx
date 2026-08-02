@@ -8,7 +8,13 @@ interface PageParams {
 export async function generateMetadata({ params }: PageParams): Promise<Metadata> {
   const { league, id } = await params;
   const leagueLabel =
-    league === 'liga-mx' ? 'Liga MX' : league === 'seleccion' ? 'El Tri' : 'Fútbol';
+    league === 'liga-mx'
+      ? 'Liga MX'
+      : league === 'seleccion'
+        ? 'El Tri'
+        : league === 'leagues-cup'
+          ? 'Leagues Cup'
+          : 'Fútbol';
   return {
     title: `Partido · ${leagueLabel}`,
     description: `Capítulo en vivo, crónica y Acceso Radio. ${leagueLabel} (${id}).`,

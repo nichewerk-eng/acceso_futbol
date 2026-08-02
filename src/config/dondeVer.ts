@@ -77,7 +77,9 @@ function labelList(ids: TvChannelId[]): string {
 }
 
 /** Resolve MX/US channels for a fixture (known guide → defaults). */
-export function resolveDondeVer(fixture: Pick<Fixture, 'date' | 'home' | 'away' | 'venue' | 'city'>): {
+export function resolveDondeVer(
+  fixture: Pick<Fixture, 'date' | 'home' | 'away' | 'venue' | 'city' | 'league'>
+): {
   mx: string;
   us: string;
   mxChannels: TvChannelId[];
@@ -90,6 +92,15 @@ export function resolveDondeVer(fixture: Pick<Fixture, 'date' | 'home' | 'away' 
       us: labelList(known.us),
       mxChannels: known.mx,
       usChannels: known.us,
+    };
+  }
+
+  if (fixture.league === 'leagues-cup') {
+    return {
+      mx: 'Apple TV · partners MX',
+      us: 'Apple TV · MLS Season Pass',
+      mxChannels: ['tudn', 'vix'],
+      usChannels: ['tudn', 'univision'],
     };
   }
 

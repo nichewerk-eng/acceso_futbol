@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'www.tudn.com' },
       { protocol: 'https', hostname: 'st1.uvnimg.com' },
       { protocol: 'https', hostname: '**.uvnimg.com' },
+      { protocol: 'https', hostname: 'cdn.sportmonks.com' },
     ],
   },
   async headers() {
