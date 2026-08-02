@@ -721,7 +721,6 @@ export function MatchChapter({ league, id }: Props) {
               {(match.venue || match.city) && (
                 <p className="match-venue">{[match.venue, match.city].filter(Boolean).join(' · ')}</p>
               )}
-              {match.referee && <p className="match-referee">Árbitro · {match.referee}</p>}
             </div>
 
             <div className="match-side match-side-away">
