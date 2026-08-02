@@ -1,0 +1,27 @@
+---
+description: Fix broken agent HOME so git commit/push can use macOS credentials
+alwaysApply: true
+---
+
+# Git auth in Cursor agent shells
+
+Cursor agent shells on this machine sometimes set `HOME=1356` (relative/invalid). That breaks:
+
+- `git push` / `git pull` (cannot read GitHub creds from osxkeychain)
+- `git commit` identity (falls back to `jondev@R2D2.local` instead of real `.gitconfig`)
+- Homebrew and `~/.ssh`
+
+**Before any git network or commit command, run:**
+
+```bash
+export HOME=/Users/jondev
+```
+
+Or prefix:
+
+```bash
+HOME=/Users/jondev git push
+HOME=/Users/jondev git commit ...
+```
+
+Do not print credential helper output (tokens). If `1356/` appears in the repo root, delete it; it is junk from the bad HOME.

@@ -24,6 +24,9 @@
 .DS_Store
 *.pem
 
+# Accidental junk when Cursor agent HOME is mis-set to relative "1356"
+/1356/
+
 # debug
 npm-debug.log*
 yarn-debug.log*
