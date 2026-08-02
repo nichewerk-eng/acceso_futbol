@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { PulseNav } from '@/components/living-room/PulseNav';
 import { RadioCompanion } from '@/components/radio/RadioCompanion';
 import { RitualSlot } from '@/components/ritual/RitualSlot';
@@ -116,13 +117,13 @@ export function MatchChapter({ league, id }: Props) {
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
             <RitualSlot placement="donde-ver" />
             <div className="border border-line px-4 py-3">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">Dónde ver</p>
-              <p className="mt-1 text-sm text-foreground">
-                MX · {match.dondeVer?.mx ?? 'Streaming / TV local'}
-              </p>
-              <p className="text-sm text-muted">
-                US · {match.dondeVer?.us ?? 'Univision · TUDN · ViX'}
-              </p>
+              <BroadcastChannels
+                mx={match.dondeVer?.mxChannels}
+                us={match.dondeVer?.usChannels}
+                mxLabel={match.dondeVer?.mx ?? 'Streaming / TV local'}
+                usLabel={match.dondeVer?.us ?? 'Univision · TUDN · ViX'}
+                surface="paper"
+              />
             </div>
           </div>
         </div>

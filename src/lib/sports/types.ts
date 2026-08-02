@@ -55,7 +55,12 @@ export interface Fixture {
   /** Goal scorers from board details (compact UI). */
   scorers?: FixtureScorer[];
   /** MX / US broadcast hints when known */
-  dondeVer?: { mx?: string; us?: string };
+  dondeVer?: {
+    mx?: string;
+    us?: string;
+    mxChannels?: Array<'tudn' | 'vix' | 'canal-5' | 'layvtime' | 'univision'>;
+    usChannels?: Array<'tudn' | 'vix' | 'canal-5' | 'layvtime' | 'univision'>;
+  };
 }
 
 export interface MatchSnapshot extends Fixture {
