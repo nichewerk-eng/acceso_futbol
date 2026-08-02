@@ -1350,19 +1350,89 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 1.65rem;
+  flex-shrink: 0;
+  width: 3.1rem;
+  height: 1.4rem;
 }
 
 .tv-channel-compact {
-  height: 1.35rem;
+  width: 2.6rem;
+  height: 1.15rem;
 }
 
 .tv-channel-logo {
   display: block;
-  height: 100%;
   width: auto;
-  max-width: 4.5rem;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
+}
+
+/*
+  Optical scales: ViX fills its PNG frame with thick glyphs + black pad,
+  so equal max-height makes it read ~2× heavier than TUDN/Canal 5.
+*/
+.tv-channel[data-channel='vix'] {
+  width: 2.35rem;
+}
+
+.tv-channel[data-channel='vix'] .tv-channel-logo {
+  width: 1.85rem;
+  max-width: 1.85rem;
+  max-height: 0.62rem;
+  height: 0.62rem;
+}
+
+.tv-channel[data-channel='tudn'] .tv-channel-logo {
+  max-height: 0.85rem;
+  max-width: 2.85rem;
+}
+
+.tv-channel[data-channel='canal-5'] .tv-channel-logo {
+  max-height: 1.2rem;
+  max-width: 1.2rem;
+}
+
+.tv-channel[data-channel='univision'] .tv-channel-logo {
+  max-height: 1.25rem;
+  max-width: 1.25rem;
+}
+
+.tv-channel[data-channel='layvtime'] .tv-channel-logo {
+  max-height: 0.9rem;
+  max-width: 2.7rem;
+}
+
+.tv-channel-compact[data-channel='vix'] {
+  width: 2rem;
+}
+
+.tv-channel-compact[data-channel='vix'] .tv-channel-logo {
+  width: 1.55rem;
+  max-width: 1.55rem;
+  max-height: 0.5rem;
+  height: 0.5rem;
+}
+
+.tv-channel-compact[data-channel='tudn'] .tv-channel-logo {
+  max-height: 0.7rem;
+  max-width: 2.35rem;
+}
+
+.tv-channel-compact[data-channel='canal-5'] .tv-channel-logo {
+  max-height: 1rem;
+  max-width: 1rem;
+}
+
+.tv-channel-compact[data-channel='univision'] .tv-channel-logo {
+  max-height: 1.05rem;
+  max-width: 1.05rem;
+}
+
+.tv-channel-compact[data-channel='layvtime'] .tv-channel-logo {
+  max-height: 0.75rem;
+  max-width: 2.25rem;
 }
 
 .tv-channel-logo-invert {

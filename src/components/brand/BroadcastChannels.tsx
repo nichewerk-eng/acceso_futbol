@@ -27,6 +27,7 @@ function ChannelMark({
   return (
     <span
       className={['tv-channel', compact ? 'tv-channel-compact' : ''].filter(Boolean).join(' ')}
+      data-channel={id}
       title={ch.label}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}

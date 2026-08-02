@@ -167,18 +167,18 @@ function statusCopy(match: MatchSnapshot): string {
   return localizeStatus(match.statusLabel, match.state);
 }
 
-function kickoffCopy(iso: string): { day: string; time: string } {
+function kickoffCopy(iso: string, tz: string): { day: string; time: string } {
   try {
     const d = new Date(iso);
     return {
       day: d.toLocaleDateString('es-MX', {
-        timeZone: 'America/Mexico_City',
+        timeZone: tz,
         weekday: 'long',
         day: 'numeric',
         month: 'long',
       }),
       time: d.toLocaleTimeString('es-MX', {
-        timeZone: 'America/Mexico_City',
+        timeZone: tz,
         hour: 'numeric',
         minute: '2-digit',
       }),
@@ -188,10 +188,10 @@ function kickoffCopy(iso: string): { day: string; time: string } {
   }
 }
 
-function formatMeetingDay(iso: string): string {
+function formatMeetingDay(iso: string, tz: string): string {
   try {
     return new Date(iso).toLocaleDateString('es-MX', {
-      timeZone: 'America/Mexico_City',
+      timeZone: tz,
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -241,7 +241,7 @@ function FormRow({
   );
 }
 
-function FormDetail({ side, form }: { side: string; form: FormMatch[] }) {
+function FormDetail({ side, form, tz }: { side: string; form: FormMatch[]; tz: string }) {
   if (!form.length) return null;
   return (
     <div className="match-form-detail">
@@ -257,7 +257,7 @@ function FormDetail({ side, form }: { side: string; form: FormMatch[] }) {
                 ? `${side} ${f.homeScore}–${f.awayScore} ${f.opponentAbbr}`
                 : `${f.opponentAbbr} ${f.homeScore}–${f.awayScore} ${side}`}
             </span>
-            <span className="match-form-detail-day">{formatMeetingDay(f.date)}</span>
+            <span className="match-form-detail-day">{formatMeetingDay(f.date, tz)}</span>
           </li>
         ))}
       </ul>
@@ -269,10 +269,12 @@ function H2HBlock({
   h2h,
   homeAbbr,
   awayAbbr,
+  tz,
 }: {
   h2h: HeadToHeadSummary;
   homeAbbr: string;
   awayAbbr: string;
+  tz: string;
 }) {
   const total = h2h.homeWins + h2h.draws + h2h.awayWins || 1;
   return (
@@ -299,7 +301,7 @@ function H2HBlock({
       <ul className="match-h2h-list">
         {h2h.meetings.slice(0, 5).map((m) => (
           <li key={m.id}>
-            <span className="match-h2h-day">{formatMeetingDay(m.date)}</span>
+            <span className="match-h2h-day">{formatMeetingDay(m.date, tz)}</span>
             <span className="match-h2h-score">
               {m.homeAbbr} {m.homeScore}–{m.awayScore} {m.awayAbbr}
             </span>
@@ -413,6 +415,12 @@ export function MatchChapter({ league, id }: Props) {
   const [error, setError] = useState(false);
   const [tab, setTab] = useState<TabId | null>(null);
   const [feed, setFeed] = useState<FeedFilter>('clave');
+  const [userTz, setUserTz] = useState('America/Mexico_City');
+
+  useEffect(() => {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (tz) setUserTz(tz);
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -498,7 +506,7 @@ export function MatchChapter({ league, id }: Props) {
 
   const live = match.state === 'in';
   const pre = match.state === 'pre';
-  const kick = kickoffCopy(match.date);
+  const kick = kickoffCopy(match.date, userTz);
   const headlines = headlineLines(match);
   const homeLines = headlines.filter((s) => s.side === 'home');
   const awayLines = headlines.filter((s) => s.side === 'away');
@@ -688,7 +696,12 @@ export function MatchChapter({ league, id }: Props) {
               </section>
 
               {h2h && h2h.meetings.length > 0 && (
-                <H2HBlock h2h={h2h} homeAbbr={match.home.abbreviation} awayAbbr={match.away.abbreviation} />
+                <H2HBlock
+                  h2h={h2h}
+                  homeAbbr={match.home.abbreviation}
+                  awayAbbr={match.away.abbreviation}
+                  tz={userTz}
+                />
               )}
 
               {(homeForm.length > 0 || awayForm.length > 0) && (
@@ -697,8 +710,8 @@ export function MatchChapter({ league, id }: Props) {
                     <span className="af-tele">Últimos cinco</span>
                   </p>
                   <div className="match-form-panels">
-                    <FormDetail side={match.home.abbreviation} form={homeForm} />
-                    <FormDetail side={match.away.abbreviation} form={awayForm} />
+                    <FormDetail side={match.home.abbreviation} form={homeForm} tz={userTz} />
+                    <FormDetail side={match.away.abbreviation} form={awayForm} tz={userTz} />
                   </div>
                 </section>
               )}

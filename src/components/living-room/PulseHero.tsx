@@ -12,10 +12,10 @@ type Props = {
   leadStory: Story | null;
 };
 
-function kickLabel(iso: string) {
+function kickLabel(iso: string, tz: string) {
   try {
     return new Date(iso).toLocaleTimeString('es-MX', {
-      timeZone: 'America/Mexico_City',
+      timeZone: tz,
       hour: 'numeric',
       minute: '2-digit',
     });
@@ -38,7 +38,7 @@ function dayLabel(dayKey?: string) {
   }
 }
 
-function bandMeta(g: DayGame) {
+function bandMeta(g: DayGame, tz: string) {
   if (g.state === 'in') {
     return {
       kind: 'live' as const,
@@ -55,7 +55,7 @@ function bandMeta(g: DayGame) {
   }
   return {
     kind: 'pre' as const,
-    stamp: g.phase === 'preshow' ? 'PRE' : kickLabel(g.date),
+    stamp: g.phase === 'preshow' ? 'PRE' : kickLabel(g.date, tz),
     center: 'VS',
   };
 }
@@ -64,6 +64,12 @@ export function PulseHero({ leadStory }: Props) {
   const { matchesGravity, club, elTri, settled } = useGravity();
   const [payload, setPayload] = useState<GamesOfDayPayload | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userTz, setUserTz] = useState('America/Mexico_City');
+
+  useEffect(() => {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (tz) setUserTz(tz);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -170,7 +176,7 @@ export function PulseHero({ leadStory }: Props) {
             <div className="mb-3 flex flex-wrap items-center gap-3">
               <span className="af-tele flex items-center gap-2 text-foreground">
                 {stage.state === 'in' && <span className="hoy-live-dot" aria-hidden />}
-                {bandMeta(stage).stamp}
+                {bandMeta(stage, userTz).stamp}
               </span>
               {matchesGravity(
                 stage.home.name,
@@ -203,7 +209,7 @@ export function PulseHero({ leadStory }: Props) {
                 <p className="hero-stage-name">{stage.home.name}</p>
               </div>
               <div className="hero-stage-score" data-testid="hero-stage-score">
-                {bandMeta(stage).center}
+                {bandMeta(stage, userTz).center}
               </div>
               <div className="hero-stage-side hero-stage-away">
                 <div className="hero-stage-pair">
@@ -254,7 +260,7 @@ export function PulseHero({ leadStory }: Props) {
             {games
               .filter((g) => g.id !== stage?.id)
               .map((g) => {
-                const meta = bandMeta(g);
+                const meta = bandMeta(g, userTz);
                 const href = `/partido/${leaguePath(g.league)}/${g.id}`;
                 const mine = matchesGravity(
                   g.home.name,

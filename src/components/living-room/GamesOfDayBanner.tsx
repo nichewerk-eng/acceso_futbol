@@ -6,10 +6,10 @@ import { useGravity } from '@/contexts/GravityContext';
 import { leaguePath } from '@/lib/radio/phases';
 import type { DayGame, GamesOfDayPayload } from '@/lib/sports';
 
-function kickLabel(iso: string) {
+function kickLabel(iso: string, tz: string) {
   try {
     return new Date(iso).toLocaleTimeString('es-MX', {
-      timeZone: 'America/Mexico_City',
+      timeZone: tz,
       hour: 'numeric',
       minute: '2-digit',
     });
@@ -18,12 +18,12 @@ function kickLabel(iso: string) {
   }
 }
 
-function cabinaLine(g: DayGame) {
+function cabinaLine(g: DayGame, tz: string) {
   if (g.phase === 'live') return { action: 'AF Radio en vivo', ready: true, note: '~30s de retraso' };
   if (g.phase === 'preshow') return { action: 'Pre-show', ready: true, note: 'Podcast previo' };
   if (g.phase === 'recap') return { action: 'Recap podcast', ready: true, note: 'Postpartido' };
   if (g.state === 'pre') {
-    return { action: 'Cabina al inicio', ready: false, note: `Arranca ${kickLabel(g.date)}` };
+    return { action: 'Cabina al inicio', ready: false, note: `Arranca ${kickLabel(g.date, tz)}` };
   }
   return { action: 'Cabina', ready: false, note: 'Sin audio aún' };
 }
@@ -32,6 +32,12 @@ export function GamesOfDayBanner() {
   const { matchesGravity, club, elTri } = useGravity();
   const [payload, setPayload] = useState<GamesOfDayPayload | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userTz, setUserTz] = useState('America/Mexico_City');
+
+  useEffect(() => {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (tz) setUserTz(tz);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -140,7 +146,7 @@ export function GamesOfDayBanner() {
             {sorted.map((g) => {
               const path = leaguePath(g.league);
               const href = `/partido/${path}/${g.id}?tab=radio`;
-              const line = cabinaLine(g);
+              const line = cabinaLine(g, userTz);
               const mine = matchesGravity(
                 g.home.name,
                 g.away.name,
