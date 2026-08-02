@@ -21,7 +21,7 @@ import type {
 
 const BASE = 'https://api.sportmonks.com/v3/football';
 const TIMEOUT_MS = 12_000;
-const SEASON_CACHE_KEY = 'sm-ligamx-season-fixtures-v4-es';
+const SEASON_CACHE_KEY = 'sm-ligamx-season-fixtures-v5-scorers';
 const SEASON_TTL_MS = 5 * 60_000;
 const STANDINGS_CACHE_KEY = 'sm-ligamx-standings-v1';
 const STANDINGS_TTL_MS = 60_000;
@@ -175,6 +175,23 @@ function participantSide(p: SmParticipant): 'home' | 'away' {
   return p.meta?.location === 'away' ? 'away' : 'home';
 }
 
+function winnerSideOf(
+  homeP: SmParticipant | undefined,
+  awayP: SmParticipant | undefined,
+  state: MatchState,
+  homeScore: string | null,
+  awayScore: string | null
+): 'home' | 'away' | null {
+  if (state !== 'post' && state !== 'in') return null;
+  if (homeP?.meta?.winner === true) return 'home';
+  if (awayP?.meta?.winner === true) return 'away';
+  if (homeP?.meta?.winner === false && awayP?.meta?.winner === false) return null;
+  const hs = Number(homeScore);
+  const as = Number(awayScore);
+  if (!Number.isFinite(hs) || !Number.isFinite(as) || hs === as) return null;
+  return hs > as ? 'home' : 'away';
+}
+
 export function mapFixture(f: SmFixture): Fixture {
   const parts = f.participants ?? [];
   const homeP = parts.find((p) => participantSide(p) === 'home') ?? parts[0];
@@ -183,6 +200,10 @@ export function mapFixture(f: SmFixture): Fixture {
 
   const homeScore = scoreFor(f.scores, 'home');
   const awayScore = scoreFor(f.scores, 'away');
+  const homeId = String(homeP?.id ?? 'home');
+  const awayId = String(awayP?.id ?? 'away');
+  const homeAbbr = scheduleAbbr(homeP?.short_code ?? 'LOC');
+  const awayAbbr = scheduleAbbr(awayP?.short_code ?? 'VIS');
 
   const roundName = f.round?.name?.trim();
   const jornada = roundName
@@ -190,6 +211,9 @@ export function mapFixture(f: SmFixture): Fixture {
       ? roundName
       : `Jornada ${roundName}`
     : null;
+
+  const events = mapEvents(f.events, homeId, awayId, homeAbbr, awayAbbr);
+  const scorers = scorersFromEvents(events);
 
   return {
     id: String(f.id),
@@ -204,17 +228,19 @@ export function mapFixture(f: SmFixture): Fixture {
     ),
     venue: localizeVenue(f.venue?.name),
     city: localizeCity(f.venue?.city_name),
+    winnerSide: winnerSideOf(homeP, awayP, state, homeScore, awayScore),
+    scorers: scorers.length ? scorers : undefined,
     home: {
-      id: String(homeP?.id ?? 'home'),
+      id: homeId,
       name: homeP?.name ?? 'Local',
-      abbreviation: scheduleAbbr(homeP?.short_code ?? 'LOC'),
+      abbreviation: homeAbbr,
       logo: homeP?.image_path,
       score: state === 'pre' ? null : homeScore,
     },
     away: {
-      id: String(awayP?.id ?? 'away'),
+      id: awayId,
       name: awayP?.name ?? 'Visitante',
-      abbreviation: scheduleAbbr(awayP?.short_code ?? 'VIS'),
+      abbreviation: awayAbbr,
       logo: awayP?.image_path,
       score: state === 'pre' ? null : awayScore,
     },
@@ -494,7 +520,8 @@ export async function fetchLigaMxSeasonFixtures(): Promise<Fixture[]> {
   const data = await smFetch<{ data?: { fixtures?: SmFixture[] } }>(
     `/seasons/${ligaMxSeasonId()}`,
     {
-      include: 'fixtures.participants;fixtures.scores;fixtures.state;fixtures.round;fixtures.venue',
+      include:
+        'fixtures.participants;fixtures.scores;fixtures.state;fixtures.round;fixtures.venue;fixtures.events.type',
     }
   );
   const fixtures = (data.data?.fixtures ?? []).map(mapFixture);

@@ -7,10 +7,10 @@ import { useGravity } from '@/contexts/GravityContext';
 import type { Fixture } from '@/lib/sports';
 import type { JornadaOverview } from '@/lib/sports/jornada';
 
-function kickWhen(iso: string) {
+function kickWhen(iso: string, tz: string) {
   try {
     return new Date(iso).toLocaleString('es-MX', {
-      timeZone: 'America/Mexico_City',
+      timeZone: tz,
       weekday: 'short',
       day: 'numeric',
       month: 'short',
@@ -93,7 +93,7 @@ function ResultStamp({ f, mine }: { f: Fixture; mine: boolean }) {
   );
 }
 
-function NextCard({ f, mine }: { f: Fixture; mine: boolean }) {
+function NextCard({ f, mine, tz }: { f: Fixture; mine: boolean; tz: string }) {
   return (
     <Link
       href={`/partido/liga-mx/${f.id}`}
@@ -101,7 +101,7 @@ function NextCard({ f, mine }: { f: Fixture; mine: boolean }) {
       className={['jor-next jor-rise', mine ? 'jor-next-mine' : ''].join(' ')}
     >
       <div className="flex items-start justify-between gap-3">
-        <p className="jor-next-when">{kickWhen(f.date)}</p>
+        <p className="jor-next-when">{kickWhen(f.date, tz)}</p>
         {mine && <span className="af-tele !text-signal">LOCK</span>}
       </div>
       <div className="jor-next-vs">
@@ -124,6 +124,12 @@ export function JornadaRecap() {
   const { matchesGravity } = useGravity();
   const [data, setData] = useState<JornadaOverview | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userTz, setUserTz] = useState('America/Mexico_City');
+
+  useEffect(() => {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (tz) setUserTz(tz);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -257,7 +263,7 @@ export function JornadaRecap() {
               ) : (
                 <div className="jor-mosaic">
                   {upcoming.map((f) => (
-                    <NextCard key={f.id} f={f} mine={isMine(f)} />
+                    <NextCard key={f.id} f={f} mine={isMine(f)} tz={userTz} />
                   ))}
                 </div>
               )}
