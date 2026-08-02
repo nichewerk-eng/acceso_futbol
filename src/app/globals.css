@@ -932,6 +932,37 @@ body {
   }
 }
 
+/* ── Liga MX standings: one grid for header + rows ── */
+.lm-standings-grid {
+  display: grid;
+  align-items: center;
+  gap: 0 0.25rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  /* Mobile: # Club PJ G E P DG Pts */
+  grid-template-columns:
+    2rem minmax(0, 1fr) 1.75rem 1.5rem 1.5rem 1.5rem 2rem 2.25rem;
+}
+
+.lm-standings-grid > .lm-col-desktop {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .lm-standings-grid {
+    gap: 0 0.25rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    /* Desktop: # Club PJ G E P GF DG Pts Zona */
+    grid-template-columns:
+      2.5rem minmax(0, 1fr) 2.25rem 2.25rem 2.25rem 2.5rem 2.5rem 2.5rem 3rem 5.5rem;
+  }
+
+  .lm-standings-grid > .lm-col-desktop {
+    display: block;
+  }
+}
+
 /* ── AF://CIERRE — broadcast sign-off, not a link dump ── */
 .af-footer {
   position: relative;

@@ -14,6 +14,9 @@ import { mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
 /** Apertura 2026: no Play-In — top 8 go straight to Liguilla. */
 const LIGUILLA_SPOTS = 8;
 
+/** Shared header + row shell — tracks live in `.lm-standings-grid` (globals.css). */
+const STANDINGS_GRID = 'lm-standings-grid';
+
 function fmtDate(iso: string, tz: string) {
   return new Date(iso).toLocaleDateString('es-MX', {
     timeZone: tz,
@@ -44,7 +47,7 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
   const [fixtures, setFixtures] = useState<LigaMXFixture[]>(baseFixtures);
   const [tab, setTab] = useState<'tabla' | 'jornada'>('tabla');
   const [refreshing, setRefreshing] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [userTz, setUserTz] = useState('America/Mexico_City');
   const [selectedJornada, setSelectedJornada] = useState(() => getCurrentJornada(baseFixtures));
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -52,6 +55,7 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
   useEffect(() => {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     if (tz) setUserTz(tz);
+    setLastUpdated(new Date());
   }, []);
 
   const refresh = useCallback(async (silent = false) => {
@@ -130,13 +134,15 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <p className="af-tele" data-testid="ligamx-updated">
+              <p className="af-tele" data-testid="ligamx-updated" suppressHydrationWarning>
                 SYNC{' '}
-                {lastUpdated.toLocaleTimeString('es-MX', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  timeZone: userTz,
-                })}
+                {lastUpdated
+                  ? lastUpdated.toLocaleTimeString('es-MX', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      timeZone: userTz,
+                    })
+                  : '—'}
               </p>
               <button
                 type="button"
@@ -243,17 +249,22 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
                 </div>
 
                 <div className="border border-line bg-bg-2" data-testid="ligamx-standings">
-                  <div className="grid grid-cols-[2.25rem_1fr_2rem_2rem_2rem_2.25rem_2.5rem_2.75rem_auto] gap-1 border-b border-line px-3 py-2 af-tele sm:grid-cols-[2.5rem_1fr_2.25rem_2.25rem_2.25rem_2.5rem_2.5rem_2.5rem_3rem_auto] sm:px-4">
+                  <div
+                    className={[
+                      STANDINGS_GRID,
+                      'border-b border-line py-2 af-tele',
+                    ].join(' ')}
+                  >
                     <span className="text-center">#</span>
                     <span>Club</span>
                     <span className="text-center">PJ</span>
                     <span className="text-center">G</span>
                     <span className="text-center">E</span>
                     <span className="text-center">P</span>
-                    <span className="hidden text-center sm:block">GF</span>
+                    <span className="lm-col-desktop text-center">GF</span>
                     <span className="text-center">DG</span>
                     <span className="text-center">Pts</span>
-                    <span className="hidden text-right sm:block">Zona</span>
+                    <span className="lm-col-desktop text-right">Zona</span>
                   </div>
                   {entries.map((entry) => (
                     <StandingsRow
@@ -388,7 +399,8 @@ function StandingsRow({ entry, mine }: { entry: LigaMXEntry; mine: boolean }) {
     <div
       data-testid={`ligamx-row-${entry.team.abbreviation}`}
       className={[
-        'grid grid-cols-[2.25rem_1fr_2rem_2rem_2rem_2.25rem_2.5rem_2.75rem_auto] items-center gap-1 border-t border-line px-3 py-3 transition hover:bg-bg-3 sm:grid-cols-[2.5rem_1fr_2.25rem_2.25rem_2.25rem_2.5rem_2.5rem_2.5rem_3rem_auto] sm:px-4',
+        STANDINGS_GRID,
+        'border-t border-line py-3 transition hover:bg-bg-3',
         zoneEdge ? 'border-t-2 border-t-foreground' : '',
         mine ? 'bg-signal/5' : '',
       ].join(' ')}
@@ -401,37 +413,39 @@ function StandingsRow({ entry, mine }: { entry: LigaMXEntry; mine: boolean }) {
       >
         {entry.position}
       </span>
-      <div className="flex min-w-0 items-center gap-2.5">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
         <ClubLogo
           abbr={entry.team.abbreviation}
           name={entry.team.name}
-          size="md"
+          size="sm"
         />
         <div className="min-w-0">
           <p
             className={[
-              'truncate font-display text-base font-bold uppercase tracking-wide sm:text-lg',
+              'truncate font-display text-sm font-bold uppercase tracking-wide sm:text-lg',
               mine ? 'text-signal' : 'text-foreground',
             ].join(' ')}
           >
             {entry.team.abbreviation}
             {mine && <span className="ml-2 af-tele !text-signal">LOCK</span>}
           </p>
-          <p className="truncate text-xs text-muted">{teamNameEs(entry.team.name)}</p>
+          <p className="truncate text-[11px] text-muted sm:text-xs">
+            {teamNameEs(entry.team.name)}
+          </p>
         </div>
       </div>
-      <span className="text-center text-xs text-muted">{entry.gp}</span>
-      <span className="text-center text-xs text-muted">{entry.w}</span>
-      <span className="text-center text-xs text-muted">{entry.d}</span>
-      <span className="text-center text-xs text-muted">{entry.l}</span>
-      <span className="hidden text-center text-xs text-muted sm:block">{entry.gf}</span>
-      <span className="text-center text-xs text-muted">{entry.gd}</span>
-      <span className="text-center font-display text-base font-bold tabular-nums text-foreground">
+      <span className="text-center text-xs tabular-nums text-muted">{entry.gp}</span>
+      <span className="text-center text-xs tabular-nums text-muted">{entry.w}</span>
+      <span className="text-center text-xs tabular-nums text-muted">{entry.d}</span>
+      <span className="text-center text-xs tabular-nums text-muted">{entry.l}</span>
+      <span className="lm-col-desktop text-center text-xs tabular-nums text-muted">{entry.gf}</span>
+      <span className="text-center text-xs tabular-nums text-muted">{entry.gd}</span>
+      <span className="text-center font-display text-sm font-bold tabular-nums text-foreground sm:text-base">
         {entry.pts}
       </span>
       <span
         className={[
-          'af-tele text-right',
+          'lm-col-desktop af-tele text-right',
           inLiguilla ? 'text-signal' : 'text-muted',
         ].join(' ')}
       >
