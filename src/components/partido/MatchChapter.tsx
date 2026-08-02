@@ -6,6 +6,7 @@ import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { PulseNav } from '@/components/living-room/PulseNav';
 import { RadioCompanion } from '@/components/radio/RadioCompanion';
+import type { LigaMXEntry, LigaMXTable } from '@/app/api/ligamx/standings/route';
 import type {
   FormMatch,
   FormResult,
@@ -13,6 +14,7 @@ import type {
   MatchSnapshot,
   TeamLineup,
 } from '@/lib/sports';
+import { scheduleAbbr } from '@/lib/sports/ligaMxAbbr';
 import { localizeStatus } from '@/lib/sports/localizeEs';
 
 type Props = { league: string; id: string };
@@ -333,6 +335,62 @@ function H2HBlock({
   );
 }
 
+function MatchTabla({
+  entries,
+  homeAbbr,
+  awayAbbr,
+}: {
+  entries: LigaMXEntry[];
+  homeAbbr: string;
+  awayAbbr: string;
+}) {
+  const home = scheduleAbbr(homeAbbr);
+  const away = scheduleAbbr(awayAbbr);
+
+  return (
+    <aside className="match-tabla" aria-label="Tabla Liga MX">
+      <div className="match-tabla-head">
+        <p className="af-tele match-contexto-label">Tabla</p>
+        <Link href="/liga-mx" className="match-tabla-link">
+          Completa →
+        </Link>
+      </div>
+      <div className="match-tabla-grid match-tabla-cols" aria-hidden>
+        <span>#</span>
+        <span>Club</span>
+        <span>PJ</span>
+        <span>Pts</span>
+        <span>DG</span>
+      </div>
+      <ul className="match-tabla-list">
+        {entries.map((e) => {
+          const abbr = scheduleAbbr(e.team.abbreviation);
+          const side = abbr === home ? 'home' : abbr === away ? 'away' : null;
+          return (
+            <li
+              key={e.team.id}
+              className={['match-tabla-row', side ? `is-${side}` : ''].filter(Boolean).join(' ')}
+            >
+              <span className="match-tabla-pos tabular-nums">{e.position}</span>
+              <span className="match-tabla-club">
+                <ClubLogo abbr={abbr} size="xs" />
+                <span>{abbr}</span>
+              </span>
+              <span className="tabular-nums">{e.gp}</span>
+              <span className="match-tabla-pts tabular-nums">{e.pts}</span>
+              <span className="tabular-nums match-tabla-gd">{e.gd}</span>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="match-tabla-legend">
+        <span className="is-home">{home}</span>
+        <span className="is-away">{away}</span>
+      </p>
+    </aside>
+  );
+}
+
 function LineupSide({ team }: { team: TeamLineup }) {
   return (
     <div className="match-lineup-side">
@@ -437,6 +495,7 @@ export function MatchChapter({ league, id }: Props) {
   const [tab, setTab] = useState<TabId | null>(null);
   const [feed, setFeed] = useState<FeedFilter>('clave');
   const [userTz, setUserTz] = useState('America/Mexico_City');
+  const [tabla, setTabla] = useState<LigaMXEntry[] | null>(null);
 
   useEffect(() => {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -477,6 +536,25 @@ export function MatchChapter({ league, id }: Props) {
       clearInterval(t);
     };
   }, [league, id]);
+
+  useEffect(() => {
+    if (league !== 'liga-mx') {
+      setTabla(null);
+      return;
+    }
+    let cancelled = false;
+    fetch('/api/ligamx/standings')
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d: LigaMXTable) => {
+        if (!cancelled && Array.isArray(d.entries)) setTabla(d.entries);
+      })
+      .catch(() => {
+        if (!cancelled) setTabla(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [league]);
 
   const back = league === 'liga-mx' || league === 'seleccion' ? '/#hoy' : '/';
   const backLabel = league === 'seleccion' ? 'El Tri' : league === 'liga-mx' ? 'Liga MX' : 'Pulso';
@@ -704,28 +782,38 @@ export function MatchChapter({ league, id }: Props) {
           {tab === 'radio' && <RadioCompanion league={league} matchId={id} />}
 
           {tab === 'contexto' && (
-            <div className="match-contexto">
-              {h2h && h2h.meetings.length > 0 && (
-                <H2HBlock
-                  h2h={h2h}
+            <div className={['match-contexto', tabla?.length ? 'has-tabla' : ''].filter(Boolean).join(' ')}>
+              <div className="match-contexto-main">
+                {h2h && h2h.meetings.length > 0 && (
+                  <H2HBlock
+                    h2h={h2h}
+                    homeAbbr={match.home.abbreviation}
+                    awayAbbr={match.away.abbreviation}
+                    tz={userTz}
+                  />
+                )}
+
+                {(homeForm.length > 0 || awayForm.length > 0) && (
+                  <section className="match-form-section">
+                    <p className="af-tele match-contexto-label">Forma · últimos 5</p>
+                    <div className="match-form-panels">
+                      <FormDetail side={match.home.abbreviation} form={homeForm} />
+                      <FormDetail side={match.away.abbreviation} form={awayForm} />
+                    </div>
+                  </section>
+                )}
+
+                {!h2h?.meetings.length && homeForm.length === 0 && awayForm.length === 0 && (
+                  <p className="match-empty">Sin historial ni forma aún para este duelo.</p>
+                )}
+              </div>
+
+              {tabla && tabla.length > 0 && (
+                <MatchTabla
+                  entries={tabla}
                   homeAbbr={match.home.abbreviation}
                   awayAbbr={match.away.abbreviation}
-                  tz={userTz}
                 />
-              )}
-
-              {(homeForm.length > 0 || awayForm.length > 0) && (
-                <section className="match-form-section">
-                  <p className="af-tele match-contexto-label">Forma · últimos 5</p>
-                  <div className="match-form-panels">
-                    <FormDetail side={match.home.abbreviation} form={homeForm} />
-                    <FormDetail side={match.away.abbreviation} form={awayForm} />
-                  </div>
-                </section>
-              )}
-
-              {!h2h?.meetings.length && homeForm.length === 0 && awayForm.length === 0 && (
-                <p className="match-empty">Sin historial ni forma aún para este duelo.</p>
               )}
             </div>
           )}
