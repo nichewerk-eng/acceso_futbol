@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { useGravity } from '@/contexts/GravityContext';
 import { leaguePath } from '@/lib/radio/phases';
@@ -222,19 +221,7 @@ export function PulseHero({ leadStory }: Props) {
               </div>
             </div>
 
-            {(stage.dondeVer?.mxChannels?.length || stage.dondeVer?.usChannels?.length) ? (
-              <BroadcastChannels
-                className="mt-4"
-                mx={stage.dondeVer.mxChannels}
-                us={stage.dondeVer.usChannels}
-                mxLabel={stage.dondeVer.mx}
-                usLabel={stage.dondeVer.us}
-                surface="paper"
-                compact
-              />
-            ) : null}
-
-            <p className="af-tele mt-3 text-muted">
+            <p className="af-tele mt-4 text-muted">
               {stage.state === 'in'
                 ? 'Toca para crónica + AF Radio'
                 : stage.state === 'post'
@@ -302,18 +289,6 @@ export function PulseHero({ leadStory }: Props) {
                       <ClubLogo abbr={g.away.abbreviation} name={g.away.name} size="sm" />
                     </span>
                     {mine && <span className="hero-band-lock af-tele text-signal">LOCK</span>}
-                    {(g.dondeVer?.mxChannels?.length || g.dondeVer?.usChannels?.length) ? (
-                      <span className="hero-band-donde">
-                        <BroadcastChannels
-                          mx={g.dondeVer.mxChannels}
-                          us={g.dondeVer.usChannels}
-                          mxLabel={g.dondeVer.mx}
-                          usLabel={g.dondeVer.us}
-                          surface="paper"
-                          compact
-                        />
-                      </span>
-                    ) : null}
                   </Link>
                 );
               })}
