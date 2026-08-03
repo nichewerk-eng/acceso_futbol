@@ -20,15 +20,6 @@ function dayKeyInTz(d: Date, tz: string) {
   return d.toLocaleDateString('en-CA', { timeZone: tz });
 }
 
-function fmtDay(iso: string, tz: string) {
-  return new Date(iso).toLocaleDateString('es-MX', {
-    timeZone: tz,
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  });
-}
-
 function fmtTime(iso: string, tz: string) {
   return new Date(iso).toLocaleTimeString('es-MX', {
     timeZone: tz,
@@ -61,7 +52,7 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
         const d = (await res.json()) as { fixtures?: Fixture[] };
         const next = d.fixtures ?? [];
         setFixtures(next);
-        paceRef.current = paceFromFixtures(next);
+        paceRef.current = paceFromFixtures(next.filter((f) => !f.id.startsWith('lc-')));
       }
     } finally {
       if (!silent) setRefreshing(false);
@@ -75,30 +66,54 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
 
   const todayKey = useMemo(() => dayKeyInTz(new Date(), userTz), [userTz]);
 
-  const { live, tonight, upcoming, played } = useMemo(() => {
+  const { live, phaseOneByDay, knockout } = useMemo(() => {
     const liveRows: Fixture[] = [];
-    const tonightRows: Fixture[] = [];
-    const upcomingRows: Fixture[] = [];
-    const playedRows: Fixture[] = [];
+    const phase: Fixture[] = [];
+    const ko: Fixture[] = [];
     for (const f of fixtures) {
-      const day = dayKeyInTz(new Date(f.date), userTz);
+      if (f.id.startsWith('lc-') || (f.jornada && /final|semifinal|quarter|third|tercer/i.test(f.jornada))) {
+        ko.push(f);
+        continue;
+      }
       if (f.state === 'in') liveRows.push(f);
-      else if (f.state === 'post') playedRows.push(f);
-      else if (day === todayKey) tonightRows.push(f);
-      else if (day > todayKey) upcomingRows.push(f);
-      else playedRows.push(f);
+      phase.push(f);
     }
-    playedRows.reverse();
-    return {
-      live: liveRows,
-      tonight: tonightRows,
-      upcoming: upcomingRows.slice(0, 24),
-      played: playedRows.slice(0, 12),
-    };
-  }, [fixtures, todayKey, userTz]);
+    const byDay = new Map<string, Fixture[]>();
+    for (const f of phase) {
+      const day = f.scheduleDay ?? dayKeyInTz(new Date(f.date), userTz);
+      const list = byDay.get(day) ?? [];
+      list.push(f);
+      byDay.set(day, list);
+    }
+    const phaseOneByDay = [...byDay.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([day, rows]) => {
+        const anchor = `${day}T12:00:00.000Z`;
+        return {
+          day,
+          label: new Date(anchor).toLocaleDateString('es-MX', {
+            timeZone: 'UTC',
+            weekday: 'short',
+            day: 'numeric',
+            month: 'short',
+          }),
+          month: new Date(anchor).toLocaleDateString('es-MX', {
+            timeZone: 'UTC',
+            month: 'long',
+            year: 'numeric',
+          }),
+          rows: rows.sort((a, b) => +new Date(a.date) - +new Date(b.date)),
+        };
+      });
+    return { live: liveRows, phaseOneByDay, knockout: ko };
+  }, [fixtures, userTz]);
+
+  const phaseCount = phaseOneByDay.reduce((n, d) => n + d.rows.length, 0);
 
   const isMine = (f: Fixture) =>
     matchesGravity(f.home.name, f.away.name, f.home.abbreviation, f.away.abbreviation);
+
+  let lastMonth = '';
 
   return (
     <div data-testid="page-leagues-cup" className="bg-bg-1 text-foreground">
@@ -109,8 +124,8 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
             Leagues Cup
           </h1>
           <p className="mt-3 max-w-xl font-mono text-[12px] leading-6 text-muted">
-            MLS × Liga MX. Solo partidos con clubes mexicanos. Fase 1 del 4 al 12 de agosto;
-            eliminación hasta el 6 de septiembre. Todo en Apple TV; selectos en TV abierta.
+            MLS × Liga MX. Fase 1 del 4 al 13 de agosto; eliminación hasta el 6 de septiembre.
+            Sedes y horarios del calendario oficial. Todo en Apple TV; selectos en TV abierta.
           </p>
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <button
@@ -123,7 +138,7 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
               {refreshing ? 'Sync…' : 'Actualizar'}
             </button>
             <p className="af-tele text-muted">
-              {fixtures.length > 0 ? `${fixtures.length} fichas MX` : 'Sin calendario'}
+              {phaseCount > 0 ? `${phaseCount} Fase 1 · ${knockout.length} KO` : 'Sin calendario'}
             </p>
           </div>
         </div>
@@ -153,33 +168,67 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
               </BoardBlock>
             )}
 
-            <BoardBlock
-              title={tonight.length > 0 ? 'Esta noche' : 'Hoy'}
-              testId="lc-tonight"
-              empty={
-                tonight.length === 0
-                  ? 'Sin partidos MX esta noche. Revisa próximos o vuelve al pulso Liga MX.'
-                  : undefined
-              }
-            >
-              {tonight.map((f) => (
-                <MatchRow key={f.id} f={f} tz={userTz} mine={isMine(f)} />
-              ))}
-            </BoardBlock>
+            <section data-testid="lc-fase-1">
+              <h2 className="af-tele mb-2 text-foreground">Fase 1</h2>
+              <p className="mb-6 font-mono text-[11px] text-muted">
+                4–13 agosto · 54 partidos MLS vs Liga MX
+              </p>
+              <div className="space-y-8">
+                {phaseOneByDay.map((group) => {
+                  const showMonth = group.month !== lastMonth;
+                  lastMonth = group.month;
+                  const isToday = group.day === todayKey;
+                  return (
+                    <div key={group.day} data-testid={`lc-day-${group.day}`}>
+                      {showMonth && (
+                        <p className="mb-3 font-display text-xl font-bold uppercase tracking-wide">
+                          {group.month}
+                        </p>
+                      )}
+                      <div className="mb-2 flex items-baseline gap-3">
+                        <h3 className="af-tele text-signal">{group.label}</h3>
+                        {isToday && <span className="af-chip text-signal">Hoy</span>}
+                      </div>
+                      <ul className="divide-y divide-line border-y border-line">
+                        {group.rows.map((f) => (
+                          <MatchRow key={f.id} f={f} tz={userTz} mine={isMine(f)} />
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
 
-            <BoardBlock title="Próximos" testId="lc-upcoming">
-              {upcoming.map((f) => (
-                <MatchRow key={f.id} f={f} tz={userTz} mine={isMine(f)} />
-              ))}
-            </BoardBlock>
-
-            {played.length > 0 && (
-              <BoardBlock title="Recientes" testId="lc-played">
-                {played.map((f) => (
-                  <MatchRow key={f.id} f={f} tz={userTz} mine={isMine(f)} />
-                ))}
-              </BoardBlock>
-            )}
+            <section data-testid="lc-bracket">
+              <h2 className="af-tele mb-2 text-foreground">Eliminación</h2>
+              <p className="mb-6 font-mono text-[11px] text-muted">
+                Cuartos (25–27 ago) · Semis (1–2 sep) · Tercer lugar y Final (6 sep)
+              </p>
+              <div className="space-y-6">
+                {(
+                  [
+                    ['Quarterfinals', 'Cuartos de final'],
+                    ['Semifinals', 'Semifinales'],
+                    ['Third Place Match', 'Tercer lugar'],
+                    ['Final', 'Final'],
+                  ] as const
+                ).map(([stage, title]) => {
+                  const rows = knockout.filter((f) => f.jornada === stage);
+                  if (!rows.length) return null;
+                  return (
+                    <div key={stage}>
+                      <h3 className="af-tele mb-2 text-signal">{title}</h3>
+                      <ul className="divide-y divide-line border-y border-line">
+                        {rows.map((f) => (
+                          <KnockoutRow key={f.id} f={f} tz={userTz} />
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
           </>
         )}
       </div>
@@ -191,23 +240,50 @@ function BoardBlock({
   title,
   testId,
   children,
-  empty,
 }: {
   title: string;
   testId: string;
   children?: ReactNode;
-  empty?: string;
 }) {
-  const hasKids = Array.isArray(children) ? children.length > 0 : Boolean(children);
   return (
     <section data-testid={testId}>
       <h2 className="af-tele mb-4 text-foreground">{title}</h2>
-      {!hasKids && empty ? (
-        <p className="font-mono text-[12px] text-muted">{empty}</p>
-      ) : (
-        <ul className="divide-y divide-line border-y border-line">{children}</ul>
-      )}
+      <ul className="divide-y divide-line border-y border-line">{children}</ul>
     </section>
+  );
+}
+
+function KnockoutRow({ f }: { f: Fixture; tz: string }) {
+  const tbd = f.home.abbreviation === 'TBC';
+  const dateLabel = f.scheduleDay
+    ? new Date(`${f.scheduleDay}T12:00:00.000Z`).toLocaleDateString('es-MX', {
+        timeZone: 'UTC',
+        day: 'numeric',
+        month: 'short',
+      })
+    : 'Por anunciar';
+  return (
+    <li
+      className="flex flex-wrap items-center gap-3 py-4 sm:gap-4"
+      data-testid={`lc-ko-${f.id}`}
+    >
+      <div className="min-w-[5.5rem] shrink-0">
+        <p className="af-tele text-muted">{f.jornada}</p>
+        <p className="mt-1 font-mono text-[11px] text-muted">{dateLabel}</p>
+      </div>
+      <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+        <span className="font-display text-sm font-bold uppercase tracking-wide">
+          {tbd ? 'TBC' : f.home.abbreviation}
+        </span>
+        <span className="af-tele text-signal">TBD</span>
+        <span className="font-display text-sm font-bold uppercase tracking-wide">
+          {tbd ? 'TBC' : f.away.abbreviation}
+        </span>
+      </div>
+      <p className="w-full font-mono text-[11px] text-muted sm:w-auto sm:text-right">
+        {f.venue ?? 'TBC'}
+      </p>
+    </li>
   );
 }
 
@@ -246,9 +322,9 @@ function MatchRow({
         <div className="min-w-[5.5rem] shrink-0">
           <p className="af-tele text-muted">
             {live && <span className="hoy-live-dot mr-1.5" aria-hidden />}
-            {clockStamp ?? f.jornada ?? 'LC'}
+            {clockStamp ?? f.jornada ?? 'Fase 1'}
           </p>
-          <p className="mt-1 font-mono text-[11px] text-muted">{fmtDay(f.date, tz)}</p>
+          <p className="mt-1 font-mono text-[11px] text-muted">{fmtTime(f.date, tz)}</p>
         </div>
 
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
@@ -275,8 +351,13 @@ function MatchRow({
           />
         </div>
 
-        <div className="hidden w-full items-center justify-between gap-3 sm:flex sm:w-auto sm:flex-col sm:items-end">
+        <div className="hidden w-full flex-col items-end gap-1 sm:flex sm:w-auto">
           {mine && <span className="af-tele text-signal">TU CLUB</span>}
+          {f.venue && (
+            <p className="max-w-[14rem] truncate text-right font-mono text-[10px] text-muted">
+              {f.venue}
+            </p>
+          )}
           <BroadcastChannels
             mx={f.dondeVer?.mxChannels}
             us={f.dondeVer?.usChannels}

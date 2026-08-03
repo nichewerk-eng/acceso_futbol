@@ -23,10 +23,11 @@ const BY_SM_ID: Record<string, string> = {
   '292': `${LOGO_DIR}/vancouver-whitecaps.png`,
 };
 
-/** Non-colliding Sportmonks short codes (omit CHI — clashes with Chivas ESPN abbr). */
+/** Sportmonks / board short codes. CHI = Chicago Fire (not Chivas — use GDL/GUA for Guadalajara). */
 const ABBR_TO_PATH: Record<string, string> = {
   ATX: BY_SM_ID['254172'],
   CHL: BY_SM_ID['260119'],
+  CHI: BY_SM_ID['75'],
   CIN: BY_SM_ID['3636'],
   COL: BY_SM_ID['577'],
   DAL: BY_SM_ID['583'],

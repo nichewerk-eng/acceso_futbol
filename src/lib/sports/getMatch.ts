@@ -5,6 +5,7 @@ import { attachDondeVer } from '@/config/dondeVer';
 import { enrichMatchWithEspnCommentary } from './espnCommentary';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
 import type { CommentaryLine, MatchSnapshot } from './types';
+import { applyLeaguesCupOfficial } from './leaguesCupBoard';
 import {
   fetchLigaMxSeasonFixtures,
   fetchMatchSnapshot,
@@ -16,7 +17,7 @@ type LeagueKey = 'liga-mx' | 'mundial' | 'seleccion' | 'leagues-cup';
 
 /** Shared with `/api/sports/match` + radio so both surfaces coalesce. */
 export function sportsMatchCacheKey(league: string, id: string) {
-  return `sports-match-v13-paced-${league}-${id}`;
+  return `sports-match-v14-lc-board-${league}-${id}`;
 }
 
 function espnSlug(league: LeagueKey) {
@@ -267,8 +268,18 @@ async function getMatchUncached(league: string, id: string): Promise<MatchSnapsh
       }
       if (sm) {
         // SM scores/lineups; Completa uses ESPN Spanish PBP (budgeted so live isn't stalled).
-        const enriched =
+        let enriched =
           key === 'liga-mx' ? await enrichMatchWithEspnCommentary(sm) : sm;
+        if (key === 'leagues-cup') {
+          const board = applyLeaguesCupOfficial(enriched);
+          enriched = {
+            ...enriched,
+            ...board,
+            // Keep snapshot extras; only override board fields (venue/date/sides).
+            home: { ...enriched.home, ...board.home },
+            away: { ...enriched.away, ...board.away },
+          };
+        }
         return attachDondeVer(enriched) as MatchSnapshot;
       }
       // Token present but fixture missing — do not serve ESPN match content.

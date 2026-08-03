@@ -3,11 +3,10 @@ import { SiteFooter } from '@/components/home/SiteFooter';
 import LeaguesCupView from '@/components/leaguescup/LeaguesCupView';
 import { PulseNav } from '@/components/living-room/PulseNav';
 import { JsonLd } from '@/components/seo/JsonLd';
-import { attachDondeVer } from '@/config/dondeVer';
 import { absoluteUrl, breadcrumbJsonLd } from '@/lib/seo';
 import {
+  buildLeaguesCupBoard,
   fetchLeaguesCupSeasonFixtures,
-  involvesLigaMxClub,
   sportmonksEnabled,
 } from '@/lib/sports';
 import type { Fixture } from '@/lib/sports/types';
@@ -15,33 +14,31 @@ import type { Fixture } from '@/lib/sports/types';
 export const metadata: Metadata = {
   title: 'Leagues Cup 2026 · MLS × Liga MX calendario y dónde ver',
   description:
-    'Calendario Leagues Cup 2026 con clubes de Liga MX: horarios, resultados, Apple TV / TV selecta y cabina Acceso Futbol.',
+    'Calendario oficial Leagues Cup 2026: Fase 1, eliminación, estadios, horarios y Apple TV / TV selecta.',
   alternates: { canonical: absoluteUrl('/leagues-cup') },
   openGraph: {
     title: 'Leagues Cup 2026 · MLS × Liga MX',
-    description: 'Fase 1, eliminación, dónde ver y fichas con clubes mexicanos.',
+    description: 'Fase 1, eliminación, sedes oficiales y dónde ver.',
     url: absoluteUrl('/leagues-cup'),
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Leagues Cup 2026 · MLS × Liga MX',
-    description: 'Fase 1, eliminación, dónde ver y fichas con clubes mexicanos.',
+    description: 'Fase 1, eliminación, sedes oficiales y dónde ver.',
   },
 };
 
 export const revalidate = 60;
 
 async function loadFixtures(): Promise<Fixture[]> {
-  if (!sportmonksEnabled()) return [];
   try {
-    const raw = await fetchLeaguesCupSeasonFixtures();
-    return raw
-      .filter((f) => involvesLigaMxClub(f.home, f.away))
-      .map(attachDondeVer)
-      .sort((a, b) => +new Date(a.date) - +new Date(b.date));
+    const raw = sportmonksEnabled()
+      ? await fetchLeaguesCupSeasonFixtures().catch(() => [] as Fixture[])
+      : [];
+    return buildLeaguesCupBoard(raw);
   } catch {
-    return [];
+    return buildLeaguesCupBoard([]);
   }
 }
 

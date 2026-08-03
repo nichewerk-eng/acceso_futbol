@@ -23,12 +23,12 @@ type Props = {
 
 /** Local Liga MX / MLS crest, then remote logo, then abbreviation text. */
 export function ClubLogo({ abbr, clubId, name, logoUrl, size = 'sm', className = '' }: Props) {
-  // Resolve SM numeric ids via MLS before Liga MX abbr aliases (CHI = Chivas vs Chicago).
+  // MLS SM ids / CHI (Chicago Fire) before Liga MX abbr aliases (CHI→Chivas on ESPN only).
   const src =
-    ligaMxLogoSrc(clubId) ??
     mlsLogoSrc(clubId) ??
-    ligaMxLogoSrc(abbr) ??
+    ligaMxLogoSrc(clubId) ??
     mlsLogoSrc(abbr) ??
+    ligaMxLogoSrc(abbr) ??
     logoUrl ??
     null;
   const px = PX[size];

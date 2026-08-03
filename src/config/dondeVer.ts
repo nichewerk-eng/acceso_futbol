@@ -8,12 +8,14 @@ export type TvChannelId =
   | 'canal-5'
   | 'layvtime'
   | 'univision'
-  | 'apple-tv';
+  | 'apple-tv'
+  | 'fs1';
 
 export type TvChannel = {
   id: TvChannelId;
   label: string;
-  src: string;
+  /** Optional mark; text badge when missing */
+  src?: string;
   /** White/light mark — invert on paper backgrounds */
   onDark?: boolean;
 };
@@ -49,6 +51,11 @@ export const TV_CHANNELS: Record<TvChannelId, TvChannel> = {
     id: 'apple-tv',
     label: 'Apple TV',
     src: '/tv_logos/AppleTV-iOS.png',
+  },
+  fs1: {
+    id: 'fs1',
+    label: 'FS1',
+    src: '/tv_logos/fs1-seeklogo.png',
   },
 };
 
@@ -107,12 +114,12 @@ export function resolveDondeVer(
   }
 
   if (fixture.league === 'leagues-cup') {
-    // Every match streams on Apple TV; linear partners (Imagen / TelevisaUnivision / FS1) are select-only.
+    // Every match on Apple TV. US linear (Univision / FS1) and MX linear (Imagen / Televisa) are select-only.
     return {
-      mx: 'Apple TV · Imagen / TUDN (selectos)',
-      us: 'Apple TV · Univision / TUDN / FS1 (selectos)',
-      mxChannels: ['apple-tv', 'tudn'],
-      usChannels: ['apple-tv', 'univision', 'tudn'],
+      mx: 'Apple TV',
+      us: 'Apple TV',
+      mxChannels: ['apple-tv'],
+      usChannels: ['apple-tv'],
     };
   }
 
@@ -144,6 +151,10 @@ export function resolveDondeVer(
 }
 
 export function attachDondeVer(fixture: Fixture): Fixture {
+  // Keep curated boards (e.g. Leagues Cup official TV grid).
+  if (fixture.dondeVer?.usChannels?.length || fixture.dondeVer?.mxChannels?.length) {
+    return fixture;
+  }
   const d = resolveDondeVer(fixture);
   return {
     ...fixture,

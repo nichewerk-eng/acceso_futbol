@@ -35,6 +35,11 @@ export {
   overlayLiveFixtures,
   fetchLigaMxStandings,
 } from './sportmonks';
+export {
+  applyLeaguesCupOfficial,
+  buildLeaguesCupBoard,
+  leaguesCupKnockoutSlots,
+} from './leaguesCupBoard';
 export { involvesLigaMxClub, isLigaMxSmTeamId } from './ligaMxTeams';
 export { fetchLigaMxFixtures } from './espnFallback';
 export { getSmRateSnapshot, sportmonksPlan, softHourlyLimit } from './smRateLimit';

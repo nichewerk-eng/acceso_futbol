@@ -30,15 +30,23 @@ function ChannelMark({
       data-channel={id}
       title={ch.label}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={ch.src}
-        alt={ch.label}
-        className={['tv-channel-logo', invert ? 'tv-channel-logo-invert' : ''].filter(Boolean).join(' ')}
-        loading="lazy"
-        decoding="async"
-      />
-      <span className="sr-only">{ch.label}</span>
+      {ch.src ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={ch.src}
+            alt={ch.label}
+            className={['tv-channel-logo', invert ? 'tv-channel-logo-invert' : '']
+              .filter(Boolean)
+              .join(' ')}
+            loading="lazy"
+            decoding="async"
+          />
+          <span className="sr-only">{ch.label}</span>
+        </>
+      ) : (
+        <span className="tv-channel-text">{ch.label}</span>
+      )}
     </span>
   );
 }

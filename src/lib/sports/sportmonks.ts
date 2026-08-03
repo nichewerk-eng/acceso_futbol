@@ -29,7 +29,7 @@ import type {
 const BASE = 'https://api.sportmonks.com/v3/football';
 const TIMEOUT_MS = 12_000;
 const SEASON_CACHE_KEY = 'sm-ligamx-season-fixtures-v5-scorers';
-const LC_SEASON_CACHE_KEY = 'sm-leagues-cup-season-fixtures-v1';
+const LC_SEASON_CACHE_KEY = 'sm-leagues-cup-season-fixtures-v2';
 const LIVE_CACHE_KEY = 'sm-livescores-v4-latest';
 /** Sticky in-play board while /livescores/latest returns empty (no updates in ~10s). */
 const LIVE_STICKY_TTL_MS = 120_000;
@@ -418,9 +418,14 @@ export function mapFixture(f: SmFixture): Fixture {
   const awayScore = scoreFor(f.scores, 'away');
   const homeId = String(homeP?.id ?? 'home');
   const awayId = String(awayP?.id ?? 'away');
-  const homeAbbr = scheduleAbbr(homeP?.short_code ?? 'LOC');
-  const awayAbbr = scheduleAbbr(awayP?.short_code ?? 'VIS');
   const league = mapLeagueId(f.league?.id);
+  // Sportmonks Chicago Fire short_code is CHI; scheduleAbbr(CHI)→GDL is ESPN Chivas only.
+  const rawHome = (homeP?.short_code ?? 'LOC').toUpperCase();
+  const rawAway = (awayP?.short_code ?? 'VIS').toUpperCase();
+  const homeAbbr =
+    league === 'leagues-cup' && rawHome === 'CHI' ? 'CHI' : scheduleAbbr(rawHome);
+  const awayAbbr =
+    league === 'leagues-cup' && rawAway === 'CHI' ? 'CHI' : scheduleAbbr(rawAway);
   const date = f.starting_at ? `${f.starting_at.replace(' ', 'T')}Z` : new Date().toISOString();
   const clock = clockFromFixture(f, state);
 

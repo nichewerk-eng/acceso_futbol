@@ -63,6 +63,11 @@ export interface Fixture {
   provider: 'sportmonks' | 'espn';
   league: 'liga-mx' | 'liga-mx-femenil' | 'leagues-cup' | 'seleccion' | 'other';
   date: string;
+  /**
+   * Official board calendar day (YYYY-MM-DD) when kickoff TZ differs from the viewer.
+   * Used for Leagues Cup day grouping.
+   */
+  scheduleDay?: string;
   jornada?: string | null;
   state: MatchState;
   statusLabel: string;
@@ -79,8 +84,12 @@ export interface Fixture {
   dondeVer?: {
     mx?: string;
     us?: string;
-    mxChannels?: Array<'tudn' | 'vix' | 'canal-5' | 'layvtime' | 'univision' | 'apple-tv'>;
-    usChannels?: Array<'tudn' | 'vix' | 'canal-5' | 'layvtime' | 'univision' | 'apple-tv'>;
+    mxChannels?: Array<
+      'tudn' | 'vix' | 'canal-5' | 'layvtime' | 'univision' | 'apple-tv' | 'fs1'
+    >;
+    usChannels?: Array<
+      'tudn' | 'vix' | 'canal-5' | 'layvtime' | 'univision' | 'apple-tv' | 'fs1'
+    >;
   };
 }
 
