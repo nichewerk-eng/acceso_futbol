@@ -14,12 +14,14 @@ const TO_SCHEDULE: Record<string, string> = {
   GUA: 'GDL',
   PCH: 'PAC',
   QUE: 'QRO',
+  LAF: 'LAFC',
+  POT: 'POR',
   // ESPN / static legacy
   NEC: 'NCX',
   TIG: 'UANL',
   SLP: 'ASL',
   ALT: 'ATL',
-  CHI: 'GDL',
+  // Note: do not map CHI→GDL — CHI is Chicago Fire in Leagues Cup / MLS.
 };
 
 export function scheduleAbbr(abbr: string): string {

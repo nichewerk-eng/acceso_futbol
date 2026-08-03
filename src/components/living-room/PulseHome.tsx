@@ -6,7 +6,6 @@ import { useGamesOfDay } from '@/lib/client/useGamesOfDay';
 import { useGravity } from '@/contexts/GravityContext';
 import { SiteFooter } from '@/components/home/SiteFooter';
 import { EngagementDock } from './EngagementDock';
-import { GamesOfDayBanner } from './GamesOfDayBanner';
 import { GravityClaim } from './GravityClaim';
 import { JornadaRecap } from './JornadaRecap';
 import { PulseHero } from './PulseHero';
@@ -49,7 +48,7 @@ export function PulseHome() {
       <main className="flex-1" data-testid="pulse-main">
         <PulseHero leadStory={leadStory} />
         {!settled && <GravityClaim />}
-        <GamesOfDayBanner />
+        {/* Cabina / Acceso Radio — hidden until radio is production-ready */}
         {settled && <GravityClaim />}
         <JornadaRecap />
         <StoriesRail />

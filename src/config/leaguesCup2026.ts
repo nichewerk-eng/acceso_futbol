@@ -267,3 +267,15 @@ export const LC_TEAM_NAMES: Record<string, string> = {
   AME: 'América',
   PUE: 'Puebla',
 };
+
+/** Liga MX Apertura pause while Leagues Cup runs (Fase 1 → Final). */
+export const LEAGUES_CUP_WINDOW = {
+  start: '2026-08-04',
+  end: '2026-09-06',
+} as const;
+
+/** True during the Leagues Cup competition window (Mexico City calendar). */
+export function isLeaguesCupWindow(now = new Date()): boolean {
+  const day = now.toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
+  return day >= LEAGUES_CUP_WINDOW.start && day <= LEAGUES_CUP_WINDOW.end;
+}

@@ -39,7 +39,7 @@ function dayLabel(dayKey?: string) {
   }
 }
 
-function bandMeta(g: DayGame, tz: string) {
+function bandMeta(g: DayGame, tz: string, upcoming?: boolean) {
   if (g.state === 'in') {
     const clock = (g.clock || '').trim();
     const isHt = clock === 'HT' || /descanso|half\s*time/i.test(g.statusLabel || '');
@@ -65,7 +65,12 @@ function bandMeta(g: DayGame, tz: string) {
   }
   return {
     kind: 'pre' as const,
-    stamp: g.phase === 'preshow' ? 'PRE' : kickLabel(g.date, tz),
+    // Upcoming slate is a single day — times only; day lives in the hero header.
+    stamp: upcoming
+      ? kickLabel(g.date, tz)
+      : g.phase === 'preshow'
+        ? 'PRE'
+        : kickLabel(g.date, tz),
     center: 'VS',
   };
 }
@@ -101,6 +106,7 @@ export function PulseHero({ leadStory }: Props) {
   const liveCount = games.filter((g) => g.state === 'in').length;
   const lock = [club?.abbreviation, elTri ? 'TRI' : null].filter(Boolean).join('+');
   const stage = games.find((g) => g.state === 'in') ?? games[0] ?? null;
+  const upcoming = Boolean(payload?.upcoming);
 
   return (
     <section
@@ -136,9 +142,11 @@ export function PulseHero({ leadStory }: Props) {
             <p className="af-tele mt-2 text-muted" data-testid="hero-support">
               {loading && !payload
                 ? 'Sincronizando jornada…'
-                : games.length > 0
-                  ? `${dayLabel(payload?.dayKey)} · ${games.length} partido${games.length === 1 ? '' : 's'}${liveCount ? ` · ${liveCount} en vivo` : ''}`
-                  : `${dayLabel(payload?.dayKey) || 'Hoy'} · sin partidos en cartelera`}
+                : upcoming && games.length > 0
+                  ? `${dayLabel(payload?.dayKey)} · ${games.length} partido${games.length === 1 ? '' : 's'} · próxima cartelera`
+                  : games.length > 0
+                    ? `${dayLabel(payload?.dayKey)} · ${games.length} partido${games.length === 1 ? '' : 's'}${liveCount ? ` · ${liveCount} en vivo` : ''}`
+                    : `${dayLabel(payload?.dayKey) || 'Hoy'} · sin partidos en cartelera`}
             </p>
           </div>
           <div className="flex flex-wrap gap-2" data-testid="hero-cta-group">
@@ -147,8 +155,8 @@ export function PulseHero({ leadStory }: Props) {
                 Elegir club
               </a>
             )}
-            <a href="#hoy" className="af-cta" data-testid="hero-cta-hoy">
-              Cabina
+            <a href="#jornada" className="af-cta" data-testid="hero-cta-hoy">
+              Jornada
             </a>
           </div>
         </header>
@@ -166,7 +174,10 @@ export function PulseHero({ leadStory }: Props) {
             <div className="mb-3 flex flex-wrap items-center gap-3">
               <span className="af-tele flex items-center gap-2 text-foreground">
                 {stage.state === 'in' && <span className="hoy-live-dot" aria-hidden />}
-                {bandMeta(stage, userTz).stamp}
+                {upcoming && stage.state === 'pre' ? (
+                  <span className="text-signal">PRÓXIMO · </span>
+                ) : null}
+                {bandMeta(stage, userTz, upcoming).stamp}
               </span>
               {matchesGravity(
                 stage.home.name,
@@ -204,7 +215,7 @@ export function PulseHero({ leadStory }: Props) {
                 <p className="hero-stage-name">{stage.home.name}</p>
               </div>
               <div className="hero-stage-score" data-testid="hero-stage-score">
-                {bandMeta(stage, userTz).center}
+                {bandMeta(stage, userTz, upcoming).center}
               </div>
               <div className="hero-stage-side hero-stage-away">
                 <div className="hero-stage-pair">
@@ -226,10 +237,12 @@ export function PulseHero({ leadStory }: Props) {
 
             <p className="af-tele mt-4 text-muted">
               {stage.state === 'in'
-                ? 'Toca para crónica + AF Radio'
+                ? 'Toca para crónica'
                 : stage.state === 'post'
                   ? 'Final · abre recap'
-                  : 'Próximo · ficha y pre-show'}
+                  : upcoming
+                    ? 'Próximo en cartelera · ficha'
+                    : 'Próximo · ficha'}
             </p>
           </Link>
         )}
@@ -243,7 +256,7 @@ export function PulseHero({ leadStory }: Props) {
               Cancha en silencio
             </p>
             <p className="af-tele mt-3 text-muted">
-              Sin marcadores hoy. Leagues Cup (MLS × Liga MX) vive en el tablero cup.
+              Sin partidos próximos en Liga MX o Leagues Cup.
             </p>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
               <Link href="/leagues-cup" className="af-cta inline-flex" data-testid="hero-cta-cup">
@@ -256,13 +269,13 @@ export function PulseHero({ leadStory }: Props) {
           </div>
         )}
 
-        {/* Score wall — every game today */}
+        {/* Score wall — every game today / upcoming slate */}
         {games.length > 1 && (
           <div className="hero-wall mt-1" data-testid="hero-score-wall">
             {games
               .filter((g) => g.id !== stage?.id)
               .map((g) => {
-                const meta = bandMeta(g, userTz);
+                const meta = bandMeta(g, userTz, upcoming);
                 const href = `/partido/${leaguePath(g.league)}/${g.id}`;
                 const mine = matchesGravity(
                   g.home.name,

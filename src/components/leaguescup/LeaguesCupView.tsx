@@ -14,6 +14,12 @@ import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { useGravity } from '@/contexts/GravityContext';
 import { startLivePoll } from '@/lib/client/livePoll';
 import { paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
+import {
+  buildLeaguesCupStandingsFromFixtures,
+  LC_KO_SPOTS,
+  type LcStandingEntry,
+  type LcStandingsPayload,
+} from '@/lib/sports/leaguesCupStandings';
 import type { Fixture } from '@/lib/sports/types';
 
 function dayKeyInTz(d: Date, tz: string) {
@@ -28,6 +34,8 @@ function fmtTime(iso: string, tz: string) {
   });
 }
 
+const STANDINGS_GRID = 'lc-standings-grid';
+
 type Props = {
   initialFixtures: Fixture[];
 };
@@ -35,6 +43,7 @@ type Props = {
 export default function LeaguesCupView({ initialFixtures }: Props) {
   const { matchesGravity } = useGravity();
   const [fixtures, setFixtures] = useState(initialFixtures);
+  const [tab, setTab] = useState<'partidos' | 'tabla' | 'bracket'>('partidos');
   const [refreshing, setRefreshing] = useState(false);
   const [userTz, setUserTz] = useState('America/Mexico_City');
   useEffect(() => {
@@ -66,12 +75,20 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
 
   const todayKey = useMemo(() => dayKeyInTz(new Date(), userTz), [userTz]);
 
+  const standings = useMemo(
+    () => buildLeaguesCupStandingsFromFixtures(fixtures),
+    [fixtures]
+  );
+
   const { live, phaseOneByDay, knockout } = useMemo(() => {
     const liveRows: Fixture[] = [];
     const phase: Fixture[] = [];
     const ko: Fixture[] = [];
     for (const f of fixtures) {
-      if (f.id.startsWith('lc-') || (f.jornada && /final|semifinal|quarter|third|tercer/i.test(f.jornada))) {
+      if (
+        f.id.startsWith('lc-') ||
+        (f.jornada && /final|semifinal|quarter|third|tercer/i.test(f.jornada))
+      ) {
         ko.push(f);
         continue;
       }
@@ -125,7 +142,7 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
           </h1>
           <p className="mt-3 max-w-xl font-mono text-[12px] leading-6 text-muted">
             MLS × Liga MX. Fase 1 del 4 al 13 de agosto; eliminación hasta el 6 de septiembre.
-            Sedes y horarios del calendario oficial. Todo en Apple TV; selectos en TV abierta.
+            Top 4 de cada tabla pasan a cuartos. Todo en Apple TV; selectos en TV abierta.
           </p>
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <button
@@ -144,95 +161,352 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
         </div>
       </section>
 
+      <div className="border-b border-line px-4 sm:px-6">
+        <div
+          className="mx-auto flex max-w-6xl gap-1 overflow-x-auto py-3"
+          data-testid="lc-tabs"
+          role="tablist"
+        >
+          {(
+            [
+              ['partidos', 'Partidos'],
+              ['tabla', 'Tabla'],
+              ['bracket', 'Bracket'],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={tab === id}
+              data-testid={`lc-tab-${id}`}
+              onClick={() => setTab(id)}
+              className={[
+                'shrink-0 border px-4 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] transition',
+                tab === id
+                  ? 'border-foreground bg-foreground text-bg-1'
+                  : 'border-line text-muted hover:border-foreground hover:text-foreground',
+              ].join(' ')}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="mx-auto max-w-6xl space-y-14 px-4 py-10 sm:px-6 sm:py-12">
-        {fixtures.length === 0 ? (
-          <div className="border border-line px-5 py-10" data-testid="lc-empty">
-            <p className="font-display text-2xl font-bold uppercase tracking-wide">
-              Ventana Leagues Cup
-            </p>
-            <p className="mt-3 max-w-lg font-mono text-[12px] leading-6 text-muted">
-              La rivalidad binacional arranca el 4 de agosto. Mientras tanto, el pulso sigue en
-              Liga MX y la cabina de hoy.
-            </p>
-            <Link href="/#hoy" className="af-cta mt-6 inline-flex">
-              Ir a cabina
-            </Link>
-          </div>
-        ) : (
-          <>
-            {live.length > 0 && (
-              <BoardBlock title="En vivo" testId="lc-live">
-                {live.map((f) => (
-                  <MatchRow key={f.id} f={f} tz={userTz} mine={isMine(f)} live />
-                ))}
-              </BoardBlock>
-            )}
+        {tab === 'tabla' && (
+          <LcTabla standings={standings} matchesGravity={matchesGravity} />
+        )}
 
-            <section data-testid="lc-fase-1">
-              <h2 className="af-tele mb-2 text-foreground">Fase 1</h2>
-              <p className="mb-6 font-mono text-[11px] text-muted">
-                4–13 agosto · 54 partidos MLS vs Liga MX
+        {tab === 'bracket' && (
+          <section data-testid="lc-bracket">
+            <div className="mb-6 border-b border-line pb-4">
+              <p className="af-tele text-foreground">
+                <span className="text-signal">AF</span>
+                ://BRACKET
               </p>
-              <div className="space-y-8">
-                {phaseOneByDay.map((group) => {
-                  const showMonth = group.month !== lastMonth;
-                  lastMonth = group.month;
-                  const isToday = group.day === todayKey;
-                  return (
-                    <div key={group.day} data-testid={`lc-day-${group.day}`}>
-                      {showMonth && (
-                        <p className="mb-3 font-display text-xl font-bold uppercase tracking-wide">
-                          {group.month}
-                        </p>
-                      )}
-                      <div className="mb-2 flex items-baseline gap-3">
-                        <h3 className="af-tele text-signal">{group.label}</h3>
-                        {isToday && <span className="af-chip text-signal">Hoy</span>}
-                      </div>
-                      <ul className="divide-y divide-line border-y border-line">
-                        {group.rows.map((f) => (
-                          <MatchRow key={f.id} f={f} tz={userTz} mine={isMine(f)} />
-                        ))}
-                      </ul>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-
-            <section data-testid="lc-bracket">
-              <h2 className="af-tele mb-2 text-foreground">Eliminación</h2>
-              <p className="mb-6 font-mono text-[11px] text-muted">
+              <h2 className="mt-1 font-display text-2xl font-bold uppercase tracking-wide sm:text-3xl">
+                Ronda eliminatoria
+              </h2>
+              <p className="mt-3 font-mono text-[11px] text-muted">
                 Cuartos (25–27 ago) · Semis (1–2 sep) · Tercer lugar y Final (6 sep)
               </p>
-              <div className="space-y-6">
-                {(
-                  [
-                    ['Quarterfinals', 'Cuartos de final'],
-                    ['Semifinals', 'Semifinales'],
-                    ['Third Place Match', 'Tercer lugar'],
-                    ['Final', 'Final'],
-                  ] as const
-                ).map(([stage, title]) => {
-                  const rows = knockout.filter((f) => f.jornada === stage);
-                  if (!rows.length) return null;
-                  return (
-                    <div key={stage}>
-                      <h3 className="af-tele mb-2 text-signal">{title}</h3>
-                      <ul className="divide-y divide-line border-y border-line">
-                        {rows.map((f) => (
-                          <KnockoutRow key={f.id} f={f} tz={userTz} />
-                        ))}
-                      </ul>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          </>
+            </div>
+            <div className="space-y-6">
+              {(
+                [
+                  ['Quarterfinals', 'Cuartos de final'],
+                  ['Semifinals', 'Semifinales'],
+                  ['Third Place Match', 'Tercer lugar'],
+                  ['Final', 'Final'],
+                ] as const
+              ).map(([stage, title]) => {
+                const rows = knockout.filter((f) => f.jornada === stage);
+                if (!rows.length) return null;
+                return (
+                  <div key={stage}>
+                    <h3 className="af-tele mb-2 text-signal">{title}</h3>
+                    <ul className="divide-y divide-line border-y border-line">
+                      {rows.map((f) => (
+                        <KnockoutRow key={f.id} f={f} tz={userTz} />
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
         )}
+
+        {tab === 'partidos' &&
+          (fixtures.length === 0 ? (
+            <div className="border border-line px-5 py-10" data-testid="lc-empty">
+              <p className="font-display text-2xl font-bold uppercase tracking-wide">
+                Ventana Leagues Cup
+              </p>
+              <p className="mt-3 max-w-lg font-mono text-[12px] leading-6 text-muted">
+                La rivalidad binacional arranca el 4 de agosto. Mientras tanto, el pulso sigue en
+                Liga MX y el pulso de la jornada.
+              </p>
+              <Link href="/#jornada" className="af-cta mt-6 inline-flex">
+                Ir al pulso
+              </Link>
+            </div>
+          ) : (
+            <>
+              {live.length > 0 && (
+                <BoardBlock title="En vivo" testId="lc-live">
+                  {live.map((f) => (
+                    <MatchRow key={f.id} f={f} tz={userTz} mine={isMine(f)} live />
+                  ))}
+                </BoardBlock>
+              )}
+
+              <section data-testid="lc-fase-1">
+                <h2 className="af-tele mb-2 text-foreground">Fase 1</h2>
+                <p className="mb-6 font-mono text-[11px] text-muted">
+                  4–13 agosto · 54 partidos MLS vs Liga MX
+                </p>
+                <div className="space-y-8">
+                  {phaseOneByDay.map((group) => {
+                    const showMonth = group.month !== lastMonth;
+                    lastMonth = group.month;
+                    const isToday = group.day === todayKey;
+                    return (
+                      <div key={group.day} data-testid={`lc-day-${group.day}`}>
+                        {showMonth && (
+                          <p className="mb-3 font-display text-xl font-bold uppercase tracking-wide">
+                            {group.month}
+                          </p>
+                        )}
+                        <div className="mb-2 flex items-baseline gap-3">
+                          <h3 className="af-tele text-signal">{group.label}</h3>
+                          {isToday && <span className="af-chip text-signal">Hoy</span>}
+                        </div>
+                        <ul className="divide-y divide-line border-y border-line">
+                          {group.rows.map((f) => (
+                            <MatchRow key={f.id} f={f} tz={userTz} mine={isMine(f)} />
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            </>
+          ))}
       </div>
     </div>
+  );
+}
+
+function LcTabla({
+  standings,
+  matchesGravity,
+}: {
+  standings: LcStandingsPayload;
+  matchesGravity: (
+    homeName: string,
+    awayName: string,
+    homeAbbr?: string,
+    awayAbbr?: string
+  ) => boolean;
+}) {
+  return (
+    <section data-testid="lc-tabla" className="space-y-12">
+      <div className="border-b border-line pb-4">
+        <p className="af-tele text-foreground">
+          <span className="text-signal">AF</span>
+          ://TABLA
+        </p>
+        <h2 className="mt-1 font-display text-2xl font-bold uppercase tracking-wide sm:text-3xl">
+          Primera fase · Clasificación
+        </h2>
+        <p className="mt-3 max-w-2xl font-mono text-[11px] leading-5 text-muted">
+          Victoria reglamentaria 3 pts · penales ganados 2 · penales perdidos 1. Top{' '}
+          {LC_KO_SPOTS} de cada liga avanza a la fase eliminatoria.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-4">
+          <Legend mark="signal" label="a · avanza" />
+          <Legend mark="signal" label="x · 1º asegurado" />
+          <Legend mark="ink" label="e · eliminado" />
+        </div>
+      </div>
+
+      <StandingsTable
+        title="Liga MX"
+        testId="lc-tabla-ligamx"
+        entries={standings.ligaMx}
+        matchesGravity={matchesGravity}
+      />
+      <StandingsTable
+        title="MLS"
+        testId="lc-tabla-mls"
+        entries={standings.mls}
+        matchesGravity={matchesGravity}
+      />
+
+      <aside className="border border-line bg-bg-2 px-4 py-5 sm:px-5" data-testid="lc-tabla-rules">
+        <p className="af-tele text-foreground">Puntos</p>
+        <ul className="mt-3 space-y-2 font-mono text-[11px] leading-5 text-muted">
+          <li>Victoria en tiempo reglamentario → 3 puntos</li>
+          <li>Derrota en tiempo reglamentario → 0 puntos</li>
+          <li>Empate en reglamentario → penales: ganador 2 pts · perdedor 1 pt</li>
+        </ul>
+        <p className="af-tele mt-5 text-foreground">Desempates</p>
+        <ol className="mt-3 list-decimal space-y-1.5 pl-4 font-mono text-[11px] leading-5 text-muted">
+          <li>Mayor diferencia de goles (Dif)</li>
+          <li>Más victorias en tiempo reglamentario (PG)</li>
+          <li>Más goles marcados (TG)</li>
+          <li>Menos goles recibidos (GA)</li>
+          <li>Juego limpio · luego sorteo del Comité</li>
+        </ol>
+        <p className="af-tele mt-5 text-foreground">Clave</p>
+        <p className="mt-2 font-mono text-[11px] leading-5 text-muted">
+          <span className="text-signal">x</span> primer lugar asegurado ·{' '}
+          <span className="text-signal">a</span> avanza a eliminatoria ·{' '}
+          <span className="text-muted">e</span> eliminado
+        </p>
+      </aside>
+    </section>
+  );
+}
+
+function StandingsTable({
+  title,
+  testId,
+  entries,
+  matchesGravity,
+}: {
+  title: string;
+  testId: string;
+  entries: LcStandingEntry[];
+  matchesGravity: (
+    homeName: string,
+    awayName: string,
+    homeAbbr?: string,
+    awayAbbr?: string
+  ) => boolean;
+}) {
+  return (
+    <div data-testid={testId}>
+      <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+        <h3 className="font-display text-xl font-bold uppercase tracking-wide">{title}</h3>
+        <p className="af-tele text-muted">{entries.length} clubes</p>
+      </div>
+      <div className="border border-line bg-bg-2">
+        <div className={[STANDINGS_GRID, 'border-b border-line py-2 af-tele'].join(' ')}>
+          <span className="text-center">#</span>
+          <span>Club</span>
+          <span className="text-center" title="Puntos">
+            Pts
+          </span>
+          <span className="text-center" title="Partidos jugados">
+            PJ
+          </span>
+          <span className="text-center" title="Victorias reglamentarias">
+            PG
+          </span>
+          <span className="lc-col-desktop text-center" title="Derrotas reglamentarias">
+            PP
+          </span>
+          <span className="lc-col-desktop text-center" title="Penales ganados">
+            PKW
+          </span>
+          <span className="lc-col-desktop text-center" title="Penales perdidos">
+            PKL
+          </span>
+          <span className="lc-col-desktop text-center" title="Goles a favor">
+            TG
+          </span>
+          <span className="lc-col-desktop text-center" title="Goles en contra">
+            GA
+          </span>
+          <span className="text-center" title="Diferencia">
+            Dif
+          </span>
+          <span className="text-center">Clave</span>
+        </div>
+        {entries.map((entry) => {
+          const mine = matchesGravity(
+            entry.team.name,
+            entry.team.name,
+            entry.team.abbreviation,
+            entry.team.abbreviation
+          );
+          const advances = entry.mark === 'a' || entry.mark === 'x';
+          return (
+            <div
+              key={entry.team.id || entry.team.abbreviation}
+              data-testid={`lc-row-${entry.team.abbreviation}`}
+              className={[
+                STANDINGS_GRID,
+                'border-b border-line py-2.5 text-sm last:border-b-0',
+                advances ? 'bg-signal/[0.04]' : '',
+                mine ? 'bg-foreground/[0.03]' : '',
+              ].join(' ')}
+            >
+              <span
+                className={[
+                  'text-center font-mono text-[11px] tabular-nums',
+                  advances ? 'text-signal' : 'text-muted',
+                ].join(' ')}
+              >
+                {entry.position}
+              </span>
+              <span className="flex min-w-0 items-center gap-2">
+                <ClubLogo
+                  abbr={entry.team.abbreviation}
+                  name={entry.team.name}
+                  logoUrl={entry.team.logo}
+                  size="sm"
+                />
+                <span className="truncate font-display text-sm font-bold uppercase tracking-wide">
+                  <span className="sm:hidden">{entry.team.abbreviation}</span>
+                  <span className="hidden sm:inline">{entry.team.name}</span>
+                </span>
+                {mine && <span className="af-tele shrink-0 text-signal">TU</span>}
+              </span>
+              <span className="text-center font-semibold tabular-nums">{entry.pts}</span>
+              <span className="text-center tabular-nums text-muted">{entry.gp}</span>
+              <span className="text-center tabular-nums">{entry.w}</span>
+              <span className="lc-col-desktop text-center tabular-nums text-muted">{entry.l}</span>
+              <span className="lc-col-desktop text-center tabular-nums text-muted">{entry.pw}</span>
+              <span className="lc-col-desktop text-center tabular-nums text-muted">{entry.pl}</span>
+              <span className="lc-col-desktop text-center tabular-nums text-muted">{entry.gf}</span>
+              <span className="lc-col-desktop text-center tabular-nums text-muted">{entry.ga}</span>
+              <span className="text-center tabular-nums">
+                {entry.gd > 0 ? `+${entry.gd}` : entry.gd}
+              </span>
+              <span
+                className={[
+                  'text-center font-mono text-[10px] uppercase tracking-[0.12em]',
+                  entry.mark === 'e' ? 'text-muted' : 'text-signal',
+                ].join(' ')}
+              >
+                {entry.mark ?? '—'}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function Legend({ mark, label }: { mark: 'signal' | 'ink'; label: string }) {
+  return (
+    <p className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
+      <span
+        className={[
+          'inline-block h-2 w-2',
+          mark === 'signal' ? 'bg-signal' : 'bg-line',
+        ].join(' ')}
+        aria-hidden
+      />
+      {label}
+    </p>
   );
 }
 

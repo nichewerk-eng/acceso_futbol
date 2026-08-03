@@ -12,20 +12,20 @@ import {
 import type { Fixture } from '@/lib/sports/types';
 
 export const metadata: Metadata = {
-  title: 'Leagues Cup 2026 · MLS × Liga MX calendario y dónde ver',
+  title: 'Leagues Cup 2026 · MLS × Liga MX calendario, tabla y dónde ver',
   description:
-    'Calendario oficial Leagues Cup 2026: Fase 1, eliminación, estadios, horarios y Apple TV / TV selecta.',
+    'Calendario y tabla oficial Leagues Cup 2026: Fase 1, posiciones Liga MX y MLS, eliminación, estadios y Apple TV.',
   alternates: { canonical: absoluteUrl('/leagues-cup') },
   openGraph: {
     title: 'Leagues Cup 2026 · MLS × Liga MX',
-    description: 'Fase 1, eliminación, sedes oficiales y dónde ver.',
+    description: 'Partidos, tabla Fase 1, sedes oficiales y dónde ver.',
     url: absoluteUrl('/leagues-cup'),
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Leagues Cup 2026 · MLS × Liga MX',
-    description: 'Fase 1, eliminación, sedes oficiales y dónde ver.',
+    description: 'Partidos, tabla Fase 1, sedes oficiales y dónde ver.',
   },
 };
 

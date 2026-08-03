@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { PulseNav } from '@/components/living-room/PulseNav';
-import { RadioCompanion } from '@/components/radio/RadioCompanion';
 import type { LigaMXEntry, LigaMXTable } from '@/app/api/ligamx/standings/route';
 import type {
   FormMatch,
@@ -527,9 +526,11 @@ export function MatchChapter({ league, id }: Props) {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    // Radio tab hidden until Acceso Radio is production-ready
     const q = new URLSearchParams(window.location.search);
-    if (q.get('tab') === 'radio' || window.location.hash === '#radio') {
-      setTab('radio');
+    const tab = q.get('tab');
+    if (tab === 'momentos' || tab === 'contexto' || tab === 'alineacion' || tab === 'datos') {
+      setTab(tab);
     }
   }, []);
 
@@ -584,7 +585,7 @@ export function MatchChapter({ league, id }: Props) {
     league === 'leagues-cup'
       ? '/leagues-cup'
       : league === 'liga-mx' || league === 'seleccion'
-        ? '/#hoy'
+        ? '/#jornada'
         : '/';
   const backLabel =
     league === 'seleccion'
@@ -601,7 +602,6 @@ export function MatchChapter({ league, id }: Props) {
       return [
         { id: 'contexto' as const, label: 'Contexto' },
         { id: 'alineacion' as const, label: 'Alineación' },
-        { id: 'radio' as const, label: 'Radio' },
       ];
     }
     return [
@@ -609,7 +609,6 @@ export function MatchChapter({ league, id }: Props) {
       { id: 'contexto' as const, label: 'Contexto' },
       { id: 'alineacion' as const, label: 'Alineación' },
       { id: 'datos' as const, label: 'Datos' },
-      { id: 'radio' as const, label: 'Radio' },
     ];
   }, [match]);
 
@@ -804,9 +803,6 @@ export function MatchChapter({ league, id }: Props) {
                 compact
               />
             </div>
-            <button type="button" className="af-cta match-radio-cta" onClick={() => setTab('radio')}>
-              Acceso Radio
-            </button>
           </div>
         </div>
       </section>
@@ -851,8 +847,6 @@ export function MatchChapter({ league, id }: Props) {
         </div>
 
         <div className="match-panel">
-          {tab === 'radio' && <RadioCompanion league={league} matchId={id} />}
-
           {tab === 'contexto' && (
             <div className={['match-contexto', tabla?.length ? 'has-tabla' : ''].filter(Boolean).join(' ')}>
               <div className="match-contexto-main">
@@ -920,7 +914,7 @@ export function MatchChapter({ league, id }: Props) {
                     : 'Narración completa del partido.'}
                 </p>
                 {feedRows.length === 0 ? (
-                  <p className="match-empty">Sin crónica aún. Entra a Radio para la cabina Acceso.</p>
+                  <p className="match-empty">Sin crónica aún. Vuelve cuando arranque el partido.</p>
                 ) : (
                   <ul className="match-timeline">
                     {feedRows.map((row) => (

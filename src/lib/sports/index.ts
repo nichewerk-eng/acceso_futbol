@@ -34,12 +34,18 @@ export {
   fetchLivescores,
   overlayLiveFixtures,
   fetchLigaMxStandings,
+  fetchLeaguesCupStandings,
 } from './sportmonks';
 export {
   applyLeaguesCupOfficial,
   buildLeaguesCupBoard,
   leaguesCupKnockoutSlots,
 } from './leaguesCupBoard';
+export {
+  buildLeaguesCupStandingsFromFixtures,
+  LC_KO_SPOTS,
+} from './leaguesCupStandings';
+export type { LcStandingEntry, LcStandingsPayload } from './leaguesCupStandings';
 export { involvesLigaMxClub, isLigaMxSmTeamId } from './ligaMxTeams';
 export { fetchLigaMxFixtures } from './espnFallback';
 export { getSmRateSnapshot, sportmonksPlan, softHourlyLimit } from './smRateLimit';

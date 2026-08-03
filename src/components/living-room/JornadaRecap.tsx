@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState, type CSSProperties } from 'react';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { useGravity } from '@/contexts/GravityContext';
+import { isLeaguesCupWindow } from '@/config/leaguesCup2026';
 import { startLivePoll } from '@/lib/client/livePoll';
 import { paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
 import type { Fixture } from '@/lib/sports';
@@ -123,7 +124,7 @@ function NextCard({ f, mine, tz }: { f: Fixture; mine: boolean; tz: string }) {
           <span className="jor-next-abbr">{f.away.abbreviation}</span>
         </span>
       </div>
-      <p className="jor-next-when jor-next-cta">Ficha · radio al kick</p>
+      <p className="jor-next-when jor-next-cta">Ficha del partido</p>
     </Link>
   );
 }
@@ -176,6 +177,8 @@ export function JornadaRecap() {
   const total = doneBlock.length + upcoming.length || 9;
   const doneCount = doneBlock.length;
   const jornadaNum = data?.number;
+  const fechaCerrada = !loading && Boolean(data) && upcoming.length === 0 && doneCount > 0;
+  const lcPause = fechaCerrada && isLeaguesCupWindow();
 
   const isMine = (f: Fixture) =>
     matchesGravity(f.home.name, f.away.name, f.home.abbreviation, f.away.abbreviation);
@@ -205,12 +208,18 @@ export function JornadaRecap() {
           <div className="min-w-0 lg:pb-2">
             <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
               <p className="font-display text-xl font-bold uppercase tracking-wide sm:text-2xl">
-                {loading && !data ? 'Cargando fecha…' : 'Estado de la fecha'}
+                {loading && !data
+                  ? 'Cargando fecha…'
+                  : lcPause
+                    ? 'Fecha cerrada · pausa LC'
+                    : 'Estado de la fecha'}
               </p>
               <p className="af-tele" data-testid="jornada-stats">
                 {loading && !data
                   ? 'SYNC…'
-                  : `${doneCount} jugados · ${upcoming.length} quedan`}
+                  : upcoming.length > 0
+                    ? `${doneCount} jugados · ${upcoming.length} quedan`
+                    : `${doneCount} jugados`}
               </p>
             </div>
             <div
@@ -233,14 +242,49 @@ export function JornadaRecap() {
               })}
             </div>
             <p className="mt-3 max-w-md text-sm leading-6 text-muted">
-              Resultados sellados y lo que todavía falta por patear.
+              {lcPause
+                ? 'Liga MX en pausa por Leagues Cup. La siguiente jornada vuelve cuando cierre el torneo binacional.'
+                : fechaCerrada
+                  ? 'Fecha sellada. Esperando la siguiente jornada.'
+                  : 'Resultados sellados y lo que todavía falta por patear.'}
             </p>
           </div>
 
-          <Link href="/liga-mx" className="af-cta af-cta-ghost !py-2 self-end" data-testid="jornada-cta-tabla">
-            Calendario
-          </Link>
+          <div className="flex flex-wrap gap-2 self-end">
+            {lcPause && (
+              <Link href="/leagues-cup" className="af-cta !py-2" data-testid="jornada-cta-lc">
+                Leagues Cup
+              </Link>
+            )}
+            <Link
+              href="/liga-mx"
+              className="af-cta af-cta-ghost !py-2"
+              data-testid="jornada-cta-tabla"
+            >
+              Calendario
+            </Link>
+          </div>
         </div>
+
+        {lcPause && (
+          <div
+            data-testid="jornada-lc-pause"
+            className="mb-10 border border-signal/40 bg-signal/[0.06] px-4 py-5 sm:px-5"
+            role="status"
+          >
+            <p className="af-tele text-signal">AF://PAUSA · LEAGUES CUP</p>
+            <p className="mt-2 font-display text-xl font-bold uppercase tracking-wide sm:text-2xl">
+              Liga MX en espera
+            </p>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
+              El Apertura frena mientras corre Leagues Cup (4 ago – 6 sep). Los 18 clubes cruzan con
+              MLS; el pulso doméstico regresa al cerrar la Final.
+            </p>
+            <Link href="/leagues-cup" className="af-cta mt-4 inline-flex !py-2">
+              Ir a Leagues Cup
+            </Link>
+          </div>
+        )}
 
         {loading && !data ? (
           <p className="af-tele py-8" data-testid="jornada-loading">
@@ -266,21 +310,19 @@ export function JornadaRecap() {
               )}
             </div>
 
-            <div data-testid="jornada-upcoming">
-              <div className="mb-4 flex items-baseline justify-between gap-3">
-                <h3 className="font-display text-2xl font-bold uppercase tracking-wide">Quedan</h3>
-                <p className="af-tele">{upcoming.length} por jugar</p>
-              </div>
-              {upcoming.length === 0 ? (
-                <p className="af-tele py-6 text-muted">Fecha cerrada. Toda la jornada ya se jugó.</p>
-              ) : (
+            {upcoming.length > 0 && (
+              <div data-testid="jornada-upcoming">
+                <div className="mb-4 flex items-baseline justify-between gap-3">
+                  <h3 className="font-display text-2xl font-bold uppercase tracking-wide">Quedan</h3>
+                  <p className="af-tele">{upcoming.length} por jugar</p>
+                </div>
                 <div className="jor-mosaic">
                   {upcoming.map((f) => (
                     <NextCard key={f.id} f={f} mine={isMine(f)} tz={userTz} />
                   ))}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
       </div>

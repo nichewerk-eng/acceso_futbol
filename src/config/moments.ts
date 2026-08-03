@@ -90,14 +90,6 @@ export const MOMENTS: Moment[] = [
     href: '/momento/femenil',
   },
   {
-    id: 'radio-teaser',
-    kind: 'take',
-    tag: 'Acceso Radio',
-    headline: 'El partido en tu oído.',
-    body: 'Escucha Acceso Radio con ~30s de retraso, como la radio de toda la vida.',
-    href: '/momento/radio-teaser',
-  },
-  {
     id: 'clasico-heat',
     kind: 'rivalry',
     tag: 'Rivalidad',

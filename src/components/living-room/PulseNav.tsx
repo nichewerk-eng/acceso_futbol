@@ -8,7 +8,6 @@ import { useGravity } from '@/contexts/GravityContext';
 
 const LINKS = [
   { href: '/', label: 'Pulso' },
-  { href: '/#hoy', label: 'Cabina' },
   { href: '/#jornada', label: 'Jornada' },
   { href: '/#noticias', label: 'Cable' },
   { href: '/liga-mx', label: 'Tabla' },

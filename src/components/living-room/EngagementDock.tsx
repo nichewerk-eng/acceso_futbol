@@ -30,7 +30,6 @@ export function EngagementDock() {
 
   const path = leaguePath(game.league);
   const href = `/partido/${path}/${game.id}`;
-  const radioHref = `${href}?tab=radio`;
   const live = game.state === 'in';
   const score =
     game.state !== 'pre'
@@ -54,7 +53,7 @@ export function EngagementDock() {
                 LIVE
               </span>
             ) : game.phase === 'preshow' ? (
-              <span className="text-signal">PRE-SHOW</span>
+              <span className="text-signal">PRE</span>
             ) : (
               `HOY · ${String(count).padStart(2, '0')}`
             )}
@@ -67,21 +66,15 @@ export function EngagementDock() {
             <ClubLogo abbr={game.away.abbreviation} name={game.away.name} size="sm" />
           </p>
         </div>
-        {game.radioAvailable ? (
-          <Link href={radioHref} className="hoy-cta shrink-0 !py-2" data-testid="dock-cta-radio">
-            {game.phase === 'live' ? 'Radio' : game.phase === 'preshow' ? 'Pre' : 'Recap'}
-          </Link>
-        ) : (
-          <Link href={href} className="hoy-cta hoy-cta-ghost shrink-0 !py-2" data-testid="dock-cta-ficha">
-            Ficha
-          </Link>
-        )}
+        <Link href={href} className="hoy-cta shrink-0 !py-2" data-testid="dock-cta-ficha">
+          Ficha
+        </Link>
         <Link
-          href="/#hoy"
+          href="/#jornada"
           className="hidden shrink-0 font-mono text-[10px] uppercase tracking-[0.16em] text-white/50 sm:inline"
           data-testid="dock-cta-all"
         >
-          Todos
+          Jornada
         </Link>
       </div>
     </div>

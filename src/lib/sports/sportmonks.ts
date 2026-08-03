@@ -1132,3 +1132,94 @@ export async function fetchLigaMxStandings(): Promise<{
   setCache(STANDINGS_CACHE_KEY, table);
   return table;
 }
+
+const LC_STANDINGS_CACHE_KEY = 'sm-leagues-cup-standings-v1';
+
+export type SmLcStandingGroup = {
+  id: string;
+  name: string;
+  entries: SmStandingEntry[];
+};
+
+/** Sportmonks Fase 1 tables: Liga MX + MLS (top 4 each advance). */
+export async function fetchLeaguesCupStandings(): Promise<{
+  season: string;
+  groups: SmLcStandingGroup[];
+}> {
+  const cached = getCache<{ season: string; groups: SmLcStandingGroup[] }>(
+    LC_STANDINGS_CACHE_KEY,
+    STANDINGS_TTL_MS
+  );
+  if (cached) return cached;
+
+  const data = await smFetch<{
+    data?: {
+      position?: number;
+      points?: number;
+      group_id?: number;
+      group?: { id?: number; name?: string };
+      participant?: {
+        id?: number;
+        name?: string;
+        short_code?: string;
+        image_path?: string;
+      };
+      details?: { value?: number; type?: { developer_name?: string; code?: string } }[];
+    }[];
+  }>(`/standings/seasons/${leaguesCupSeasonId()}`, {
+    include: 'participant;details.type;group',
+  });
+
+  const byGroup = new Map<string, SmLcStandingGroup>();
+  for (const row of data.data ?? []) {
+    const gid = String(row.group_id ?? row.group?.id ?? 'unknown');
+    const gname = row.group?.name ?? gid;
+    if (!byGroup.has(gid)) {
+      byGroup.set(gid, { id: gid, name: gname, entries: [] });
+    }
+    const gp = detailValue(row.details, ['OVERALL_MATCHES']);
+    const w = detailValue(row.details, ['OVERALL_WINS']);
+    const d = detailValue(row.details, ['OVERALL_DRAWS']);
+    const l = detailValue(row.details, ['OVERALL_LOST']);
+    const gf = detailValue(row.details, ['OVERALL_SCORED']);
+    const ga = detailValue(row.details, ['OVERALL_CONCEDED']);
+    const gd = detailValue(row.details, ['OVERALL_GOAL_DIFFERENCE']);
+    const pts = detailValue(row.details, ['TOTAL_POINTS']) || Number(row.points ?? 0);
+    byGroup.get(gid)!.entries.push({
+      position: Number(row.position ?? 0),
+      team: {
+        id: String(row.participant?.id ?? ''),
+        name: row.participant?.name ?? '',
+        // Chicago Fire stays CHI (Liga MX legacy maps CHI→GDL).
+        abbreviation: (() => {
+          const raw = (row.participant?.short_code ?? '').trim().toUpperCase();
+          if (raw === 'CHI') return 'CHI';
+          return scheduleAbbr(raw);
+        })(),
+        logo: row.participant?.image_path,
+      },
+      gp,
+      w,
+      d,
+      l,
+      gf,
+      ga,
+      gd: String(gd),
+      pts,
+    });
+  }
+
+  for (const g of byGroup.values()) {
+    g.entries.sort((a, b) => a.position - b.position);
+  }
+
+  // Prefer Liga MX first for Acceso.
+  const groups = [...byGroup.values()].sort((a, b) => {
+    const rank = (n: string) => (/liga\s*mx/i.test(n) ? 0 : /mls/i.test(n) ? 1 : 2);
+    return rank(a.name) - rank(b.name) || a.name.localeCompare(b.name);
+  });
+
+  const table = { season: 'Leagues Cup 2026', groups };
+  setCache(LC_STANDINGS_CACHE_KEY, table);
+  return table;
+}

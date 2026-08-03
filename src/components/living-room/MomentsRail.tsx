@@ -42,7 +42,7 @@ export function MomentsRail() {
               Momentos Acceso
             </h2>
           </div>
-          <p className="af-tele">Opinión · Rivalidad · Femenil · Radio</p>
+          <p className="af-tele">Opinión · Rivalidad · Femenil</p>
         </div>
 
         {lead && (
