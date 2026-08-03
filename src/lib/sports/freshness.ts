@@ -34,8 +34,13 @@ export const FRESH = {
   storiesTtlMs: 60_000,
 
   espnCronicaTtlMs: 60_000,
+  /** Live polls: don't stall the scoreboard waiting on ESPN. */
   espnEnrichBudgetMs: 550,
+  /** First Completa paint (no cached ESPN yet) — wait longer once. */
+  espnEnrichBudgetFirstMs: 2_500,
   espnEnrichBudgetIdleMs: 2_000,
+  /** Re-hydrate full livescores if sticky board is this old without updates. */
+  livescoresFullRefreshMs: 45_000,
 
   /** Kickoff window that still warrants “near” polling */
   nearKickoffBeforeMs: 45 * 60_000,

@@ -10,11 +10,13 @@ Last reviewed: 2026-08-02 (commit era: adaptive pace + single-flight).
 
 ## 1. Principles
 
-1. **Spend quota only when scores can move** — live / near-kickoff get short TTLs; idle days get long ones.
-2. **One upstream load, many users** — `singleFlight` + in-memory TTL per serverless instance; CDN `s-maxage` for edge.
-3. **One browser timer, many widgets** — shared `useGamesOfDay` for home surfaces.
-4. **Pause when nobody is looking** — `startLivePoll` stops while the tab is hidden.
-5. **AI/TTS is event-priced, not poll-priced** — Anthropic + ElevenLabs only on new beats / cold cable briefs.
+1. **UX first, then lean** — never clear Contexto / Alineación / Completa / Datos on a thin live refresh (`mergeMatchSnapshot`).
+2. **Spend quota only when scores can move** — live / near-kickoff get short TTLs; idle days get long ones.
+3. **One upstream load, many users** — `singleFlight` + in-memory TTL per serverless instance; CDN `s-maxage` for edge.
+4. **One browser timer, many widgets** — shared `useGamesOfDay` for home surfaces.
+5. **Pause when nobody is looking** — `startLivePoll` stops while the tab is hidden.
+6. **AI/TTS is event-priced, not poll-priced** — Anthropic + ElevenLabs only on new beats / cold cable briefs.
+7. **Soft throttle never blocks the UI for seconds** — brief pause only; prefer cache + 429 over blank screens.
 
 ---
 

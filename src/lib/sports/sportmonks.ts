@@ -1,4 +1,4 @@
-import { getCache, setCache, singleFlight } from '@/lib/apiCache';
+import { getCache, peekCacheAgeMs, setCache, singleFlight } from '@/lib/apiCache';
 import { FRESH } from './freshness';
 import { dayPairKey, scheduleAbbr } from './ligaMxAbbr';
 import { localizeComment } from './localizeComment';
@@ -41,6 +41,9 @@ const LIVE_TTL_MS = FRESH.liveTtlMs;
 const DATE_TTL_MS = FRESH.apiTtlNearMs;
 const STANDINGS_CACHE_KEY = 'sm-ligamx-standings-v1';
 const STANDINGS_TTL_MS = FRESH.standingsTtlMs;
+/** Form / H2H barely move during a match — cache hard so live polls stay cheap. */
+const FORM_TTL_MS = 30 * 60_000;
+const H2H_TTL_MS = 30 * 60_000;
 
 function sleep(ms: number) {
   return new Promise<void>((r) => setTimeout(r, ms));
@@ -740,10 +743,12 @@ export async function fetchLivescores(leagueIds: number[] = [ligaMxLeagueId()]):
     );
     const fresh = (latest.data ?? []).map(mapFixture);
     const prev = getCache<Fixture[]>(stickyKey, LIVE_STICKY_TTL_MS) ?? [];
+    const stickyAge = peekCacheAgeMs(stickyKey);
+    const staleSticky =
+      stickyAge != null && stickyAge >= FRESH.livescoresFullRefreshMs;
 
-    if (fresh.length === 0) {
-      if (prev.length > 0) return prev.filter((f) => f.state === 'in');
-      // Cold start: full board once, then sticky.
+    // Cold start, or sticky board went quiet too long — full hydrate so scores don't freeze.
+    if (fresh.length === 0 && (prev.length === 0 || staleSticky)) {
       const full = await smFetch<{ data?: SmFixture[] }>(
         '/livescores',
         { include, filters },
@@ -752,6 +757,10 @@ export async function fetchLivescores(leagueIds: number[] = [ligaMxLeagueId()]):
       const hydrated = (full.data ?? []).map(mapFixture).filter((f) => f.state === 'in');
       setCache(stickyKey, hydrated);
       return hydrated;
+    }
+
+    if (fresh.length === 0) {
+      return prev.filter((f) => f.state === 'in');
     }
 
     const byId = new Map(prev.map((f) => [f.id, f]));
@@ -994,17 +1003,20 @@ async function loadMatchSnapshot(fixtureId: string): Promise<MatchSnapshot | nul
       base.away.abbreviation
     );
 
-    // Live path: skip form/H2H so score/clock/events win the race.
-    let homeForm: FormMatch[] = [];
-    let awayForm: FormMatch[] = [];
-    let h2hRaw: HeadToHeadSummary | null = null;
-    if (base.state !== 'in') {
-      [homeForm, awayForm, h2hRaw] = await Promise.all([
-        fetchTeamForm(base.home.id, 5),
-        fetchTeamForm(base.away.id, 5),
-        fetchHeadToHead(base.home.id, base.away.id),
-      ]);
-    }
+    // Always load Contexto (form + H2H). Long TTL so live score polls don't re-tax SM.
+    const [homeForm, awayForm, h2hRaw] = await Promise.all([
+      singleFlight(`sm-team-form-v1-${base.home.id}`, FORM_TTL_MS, () =>
+        fetchTeamForm(base.home.id, 5)
+      ),
+      singleFlight(`sm-team-form-v1-${base.away.id}`, FORM_TTL_MS, () =>
+        fetchTeamForm(base.away.id, 5)
+      ),
+      singleFlight(
+        `sm-h2h-v1-${[base.home.id, base.away.id].sort().join('-')}`,
+        H2H_TTL_MS,
+        () => fetchHeadToHead(base.home.id, base.away.id)
+      ),
+    ]);
 
     return {
       ...base,

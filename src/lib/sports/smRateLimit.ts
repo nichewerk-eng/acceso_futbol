@@ -127,19 +127,16 @@ export async function beforeSmRequest(entity: SmEntity): Promise<void> {
   const now = Date.now();
   m.timestamps = m.timestamps.filter((t) => now - t < 3_600_000);
 
+  // Soft cap: brief pause only — never stall UX for seconds waiting on the hour window.
   if (m.timestamps.length >= soft) {
-    const oldest = m.timestamps[0] ?? now;
-    const wait = Math.min(3_600_000 - (now - oldest) + 50, 15_000);
-    console.warn(`[sportmonks] soft-throttle ${entity}: ${m.timestamps.length}/${soft}, wait ${wait}ms`);
-    await sleep(Math.max(wait, 250));
-    return beforeSmRequest(entity);
-  }
-
-  // If SM said we're nearly empty, pause briefly (don't sleep full reset in-request).
-  if (m.updatedAt && m.remaining <= 0) {
-    await sleep(1_000);
+    console.warn(
+      `[sportmonks] soft-throttle ${entity}: ${m.timestamps.length}/${soft} (allowing with short pause)`
+    );
+    await sleep(200);
+  } else if (m.updatedAt && m.remaining <= 0) {
+    await sleep(400);
   } else if (m.updatedAt && m.remaining < 50) {
-    await sleep(250);
+    await sleep(150);
   }
 
   m.timestamps.push(Date.now());

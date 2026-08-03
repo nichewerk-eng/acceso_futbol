@@ -18,6 +18,7 @@ import { startLivePoll } from '@/lib/client/livePoll';
 import type { FreshPace } from '@/lib/sports/freshness';
 import { scheduleAbbr } from '@/lib/sports/ligaMxAbbr';
 import { localizeStatus } from '@/lib/sports/localizeEs';
+import { mergeMatchSnapshot } from '@/lib/sports/mergeMatchSnapshot';
 
 type Props = { league: string; id: string };
 type TabId = 'contexto' | 'momentos' | 'alineacion' | 'datos' | 'radio';
@@ -541,7 +542,7 @@ export function MatchChapter({ league, id }: Props) {
         .then((d: MatchSnapshot) => {
           if (!cancelled) {
             pace = d.state === 'in' ? 'live' : d.state === 'pre' ? 'near' : 'idle';
-            setMatch(d);
+            setMatch((prev) => mergeMatchSnapshot(prev, d));
             setError(false);
             setTab((prev) => {
               if (prev) return prev;

@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import { peekCache, peekCacheAgeMs, singleFlight } from '@/lib/apiCache';
+import { peekCache, peekCacheAgeMs, setCache, singleFlight } from '@/lib/apiCache';
 import {
   apiTtlMsForPace,
   liveCacheHeaders,
   type FreshPace,
 } from '@/lib/sports/freshness';
 import { getMatch, sportsMatchCacheKey } from '@/lib/sports/getMatch';
+import { mergeMatchSnapshot } from '@/lib/sports/mergeMatchSnapshot';
 import type { MatchSnapshot } from '@/lib/sports';
 
 function matchPace(m: MatchSnapshot): FreshPace {
@@ -42,8 +43,12 @@ export async function GET(
   );
   if (!match) return NextResponse.json({ error: 'not_found' }, { status: 404 });
 
-  const pace = matchPace(match);
-  return NextResponse.json(match, {
+  // Preserve Contexto / Alineación / Completa if a lean refresh thinned them out.
+  const merged = mergeMatchSnapshot(cached, match);
+  if (merged !== match) setCache(CACHE_KEY, merged);
+
+  const pace = matchPace(merged);
+  return NextResponse.json(merged, {
     headers: { ...liveCacheHeaders(pace), 'X-AF-Pace': pace },
   });
 }

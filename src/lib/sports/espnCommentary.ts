@@ -131,9 +131,16 @@ export async function enrichMatchWithEspnCommentary(
 ): Promise<MatchSnapshot> {
   const cacheKey = `espn-cronica-v1-${match.id}`;
   const cached = getCache<CommentaryLine[]>(cacheKey, FRESH.espnCronicaTtlMs);
+  // First Completa load: wait for Spanish PBP. Later live polls: keep scores snappy.
   const budget =
     opts?.budgetMs ??
-    (match.state === 'in' ? FRESH.espnEnrichBudgetMs : FRESH.espnEnrichBudgetIdleMs);
+    (cached
+      ? match.state === 'in'
+        ? FRESH.espnEnrichBudgetMs
+        : FRESH.espnEnrichBudgetIdleMs
+      : match.state === 'in'
+        ? FRESH.espnEnrichBudgetFirstMs
+        : FRESH.espnEnrichBudgetIdleMs);
 
   const work = (async (): Promise<MatchSnapshot> => {
     const espnId = await resolveEspnLigaMxEventId(match);
