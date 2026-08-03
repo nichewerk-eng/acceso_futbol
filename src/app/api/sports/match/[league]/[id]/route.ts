@@ -5,7 +5,7 @@ import {
   liveCacheHeaders,
   type FreshPace,
 } from '@/lib/sports/freshness';
-import { getMatch } from '@/lib/sports/getMatch';
+import { getMatch, sportsMatchCacheKey } from '@/lib/sports/getMatch';
 import type { MatchSnapshot } from '@/lib/sports';
 
 function matchPace(m: MatchSnapshot): FreshPace {
@@ -23,7 +23,7 @@ export async function GET(
     return NextResponse.json({ error: 'invalid_league' }, { status: 400 });
   }
 
-  const CACHE_KEY = `sports-match-v13-paced-${league}-${id}`;
+  const CACHE_KEY = sportsMatchCacheKey(league, id);
   const cached = peekCache<MatchSnapshot>(CACHE_KEY);
   const age = peekCacheAgeMs(CACHE_KEY);
   if (cached && age != null) {

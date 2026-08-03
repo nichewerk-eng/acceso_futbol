@@ -14,6 +14,11 @@ import {
 
 type LeagueKey = 'liga-mx' | 'mundial' | 'seleccion' | 'leagues-cup';
 
+/** Shared with `/api/sports/match` + radio so both surfaces coalesce. */
+export function sportsMatchCacheKey(league: string, id: string) {
+  return `sports-match-v13-paced-${league}-${id}`;
+}
+
 function espnSlug(league: LeagueKey) {
   return league === 'liga-mx' ? SLUG.LIGA_MX : SLUG.WORLD_CUP;
 }

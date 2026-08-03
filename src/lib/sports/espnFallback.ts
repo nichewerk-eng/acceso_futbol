@@ -2,6 +2,7 @@ import { espnFetch, scoreboardUrl, SLUG } from '@/lib/espn';
 import { APERTURA_2026_FIXTURES } from '@/fixtures/ligamx-apertura-2026';
 import { dayPairKey, scheduleAbbr } from './ligaMxAbbr';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
+import { isNearKickoff } from './freshness';
 import {
   fetchLigaMxSeasonFixtures,
   fetchLivescores,
@@ -254,12 +255,17 @@ export async function fetchLigaMxFixtures(): Promise<{
 }> {
   if (sportmonksEnabled()) {
     try {
-      const [sm, live] = await Promise.all([
-        fetchLigaMxSeasonFixtures(),
-        fetchLivescores([ligaMxLeagueId()]).catch(() => [] as Fixture[]),
-      ]);
+      const sm = await fetchLigaMxSeasonFixtures();
       if (sm.length > 0) {
-        // Season board (5m) + livescores overlay (~8s) so in-play stays fresh.
+        // Season board is 5m-cached; only hit livescores when a kickoff window is open
+        // (date-based — season state alone can lag behind kickoff).
+        const now = Date.now();
+        const mayBeLive = sm.some(
+          (f) => f.state === 'in' || isNearKickoff(f.date, now, f.state)
+        );
+        const live = mayBeLive
+          ? await fetchLivescores([ligaMxLeagueId()]).catch(() => [] as Fixture[])
+          : [];
         return { fixtures: overlayLiveFixtures(sm, live), source: 'sportmonks' };
       }
     } catch {

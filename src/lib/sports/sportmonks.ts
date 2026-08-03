@@ -1,8 +1,14 @@
-import { getCache, setCache } from '@/lib/apiCache';
+import { getCache, setCache, singleFlight } from '@/lib/apiCache';
 import { FRESH } from './freshness';
 import { dayPairKey, scheduleAbbr } from './ligaMxAbbr';
 import { localizeComment } from './localizeComment';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
+import {
+  beforeSmRequest,
+  entityForPath,
+  noteSmRateLimit,
+  type SmRateLimitInfo,
+} from './smRateLimit';
 import type {
   CommentaryLine,
   Fixture,
@@ -24,12 +30,23 @@ const BASE = 'https://api.sportmonks.com/v3/football';
 const TIMEOUT_MS = 12_000;
 const SEASON_CACHE_KEY = 'sm-ligamx-season-fixtures-v5-scorers';
 const LC_SEASON_CACHE_KEY = 'sm-leagues-cup-season-fixtures-v1';
-const LIVE_CACHE_KEY = 'sm-livescores-v2-periods';
+const LIVE_CACHE_KEY = 'sm-livescores-v4-latest';
+/** Sticky in-play board while /livescores/latest returns empty (no updates in ~10s). */
+const LIVE_STICKY_TTL_MS = 120_000;
+const DATE_CACHE_PREFIX = 'sm-fixtures-date-v1';
 const SEASON_TTL_MS = 5 * 60_000;
 /** Livescores must stay near-real-time — never share the 5m season TTL. */
 const LIVE_TTL_MS = FRESH.liveTtlMs;
+/** Date boards coalesce with near/idle pace — not as hot as livescores. */
+const DATE_TTL_MS = FRESH.apiTtlNearMs;
 const STANDINGS_CACHE_KEY = 'sm-ligamx-standings-v1';
 const STANDINGS_TTL_MS = FRESH.standingsTtlMs;
+
+function sleep(ms: number) {
+  return new Promise<void>((r) => setTimeout(r, ms));
+}
+
+type SmJson<T> = T & { rate_limit?: SmRateLimitInfo; retry_after?: number };
 
 /** Sportmonks Liga MX league id (Mexico · domestic). */
 export function ligaMxLeagueId(): number {
@@ -75,30 +92,66 @@ export function sportmonksEnabled(): boolean {
 async function smFetch<T>(
   path: string,
   params: Record<string, string> = {},
-  opts?: { revalidate?: number | false }
+  opts?: { revalidate?: number | false; retries?: number }
 ): Promise<T> {
   const token = process.env.SPORTMONKS_API_TOKEN?.trim();
   if (!token) throw new Error('SPORTMONKS_API_TOKEN missing');
+
+  const entity = entityForPath(path);
+  await beforeSmRequest(entity);
 
   const url = new URL(`${BASE}${path}`);
   url.searchParams.set('api_token', token);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   const revalidate = opts?.revalidate;
-  try {
-    const res = await fetch(url.toString(), {
-      signal: controller.signal,
-      ...(revalidate === false
-        ? { cache: 'no-store' as const }
-        : { next: { revalidate: revalidate ?? FRESH.sMaxAgeLive } }),
-    });
-    if (!res.ok) throw new Error(`Sportmonks HTTP ${res.status}`);
-    return res.json() as Promise<T>;
-  } finally {
-    clearTimeout(timer);
+  const maxAttempts = 1 + (opts?.retries ?? 1);
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    try {
+      const res = await fetch(url.toString(), {
+        signal: controller.signal,
+        ...(revalidate === false
+          ? { cache: 'no-store' as const }
+          : { next: { revalidate: revalidate ?? FRESH.sMaxAgeLive } }),
+      });
+
+      if (res.status === 429) {
+        let body: SmJson<Record<string, never>> | null = null;
+        try {
+          body = (await res.json()) as SmJson<Record<string, never>>;
+        } catch {
+          body = null;
+        }
+        if (body?.rate_limit) noteSmRateLimit(body.rate_limit);
+        const retrySec =
+          Number(body?.retry_after) ||
+          Number(body?.rate_limit?.resets_in_seconds) ||
+          Number(res.headers.get('Retry-After')) ||
+          0;
+        // Never block a serverless invoke for a full hour reset — short retry then fail to cache.
+        if (attempt < maxAttempts - 1 && retrySec > 0 && retrySec <= 8) {
+          await sleep(retrySec * 1000 + Math.floor(Math.random() * 200));
+          continue;
+        }
+        if (attempt < maxAttempts - 1 && retrySec > 8) {
+          await sleep(1_000 + Math.floor(Math.random() * 400));
+          continue;
+        }
+        throw new Error(`Sportmonks HTTP 429 (${entity})`);
+      }
+
+      if (!res.ok) throw new Error(`Sportmonks HTTP ${res.status}`);
+      const json = (await res.json()) as SmJson<T>;
+      if (json.rate_limit) noteSmRateLimit(json.rate_limit);
+      return json;
+    } finally {
+      clearTimeout(timer);
+    }
   }
+  throw new Error('Sportmonks request failed');
 }
 
 interface SmParticipant {
@@ -669,40 +722,63 @@ function mapStatistics(
   return [...byLabel.entries()].map(([label, v]) => ({ label, ...v }));
 }
 
-/** In-play + near kickoff fixtures for selected leagues. */
+/**
+ * In-play updates for selected leagues.
+ * Uses `/livescores/latest` (only fixtures touched in ~last 10s) per SM rate-limit docs.
+ * Empty latest → keep sticky in-play board; cold miss → one full `/livescores` hydrate.
+ */
 export async function fetchLivescores(leagueIds: number[] = [ligaMxLeagueId()]): Promise<Fixture[]> {
   const key = `${LIVE_CACHE_KEY}-${leagueIds.slice().sort().join(',')}`;
-  const cached = getCache<Fixture[]>(key, LIVE_TTL_MS);
-  if (cached) return cached;
+  const stickyKey = `${key}-sticky`;
+  return singleFlight(key, LIVE_TTL_MS, async () => {
+    const include = 'participants;scores;state;league;periods;events.type';
+    const filters = `fixtureLeagues:${leagueIds.join(',')}`;
+    const latest = await smFetch<{ data?: SmFixture[] }>(
+      '/livescores/latest',
+      { include, filters },
+      { revalidate: false }
+    );
+    const fresh = (latest.data ?? []).map(mapFixture);
+    const prev = getCache<Fixture[]>(stickyKey, LIVE_STICKY_TTL_MS) ?? [];
 
-  const include = 'participants;scores;state;venue;round;league;periods;events.type';
-  const data = await smFetch<{ data?: SmFixture[] }>(
-    '/livescores',
-    {
-      include,
-      filters: `fixtureLeagues:${leagueIds.join(',')}`,
-    },
-    { revalidate: false }
-  );
-  const fixtures = (data.data ?? []).map(mapFixture);
-  setCache(key, fixtures);
-  return fixtures;
+    if (fresh.length === 0) {
+      if (prev.length > 0) return prev.filter((f) => f.state === 'in');
+      // Cold start: full board once, then sticky.
+      const full = await smFetch<{ data?: SmFixture[] }>(
+        '/livescores',
+        { include, filters },
+        { revalidate: false }
+      );
+      const hydrated = (full.data ?? []).map(mapFixture).filter((f) => f.state === 'in');
+      setCache(stickyKey, hydrated);
+      return hydrated;
+    }
+
+    const byId = new Map(prev.map((f) => [f.id, f]));
+    for (const f of fresh) byId.set(f.id, f);
+    const merged = [...byId.values()].filter((f) => f.state === 'in');
+    setCache(stickyKey, merged);
+    return merged;
+  });
 }
 
 export async function fetchFixturesByDate(
   dateYYYYMMDD: string,
   leagueIds: number[] = [ligaMxLeagueId()]
 ): Promise<Fixture[]> {
-  const include = 'participants;scores;state;venue;round;league;periods';
-  const data = await smFetch<{ data?: SmFixture[] }>(
-    `/fixtures/date/${dateYYYYMMDD}`,
-    {
-      include,
-      filters: `fixtureLeagues:${leagueIds.join(',')}`,
-    },
-    { revalidate: false }
-  );
-  return (data.data ?? []).map(mapFixture);
+  const key = `${DATE_CACHE_PREFIX}-${dateYYYYMMDD}-${leagueIds.slice().sort().join(',')}`;
+  return singleFlight(key, DATE_TTL_MS, async () => {
+    const include = 'participants;scores;state;venue;round;league;periods';
+    const data = await smFetch<{ data?: SmFixture[] }>(
+      `/fixtures/date/${dateYYYYMMDD}`,
+      {
+        include,
+        filters: `fixtureLeagues:${leagueIds.join(',')}`,
+      },
+      { revalidate: false }
+    );
+    return (data.data ?? []).map(mapFixture);
+  });
 }
 
 /** Full current Liga MX season (Apertura) via season include. */
@@ -894,6 +970,12 @@ async function fetchTeamForm(teamId: string, limit = 5): Promise<FormMatch[]> {
 }
 
 export async function fetchMatchSnapshot(fixtureId: string): Promise<MatchSnapshot | null> {
+  // Coalesce match-chapter + radio polls onto one SM fixture detail call.
+  const cacheKey = `sm-match-snap-v1-${fixtureId}`;
+  return singleFlight(cacheKey, FRESH.apiTtlLiveMs, () => loadMatchSnapshot(fixtureId));
+}
+
+async function loadMatchSnapshot(fixtureId: string): Promise<MatchSnapshot | null> {
   const include =
     'participants;scores;state;venue;round;league;periods;events.type;events.player;comments;statistics.type;lineups.type;lineups.player;referees.referee;formations';
   try {

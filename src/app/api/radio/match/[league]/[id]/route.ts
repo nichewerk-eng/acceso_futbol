@@ -1,7 +1,16 @@
 import { NextResponse } from 'next/server';
+import { peekCache, peekCacheAgeMs } from '@/lib/apiCache';
 import { isRadioStyle } from '@/lib/radio/personas';
 import { buildRadioFeed } from '@/lib/radio/pipeline';
-import { getMatch } from '@/lib/sports/getMatch';
+import { apiTtlMsForPace, type FreshPace } from '@/lib/sports/freshness';
+import { getMatch, sportsMatchCacheKey } from '@/lib/sports/getMatch';
+import type { MatchSnapshot } from '@/lib/sports';
+
+function matchPace(m: MatchSnapshot): FreshPace {
+  if (m.state === 'in') return 'live';
+  if (m.state === 'pre') return 'near';
+  return 'idle';
+}
 
 export async function GET(
   req: Request,
@@ -13,7 +22,16 @@ export async function GET(
     return NextResponse.json({ error: 'invalid_style' }, { status: 400 });
   }
 
-  const match = await getMatch(league, id);
+  // Prefer the sports-match coalesce window so radio doesn't double SM detail calls.
+  const cacheKey = sportsMatchCacheKey(league, id);
+  const cached = peekCache<MatchSnapshot>(cacheKey);
+  const age = peekCacheAgeMs(cacheKey);
+  let match: MatchSnapshot | null = null;
+  if (cached && age != null && age <= apiTtlMsForPace(matchPace(cached))) {
+    match = cached;
+  } else {
+    match = await getMatch(league, id);
+  }
   if (!match) return NextResponse.json({ error: 'not_found' }, { status: 404 });
 
   const feed = await buildRadioFeed(match, styleParam);

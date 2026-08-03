@@ -37,3 +37,4 @@ export {
 } from './sportmonks';
 export { involvesLigaMxClub, isLigaMxSmTeamId } from './ligaMxTeams';
 export { fetchLigaMxFixtures } from './espnFallback';
+export { getSmRateSnapshot, sportmonksPlan, softHourlyLimit } from './smRateLimit';
