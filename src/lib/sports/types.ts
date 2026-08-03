@@ -42,6 +42,8 @@ export interface LiveEvent {
 export interface CommentaryLine {
   id: string;
   minute?: number;
+  /** Display clock as delivered by provider (e.g. 45'+7'). */
+  clock?: string;
   order?: number;
   text: string;
   isGoal?: boolean;

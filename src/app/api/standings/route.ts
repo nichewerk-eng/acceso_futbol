@@ -1,29 +1,27 @@
 import { NextResponse } from 'next/server';
 import { espnFetch, standingsUrl, SLUG } from '@/lib/espn';
 import { getCache, setCache } from '@/lib/apiCache';
+import { FRESH, standingsCacheHeaders } from '@/lib/sports/freshness';
 
-const CACHE_KEY = 'wc-standings';
-const TTL_MS    = 30_000;
+const CACHE_KEY = 'wc-standings-v2';
 
 export async function GET() {
-  const cached = getCache<ReturnType<typeof parseGroups>>(CACHE_KEY, TTL_MS);
+  const headers = standingsCacheHeaders();
+  const cached = getCache<ReturnType<typeof parseGroups>>(CACHE_KEY, FRESH.standingsTtlMs);
   if (cached) {
-    return NextResponse.json({ groups: cached }, {
-      headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' },
-    });
+    return NextResponse.json({ groups: cached }, { headers });
   }
 
   try {
-    const raw = await espnFetch(standingsUrl(SLUG.WORLD_CUP)) as { children?: GroupRaw[] };
+    const raw = (await espnFetch(standingsUrl(SLUG.WORLD_CUP), {
+      revalidate: FRESH.standingsSMaxAge,
+    })) as { children?: GroupRaw[] };
     const groups = parseGroups(raw);
     setCache(CACHE_KEY, groups);
-    return NextResponse.json({ groups }, {
-      headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' },
-    });
+    return NextResponse.json({ groups }, { headers });
   } catch {
-    // Serve stale cache on error rather than failing
     const stale = getCache<ReturnType<typeof parseGroups>>(CACHE_KEY, Infinity);
-    if (stale) return NextResponse.json({ groups: stale, stale: true }, { status: 200 });
+    if (stale) return NextResponse.json({ groups: stale, stale: true }, { status: 200, headers });
     return NextResponse.json({ error: 'upstream_error' }, { status: 502 });
   }
 }

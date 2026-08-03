@@ -4,9 +4,10 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { useGravity } from '@/contexts/GravityContext';
+import { useGamesOfDay } from '@/lib/client/useGamesOfDay';
 import { leaguePath } from '@/lib/radio/phases';
 import type { Story } from '@/lib/news/types';
-import type { DayGame, GamesOfDayPayload } from '@/lib/sports';
+import type { DayGame } from '@/lib/sports';
 
 type Props = {
   leadStory: Story | null;
@@ -40,9 +41,18 @@ function dayLabel(dayKey?: string) {
 
 function bandMeta(g: DayGame, tz: string) {
   if (g.state === 'in') {
+    const clock = (g.clock || '').trim();
+    const isHt = clock === 'HT' || /descanso|half\s*time/i.test(g.statusLabel || '');
+    const stamp = isHt
+      ? 'HT'
+      : clock === 'PEN' || /penal/i.test(g.statusLabel || '')
+        ? 'PEN'
+        : clock
+          ? clock
+          : 'LIVE';
     return {
       kind: 'live' as const,
-      stamp: g.clock ? `LIVE ${g.clock}` : 'LIVE',
+      stamp,
       center: `${g.home.score ?? 0}:${g.away.score ?? 0}`,
     };
   }
@@ -62,36 +72,12 @@ function bandMeta(g: DayGame, tz: string) {
 
 export function PulseHero({ leadStory }: Props) {
   const { matchesGravity, club, elTri, settled } = useGravity();
-  const [payload, setPayload] = useState<GamesOfDayPayload | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { payload, loading } = useGamesOfDay();
   const [userTz, setUserTz] = useState('America/Mexico_City');
 
   useEffect(() => {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     if (tz) setUserTz(tz);
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    const load = () => {
-      fetch('/api/games-of-day')
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d: GamesOfDayPayload | null) => {
-          if (!cancelled) {
-            setPayload(d && !('error' in d) ? d : null);
-            setLoading(false);
-          }
-        })
-        .catch(() => {
-          if (!cancelled) setLoading(false);
-        });
-    };
-    load();
-    const t = setInterval(load, 15_000);
-    return () => {
-      cancelled = true;
-      clearInterval(t);
-    };
   }, []);
 
   const games = useMemo(() => {

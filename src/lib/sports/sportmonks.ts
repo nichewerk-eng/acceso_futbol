@@ -1,4 +1,5 @@
 import { getCache, setCache } from '@/lib/apiCache';
+import { FRESH } from './freshness';
 import { dayPairKey, scheduleAbbr } from './ligaMxAbbr';
 import { localizeComment } from './localizeComment';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
@@ -23,9 +24,12 @@ const BASE = 'https://api.sportmonks.com/v3/football';
 const TIMEOUT_MS = 12_000;
 const SEASON_CACHE_KEY = 'sm-ligamx-season-fixtures-v5-scorers';
 const LC_SEASON_CACHE_KEY = 'sm-leagues-cup-season-fixtures-v1';
+const LIVE_CACHE_KEY = 'sm-livescores-v2-periods';
 const SEASON_TTL_MS = 5 * 60_000;
+/** Livescores must stay near-real-time — never share the 5m season TTL. */
+const LIVE_TTL_MS = FRESH.liveTtlMs;
 const STANDINGS_CACHE_KEY = 'sm-ligamx-standings-v1';
-const STANDINGS_TTL_MS = 60_000;
+const STANDINGS_TTL_MS = FRESH.standingsTtlMs;
 
 /** Sportmonks Liga MX league id (Mexico · domestic). */
 export function ligaMxLeagueId(): number {
@@ -68,7 +72,11 @@ export function sportmonksEnabled(): boolean {
   return Boolean(process.env.SPORTMONKS_API_TOKEN?.trim());
 }
 
-async function smFetch<T>(path: string, params: Record<string, string> = {}): Promise<T> {
+async function smFetch<T>(
+  path: string,
+  params: Record<string, string> = {},
+  opts?: { revalidate?: number | false }
+): Promise<T> {
   const token = process.env.SPORTMONKS_API_TOKEN?.trim();
   if (!token) throw new Error('SPORTMONKS_API_TOKEN missing');
 
@@ -78,10 +86,13 @@ async function smFetch<T>(path: string, params: Record<string, string> = {}): Pr
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const revalidate = opts?.revalidate;
   try {
     const res = await fetch(url.toString(), {
       signal: controller.signal,
-      next: { revalidate: 15 },
+      ...(revalidate === false
+        ? { cache: 'no-store' as const }
+        : { next: { revalidate: revalidate ?? FRESH.sMaxAgeLive } }),
     });
     if (!res.ok) throw new Error(`Sportmonks HTTP ${res.status}`);
     return res.json() as Promise<T>;
@@ -128,6 +139,7 @@ interface SmComment {
   id: number;
   order?: number;
   minute?: number | null;
+  extra_minute?: number | null;
   comment?: string;
   is_goal?: boolean;
 }
@@ -170,13 +182,32 @@ interface SmFormation {
   location?: string;
 }
 
+interface SmPeriod {
+  id?: number;
+  description?: string | null;
+  ticking?: boolean;
+  sort_order?: number;
+  counts_from?: number | null;
+  period_length?: number | null;
+  minutes?: number | null;
+  seconds?: number | null;
+  time_added?: number | null;
+  has_timer?: boolean;
+}
+
 interface SmFixture {
   id: number;
   starting_at?: string;
   starting_at_timestamp?: number;
   name?: string;
   result_info?: string | null;
-  state?: { id?: number; state?: string; short_name?: string; name?: string };
+  state?: {
+    id?: number;
+    state?: string;
+    short_name?: string;
+    name?: string;
+    developer_name?: string;
+  };
   participants?: SmParticipant[];
   scores?: SmScore[];
   events?: SmEvent[];
@@ -185,9 +216,15 @@ interface SmFixture {
   lineups?: SmLineup[];
   referees?: SmRefereeRow[];
   formations?: SmFormation[];
+  periods?: SmPeriod[];
   venue?: { name?: string; city_name?: string };
   round?: { name?: string };
   league?: { id?: number; name?: string };
+}
+
+function stateBlob(f: SmFixture): string {
+  const s = f.state;
+  return `${s?.developer_name ?? ''} ${s?.state ?? ''} ${s?.short_name ?? ''} ${s?.name ?? ''}`.toUpperCase();
 }
 
 function mapState(raw?: string): MatchState {
@@ -195,6 +232,82 @@ function mapState(raw?: string): MatchState {
   if (s.includes('inplay') || s === 'live' || s === '1st' || s === '2nd' || s === 'ht') return 'in';
   if (s.includes('ft') || s.includes('full') || s === 'finished' || s === 'completed') return 'post';
   return 'pre';
+}
+
+/** Live board stamp: 67' · 45+2' · HT · ET · PEN */
+function clockFromFixture(f: SmFixture, state: MatchState): string | undefined {
+  const blob = stateBlob(f);
+  if (/\bHT\b|HALF[\s_-]?TIME|DESCANSO/.test(blob)) return 'HT';
+  if (/\bPEN|PENALT/.test(blob) && state === 'in') return 'PEN';
+
+  const periods = f.periods ?? [];
+  const ticking =
+    periods.find((p) => p.ticking) ??
+    [...periods].sort((a, b) => (b.sort_order ?? 0) - (a.sort_order ?? 0))[0];
+
+  if (ticking?.minutes != null && Number.isFinite(ticking.minutes)) {
+    const mins = Math.max(0, Math.floor(ticking.minutes));
+    const from = ticking.counts_from ?? 0;
+    const length = ticking.period_length ?? 45;
+    const regulationEnd = from + length;
+    if (mins > regulationEnd) {
+      return `${regulationEnd}+${mins - regulationEnd}'`;
+    }
+    const desc = (ticking.description ?? '').toLowerCase();
+    if (desc.includes('extra') || desc.includes('et')) {
+      return `ET ${mins}'`;
+    }
+    return `${mins}'`;
+  }
+
+  if (/\bET\b|EXTRA|AET/.test(blob) && state === 'in') return 'ET';
+
+  // Fallback: latest event minute
+  const lastEvent = [...(f.events ?? [])]
+    .filter((e) => e.minute != null)
+    .sort((a, b) => (b.minute ?? 0) - (a.minute ?? 0) || (b.extra_minute ?? 0) - (a.extra_minute ?? 0))[0];
+  if (lastEvent?.minute != null) {
+    return lastEvent.extra_minute
+      ? `${lastEvent.minute}+${lastEvent.extra_minute}'`
+      : `${lastEvent.minute}'`;
+  }
+
+  return state === 'in' ? undefined : undefined;
+}
+
+/** Overlay fresh livescores onto a season/schedule board by fixture id. */
+export function overlayLiveFixtures(base: Fixture[], live: Fixture[]): Fixture[] {
+  if (!live.length) return base;
+  const byId = new Map(live.map((f) => [f.id, f]));
+  const seen = new Set<string>();
+  const merged = base.map((f) => {
+    const l = byId.get(f.id);
+    if (!l) return f;
+    seen.add(l.id);
+    return {
+      ...f,
+      state: l.state,
+      statusLabel: l.statusLabel,
+      clock: l.clock ?? f.clock,
+      winnerSide: l.winnerSide ?? f.winnerSide,
+      scorers: l.scorers ?? f.scorers,
+      home: {
+        ...f.home,
+        score: l.home.score,
+        logo: l.home.logo ?? f.home.logo,
+      },
+      away: {
+        ...f.away,
+        score: l.away.score,
+        logo: l.away.logo ?? f.away.logo,
+      },
+    };
+  });
+  // Include in-play games missing from the season board (edge cases).
+  for (const l of live) {
+    if (!seen.has(l.id) && l.state === 'in') merged.push(l);
+  }
+  return merged;
 }
 
 function scoreFor(scores: SmScore[] | undefined, side: 'home' | 'away'): string | null {
@@ -242,7 +355,8 @@ export function mapFixture(f: SmFixture): Fixture {
   const parts = f.participants ?? [];
   const homeP = parts.find((p) => participantSide(p) === 'home') ?? parts[0];
   const awayP = parts.find((p) => participantSide(p) === 'away') ?? parts[1];
-  const state = mapState(f.state?.state ?? f.state?.short_name ?? f.state?.name);
+  const stateRaw = f.state?.state ?? f.state?.short_name ?? f.state?.name ?? f.state?.developer_name;
+  const state = mapState(stateRaw);
 
   const homeScore = scoreFor(f.scores, 'home');
   const awayScore = scoreFor(f.scores, 'away');
@@ -252,6 +366,7 @@ export function mapFixture(f: SmFixture): Fixture {
   const awayAbbr = scheduleAbbr(awayP?.short_code ?? 'VIS');
   const league = mapLeagueId(f.league?.id);
   const date = f.starting_at ? `${f.starting_at.replace(' ', 'T')}Z` : new Date().toISOString();
+  const clock = clockFromFixture(f, state);
 
   const roundName = f.round?.name?.trim();
   let jornada: string | null = null;
@@ -272,9 +387,10 @@ export function mapFixture(f: SmFixture): Fixture {
     jornada,
     state,
     statusLabel: localizeStatus(
-      f.state?.name ?? f.state?.short_name ?? null,
+      f.state?.name ?? f.state?.short_name ?? f.state?.developer_name ?? null,
       state
     ),
+    clock,
     venue: localizeVenue(f.venue?.name),
     city: localizeCity(f.venue?.city_name),
     winnerSide: winnerSideOf(homeP, awayP, state, homeScore, awayScore),
@@ -417,9 +533,18 @@ function mapComments(comments: SmComment[] | undefined): CommentaryLine[] {
   return (comments ?? [])
     .map((c) => {
       const raw = (c.comment ?? '').trim();
+      const minute = c.minute ?? undefined;
+      const extra = c.extra_minute;
+      const clock =
+        minute != null
+          ? extra
+            ? `${minute}+${extra}'`
+            : `${minute}'`
+          : undefined;
       return {
         id: String(c.id),
-        minute: c.minute ?? undefined,
+        minute,
+        clock,
         order: c.order,
         text: localizeComment(raw),
         isGoal: Boolean(c.is_goal) || /\b(goal|gol)\b/i.test(raw),
@@ -546,23 +671,37 @@ function mapStatistics(
 
 /** In-play + near kickoff fixtures for selected leagues. */
 export async function fetchLivescores(leagueIds: number[] = [ligaMxLeagueId()]): Promise<Fixture[]> {
-  const include = 'participants;scores;state;venue;round;league;events.type';
-  const data = await smFetch<{ data?: SmFixture[] }>('/livescores', {
-    include,
-    filters: `fixtureLeagues:${leagueIds.join(',')}`,
-  });
-  return (data.data ?? []).map(mapFixture);
+  const key = `${LIVE_CACHE_KEY}-${leagueIds.slice().sort().join(',')}`;
+  const cached = getCache<Fixture[]>(key, LIVE_TTL_MS);
+  if (cached) return cached;
+
+  const include = 'participants;scores;state;venue;round;league;periods;events.type';
+  const data = await smFetch<{ data?: SmFixture[] }>(
+    '/livescores',
+    {
+      include,
+      filters: `fixtureLeagues:${leagueIds.join(',')}`,
+    },
+    { revalidate: false }
+  );
+  const fixtures = (data.data ?? []).map(mapFixture);
+  setCache(key, fixtures);
+  return fixtures;
 }
 
 export async function fetchFixturesByDate(
   dateYYYYMMDD: string,
   leagueIds: number[] = [ligaMxLeagueId()]
 ): Promise<Fixture[]> {
-  const include = 'participants;scores;state;venue;round;league';
-  const data = await smFetch<{ data?: SmFixture[] }>(`/fixtures/date/${dateYYYYMMDD}`, {
-    include,
-    filters: `fixtureLeagues:${leagueIds.join(',')}`,
-  });
+  const include = 'participants;scores;state;venue;round;league;periods';
+  const data = await smFetch<{ data?: SmFixture[] }>(
+    `/fixtures/date/${dateYYYYMMDD}`,
+    {
+      include,
+      filters: `fixtureLeagues:${leagueIds.join(',')}`,
+    },
+    { revalidate: false }
+  );
   return (data.data ?? []).map(mapFixture);
 }
 
@@ -756,9 +895,13 @@ async function fetchTeamForm(teamId: string, limit = 5): Promise<FormMatch[]> {
 
 export async function fetchMatchSnapshot(fixtureId: string): Promise<MatchSnapshot | null> {
   const include =
-    'participants;scores;state;venue;round;league;events.type;events.player;comments;statistics.type;lineups.type;lineups.player;referees.referee;formations';
+    'participants;scores;state;venue;round;league;periods;events.type;events.player;comments;statistics.type;lineups.type;lineups.player;referees.referee;formations';
   try {
-    const data = await smFetch<{ data?: SmFixture }>(`/fixtures/${fixtureId}`, { include });
+    const data = await smFetch<{ data?: SmFixture }>(
+      `/fixtures/${fixtureId}`,
+      { include },
+      { revalidate: false }
+    );
     if (!data.data) return null;
     const base = mapFixture(data.data);
     const events = mapEvents(
@@ -769,11 +912,17 @@ export async function fetchMatchSnapshot(fixtureId: string): Promise<MatchSnapsh
       base.away.abbreviation
     );
 
-    const [homeForm, awayForm, h2hRaw] = await Promise.all([
-      fetchTeamForm(base.home.id, 5),
-      fetchTeamForm(base.away.id, 5),
-      fetchHeadToHead(base.home.id, base.away.id),
-    ]);
+    // Live path: skip form/H2H so score/clock/events win the race.
+    let homeForm: FormMatch[] = [];
+    let awayForm: FormMatch[] = [];
+    let h2hRaw: HeadToHeadSummary | null = null;
+    if (base.state !== 'in') {
+      [homeForm, awayForm, h2hRaw] = await Promise.all([
+        fetchTeamForm(base.home.id, 5),
+        fetchTeamForm(base.away.id, 5),
+        fetchHeadToHead(base.home.id, base.away.id),
+      ]);
+    }
 
     return {
       ...base,

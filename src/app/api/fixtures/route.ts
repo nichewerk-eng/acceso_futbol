@@ -1,30 +1,29 @@
 import { NextResponse } from 'next/server';
 import { espnFetch, scoreboardUrl, SLUG } from '@/lib/espn';
 import { getCache, setCache } from '@/lib/apiCache';
+import { FRESH, liveCacheHeaders } from '@/lib/sports/freshness';
 
 // Group stage (Jun 11) → Final (Jul 19) inclusive
 const DATE_RANGE = '20260611-20260720';
-const CACHE_KEY  = 'wc-fixtures';
-const TTL_MS     = 30_000;
+const CACHE_KEY = 'wc-fixtures-v2';
 
 export async function GET() {
-  const cached = getCache<ReturnType<typeof parseFixtures>>(CACHE_KEY, TTL_MS);
+  const headers = liveCacheHeaders();
+  const cached = getCache<ReturnType<typeof parseFixtures>>(CACHE_KEY, FRESH.apiTtlMs);
   if (cached) {
-    return NextResponse.json({ fixtures: cached }, {
-      headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' },
-    });
+    return NextResponse.json({ fixtures: cached }, { headers });
   }
 
   try {
-    const raw = await espnFetch(scoreboardUrl(SLUG.WORLD_CUP, DATE_RANGE)) as { events?: EventRaw[] };
+    const raw = (await espnFetch(scoreboardUrl(SLUG.WORLD_CUP, DATE_RANGE), {
+      revalidate: false,
+    })) as { events?: EventRaw[] };
     const fixtures = parseFixtures(raw);
     setCache(CACHE_KEY, fixtures);
-    return NextResponse.json({ fixtures }, {
-      headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' },
-    });
+    return NextResponse.json({ fixtures }, { headers });
   } catch {
     const stale = getCache<ReturnType<typeof parseFixtures>>(CACHE_KEY, Infinity);
-    if (stale) return NextResponse.json({ fixtures: stale, stale: true }, { status: 200 });
+    if (stale) return NextResponse.json({ fixtures: stale, stale: true }, { status: 200, headers });
     return NextResponse.json({ error: 'upstream_error' }, { status: 502 });
   }
 }

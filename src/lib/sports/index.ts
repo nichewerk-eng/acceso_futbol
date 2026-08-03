@@ -31,6 +31,8 @@ export {
   livingRoomLeagueIds,
   fetchLigaMxSeasonFixtures,
   fetchLeaguesCupSeasonFixtures,
+  fetchLivescores,
+  overlayLiveFixtures,
   fetchLigaMxStandings,
 } from './sportmonks';
 export { involvesLigaMxClub, isLigaMxSmTeamId } from './ligaMxTeams';

@@ -1,41 +1,37 @@
 import { NextResponse } from 'next/server';
 import { espnFetch, standingsUrl, SLUG } from '@/lib/espn';
-import { getCache, setCache } from '@/lib/apiCache';
+import { peekCache, singleFlight } from '@/lib/apiCache';
+import { FRESH, standingsCacheHeaders } from '@/lib/sports/freshness';
 import { fetchLigaMxStandings, sportmonksEnabled } from '@/lib/sports/sportmonks';
 
-const CACHE_KEY = 'ligamx-standings-v2-sm';
-const TTL_MS = 60_000;
+const CACHE_KEY = 'ligamx-standings-v4-sm';
+const ccHeaders = standingsCacheHeaders();
 
 export async function GET() {
-  const cached = getCache<LigaMXTable>(CACHE_KEY, TTL_MS);
-  if (cached) return NextResponse.json(cached, { headers: ccHeaders });
-
   try {
-    if (sportmonksEnabled()) {
-      try {
-        const table = await fetchLigaMxStandings();
-        if (table.entries.length > 0) {
-          const payload: LigaMXTable = { ...table, source: 'sportmonks' };
-          setCache(CACHE_KEY, payload);
-          return NextResponse.json(payload, { headers: ccHeaders });
+    const table = await singleFlight(CACHE_KEY, FRESH.standingsTtlMs, async () => {
+      if (sportmonksEnabled()) {
+        try {
+          const sm = await fetchLigaMxStandings();
+          if (sm.entries.length > 0) {
+            return { ...sm, source: 'sportmonks' as const };
+          }
+        } catch {
+          /* fall through */
         }
-      } catch {
-        /* fall through */
       }
-    }
-
-    const raw = (await espnFetch(standingsUrl(SLUG.LIGA_MX))) as RawRoot;
-    const table: LigaMXTable = { ...parseTable(raw), source: 'espn' };
-    setCache(CACHE_KEY, table);
+      const raw = (await espnFetch(standingsUrl(SLUG.LIGA_MX), {
+        revalidate: FRESH.standingsSMaxAge,
+      })) as RawRoot;
+      return { ...parseTable(raw), source: 'espn' as const };
+    });
     return NextResponse.json(table, { headers: ccHeaders });
   } catch {
-    const stale = getCache<LigaMXTable>(CACHE_KEY, Infinity);
+    const stale = peekCache<LigaMXTable>(CACHE_KEY);
     if (stale) return NextResponse.json({ ...stale, stale: true });
     return NextResponse.json({ error: 'upstream_error' }, { status: 502 });
   }
 }
-
-const ccHeaders = { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' };
 
 export interface LigaMXEntry {
   position: number;

@@ -4,6 +4,9 @@ import { dayPairKey, scheduleAbbr } from './ligaMxAbbr';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
 import {
   fetchLigaMxSeasonFixtures,
+  fetchLivescores,
+  ligaMxLeagueId,
+  overlayLiveFixtures,
   sportmonksEnabled,
 } from './sportmonks';
 import type { Fixture, FixtureScorer, MatchState } from './types';
@@ -251,9 +254,13 @@ export async function fetchLigaMxFixtures(): Promise<{
 }> {
   if (sportmonksEnabled()) {
     try {
-      const sm = await fetchLigaMxSeasonFixtures();
+      const [sm, live] = await Promise.all([
+        fetchLigaMxSeasonFixtures(),
+        fetchLivescores([ligaMxLeagueId()]).catch(() => [] as Fixture[]),
+      ]);
       if (sm.length > 0) {
-        return { fixtures: mergeLiveOntoStatic(sm), source: 'sportmonks' };
+        // Season board (5m) + livescores overlay (~8s) so in-play stays fresh.
+        return { fixtures: overlayLiveFixtures(sm, live), source: 'sportmonks' };
       }
     } catch {
       /* fall through */

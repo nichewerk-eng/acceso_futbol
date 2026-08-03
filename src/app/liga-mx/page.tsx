@@ -26,13 +26,13 @@ export const metadata: Metadata = {
   },
 };
 
-export const revalidate = 60;
+export const revalidate = 10;
 
 async function fetchTable(): Promise<LigaMXTable | null> {
   try {
     const res = await fetch(
       'https://site.api.espn.com/apis/v2/sports/soccer/mex.1/standings',
-      { next: { revalidate: 60 } }
+      { next: { revalidate: 10 } },
     );
     if (!res.ok) return null;
     const raw = await res.json();
@@ -71,7 +71,7 @@ async function fetchFixtures(): Promise<LigaMXFixture[]> {
   try {
     const res = await fetch(
       'https://site.web.api.espn.com/apis/site/v2/sports/soccer/mex.1/scoreboard?dates=20260701-20261231&limit=200',
-      { next: { revalidate: 60 } }
+      { next: { revalidate: 10 } }
     );
     if (!res.ok) return [];
     const raw = await res.json();

@@ -1,12 +1,20 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { startLivePoll } from '@/lib/client/livePoll';
+import type { FreshPace } from '@/lib/sports/freshness';
 
 interface LiveGame {
   id: string;
-  homeAbbr: string; homeName: string; homeScore: string | null;
-  awayAbbr: string; awayName: string; awayScore: string | null;
-  status: string; clock: string; league: string;
+  homeAbbr: string;
+  homeName: string;
+  homeScore: string | null;
+  awayAbbr: string;
+  awayName: string;
+  awayScore: string | null;
+  status: string;
+  clock: string;
+  league: string;
 }
 
 const FLAG: Record<string, string> = {
@@ -23,22 +31,50 @@ const flag = (a: string) => FLAG[a] ?? '🏳️';
 async function fetchLiveGames(): Promise<LiveGame[]> {
   const games: LiveGame[] = [];
   const fetchers = [
-    fetch('/api/fixtures').then(r => r.ok ? r.json() : null).then(d => {
-      if (!d?.fixtures) return;
-      for (const f of d.fixtures) {
-        if (f.status.state === 'in') {
-          games.push({ id: f.id, homeAbbr: f.home.abbreviation, homeName: f.home.name, homeScore: f.home.score, awayAbbr: f.away.abbreviation, awayName: f.away.name, awayScore: f.away.score, status: f.status.shortDetail, clock: f.status.displayClock ?? '', league: 'mundial' });
+    fetch('/api/fixtures')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!d?.fixtures) return;
+        for (const f of d.fixtures) {
+          if (f.status.state === 'in') {
+            games.push({
+              id: f.id,
+              homeAbbr: f.home.abbreviation,
+              homeName: f.home.name,
+              homeScore: f.home.score,
+              awayAbbr: f.away.abbreviation,
+              awayName: f.away.name,
+              awayScore: f.away.score,
+              status: f.status.shortDetail,
+              clock: f.status.displayClock ?? '',
+              league: 'mundial',
+            });
+          }
         }
-      }
-    }).catch(() => {}),
-    fetch('/api/ligamx/fixtures').then(r => r.ok ? r.json() : null).then(d => {
-      if (!d?.fixtures) return;
-      for (const f of d.fixtures) {
-        if (f.status.state === 'in') {
-          games.push({ id: f.id, homeAbbr: f.home.abbreviation, homeName: f.home.name, homeScore: f.home.score, awayAbbr: f.away.abbreviation, awayName: f.away.name, awayScore: f.away.score, status: f.status.shortDetail, clock: f.status.displayClock ?? '', league: 'liga-mx' });
+      })
+      .catch(() => {}),
+    fetch('/api/ligamx/fixtures')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!d?.fixtures) return;
+        for (const f of d.fixtures) {
+          if (f.status.state === 'in') {
+            games.push({
+              id: f.id,
+              homeAbbr: f.home.abbreviation,
+              homeName: f.home.name,
+              homeScore: f.home.score,
+              awayAbbr: f.away.abbreviation,
+              awayName: f.away.name,
+              awayScore: f.away.score,
+              status: f.status.shortDetail,
+              clock: f.status.displayClock ?? '',
+              league: 'liga-mx',
+            });
+          }
         }
-      }
-    }).catch(() => {}),
+      })
+      .catch(() => {}),
   ];
   await Promise.all(fetchers);
   return games;
@@ -46,18 +82,15 @@ async function fetchLiveGames(): Promise<LiveGame[]> {
 
 export default function LiveTicker() {
   const [games, setGames] = useState<LiveGame[]>([]);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const paceRef = useRef<FreshPace>('idle');
 
   const poll = useCallback(async () => {
     const live = await fetchLiveGames();
+    paceRef.current = live.length > 0 ? 'live' : 'idle';
     setGames(live);
   }, []);
 
-  useEffect(() => {
-    poll();
-    intervalRef.current = setInterval(poll, 30_000);
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [poll]);
+  useEffect(() => startLivePoll(() => void poll(), { getPace: () => paceRef.current }), [poll]);
 
   if (games.length === 0) return null;
 
@@ -66,16 +99,27 @@ export default function LiveTicker() {
       <div className="flex items-center gap-3 overflow-x-auto px-4 pb-0.5 no-scrollbar">
         <span className="flex shrink-0 items-center gap-1.5">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
-          <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/80">En vivo</span>
+          <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/80">
+            En vivo
+          </span>
         </span>
         <span className="text-white/30 text-xs shrink-0">·</span>
         {games.map((g, i) => (
-          <span key={g.id} className="flex shrink-0 items-center gap-2 text-xs text-white font-semibold">
-            {i > 0 && <span className="text-white/30 text-xs mx-1">|</span>}
-            <span>{flag(g.homeAbbr)} {g.homeAbbr}</span>
-            <span className="font-bold tabular-nums">{g.homeScore ?? 0} – {g.awayScore ?? 0}</span>
-            <span>{g.awayAbbr} {flag(g.awayAbbr)}</span>
-            <span className="text-white/60 text-[10px]">{g.status}</span>
+          <span
+            key={g.id}
+            className="flex shrink-0 items-center gap-2 text-xs font-semibold text-white"
+          >
+            {i > 0 && <span className="mx-1 text-xs text-white/30">|</span>}
+            <span>
+              {flag(g.homeAbbr)} {g.homeAbbr}
+            </span>
+            <span className="font-bold tabular-nums">
+              {g.homeScore ?? 0} – {g.awayScore ?? 0}
+            </span>
+            <span>
+              {g.awayAbbr} {flag(g.awayAbbr)}
+            </span>
+            <span className="text-[10px] text-white/60">{g.status}</span>
           </span>
         ))}
       </div>

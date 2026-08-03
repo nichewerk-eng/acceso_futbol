@@ -1,25 +1,32 @@
 import { NextResponse } from 'next/server';
-import { getCache, setCache } from '@/lib/apiCache';
+import { peekCache, peekCacheAgeMs, singleFlight } from '@/lib/apiCache';
+import {
+  apiTtlMsForPace,
+  liveCacheHeaders,
+  paceFromFixtures,
+} from '@/lib/sports/freshness';
 import { getGamesOfDay, type GamesOfDayPayload } from '@/lib/sports/gamesOfDay';
 
-const CACHE_KEY = 'games-of-day-v1';
-const TTL_MS = 20_000;
+const CACHE_KEY = 'games-of-day-v4-paced';
 
 export async function GET() {
-  const cached = getCache<GamesOfDayPayload>(CACHE_KEY, TTL_MS);
-  if (cached) {
-    return NextResponse.json(cached, {
-      headers: { 'Cache-Control': 'public, s-maxage=20, stale-while-revalidate=40' },
-    });
+  const cached = peekCache<GamesOfDayPayload>(CACHE_KEY);
+  const age = peekCacheAgeMs(CACHE_KEY);
+  if (cached && age != null) {
+    const pace = paceFromFixtures(cached.games);
+    if (age <= apiTtlMsForPace(pace)) {
+      return NextResponse.json(cached, {
+        headers: { ...liveCacheHeaders(pace), 'X-AF-Pace': pace },
+      });
+    }
   }
 
-  try {
-    const payload = await getGamesOfDay();
-    setCache(CACHE_KEY, payload);
-    return NextResponse.json(payload, {
-      headers: { 'Cache-Control': 'public, s-maxage=20, stale-while-revalidate=40' },
-    });
-  } catch {
-    return NextResponse.json({ error: 'games_unavailable' }, { status: 502 });
-  }
+  // Coalesce concurrent misses; TTL set inside singleFlight uses near as floor.
+  const payload = await singleFlight(CACHE_KEY, apiTtlMsForPace('near'), () =>
+    getGamesOfDay()
+  );
+  const pace = paceFromFixtures(payload.games);
+  return NextResponse.json(payload, {
+    headers: { ...liveCacheHeaders(pace), 'X-AF-Pace': pace },
+  });
 }

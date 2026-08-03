@@ -3,44 +3,21 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { ClubLogo } from '@/components/brand/ClubLogo';
-import type { DayGame, GamesOfDayPayload } from '@/lib/sports';
+import { useGamesOfDay } from '@/lib/client/useGamesOfDay';
 import { leaguePath } from '@/lib/radio/phases';
 
 export function EngagementDock() {
-  const [game, setGame] = useState<DayGame | null>(null);
-  const [count, setCount] = useState(0);
+  const { payload } = useGamesOfDay();
   const [on, setOn] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    const load = () => {
-      fetch('/api/games-of-day')
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d: GamesOfDayPayload | null) => {
-          if (cancelled || !d?.games?.length) {
-            if (!cancelled) {
-              setGame(null);
-              setCount(0);
-            }
-            return;
-          }
-          const priority =
-            d.games.find((g) => g.state === 'in') ??
-            d.games.find((g) => g.phase === 'preshow') ??
-            d.games.find((g) => g.state === 'pre') ??
-            d.games[0];
-          setGame(priority);
-          setCount(d.games.length);
-        })
-        .catch(() => {});
-    };
-    load();
-    const t = setInterval(load, 25_000);
-    return () => {
-      cancelled = true;
-      clearInterval(t);
-    };
-  }, []);
+  const games = payload?.games ?? [];
+  const game =
+    games.find((g) => g.state === 'in') ??
+    games.find((g) => g.phase === 'preshow') ??
+    games.find((g) => g.state === 'pre') ??
+    games[0] ??
+    null;
+  const count = games.length;
 
   useEffect(() => {
     const onScroll = () => setOn(window.scrollY > 420 && Boolean(game));

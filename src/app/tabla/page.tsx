@@ -21,13 +21,13 @@ export const metadata: Metadata = {
   },
 };
 
-export const revalidate = 60;
+export const revalidate = 10;
 
 async function fetchGroups(): Promise<Group[]> {
   try {
     const res = await fetch(
       'https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings',
-      { next: { revalidate: 60 } },
+      { next: { revalidate: 10 } },
     );
     if (!res.ok) return [];
     const raw = await res.json();
@@ -71,7 +71,7 @@ async function fetchFixtures(): Promise<Fixture[]> {
   try {
     const res = await fetch(
       'https://site.web.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20260611-20260704&limit=200',
-      { next: { revalidate: 60 } },
+      { next: { revalidate: 10 } },
     );
     if (!res.ok) return [];
     const raw = await res.json();

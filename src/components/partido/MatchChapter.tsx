@@ -14,6 +14,8 @@ import type {
   MatchSnapshot,
   TeamLineup,
 } from '@/lib/sports';
+import { startLivePoll } from '@/lib/client/livePoll';
+import type { FreshPace } from '@/lib/sports/freshness';
 import { scheduleAbbr } from '@/lib/sports/ligaMxAbbr';
 import { localizeStatus } from '@/lib/sports/localizeEs';
 
@@ -101,7 +103,9 @@ function buildFullCronica(match: MatchSnapshot): TimelineRow[] {
       const isCard = isRed || /\bamarilla\b|\byellow card\b/i.test(text);
       return {
         id: `c-${c.id}`,
-        clock: c.minute !== undefined && c.minute !== null ? `${c.minute}'` : '',
+        clock:
+          c.clock?.trim() ||
+          (c.minute !== undefined && c.minute !== null ? `${c.minute}'` : ''),
         label: isGoal ? 'Gol' : isRed ? 'Roja' : isCard ? 'Amarilla' : '',
         text,
         peak: isGoal || isRed,
@@ -164,7 +168,15 @@ function pickKeyStats(match: MatchSnapshot): KeyStat[] {
 
 function statusCopy(match: MatchSnapshot): string {
   if (match.state === 'in') {
-    return match.clock ? `En vivo · ${match.clock}` : 'En vivo';
+    const clock = match.clock?.trim();
+    if (clock === 'HT' || /descanso|half\s*time/i.test(match.statusLabel || '')) {
+      return 'Descanso';
+    }
+    if (clock === 'PEN' || /penal/i.test(match.statusLabel || '')) return 'Penales';
+    if (clock?.startsWith('ET') || /extra/i.test(match.statusLabel || '')) {
+      return clock && clock !== 'ET' ? clock : 'Tiempo extra';
+    }
+    return clock ? `En vivo · ${clock}` : 'En vivo';
   }
   return localizeStatus(match.statusLabel, match.state);
 }
@@ -522,11 +534,13 @@ export function MatchChapter({ league, id }: Props) {
 
   useEffect(() => {
     let cancelled = false;
+    let pace: FreshPace = 'near';
     const load = () => {
       fetch(`/api/sports/match/${league}/${id}`)
         .then((r) => (r.ok ? r.json() : Promise.reject()))
         .then((d: MatchSnapshot) => {
           if (!cancelled) {
+            pace = d.state === 'in' ? 'live' : d.state === 'pre' ? 'near' : 'idle';
             setMatch(d);
             setError(false);
             setTab((prev) => {
@@ -539,11 +553,10 @@ export function MatchChapter({ league, id }: Props) {
           if (!cancelled) setError(true);
         });
     };
-    load();
-    const t = setInterval(load, 15_000);
+    const stop = startLivePoll(load, { getPace: () => pace });
     return () => {
       cancelled = true;
-      clearInterval(t);
+      stop();
     };
   }, [league, id]);
 

@@ -2,6 +2,7 @@ import { cache } from 'react';
 import { espnFetch, summaryUrl, SLUG } from '@/lib/espn';
 import { APERTURA_2026_FIXTURES } from '@/fixtures/ligamx-apertura-2026';
 import { attachDondeVer } from '@/config/dondeVer';
+import { enrichMatchWithEspnCommentary } from './espnCommentary';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
 import type { CommentaryLine, MatchSnapshot } from './types';
 import {
@@ -173,13 +174,14 @@ async function fromEspn(league: LeagueKey, id: string): Promise<MatchSnapshot | 
     const comments: CommentaryLine[] = (raw.commentary ?? [])
       .map((c, i) => {
         const text = (c.text ?? '').trim();
-        const clock = c.time?.displayValue?.trim();
+        const clock = c.time?.displayValue?.trim() || undefined;
         return {
           id: String(c.sequence ?? i),
           minute: parseClockMinute(clock),
+          clock,
           order: c.sequence ?? i,
           text,
-          isGoal: /\b(goal|gol)\b/i.test(text),
+          isGoal: /¡?go+l|\bgol\b|\bgoal\b/i.test(text),
         };
       })
       .filter((c) => c.text);
@@ -258,7 +260,12 @@ async function getMatchUncached(league: string, id: string): Promise<MatchSnapsh
         const resolved = await resolveSportmonksFixtureId(id);
         if (resolved) sm = await fetchMatchSnapshot(resolved);
       }
-      if (sm) return attachDondeVer(sm) as MatchSnapshot;
+      if (sm) {
+        // SM scores/lineups; Completa uses ESPN Spanish PBP (budgeted so live isn't stalled).
+        const enriched =
+          key === 'liga-mx' ? await enrichMatchWithEspnCommentary(sm) : sm;
+        return attachDondeVer(enriched) as MatchSnapshot;
+      }
       // Token present but fixture missing — do not serve ESPN match content.
       return null;
     } catch {

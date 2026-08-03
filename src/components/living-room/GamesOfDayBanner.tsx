@@ -3,8 +3,9 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useGravity } from '@/contexts/GravityContext';
+import { useGamesOfDay } from '@/lib/client/useGamesOfDay';
 import { leaguePath } from '@/lib/radio/phases';
-import type { DayGame, GamesOfDayPayload } from '@/lib/sports';
+import type { DayGame } from '@/lib/sports';
 
 function kickLabel(iso: string, tz: string) {
   try {
@@ -30,36 +31,12 @@ function cabinaLine(g: DayGame, tz: string) {
 
 export function GamesOfDayBanner() {
   const { matchesGravity, club, elTri } = useGravity();
-  const [payload, setPayload] = useState<GamesOfDayPayload | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { payload, loading } = useGamesOfDay();
   const [userTz, setUserTz] = useState('America/Mexico_City');
 
   useEffect(() => {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     if (tz) setUserTz(tz);
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    const load = () => {
-      fetch('/api/games-of-day')
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d: GamesOfDayPayload | null) => {
-          if (!cancelled) {
-            setPayload(d && !('error' in d) ? d : null);
-            setLoading(false);
-          }
-        })
-        .catch(() => {
-          if (!cancelled) setLoading(false);
-        });
-    };
-    load();
-    const t = setInterval(load, 25_000);
-    return () => {
-      cancelled = true;
-      clearInterval(t);
-    };
   }, []);
 
   const sorted = useMemo(() => {
@@ -168,6 +145,17 @@ export function GamesOfDayBanner() {
                     <p className="hoy-telemetry flex flex-wrap items-center gap-2 text-[var(--hoy-paper)]">
                       {g.phase === 'live' && <span className="hoy-live-dot" aria-hidden />}
                       {line.action}
+                      {g.state === 'in' && (
+                        <span className="text-[var(--signal)]">
+                          ·{' '}
+                          {g.clock === 'HT' || /descanso/i.test(g.statusLabel || '')
+                            ? 'HT'
+                            : g.clock || 'LIVE'}
+                          {g.home.score != null && g.away.score != null
+                            ? ` ${g.home.score}-${g.away.score}`
+                            : ''}
+                        </span>
+                      )}
                       {g.league === 'leagues-cup' && (
                         <span className="text-[var(--signal)]">· LEAGUES CUP</span>
                       )}

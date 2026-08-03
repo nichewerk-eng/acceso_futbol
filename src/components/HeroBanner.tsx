@@ -4,6 +4,8 @@ import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { teamNameEs } from '@/components/standings/teamNames';
 import type { MatchEvent } from '@/app/api/match/[league]/[id]/route';
+import { startLivePoll } from '@/lib/client/livePoll';
+import { paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
 
 // ── Team logo map — use uploaded crests when available ────────────────────────
 const TEAM_LOGO: Record<string, string> = {
@@ -160,7 +162,6 @@ export default function HeroBanner() {
   const [userTz, setUserTz]     = useState('America/Mexico_City');
   const [lastUp, setLastUp]     = useState(new Date());
   const [refreshing, setRefreshing] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -168,29 +169,38 @@ export default function HeroBanner() {
   }, []);
 
   const [goals, setGoals] = useState<GoalEvent[]>([]);
+  const paceRef = useRef<FreshPace>('near');
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setRefreshing(true);
     try {
       const res = await fetch('/api/fixtures');
-      if (res.ok) { const d = await res.json(); setFixtures(d.fixtures ?? []); setLastUp(new Date()); }
+      if (res.ok) {
+        const d = await res.json();
+        const next = d.fixtures ?? [];
+        setFixtures(next);
+        paceRef.current = paceFromFixtures(
+          next.map((f: { status: { state: string }; date: string }) => ({
+            state: f.status.state,
+            date: f.date,
+          }))
+        );
+        setLastUp(new Date());
+      }
     } finally { if (!silent) setRefreshing(false); }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
-  useEffect(() => {
-    intervalRef.current = setInterval(() => load(true), 30_000);
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [load]);
+  useEffect(
+    () => startLivePoll(() => void load(true), { getPace: () => paceRef.current }),
+    [load]
+  );
 
-  // Fetch live match details (goal scorers) when Mexico is playing
-  const liveMatchRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Goal scorers only while Mexico is in-play (no idle polling).
   useEffect(() => {
     const liveId = fixtures.find(
       (f) => f.status.state === 'in' && (f.home.abbreviation === 'MEX' || f.away.abbreviation === 'MEX')
     )?.id;
 
-    if (liveMatchRef.current) clearInterval(liveMatchRef.current);
     if (!liveId) { setGoals([]); return; }
 
     const fetchGoals = async () => {
@@ -203,9 +213,7 @@ export default function HeroBanner() {
       } catch { /* ignore */ }
     };
 
-    fetchGoals();
-    liveMatchRef.current = setInterval(fetchGoals, 15_000);
-    return () => { if (liveMatchRef.current) clearInterval(liveMatchRef.current); };
+    return startLivePoll(() => void fetchGoals(), { getPace: () => 'live' });
   }, [fixtures]);
 
   // Mexico

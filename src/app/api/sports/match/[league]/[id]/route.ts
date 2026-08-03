@@ -1,7 +1,18 @@
 import { NextResponse } from 'next/server';
-import { getCache, setCache } from '@/lib/apiCache';
+import { peekCache, peekCacheAgeMs, singleFlight } from '@/lib/apiCache';
+import {
+  apiTtlMsForPace,
+  liveCacheHeaders,
+  type FreshPace,
+} from '@/lib/sports/freshness';
 import { getMatch } from '@/lib/sports/getMatch';
 import type { MatchSnapshot } from '@/lib/sports';
+
+function matchPace(m: MatchSnapshot): FreshPace {
+  if (m.state === 'in') return 'live';
+  if (m.state === 'pre') return 'near';
+  return 'idle';
+}
 
 export async function GET(
   _req: Request,
@@ -12,22 +23,27 @@ export async function GET(
     return NextResponse.json({ error: 'invalid_league' }, { status: 400 });
   }
 
-  const CACHE_KEY = `sports-match-v9-${league}-${id}`;
-  const cached = getCache<MatchSnapshot>(CACHE_KEY, 12_000);
-  // Don't serve a stale empty crónica when a richer payload may be available.
-  const cachedHasStory =
-    (cached?.comments?.length ?? 0) > 0 || (cached?.events?.length ?? 0) > 0;
-  if (cached && (cachedHasStory || cached.state === 'pre')) {
-    return NextResponse.json(cached, {
-      headers: { 'Cache-Control': 'public, s-maxage=12, stale-while-revalidate=20' },
-    });
+  const CACHE_KEY = `sports-match-v13-paced-${league}-${id}`;
+  const cached = peekCache<MatchSnapshot>(CACHE_KEY);
+  const age = peekCacheAgeMs(CACHE_KEY);
+  if (cached && age != null) {
+    const pace = matchPace(cached);
+    const hasStory =
+      (cached.comments?.length ?? 0) > 0 || (cached.events?.length ?? 0) > 0;
+    if (age <= apiTtlMsForPace(pace) && (pace === 'live' || hasStory || pace === 'near')) {
+      return NextResponse.json(cached, {
+        headers: { ...liveCacheHeaders(pace), 'X-AF-Pace': pace },
+      });
+    }
   }
 
-  const match = await getMatch(league, id);
+  const match = await singleFlight(CACHE_KEY, apiTtlMsForPace('live'), () =>
+    getMatch(league, id)
+  );
   if (!match) return NextResponse.json({ error: 'not_found' }, { status: 404 });
 
-  setCache(CACHE_KEY, match);
+  const pace = matchPace(match);
   return NextResponse.json(match, {
-    headers: { 'Cache-Control': 'public, s-maxage=12, stale-while-revalidate=20' },
+    headers: { ...liveCacheHeaders(pace), 'X-AF-Pace': pace },
   });
 }

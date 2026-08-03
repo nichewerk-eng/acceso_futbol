@@ -1,6 +1,7 @@
 import { attachDondeVer } from '@/config/dondeVer';
 import { editorialWeather } from '@/config/editorialWeather';
 import { isMexicoDay, mexicoDayKey } from '@/lib/radio/phases';
+import { isNearKickoff } from './freshness';
 import type { Fixture, PulsePayload } from './types';
 import { fetchEspnLigaMxFixtures } from './espnFallback';
 import { fetchFixturesByDate, fetchLivescores, sportmonksEnabled } from './sportmonks';
@@ -29,12 +30,16 @@ export async function getPulse(): Promise<PulsePayload> {
   if (sportmonksEnabled()) {
     try {
       const today = new Date().toISOString().slice(0, 10);
-      const [liveSm, dated] = await Promise.all([
-        fetchLivescores(),
-        fetchFixturesByDate(today),
-      ]);
+      const dated = await fetchFixturesByDate(today);
+      const now = Date.now();
+      const mayBeLive = dated.some(
+        (f) => f.state === 'in' || isNearKickoff(f.date, now, f.state)
+      );
+      const liveSm = mayBeLive
+        ? await fetchLivescores().catch(() => [] as Fixture[])
+        : [];
       const byId = new Map<string, Fixture>();
-      for (const f of [...liveSm, ...dated]) byId.set(f.id, f);
+      for (const f of [...dated, ...liveSm]) byId.set(f.id, f);
       const fixtures = withBridge([...byId.values()]);
       const parts = partition(fixtures);
       return {

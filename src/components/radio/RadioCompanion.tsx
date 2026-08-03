@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { RitualSlot } from '@/components/ritual/RitualSlot';
+import { startLivePoll } from '@/lib/client/livePoll';
 
 type Beat = {
   id: string;
@@ -46,11 +47,11 @@ export function RadioCompanion({ league, matchId }: { league: string; matchId: s
         })
         .catch(() => {});
     };
-    load();
-    const t = setInterval(load, 12_000);
+    // Radio beats are not score-critical — idle pace is enough.
+    const stop = startLivePoll(load, { getPace: () => 'idle' });
     return () => {
       cancelled = true;
-      clearInterval(t);
+      stop();
     };
   }, [league, matchId]);
 

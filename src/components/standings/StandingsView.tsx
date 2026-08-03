@@ -8,6 +8,8 @@ import BracketView from './BracketView';
 import BracketSimulator from './BracketSimulator';
 import { downloadGroupImage, downloadGroupImageWithPhoto } from './generateImage';
 import { teamNameEs } from './teamNames';
+import { startLivePoll } from '@/lib/client/livePoll';
+import { FRESH } from '@/lib/sports/freshness';
 import type { Fixture, Group } from './types';
 
 // ── Flag emoji map ─────────────────────────────────────────────────────────────
@@ -68,7 +70,6 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
   const [downloading, setDownloading]     = useState(false);
   const [userTz, setUserTz]               = useState('America/Mexico_City');
   const [bgPhotoUrl, setBgPhotoUrl]       = useState<string | null>(null);
-  const intervalRef  = useRef<ReturnType<typeof setInterval> | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -96,11 +97,10 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
     } finally { if (!silent) setRefreshing(false); }
   }, []);
 
-  useEffect(() => {
-    refresh(true); // immediate fresh fetch on mount
-    intervalRef.current = setInterval(() => refresh(true), 30_000);
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [refresh]);
+  useEffect(
+    () => startLivePoll(() => void refresh(true), FRESH.standingsClientMs),
+    [refresh]
+  );
 
   // ── Derived: current group fixtures ─────────────────────────────────────────
   const currentGroup = groups.find((g) => g.abbreviation === `Group ${selectedGroup}`);

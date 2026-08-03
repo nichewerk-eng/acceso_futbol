@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useEffect, useState, type CSSProperties } from 'react';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { useGravity } from '@/contexts/GravityContext';
+import { startLivePoll } from '@/lib/client/livePoll';
+import { paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
 import type { Fixture } from '@/lib/sports';
 import type { JornadaOverview } from '@/lib/sports/jornada';
 
@@ -61,7 +63,13 @@ function ResultStamp({ f, mine }: { f: Fixture; mine: boolean }) {
     >
       <div className="jor-stamp-meta">
         {live && <span className="hoy-live-dot" aria-hidden />}
-        <span>{live ? f.clock || 'LIVE' : 'FT'}</span>
+        <span>
+          {live
+            ? f.clock === 'HT' || /descanso/i.test(f.statusLabel || '')
+              ? 'HT'
+              : f.clock || 'LIVE'
+            : 'FT'}
+        </span>
         {!live && <span aria-hidden>· {resultTag}</span>}
         {mine && <span className="text-signal">· LOCK</span>}
       </div>
@@ -133,11 +141,17 @@ export function JornadaRecap() {
 
   useEffect(() => {
     let cancelled = false;
+    let pace: FreshPace = 'near';
     const load = () => {
       fetch('/api/jornada')
         .then((r) => (r.ok ? r.json() : null))
         .then((d: JornadaOverview | null) => {
           if (!cancelled) {
+            if (d) {
+              pace = paceFromFixtures([...d.live, ...d.played, ...d.upcoming]);
+            } else {
+              pace = 'idle';
+            }
             setData(d);
             setLoading(false);
           }
@@ -146,11 +160,10 @@ export function JornadaRecap() {
           if (!cancelled) setLoading(false);
         });
     };
-    load();
-    const t = setInterval(load, 30_000);
+    const stop = startLivePoll(load, { getPace: () => pace });
     return () => {
       cancelled = true;
-      clearInterval(t);
+      stop();
     };
   }, []);
 

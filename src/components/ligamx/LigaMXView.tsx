@@ -9,6 +9,8 @@ import { ligaMxLeagueLogoSrc } from '@/config/ligaMxLogos';
 import { getCurrentJornada } from '@/fixtures/ligamx-apertura-2026';
 import type { LigaMXTable, LigaMXEntry } from '@/app/api/ligamx/standings/route';
 import type { LigaMXFixture } from '@/app/api/ligamx/fixtures/route';
+import { startLivePoll } from '@/lib/client/livePoll';
+import { FRESH, paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
 import { mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
 
 /** Apertura 2026: no Play-In — top 8 go straight to Liguilla. */
@@ -50,26 +52,34 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [userTz, setUserTz] = useState('America/Mexico_City');
   const [selectedJornada, setSelectedJornada] = useState(() => getCurrentJornada(baseFixtures));
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
   useEffect(() => {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     if (tz) setUserTz(tz);
     setLastUpdated(new Date());
   }, []);
 
-  const refresh = useCallback(async (silent = false) => {
+  const paceRef = useRef<FreshPace>('near');
+  const lastStandingsAt = useRef(0);
+
+  const refreshFixtures = useCallback(async (silent = false) => {
     if (!silent) setRefreshing(true);
     try {
-      const [sr, fr] = await Promise.all([
-        fetch('/api/ligamx/standings'),
-        fetch('/api/ligamx/fixtures'),
-      ]);
-      if (sr.ok) setTable(await sr.json());
+      const fr = await fetch('/api/ligamx/fixtures');
       if (fr.ok) {
         const d = await fr.json();
-        // API already merges; keep client merge as safety for older caches.
-        setFixtures(mergeLigaMxSchedule(d.fixtures ?? []));
+        const next = mergeLigaMxSchedule(d.fixtures ?? []);
+        setFixtures(next);
+        paceRef.current = paceFromFixtures(
+          next.map((f) => ({ state: f.status.state, date: f.date }))
+        );
+      }
+      // Standings change slowly — refresh on a separate budget.
+      if (Date.now() - lastStandingsAt.current >= FRESH.standingsClientMs) {
+        const sr = await fetch('/api/ligamx/standings');
+        if (sr.ok) {
+          setTable(await sr.json());
+          lastStandingsAt.current = Date.now();
+        }
       }
       setLastUpdated(new Date());
     } finally {
@@ -77,12 +87,15 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
     }
   }, []);
 
-  useEffect(() => {
-    intervalRef.current = setInterval(() => refresh(true), 60_000);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [refresh]);
+  const refresh = useCallback(async (silent = false) => {
+    lastStandingsAt.current = 0;
+    await refreshFixtures(silent);
+  }, [refreshFixtures]);
+
+  useEffect(
+    () => startLivePoll(() => void refreshFixtures(true), { getPace: () => paceRef.current }),
+    [refreshFixtures]
+  );
 
   const liveFixtures = fixtures.filter((f) => f.status.state === 'in');
   const allJornadas = Array.from({ length: 17 }, (_, i) => i + 1);

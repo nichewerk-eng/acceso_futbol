@@ -10,6 +10,7 @@ import type { Fixture, MatchState } from './types';
 import { fetchEspnLigaMxFixtures } from './espnFallback';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
 import { involvesLigaMxClub } from './ligaMxTeams';
+import { isNearKickoff } from './freshness';
 import {
   fetchFixturesByDate,
   fetchLivescores,
@@ -153,13 +154,22 @@ async function ligaMxForDay(
       const next = new Date(`${dayKey}T12:00:00Z`);
       next.setUTCDate(next.getUTCDate() + 1);
       const nextKey = next.toISOString().slice(0, 10);
-      const [live, a, b] = await Promise.all([
-        fetchLivescores(leagues),
+      // Date boards first — only hit livescores when something may be in-play.
+      const [a, b] = await Promise.all([
         fetchFixturesByDate(dayKey, leagues),
         fetchFixturesByDate(nextKey, leagues),
       ]);
+      const dated = [...a, ...b];
+      const now = Date.now();
+      const mayBeLive = dated.some(
+        (f) => f.state === 'in' || isNearKickoff(f.date, now, f.state)
+      );
+      const live = mayBeLive
+        ? await fetchLivescores(leagues).catch(() => [] as Fixture[])
+        : [];
       const byId = new Map<string, Fixture>();
-      for (const f of [...live, ...a, ...b]) {
+      // Livescores last so in-play scores/clock win.
+      for (const f of [...dated, ...live]) {
         if (!(isMexicoDay(f.date, dayKey) || f.state === 'in')) continue;
         if (!keepLivingRoomFixture(f)) continue;
         byId.set(f.id, attachDondeVer(f));

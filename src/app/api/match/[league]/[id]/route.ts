@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { espnFetch, summaryUrl, SLUG } from '@/lib/espn';
 import { getCache, setCache } from '@/lib/apiCache';
+import { FRESH, liveCacheHeaders } from '@/lib/sports/freshness';
 
 const SLUG_MAP: Record<string, string> = {
   mundial: SLUG.WORLD_CUP,
@@ -15,19 +16,16 @@ export async function GET(
   const slug = SLUG_MAP[league];
   if (!slug) return NextResponse.json({ error: 'invalid_league' }, { status: 400 });
 
-  const CACHE_KEY = `match-${league}-${id}`;
-  const TTL_MS    = 15_000;
-
-  const cached = getCache<MatchSummary>(CACHE_KEY, TTL_MS);
-  if (cached) return NextResponse.json(cached);
+  const CACHE_KEY = `match-${league}-${id}-v2`;
+  const headers = liveCacheHeaders();
+  const cached = getCache<MatchSummary>(CACHE_KEY, FRESH.apiTtlMs);
+  if (cached) return NextResponse.json(cached, { headers });
 
   try {
-    const raw = await espnFetch(summaryUrl(slug, id)) as RawSummary;
+    const raw = (await espnFetch(summaryUrl(slug, id), { revalidate: false })) as RawSummary;
     const summary = parseSummary(raw, id, league);
     setCache(CACHE_KEY, summary);
-    return NextResponse.json(summary, {
-      headers: { 'Cache-Control': 'public, s-maxage=15, stale-while-revalidate=30' },
-    });
+    return NextResponse.json(summary, { headers });
   } catch {
     return NextResponse.json({ error: 'upstream_error' }, { status: 502 });
   }

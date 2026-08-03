@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { teamNameEs } from '@/components/standings/teamNames';
 import type { MatchSummary } from '@/app/api/match/[league]/[id]/route';
+import { startLivePoll } from '@/lib/client/livePoll';
 
 const FLAG: Record<string, string> = {
   MEX: '🇲🇽', ECU: '🇪🇨', USA: '🇺🇸', CAN: '🇨🇦', ARG: '🇦🇷', BRA: '🇧🇷',
@@ -45,13 +46,14 @@ export default function MatchView({ league, id }: Props) {
 
   useEffect(() => {
     if (!data || data.header.status.state !== 'in') return;
-    const timer = setInterval(() => {
+    return startLivePoll(() => {
       fetch(`/api/match/${league}/${id}`)
-        .then((r) => r.ok ? r.json() : null)
-        .then((d) => { if (d) setData(d); })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (d) setData(d);
+        })
         .catch(() => {});
-    }, 15_000);
-    return () => clearInterval(timer);
+    });
   }, [data, league, id]);
 
   const backHref = league === 'liga-mx' ? '/liga-mx' : '/tabla';

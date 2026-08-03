@@ -4,14 +4,23 @@
 const UA = 'AccesoFutbol/1.0';
 const TIMEOUT_MS = 8_000;
 
-export async function espnFetch(url: string): Promise<unknown> {
+export async function espnFetch(
+  url: string,
+  opts?: { revalidate?: number | false }
+): Promise<unknown> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const revalidate = opts?.revalidate;
   try {
     const res = await fetch(url, {
-      headers: { 'User-Agent': UA },
+      headers: {
+        'User-Agent': UA,
+        'Accept-Language': 'es-MX,es;q=0.9',
+      },
       signal: controller.signal,
-      next: { revalidate: 30 },
+      ...(revalidate === false
+        ? { cache: 'no-store' as const }
+        : { next: { revalidate: revalidate ?? 5 } }),
     });
     if (!res.ok) throw new Error(`ESPN HTTP ${res.status}`);
     return res.json();
@@ -30,12 +39,12 @@ export function standingsUrl(slug: string) {
   return `https://site.api.espn.com/apis/v2/sports/soccer/${slug}/standings`;
 }
 
-export function scoreboardUrl(slug: string, dateRange: string, limit = 200) {
-  return `https://site.web.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard?dates=${dateRange}&limit=${limit}`;
+export function scoreboardUrl(slug: string, dateRange: string, limit = 200, lang = 'es') {
+  return `https://site.web.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard?dates=${dateRange}&limit=${limit}&lang=${lang}`;
 }
 
-export function summaryUrl(slug: string, eventId: string) {
-  return `https://site.web.api.espn.com/apis/site/v2/sports/soccer/${slug}/summary?event=${eventId}`;
+export function summaryUrl(slug: string, eventId: string, lang = 'es') {
+  return `https://site.web.api.espn.com/apis/site/v2/sports/soccer/${slug}/summary?event=${eventId}&lang=${lang}`;
 }
 
 export function leadersUrl(slug: string) {

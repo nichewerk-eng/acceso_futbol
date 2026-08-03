@@ -1,26 +1,31 @@
 import { NextResponse } from 'next/server';
-import { getCache, setCache } from '@/lib/apiCache';
+import { peekCache, peekCacheAgeMs, singleFlight } from '@/lib/apiCache';
+import {
+  apiTtlMsForPace,
+  liveCacheHeaders,
+  paceFromFixtures,
+} from '@/lib/sports/freshness';
 import { getPulse } from '@/lib/sports';
 import type { PulsePayload } from '@/lib/sports';
 
-const CACHE_KEY = 'pulse-v1';
-const TTL_MS = 15_000;
+const CACHE_KEY = 'pulse-v3-paced';
 
 export async function GET() {
-  const cached = getCache<PulsePayload>(CACHE_KEY, TTL_MS);
-  if (cached) {
-    return NextResponse.json(cached, {
-      headers: { 'Cache-Control': 'public, s-maxage=15, stale-while-revalidate=30' },
-    });
+  const cached = peekCache<PulsePayload>(CACHE_KEY);
+  const age = peekCacheAgeMs(CACHE_KEY);
+  if (cached && age != null) {
+    const rows = [...cached.live, ...cached.upcoming, ...cached.recent];
+    const pace = paceFromFixtures(rows);
+    if (age <= apiTtlMsForPace(pace)) {
+      return NextResponse.json(cached, {
+        headers: { ...liveCacheHeaders(pace), 'X-AF-Pace': pace },
+      });
+    }
   }
 
-  try {
-    const pulse = await getPulse();
-    setCache(CACHE_KEY, pulse);
-    return NextResponse.json(pulse, {
-      headers: { 'Cache-Control': 'public, s-maxage=15, stale-while-revalidate=30' },
-    });
-  } catch {
-    return NextResponse.json({ error: 'pulse_unavailable' }, { status: 502 });
-  }
+  const pulse = await singleFlight(CACHE_KEY, apiTtlMsForPace('near'), () => getPulse());
+  const pace = paceFromFixtures([...pulse.live, ...pulse.upcoming, ...pulse.recent]);
+  return NextResponse.json(pulse, {
+    headers: { ...liveCacheHeaders(pace), 'X-AF-Pace': pace },
+  });
 }

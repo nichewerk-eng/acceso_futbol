@@ -12,6 +12,8 @@ import {
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { useGravity } from '@/contexts/GravityContext';
+import { startLivePoll } from '@/lib/client/livePoll';
+import { paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
 import type { Fixture } from '@/lib/sports/types';
 
 function dayKeyInTz(d: Date, tz: string) {
@@ -44,12 +46,12 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
   const [fixtures, setFixtures] = useState(initialFixtures);
   const [refreshing, setRefreshing] = useState(false);
   const [userTz, setUserTz] = useState('America/Mexico_City');
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
   useEffect(() => {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     if (tz) setUserTz(tz);
   }, []);
+
+  const paceRef = useRef<FreshPace>('near');
 
   const refresh = useCallback(async (silent = false) => {
     if (!silent) setRefreshing(true);
@@ -57,19 +59,19 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
       const res = await fetch('/api/leagues-cup/fixtures');
       if (res.ok) {
         const d = (await res.json()) as { fixtures?: Fixture[] };
-        setFixtures(d.fixtures ?? []);
+        const next = d.fixtures ?? [];
+        setFixtures(next);
+        paceRef.current = paceFromFixtures(next);
       }
     } finally {
       if (!silent) setRefreshing(false);
     }
   }, []);
 
-  useEffect(() => {
-    intervalRef.current = setInterval(() => refresh(true), 60_000);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [refresh]);
+  useEffect(
+    () => startLivePoll(() => void refresh(true), { getPace: () => paceRef.current }),
+    [refresh]
+  );
 
   const todayKey = useMemo(() => dayKeyInTz(new Date(), userTz), [userTz]);
 
@@ -225,6 +227,14 @@ function MatchRow({
     f.state === 'pre'
       ? fmtTime(f.date, tz)
       : `${f.home.score ?? '0'}–${f.away.score ?? '0'}`;
+  const clockStamp =
+    f.state === 'in'
+      ? f.clock === 'HT' || /descanso/i.test(f.statusLabel || '')
+        ? 'HT'
+        : f.clock || 'LIVE'
+      : f.state === 'post'
+        ? 'FT'
+        : null;
 
   return (
     <li>
@@ -236,7 +246,7 @@ function MatchRow({
         <div className="min-w-[5.5rem] shrink-0">
           <p className="af-tele text-muted">
             {live && <span className="hoy-live-dot mr-1.5" aria-hidden />}
-            {f.jornada ?? 'LC'}
+            {clockStamp ?? f.jornada ?? 'LC'}
           </p>
           <p className="mt-1 font-mono text-[11px] text-muted">{fmtDay(f.date, tz)}</p>
         </div>
