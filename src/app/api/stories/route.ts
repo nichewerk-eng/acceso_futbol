@@ -3,7 +3,7 @@ import { getCache, setCache } from '@/lib/apiCache';
 import { aggregateStories } from '@/lib/news/aggregate';
 import type { StoriesPayload } from '@/lib/news/types';
 
-const CACHE_KEY = 'stories-v8-acceso';
+const CACHE_KEY = 'stories-v9-wire-lead';
 const TTL_MS = 120_000;
 
 export async function GET() {

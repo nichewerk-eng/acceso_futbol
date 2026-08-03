@@ -42,10 +42,12 @@ export function StoriesRail() {
   }, []);
 
   const lead =
-    stories.find((s) => s.sourceId === 'acceso' && s.image) ??
-    stories.find((s) => s.sourceId === 'acceso') ??
     stories.find((s) => s.sourceId === 'espn' && s.image) ??
     stories.find((s) => s.sourceId === 'espn') ??
+    stories.find((s) => s.sourceId !== 'acceso' && s.image) ??
+    stories.find((s) => s.sourceId !== 'acceso') ??
+    stories.find((s) => s.sourceId === 'acceso' && s.image) ??
+    stories.find((s) => s.sourceId === 'acceso') ??
     null;
   const rest = lead ? stories.filter((s) => s.id !== lead.id) : stories;
   const isInternal = (url: string) => url.startsWith('/');
@@ -170,7 +172,7 @@ export function StoriesRail() {
         )}
 
         <p className="mt-6 af-tele">
-          Acceso primero. El cable de ESPN · MT · TUDN · Marca con atribución — tocan la fuente.
+          Cable primero (ESPN · MT · TUDN · Marca). Acceso abajo con atribución — tocan la fuente.
         </p>
       </div>
     </section>

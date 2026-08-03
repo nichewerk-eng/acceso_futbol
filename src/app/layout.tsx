@@ -49,6 +49,10 @@ export const metadata: Metadata = {
     },
   },
   appleWebApp: { capable: true, statusBarStyle: "default", title: "Acceso Futbol" },
+  icons: {
+    icon: [{ url: "/logo-dark.png", type: "image/png" }],
+    apple: [{ url: "/logo-dark.png", type: "image/png" }],
+  },
   openGraph: {
     title: "Acceso Futbol | Liga MX, Leagues Cup y El Tri",
     description: siteConfig.description,

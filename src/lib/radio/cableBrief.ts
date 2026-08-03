@@ -35,14 +35,51 @@ function briefBucket(now = Date.now()) {
 }
 
 export function cableBriefId(style: RadioStyle, now = Date.now()) {
-  // v3: spoken podcast voice (human host, not news-wire readout)
-  return `cable-brief-v3-${briefBucket(now)}-${style}`;
+  // v4: wire-first picks that rotate every brief bucket
+  return `cable-brief-v4-${briefBucket(now)}-${style}`;
 }
 
-function pickStories(stories: Story[], limit = 6): Story[] {
-  const withBody = stories.filter((s) => (s.summary?.trim().length ?? 0) > 40);
-  const rest = stories.filter((s) => !withBody.includes(s));
-  return [...withBody, ...rest].slice(0, limit);
+const WIRE_SOURCES = new Set(['espn', 'espn-rss', 'mediotiempo', 'tudn', 'marca']);
+
+function storyFreshness(s: Story): number {
+  return s.publishedAt ? +new Date(s.publishedAt) : 0;
+}
+
+function storyBodyScore(s: Story): number {
+  return (s.summary?.trim().length ?? 0) > 40 ? 1 : 0;
+}
+
+/**
+ * Top wire news for the brief. Acceso editorial is demoted (at most one take at the end).
+ * Rotates the lead window every brief bucket so the cut changes every few hours.
+ */
+export function pickStories(stories: Story[], limit = 6, now = Date.now()): Story[] {
+  const wire = stories.filter((s) => WIRE_SOURCES.has(s.sourceId));
+  const acceso = stories.filter((s) => s.sourceId === 'acceso');
+  const pool = (wire.length ? wire : stories.filter((s) => s.sourceId !== 'acceso')).slice();
+
+  pool.sort((a, b) => {
+    const body = storyBodyScore(b) - storyBodyScore(a);
+    if (body) return body;
+    return storyFreshness(b) - storyFreshness(a);
+  });
+
+  if (pool.length === 0) {
+    return acceso.slice(0, limit);
+  }
+
+  // Keep a fresh top stack, then rotate which slice leads this bucket.
+  const stack = pool.slice(0, Math.min(pool.length, Math.max(limit + 4, 10)));
+  const bucket = briefBucket(now);
+  const offset = stack.length <= limit ? 0 : (bucket * 2) % (stack.length - limit + 1);
+  const picks = stack.slice(offset, offset + limit);
+
+  // One Acceso take at the end if we still have a slot — never the lead.
+  if (picks.length < limit && acceso[0]) {
+    picks.push(acceso[0]);
+  }
+
+  return picks.slice(0, limit);
 }
 
 function storyBlurb(s: Story): string {
@@ -76,9 +113,10 @@ function jornadaBlurb(j: JornadaOverview | null): string {
 export function templateCableBrief(
   stories: Story[],
   jornada: JornadaOverview | null,
-  style: RadioStyle
+  style: RadioStyle,
+  now = Date.now()
 ): ShowSegment[] {
-  const picks = pickStories(stories, 6);
+  const picks = pickStories(stories, 6, now);
   const lead = picks[0];
   const jLine = jornadaBlurb(jornada);
 
@@ -142,7 +180,8 @@ async function rewriteCableBrief(
   style: RadioStyle,
   stories: Story[],
   jornada: JornadaOverview | null,
-  draft: ShowSegment[]
+  draft: ShowSegment[],
+  now = Date.now()
 ): Promise<ShowSegment[]> {
   if (!anthropicEnabled()) return draft;
 
@@ -166,12 +205,13 @@ REGLAS DE VOZ (crítico):
 - Puedes hacer una pregunta retórica corta o un aparte ("la neta…", "ojo…") si ayuda.
 - ${draft.length} bloques. Cada bloque: 4 a 7 oraciones habladas, para oídos.
 - Atribuye fuentes por nombre (ESPN, Mediotiempo, TUDN, Marca). No inventes goles, citas ni hechos.
+- Prioriza el cable de agencias; Acceso editorial solo como toma corta al final si aparece.
 - No leas artículos enteros: solo titulares, resúmenes y tomas Acceso del input.
 - Reescribe el draft para que suene más humano; conserva los hechos.
 - Responde SOLO JSON: [{"id":"...","text":"..."}]`,
       user: JSON.stringify({
         kind: 'cable-brief-podcast',
-        goal: 'El oyente debe sentir que escucha un podcast, no un resumen de noticias.',
+        goal: 'El oyente debe sentir que escucha un podcast fresco del cable, no un resumen estático.',
         jornada: jornada
           ? {
               label: jornada.label,
@@ -186,7 +226,7 @@ REGLAS DE VOZ (crítico):
               ),
             }
           : null,
-        stories: pickStories(stories, 6).map((s) => ({
+        stories: pickStories(stories, 6, now).map((s) => ({
           source: s.sourceLabel,
           title: s.title,
           summary: s.summary?.slice(0, 220) ?? '',
@@ -217,10 +257,11 @@ REGLAS DE VOZ (crítico):
 export async function buildCableBriefSegments(
   stories: Story[],
   jornada: JornadaOverview | null,
-  style: RadioStyle
+  style: RadioStyle,
+  now = Date.now()
 ): Promise<ShowSegment[]> {
-  const draft = templateCableBrief(stories, jornada, style);
-  return rewriteCableBrief(style, stories, jornada, draft);
+  const draft = templateCableBrief(stories, jornada, style, now);
+  return rewriteCableBrief(style, stories, jornada, draft, now);
 }
 
 async function ensureBriefBeat(
@@ -256,7 +297,7 @@ export async function buildCableBriefFeed(
 ): Promise<CableBriefPayload> {
   const id = cableBriefId(style, now.getTime());
   const enabled = radioEnabled();
-  const picks = pickStories(stories, 6);
+  const picks = pickStories(stories, 6, now.getTime());
   const sources = [...new Set(picks.map((s) => s.sourceLabel))];
 
   if (!enabled) {
@@ -277,7 +318,7 @@ export async function buildCableBriefFeed(
 
   let beats = listBeats(id, style).filter((b) => b.kind === 'show');
   if (beats.length < 3) {
-    const segments = await buildCableBriefSegments(stories, jornada, style);
+    const segments = await buildCableBriefSegments(stories, jornada, style, now.getTime());
     for (const seg of segments) {
       await ensureBriefBeat(id, style, seg);
     }

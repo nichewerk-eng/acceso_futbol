@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 type Beat = {
   id: string;
@@ -11,16 +11,20 @@ type Beat = {
 };
 
 type BriefPayload = {
+  id?: string;
   title?: string;
   enabled?: boolean;
   sources?: string[];
   storyCount?: number;
   jornadaLabel?: string | null;
+  expiresAt?: string;
   beats?: Beat[];
 };
 
 /** Single Acceso voice for now. */
 const RADIO_STYLE = 'caliente';
+/** Client poll — server regenerates on a 2h bucket. */
+const REFRESH_MS = 5 * 60 * 1000;
 
 export function CableBriefPlayer() {
   const [playing, setPlaying] = useState(false);
@@ -31,32 +35,49 @@ export function CableBriefPlayer() {
   const spokenRef = useRef<Set<string>>(new Set());
   const busyRef = useRef(false);
   const playingRef = useRef(false);
+  const briefIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     playingRef.current = playing;
   }, [playing]);
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    fetch(`/api/radio/cable-brief?style=${RADIO_STYLE}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d: BriefPayload | null) => {
-        if (!cancelled) {
-          setPayload(d);
-          setLoading(false);
-          if (d?.beats?.length) {
-            setLine(d.beats[0]?.text ?? 'Briefing listo.');
-          }
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
+  const loadBrief = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    try {
+      const r = await fetch(`/api/radio/cable-brief?style=${RADIO_STYLE}`);
+      const d = (r.ok ? await r.json() : null) as BriefPayload | null;
+      if (!d) return;
+      const nextId = d.id ?? null;
+      if (nextId && briefIdRef.current && nextId !== briefIdRef.current && playingRef.current) {
+        // New cut arrived — stop current playback so the next listen is fresh.
+        setPlaying(false);
+        audioRef.current?.pause();
+        if (typeof window !== 'undefined') window.speechSynthesis?.cancel();
+        busyRef.current = false;
+        spokenRef.current = new Set();
+      }
+      if (nextId !== briefIdRef.current) {
+        briefIdRef.current = nextId;
+        spokenRef.current = new Set();
+      }
+      setPayload(d);
+      if (d.beats?.length && !playingRef.current) {
+        setLine(d.beats[0]?.text ?? 'Briefing listo.');
+      }
+    } catch {
+      /* keep last good payload */
+    } finally {
+      if (!silent) setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadBrief(false);
+    const tick = window.setInterval(() => {
+      void loadBrief(true);
+    }, REFRESH_MS);
+    return () => window.clearInterval(tick);
+  }, [loadBrief]);
 
   function speakFallback(text: string, onEnd: () => void) {
     if (typeof window === 'undefined' || !window.speechSynthesis) {
@@ -77,26 +98,31 @@ export function CableBriefPlayer() {
     const next = queue.find((b) => !spokenRef.current.has(b.id));
     if (!next) {
       setPlaying(false);
-      setLine('Briefing completo. Vuelve al cable.');
+      setLine('Briefing completo. Vuelve en un par de horas por el siguiente corte.');
       return;
     }
 
-    busyRef.current = true;
     spokenRef.current.add(next.id);
     setLine(next.text);
+    busyRef.current = true;
 
     const done = () => {
       busyRef.current = false;
       if (playingRef.current) playNext(queue);
     };
 
-    if (next.audioPath) {
-      const audio = new Audio(next.audioPath);
-      audioRef.current = audio;
-      audio.onended = done;
-      audio.onerror = () => speakFallback(next.text, done);
-      audio.play().catch(() => speakFallback(next.text, done));
-      return;
+    if (next.audioPath && typeof Audio !== 'undefined') {
+      try {
+        audioRef.current?.pause();
+        const a = new Audio(next.audioPath);
+        audioRef.current = a;
+        a.onended = done;
+        a.onerror = () => speakFallback(next.text, done);
+        void a.play().catch(() => speakFallback(next.text, done));
+        return;
+      } catch {
+        /* fall through */
+      }
     }
 
     speakFallback(next.text, done);
@@ -121,10 +147,22 @@ export function CableBriefPlayer() {
 
   const beats = payload?.beats ?? [];
   const ready = beats.length > 0;
+  const nextCut = (() => {
+    if (!payload?.expiresAt) return null;
+    try {
+      return new Date(payload.expiresAt).toLocaleTimeString('es-MX', {
+        hour: 'numeric',
+        minute: '2-digit',
+      });
+    } catch {
+      return null;
+    }
+  })();
   const meta = [
     payload?.jornadaLabel,
     payload?.storyCount ? `${payload.storyCount} notas` : null,
     payload?.sources?.slice(0, 3).join(' · '),
+    nextCut ? `nuevo corte ~${nextCut}` : null,
   ]
     .filter(Boolean)
     .join(' · ');
@@ -144,7 +182,7 @@ export function CableBriefPlayer() {
             {payload?.title ?? 'Briefing del cable'}
           </p>
           <p className="mt-1 af-tele">
-            {loading ? 'Armando cabina…' : meta || '~5 min · titulares + toma Acceso'}
+            {loading ? 'Armando cabina…' : meta || '~5 min · titulares del cable'}
           </p>
         </div>
 
@@ -166,7 +204,7 @@ export function CableBriefPlayer() {
         {line}
       </p>
       <p className="mt-2 af-tele">
-        No leemos el artículo. Atribuimos la fuente y damos la toma Acceso.
+        Corte fresco cada ~2 h · cable primero · toma Acceso al cierre.
       </p>
     </div>
   );

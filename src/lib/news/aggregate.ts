@@ -73,7 +73,7 @@ async function loadSource(src: SourceDef): Promise<Story[]> {
     .map((it) => toStory(it, src.id, src.label));
 }
 
-/** Round-robin feed; ESPN lead is pinned separately. */
+/** Round-robin wire feed; ESPN lead is pinned separately. */
 function interleaveBySource(stories: Story[], limit: number): Story[] {
   const bySource = new Map<string, Story[]>();
   for (const s of stories) {
@@ -102,20 +102,22 @@ function interleaveBySource(stories: Story[], limit: number): Story[] {
   return out;
 }
 
-/** Acceso editorial first; else ESPN-with-photo for the Cable headline. */
-function pinCableLead(stories: Story[]): Story[] {
-  const accesoLead =
-    stories.find((s) => s.sourceId === 'acceso' && Boolean(s.image)) ??
-    stories.find((s) => s.sourceId === 'acceso');
-  if (accesoLead) {
-    return [accesoLead, ...stories.filter((s) => s.id !== accesoLead.id)];
-  }
+/** Wire headline first (ESPN + photo preferred). Acceso editorial stays below the top of the cable. */
+function pinWireLead(stories: Story[]): Story[] {
   const lead =
     stories.find((s) => s.sourceId === 'espn' && Boolean(s.image)) ??
     stories.find((s) => s.sourceId === 'espn') ??
-    stories.find((s) => s.sourceId === 'espn-rss' && Boolean(s.image));
+    stories.find((s) => s.sourceId === 'espn-rss' && Boolean(s.image)) ??
+    stories.find((s) => s.sourceId !== 'acceso' && Boolean(s.image)) ??
+    stories.find((s) => s.sourceId !== 'acceso');
   if (!lead) return stories;
-  return [lead, ...stories.filter((s) => s.id !== lead.id)];
+  const rest = stories.filter((s) => s.id !== lead.id);
+  const wire = rest.filter((s) => s.sourceId !== 'acceso');
+  const acceso = rest.filter((s) => s.sourceId === 'acceso');
+  // Top wire stack, then Acceso takes, then leftover wire.
+  const top = wire.slice(0, 6);
+  const more = wire.slice(6);
+  return [lead, ...top, ...acceso, ...more];
 }
 
 export async function aggregateStories(): Promise<StoriesPayload> {
@@ -125,8 +127,8 @@ export async function aggregateStories(): Promise<StoriesPayload> {
   // Topic-aware collapse (same matchup / same deck across ESPN, MT, TUDN, etc.)
   const deduped = dedupeStories(buckets.flat());
   const wire = interleaveBySource(deduped, 26);
-  // Acceso takes lead the cable; wire fills the rest.
-  const merged = pinCableLead([...editorial, ...wire]);
+  // Top news leads; Acceso own stories sit below the wire stack.
+  const merged = pinWireLead([...wire, ...editorial]);
   const stories = await maybeEnrichAccesoLines(merged);
 
   return {
