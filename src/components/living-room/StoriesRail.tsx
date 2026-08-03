@@ -42,10 +42,13 @@ export function StoriesRail() {
   }, []);
 
   const lead =
+    stories.find((s) => s.sourceId === 'acceso' && s.image) ??
+    stories.find((s) => s.sourceId === 'acceso') ??
     stories.find((s) => s.sourceId === 'espn' && s.image) ??
     stories.find((s) => s.sourceId === 'espn') ??
     null;
   const rest = lead ? stories.filter((s) => s.id !== lead.id) : stories;
+  const isInternal = (url: string) => url.startsWith('/');
 
   return (
     <section
@@ -67,7 +70,7 @@ export function StoriesRail() {
               Lo que prende
             </h2>
           </div>
-          <p className="af-tele">ESPN · MT · TUDN · MARCA · SYNC 2M</p>
+          <p className="af-tele">ACCESO · ESPN · MT · TUDN · MARCA</p>
         </div>
 
         <CableBriefPlayer />
@@ -87,8 +90,9 @@ export function StoriesRail() {
         {lead && (
           <a
             href={lead.url}
-            target="_blank"
-            rel="noopener noreferrer"
+            {...(isInternal(lead.url)
+              ? {}
+              : { target: '_blank', rel: 'noopener noreferrer' })}
             data-testid={`cable-headline-${lead.id}`}
             className="group mb-2 grid gap-6 border border-line bg-bg-2 lg:grid-cols-[1.05fr_0.95fr]"
           >
@@ -108,7 +112,7 @@ export function StoriesRail() {
                 </div>
               )}
               <span className="absolute left-3 top-3 af-chip border-0 bg-foreground text-bg-1">
-                HEADLINE
+                {lead.sourceId === 'acceso' ? 'ACCESO' : 'HEADLINE'}
               </span>
             </div>
             <div className="flex flex-col justify-center px-5 py-6 sm:px-8 sm:py-8">
@@ -128,7 +132,9 @@ export function StoriesRail() {
                 </p>
               )}
               <span className="mt-6 af-tele text-foreground group-hover:text-signal">
-                Leer en {lead.sourceLabel} →
+                {lead.sourceId === 'acceso'
+                  ? 'Leer en Acceso →'
+                  : `Leer en ${lead.sourceLabel} →`}
               </span>
             </div>
           </a>
@@ -140,8 +146,9 @@ export function StoriesRail() {
               <a
                 key={s.id}
                 href={s.url}
-                target="_blank"
-                rel="noopener noreferrer"
+                {...(isInternal(s.url)
+                  ? {}
+                  : { target: '_blank', rel: 'noopener noreferrer' })}
                 data-testid={`cable-story-${s.id}`}
                 className="af-story-row"
               >
@@ -163,7 +170,7 @@ export function StoriesRail() {
         )}
 
         <p className="mt-6 af-tele">
-          Titulares con atribución. Tocan la fuente. No republicamos el artículo.
+          Acceso primero. El cable de ESPN · MT · TUDN · Marca con atribución — tocan la fuente.
         </p>
       </div>
     </section>

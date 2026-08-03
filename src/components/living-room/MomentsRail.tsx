@@ -9,9 +9,15 @@ export function MomentsRail() {
   const { clubId } = useGravity();
 
   const sorted = [...MOMENTS].sort((a, b) => {
+    const ac = a.cable ? 0 : 1;
+    const bc = b.cable ? 0 : 1;
+    if (ac !== bc) return ac - bc;
     const ah = a.clubIds?.includes(clubId ?? '') ? 0 : 1;
     const bh = b.clubIds?.includes(clubId ?? '') ? 0 : 1;
-    return ah - bh;
+    if (ah !== bh) return ah - bh;
+    const at = a.publishedAt ? +new Date(a.publishedAt) : 0;
+    const bt = b.publishedAt ? +new Date(b.publishedAt) : 0;
+    return bt - at;
   });
 
   const [lead, ...rest] = sorted;

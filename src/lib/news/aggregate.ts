@@ -1,3 +1,4 @@
+import { accesoEditorialStories } from './accesoEditorial';
 import { maybeEnrichAccesoLines } from './accesoLine';
 import { dedupeStories } from './dedupeStories';
 import { fetchEspnLigaMxNews } from './espnNews';
@@ -101,8 +102,14 @@ function interleaveBySource(stories: Story[], limit: number): Story[] {
   return out;
 }
 
-/** Featured/header slot always prefers ESPN with a photo. */
-function pinEspnLead(stories: Story[]): Story[] {
+/** Acceso editorial first; else ESPN-with-photo for the Cable headline. */
+function pinCableLead(stories: Story[]): Story[] {
+  const accesoLead =
+    stories.find((s) => s.sourceId === 'acceso' && Boolean(s.image)) ??
+    stories.find((s) => s.sourceId === 'acceso');
+  if (accesoLead) {
+    return [accesoLead, ...stories.filter((s) => s.id !== accesoLead.id)];
+  }
   const lead =
     stories.find((s) => s.sourceId === 'espn' && Boolean(s.image)) ??
     stories.find((s) => s.sourceId === 'espn') ??
@@ -113,11 +120,14 @@ function pinEspnLead(stories: Story[]): Story[] {
 
 export async function aggregateStories(): Promise<StoriesPayload> {
   const buckets = await Promise.all(SOURCES.map((src) => loadSource(src)));
+  const editorial = accesoEditorialStories();
 
   // Topic-aware collapse (same matchup / same deck across ESPN, MT, TUDN, etc.)
   const deduped = dedupeStories(buckets.flat());
-  const top = pinEspnLead(interleaveBySource(deduped, 28));
-  const stories = await maybeEnrichAccesoLines(top);
+  const wire = interleaveBySource(deduped, 26);
+  // Acceso takes lead the cable; wire fills the rest.
+  const merged = pinCableLead([...editorial, ...wire]);
+  const stories = await maybeEnrichAccesoLines(merged);
 
   return {
     generatedAt: new Date().toISOString(),

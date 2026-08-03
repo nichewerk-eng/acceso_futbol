@@ -19,20 +19,30 @@ export function templateAccesoLine(story: Story): string {
   return 'Lee la fuente. Quédate por la toma Acceso.';
 }
 
+function withAccesoLine(s: Story, generated?: string): Story {
+  if (s.accesoLine) return s;
+  if (generated?.trim()) return { ...s, accesoLine: generated.trim() };
+  return { ...s, accesoLine: templateAccesoLine(s) };
+}
+
 export async function maybeEnrichAccesoLines(stories: Story[]): Promise<Story[]> {
   if (!anthropicEnabled() || stories.length === 0) {
-    return stories.map((s) => ({ ...s, accesoLine: s.accesoLine ?? templateAccesoLine(s) }));
+    return stories.map((s) => withAccesoLine(s));
   }
 
-  // Enrich only the top few to control cost
+  // Enrich only the top few to control cost; keep editorial lines as-authored.
   const head = stories.slice(0, 6);
-  const rest = stories.slice(6).map((s) => ({ ...s, accesoLine: templateAccesoLine(s) }));
+  const rest = stories.slice(6).map((s) => withAccesoLine(s));
 
   try {
+    const needAi = head.filter((s) => !s.accesoLine);
+    if (needAi.length === 0) {
+      return [...head, ...rest];
+    }
     const raw = await anthropicChat({
       system:
         'Eres editor de Acceso Futbol. Para cada titular escribe UNA línea corta (máx 14 palabras) con voz Acceso: opinión, urgencia, binacional MX-US. No inventes hechos. JSON array de strings en el mismo orden.',
-      user: JSON.stringify(head.map((s) => ({ title: s.title, source: s.sourceLabel }))),
+      user: JSON.stringify(needAi.map((s) => ({ title: s.title, source: s.sourceLabel }))),
       temperature: 0.6,
       maxTokens: 220,
     });
@@ -40,12 +50,15 @@ export async function maybeEnrichAccesoLines(stories: Story[]): Promise<Story[]>
     const start = raw.indexOf('[');
     const end = raw.lastIndexOf(']');
     const arr = JSON.parse(start >= 0 ? raw.slice(start, end + 1) : '[]') as string[];
-    const enriched = head.map((s, i) => ({
-      ...s,
-      accesoLine: typeof arr[i] === 'string' && arr[i].trim() ? arr[i].trim() : templateAccesoLine(s),
-    }));
+    let aiIdx = 0;
+    const enriched = head.map((s) => {
+      if (s.accesoLine) return s;
+      const line = typeof arr[aiIdx] === 'string' ? arr[aiIdx] : undefined;
+      aiIdx += 1;
+      return withAccesoLine(s, line);
+    });
     return [...enriched, ...rest];
   } catch {
-    return stories.map((s) => ({ ...s, accesoLine: templateAccesoLine(s) }));
+    return stories.map((s) => withAccesoLine(s));
   }
 }
