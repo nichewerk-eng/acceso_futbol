@@ -251,9 +251,6 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
                     <h2 className="mt-1 font-display text-2xl font-bold uppercase tracking-wide sm:text-3xl">
                       Posiciones · Liguilla
                     </h2>
-                    <p className="mt-2 max-w-lg text-sm leading-6 text-muted">
-                      Top 8 a cuartos (1v8, 2v7, 3v6, 4v5). Sin Play-In. Corte marcado abajo del 8.
-                    </p>
                   </div>
                   <div className="flex flex-wrap gap-4">
                     <Legend mark="signal" label="Liguilla 1–8" />
