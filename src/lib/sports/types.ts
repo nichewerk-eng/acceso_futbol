@@ -68,6 +68,11 @@ export interface Fixture {
    * Used for Leagues Cup day grouping.
    */
   scheduleDay?: string;
+  /**
+   * IANA timezone of the venue wall clock (Leagues Cup official board).
+   * When set, UI should show kickoff in this zone to match ESPN venue-local listings.
+   */
+  venueTz?: string;
   jornada?: string | null;
   state: MatchState;
   statusLabel: string;

@@ -592,9 +592,11 @@ function MatchRow({
   live?: boolean;
 }) {
   const href = `/partido/leagues-cup/${f.id}`;
+  // ESPN / LeaguesCup.com list venue-local wall times — match that, not browser TZ.
+  const kickTz = f.venueTz || tz;
   const score =
     f.state === 'pre'
-      ? fmtTime(f.date, tz)
+      ? fmtTime(f.date, kickTz)
       : `${f.home.score ?? '0'}–${f.away.score ?? '0'}`;
   const clockStamp =
     f.state === 'in'
@@ -617,7 +619,7 @@ function MatchRow({
             {live && <span className="hoy-live-dot mr-1.5" aria-hidden />}
             {clockStamp ?? f.jornada ?? 'Fase 1'}
           </p>
-          <p className="mt-1 font-mono text-[11px] text-muted">{fmtTime(f.date, tz)}</p>
+          <p className="mt-1 font-mono text-[11px] text-muted">{fmtTime(f.date, kickTz)}</p>
         </div>
 
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">

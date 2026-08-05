@@ -640,7 +640,8 @@ export function MatchChapter({ league, id }: Props) {
 
   const live = match.state === 'in';
   const pre = match.state === 'pre';
-  const kick = kickoffCopy(match.date, userTz);
+  // Leagues Cup: venue-local wall clock (matches ESPN listings). Else viewer TZ.
+  const kick = kickoffCopy(match.date, match.venueTz || userTz);
   const headlines = headlineLines(match);
   const homeLines = headlines.filter((s) => s.side === 'home');
   const awayLines = headlines.filter((s) => s.side === 'away');

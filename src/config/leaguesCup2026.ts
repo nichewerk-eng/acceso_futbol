@@ -98,7 +98,7 @@ export const LEAGUES_CUP_PHASE_ONE: LcKick[] = [
   { smId: 19687330, boardDate: '2026-08-04', localTime: '19:00', tz: ET, venue: 'Bank of America Stadium', home: 'CHL', away: 'UNAM', us: TV, mx: MX_IMAGEN },
   { smId: 19687329, boardDate: '2026-08-04', localTime: '19:30', tz: CT, venue: 'Allianz Field', home: 'MIN', away: 'JUA', us: TV },
   { smId: 19687328, boardDate: '2026-08-04', localTime: '21:00', tz: MT, venue: 'America First Field', home: 'UANL', away: 'RSL', us: TV_UNI_FS1 },
-  { smId: 19687327, boardDate: '2026-08-04', localTime: '21:30', tz: VAN, venue: 'BC Place', home: 'VAN', away: 'ATL', us: TV },
+  { smId: 19687327, boardDate: '2026-08-04', localTime: '19:30', tz: VAN, venue: 'BC Place', home: 'VAN', away: 'ATL', us: TV },
   // 8/5
   { smId: 19687326, boardDate: '2026-08-05', localTime: '18:30', tz: ET, venue: 'Nu Stadium', home: 'MIA', away: 'ASL', us: TV },
   { smId: 19687325, boardDate: '2026-08-05', localTime: '18:30', tz: ET, venue: 'Inter.co Stadium', home: 'MTY', away: 'ORL', us: TV },
@@ -118,7 +118,7 @@ export const LEAGUES_CUP_PHASE_ONE: LcKick[] = [
   { smId: 19687314, boardDate: '2026-08-07', localTime: '18:30', tz: ET, venue: 'ScottsMiracle-Gro Field', home: 'COL', away: 'PAC', us: TV },
   { smId: 19687313, boardDate: '2026-08-07', localTime: '19:00', tz: ET, venue: 'TQL Stadium', home: 'CIN', away: 'UNAM', us: TV_UNI, mx: MX_IMAGEN },
   { smId: 19687312, boardDate: '2026-08-07', localTime: '20:00', tz: CT, venue: 'Allianz Field', home: 'UANL', away: 'MIN', us: TV },
-  { smId: 19687311, boardDate: '2026-08-07', localTime: '21:30', tz: VAN, venue: 'BC Place', home: 'VAN', away: 'JUA', us: TV },
+  { smId: 19687311, boardDate: '2026-08-07', localTime: '19:30', tz: VAN, venue: 'BC Place', home: 'VAN', away: 'JUA', us: TV },
   // 8/8
   { smId: 19687310, boardDate: '2026-08-08', localTime: '17:30', tz: ET, venue: 'Inter.co Stadium', home: 'ORL', away: 'LEO', us: TV, mx: MX_IMAGEN },
   { smId: 19687309, boardDate: '2026-08-08', localTime: '19:00', tz: ET, venue: 'Nu Stadium', home: 'MIA', away: 'MTY', us: TV },
