@@ -5,6 +5,8 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: 'a.espncdn.com' },
       { protocol: 'https', hostname: '**.espncdn.com' },
+      { protocol: 'https', hostname: 'espnmedia-cdn.akamaized.net' },
+      { protocol: 'https', hostname: '**.akamaized.net' },
       { protocol: 'https', hostname: 'e00-marca.uecdn.es' },
       { protocol: 'https', hostname: '**.uecdn.es' },
       { protocol: 'https', hostname: 'cdn2.mediotiempo.com' },

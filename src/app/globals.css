@@ -424,9 +424,21 @@ body {
   font-weight: 600;
   font-size: 1.35rem;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.02em;
   min-width: 3.5rem;
   text-align: center;
+  justify-self: center;
+  padding-inline: 0.35rem;
+}
+
+.hero-band-center-vs {
+  color: var(--muted);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+.hero-band-center-score {
+  color: var(--foreground);
 }
 
 .hero-band-lock {
@@ -461,15 +473,22 @@ body {
   }
 
   .hero-band {
-    grid-template-columns: 4.5rem minmax(0, 1fr) 2.5rem minmax(0, 1fr);
-    gap: 0.35rem;
-    padding: 0.8rem 0.85rem;
+    /* Stamp | home | score island | away — score keeps its own width */
+    grid-template-columns: 3.5rem minmax(0, 1fr) minmax(3.1rem, auto) minmax(0, 1fr);
+    gap: 0.55rem;
+    padding: 0.85rem 0.9rem;
+  }
+
+  .hero-band-stamp {
+    font-size: 9px;
+    letter-spacing: 0.12em;
   }
 
   .hero-band-home,
   .hero-band-away {
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     min-width: 0;
+    gap: 0.35rem;
   }
 
   .hero-band-home .club-logo,
@@ -478,8 +497,11 @@ body {
   }
 
   .hero-band-center {
-    min-width: 2.5rem;
-    font-size: 1.15rem;
+    min-width: 3.1rem;
+    font-size: 1.2rem;
+    padding-inline: 0.45rem;
+    /* Soft separators so the result doesn't collide with abbrs */
+    border-inline: 1px solid var(--line);
   }
 
   .hero-band-lock {

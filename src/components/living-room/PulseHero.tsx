@@ -53,14 +53,14 @@ function bandMeta(g: DayGame, tz: string, upcoming?: boolean) {
     return {
       kind: 'live' as const,
       stamp,
-      center: `${g.home.score ?? 0}:${g.away.score ?? 0}`,
+      center: `${g.home.score ?? 0}–${g.away.score ?? 0}`,
     };
   }
   if (g.state === 'post') {
     return {
       kind: 'ft' as const,
       stamp: 'FT',
-      center: `${g.home.score ?? 0}:${g.away.score ?? 0}`,
+      center: `${g.home.score ?? 0}–${g.away.score ?? 0}`,
     };
   }
   return {
@@ -190,10 +190,10 @@ export function PulseHero({ leadStory }: Props) {
                 </span>
               )}
               {stage.league === 'seleccion' && (
-                <span className="af-tele text-signal">EL TRI</span>
+                <span className="af-tele hidden text-signal sm:inline">EL TRI</span>
               )}
               {stage.league === 'leagues-cup' && (
-                <span className="af-tele text-signal">LEAGUES CUP</span>
+                <span className="af-tele hidden text-signal sm:inline">LEAGUES CUP</span>
               )}
             </div>
 
@@ -308,10 +308,16 @@ export function PulseHero({ leadStory }: Props) {
                       />
                       {g.home.abbreviation}
                     </span>
-                    <span className="hero-band-center" data-testid={`hero-band-score-${g.id}`}>
+                    <span
+                      className={[
+                        'hero-band-center',
+                        meta.kind === 'pre' ? 'hero-band-center-vs' : 'hero-band-center-score',
+                      ].join(' ')}
+                      data-testid={`hero-band-score-${g.id}`}
+                    >
                       {meta.center}
                       {g.league === 'leagues-cup' ? (
-                        <span className="af-tele text-signal"> · CUP</span>
+                        <span className="af-tele hidden text-signal sm:inline"> · CUP</span>
                       ) : null}
                     </span>
                     <span className="hero-band-away inline-flex items-center justify-end gap-2">
