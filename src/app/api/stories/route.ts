@@ -1,13 +1,18 @@
 import { NextResponse } from 'next/server';
 import { getCache, setCache } from '@/lib/apiCache';
+import { getClubIdentity } from '@/config/clubIdentity';
 import { aggregateStories } from '@/lib/news/aggregate';
 import type { StoriesPayload } from '@/lib/news/types';
 
-const CACHE_KEY = 'stories-v9-wire-lead';
+const CACHE_KEY = 'stories-v10-fresh-day';
 const TTL_MS = 120_000;
 
-export async function GET() {
-  const cached = getCache<StoriesPayload>(CACHE_KEY, TTL_MS);
+export async function GET(req: Request) {
+  const clubSlug = new URL(req.url).searchParams.get('club');
+  const club = clubSlug ? getClubIdentity(clubSlug) : null;
+  const cacheKey = club ? `${CACHE_KEY}-club-${club.id}` : CACHE_KEY;
+
+  const cached = getCache<StoriesPayload>(cacheKey, TTL_MS);
   if (cached) {
     return NextResponse.json(cached, {
       headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=300' },
@@ -16,8 +21,16 @@ export async function GET() {
 
   try {
     const payload = await aggregateStories();
-    setCache(CACHE_KEY, payload);
-    return NextResponse.json(payload, {
+    const filtered: StoriesPayload = club
+      ? {
+          ...payload,
+          stories: payload.stories.filter((s) =>
+            club.matchHints.test(`${s.title} ${s.summary ?? ''}`)
+          ),
+        }
+      : payload;
+    setCache(cacheKey, filtered);
+    return NextResponse.json(filtered, {
       headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=300' },
     });
   } catch {

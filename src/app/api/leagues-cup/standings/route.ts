@@ -6,13 +6,12 @@ import {
   type LcStandingsPayload,
 } from '@/lib/sports/leaguesCupStandings';
 import {
-  buildLeaguesCupBoard,
-  fetchLeaguesCupSeasonFixtures,
+  fetchLeaguesCupLiveBoard,
   fetchLeaguesCupStandings,
   sportmonksEnabled,
 } from '@/lib/sports';
 
-const CACHE_KEY = 'leagues-cup-standings-v1';
+const CACHE_KEY = 'leagues-cup-standings-v2-live-board';
 const ccHeaders = standingsCacheHeaders();
 
 export async function GET() {
@@ -21,9 +20,8 @@ export async function GET() {
       // Prefer live board math (correct LC pen points) when Phase One has results.
       if (sportmonksEnabled()) {
         try {
-          const raw = await fetchLeaguesCupSeasonFixtures().catch(() => []);
-          const board = buildLeaguesCupBoard(raw);
-          const fromBoard = buildLeaguesCupStandingsFromFixtures(board);
+          const { fixtures } = await fetchLeaguesCupLiveBoard();
+          const fromBoard = buildLeaguesCupStandingsFromFixtures(fixtures);
           const played = [...fromBoard.ligaMx, ...fromBoard.mls].some((e) => e.gp > 0);
           if (played) return fromBoard;
 

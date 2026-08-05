@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
+import { ligaMxClubIdFromAbbr } from '@/config/ligaMxLogos';
 import { useGravity } from '@/contexts/GravityContext';
 import { startLivePoll } from '@/lib/client/livePoll';
 import { paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
@@ -456,16 +457,34 @@ function StandingsTable({
                 {entry.position}
               </span>
               <span className="flex min-w-0 items-center gap-2">
-                <ClubLogo
-                  abbr={entry.team.abbreviation}
-                  name={entry.team.name}
-                  logoUrl={entry.team.logo}
-                  size="sm"
-                />
-                <span className="truncate font-display text-sm font-bold uppercase tracking-wide">
-                  <span className="sm:hidden">{entry.team.abbreviation}</span>
-                  <span className="hidden sm:inline">{entry.team.name}</span>
-                </span>
+                {(() => {
+                  const slug = ligaMxClubIdFromAbbr(entry.team.abbreviation);
+                  const inner = (
+                    <>
+                      <ClubLogo
+                        abbr={entry.team.abbreviation}
+                        name={entry.team.name}
+                        logoUrl={entry.team.logo}
+                        size="sm"
+                      />
+                      <span className="truncate font-display text-sm font-bold uppercase tracking-wide">
+                        <span className="sm:hidden">{entry.team.abbreviation}</span>
+                        <span className="hidden sm:inline">{entry.team.name}</span>
+                      </span>
+                    </>
+                  );
+                  return slug ? (
+                    <Link
+                      href={`/club/${slug}`}
+                      className="flex min-w-0 items-center gap-2 transition hover:opacity-90"
+                      data-testid={`lc-club-${slug}`}
+                    >
+                      {inner}
+                    </Link>
+                  ) : (
+                    inner
+                  );
+                })()}
                 {mine && <span className="af-tele shrink-0 text-signal">TU</span>}
               </span>
               <span className="text-center font-semibold tabular-nums">{entry.pts}</span>
@@ -625,19 +644,23 @@ function MatchRow({
           />
         </div>
 
-        <div className="hidden w-full flex-col items-end gap-1 sm:flex sm:w-auto">
-          {mine && <span className="af-tele text-signal">TU CLUB</span>}
+        <div className="ml-auto flex shrink-0 flex-col items-end gap-0.5">
+          {mine && (
+            <span className="af-tele hidden text-signal sm:inline">TU CLUB</span>
+          )}
           {f.venue && (
-            <p className="max-w-[14rem] truncate text-right font-mono text-[10px] text-muted">
+            <p className="hidden max-w-[12rem] truncate text-right font-mono text-[10px] text-muted sm:block">
               {f.venue}
             </p>
           )}
           <BroadcastChannels
+            className="tv-inline-desk"
             mx={f.dondeVer?.mxChannels}
             us={f.dondeVer?.usChannels}
             mxLabel={f.dondeVer?.mx}
             usLabel={f.dondeVer?.us}
             compact
+            inline
           />
         </div>
       </Link>

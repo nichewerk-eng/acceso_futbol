@@ -2,6 +2,7 @@ import { accesoEditorialStories } from './accesoEditorial';
 import { maybeEnrichAccesoLines } from './accesoLine';
 import { dedupeStories } from './dedupeStories';
 import { fetchEspnLigaMxNews } from './espnNews';
+import { filterFreshByPublishedAt } from './freshness';
 import { fetchMediotiempoStories } from './mediotiempo';
 import { fetchRss } from './rss';
 import { fetchTudnStories } from './tudn';
@@ -126,9 +127,12 @@ export async function aggregateStories(): Promise<StoriesPayload> {
 
   // Topic-aware collapse (same matchup / same deck across ESPN, MT, TUDN, etc.)
   const deduped = dedupeStories(buckets.flat());
-  const wire = interleaveBySource(deduped, 26);
+  // Cable stays on the beat: Mexico City today + yesterday only.
+  const freshWire = filterFreshByPublishedAt(deduped);
+  const freshEditorial = filterFreshByPublishedAt(editorial);
+  const wire = interleaveBySource(freshWire, 26);
   // Top news leads; Acceso own stories sit below the wire stack.
-  const merged = pinWireLead([...wire, ...editorial]);
+  const merged = pinWireLead([...wire, ...freshEditorial]);
   const stories = await maybeEnrichAccesoLines(merged);
 
   return {

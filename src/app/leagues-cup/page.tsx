@@ -4,11 +4,7 @@ import LeaguesCupView from '@/components/leaguescup/LeaguesCupView';
 import { PulseNav } from '@/components/living-room/PulseNav';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { absoluteUrl, breadcrumbJsonLd } from '@/lib/seo';
-import {
-  buildLeaguesCupBoard,
-  fetchLeaguesCupSeasonFixtures,
-  sportmonksEnabled,
-} from '@/lib/sports';
+import { buildLeaguesCupBoard, fetchLeaguesCupLiveBoard } from '@/lib/sports';
 import type { Fixture } from '@/lib/sports/types';
 
 export const metadata: Metadata = {
@@ -33,10 +29,8 @@ export const revalidate = 60;
 
 async function loadFixtures(): Promise<Fixture[]> {
   try {
-    const raw = sportmonksEnabled()
-      ? await fetchLeaguesCupSeasonFixtures().catch(() => [] as Fixture[])
-      : [];
-    return buildLeaguesCupBoard(raw);
+    const { fixtures } = await fetchLeaguesCupLiveBoard();
+    return fixtures;
   } catch {
     return buildLeaguesCupBoard([]);
   }

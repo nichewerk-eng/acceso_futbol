@@ -70,9 +70,9 @@ export function PulseNav() {
 
         {settled && lock && (
           <Link
-            href="/#gravedad"
+            href={club ? `/club/${club.id}` : elTri ? '/club/el-tri' : '/#gravedad'}
             className="af-chip hidden text-signal sm:inline-flex"
-            title="Cambiar gravedad"
+            title="Abrir sala del club"
             data-testid="nav-gravity-lock"
           >
             LOCK {lock}

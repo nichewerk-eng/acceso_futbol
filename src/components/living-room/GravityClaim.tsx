@@ -1,15 +1,19 @@
 'use client';
 
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { EL_TRI, LIGA_MX_CLUBS, useGravity } from '@/contexts/GravityContext';
 
 export function GravityClaim() {
+  const router = useRouter();
   const { settled, clubId, elTri, setClub, setElTri, skip, club, reset } = useGravity();
 
   // Compact lock strip once settled
   if (settled) {
     const lock = [club?.abbreviation, elTri ? 'TRI' : null].filter(Boolean).join(' + ');
     if (!lock) return null;
+    const salaHref = club ? `/club/${club.id}` : elTri ? '/club/el-tri' : null;
     return (
       <section
         id="gravedad"
@@ -21,14 +25,25 @@ export function GravityClaim() {
             <span className="text-signal">LOCK</span> {lock}
             <span className="ml-3 text-muted">El pulso se ordena alrededor de ti</span>
           </p>
-          <button
-            type="button"
-            onClick={reset}
-            data-testid="gravity-reset"
-            className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted transition hover:text-foreground"
-          >
-            Cambiar
-          </button>
+          <div className="flex items-center gap-4">
+            {salaHref && (
+              <Link
+                href={salaHref}
+                data-testid="gravity-open-sala"
+                className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-signal transition hover:text-foreground"
+              >
+                Abrir sala
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={reset}
+              data-testid="gravity-reset"
+              className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted transition hover:text-foreground"
+            >
+              Cambiar
+            </button>
+          </div>
         </div>
       </section>
     );
@@ -74,7 +89,10 @@ export function GravityClaim() {
               <button
                 key={c.id}
                 type="button"
-                onClick={() => setClub(active ? null : c.id)}
+                onClick={() => {
+                  setClub(c.id);
+                  router.push(`/club/${c.id}`);
+                }}
                 data-testid={`gravity-club-${c.id}`}
                 className={['af-club-btn', active ? 'is-on' : ''].join(' ')}
                 aria-pressed={active}
@@ -88,7 +106,10 @@ export function GravityClaim() {
 
         <button
           type="button"
-          onClick={() => setElTri(!elTri)}
+          onClick={() => {
+            setElTri(true);
+            router.push('/club/el-tri');
+          }}
           data-testid="gravity-el-tri"
           className={[
             'mt-4 inline-flex items-center gap-2.5 border px-4 py-3 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] transition',

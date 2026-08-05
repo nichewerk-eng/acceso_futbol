@@ -67,16 +67,27 @@ function mapEvent(event: EventRaw): Fixture {
   });
 }
 
+async function fetchSeleccionScheduleRaw(): Promise<Fixture[]> {
+  const raw = (await espnFetch(
+    `https://site.web.api.espn.com/apis/site/v2/sports/soccer/${SLUG.WORLD_CUP}/teams/${MEXICO_TEAM_ID}/schedule`
+  )) as { events?: EventRaw[] };
+  return (raw.events ?? []).map(mapEvent);
+}
+
+/** Full El Tri schedule (WC / friendlies as ESPN lists them). */
+export async function fetchSeleccionSchedule(): Promise<Fixture[]> {
+  try {
+    return await fetchSeleccionScheduleRaw();
+  } catch {
+    return [];
+  }
+}
+
 /** Mexico national team fixtures for the Mexico City calendar day. */
 export async function fetchSeleccionGamesOfDay(dayKey = mexicoDayKey()): Promise<Fixture[]> {
   try {
-    const raw = (await espnFetch(
-      `https://site.web.api.espn.com/apis/site/v2/sports/soccer/${SLUG.WORLD_CUP}/teams/${MEXICO_TEAM_ID}/schedule`
-    )) as { events?: EventRaw[] };
-
-    return (raw.events ?? [])
-      .map(mapEvent)
-      .filter((f) => isMexicoDay(f.date, dayKey));
+    const all = await fetchSeleccionScheduleRaw();
+    return all.filter((f) => isMexicoDay(f.date, dayKey));
   } catch {
     return [];
   }

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { useGravity } from '@/contexts/GravityContext';
 import { teamNameEs } from '@/components/standings/teamNames';
-import { ligaMxLeagueLogoSrc } from '@/config/ligaMxLogos';
+import { ligaMxClubIdFromAbbr, ligaMxLeagueLogoSrc } from '@/config/ligaMxLogos';
 import { getCurrentJornada } from '@/fixtures/ligamx-apertura-2026';
 import type { LigaMXTable, LigaMXEntry } from '@/app/api/ligamx/standings/route';
 import type { LigaMXFixture } from '@/app/api/ligamx/fixtures/route';
@@ -404,6 +404,7 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
 function StandingsRow({ entry, mine }: { entry: LigaMXEntry; mine: boolean }) {
   const inLiguilla = entry.position <= LIGUILLA_SPOTS;
   const zoneEdge = entry.position === LIGUILLA_SPOTS + 1;
+  const clubSlug = ligaMxClubIdFromAbbr(entry.team.abbreviation);
 
   return (
     <div
@@ -424,25 +425,55 @@ function StandingsRow({ entry, mine }: { entry: LigaMXEntry; mine: boolean }) {
         {entry.position}
       </span>
       <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
-        <ClubLogo
-          abbr={entry.team.abbreviation}
-          name={entry.team.name}
-          size="sm"
-        />
-        <div className="min-w-0">
-          <p
-            className={[
-              'truncate font-display text-sm font-bold uppercase tracking-wide sm:text-lg',
-              mine ? 'text-signal' : 'text-foreground',
-            ].join(' ')}
+        {clubSlug ? (
+          <Link
+            href={`/club/${clubSlug}`}
+            className="flex min-w-0 items-center gap-2 sm:gap-2.5 transition hover:opacity-90"
+            data-testid={`ligamx-club-${clubSlug}`}
           >
-            {entry.team.abbreviation}
-            {mine && <span className="ml-2 af-tele !text-signal">LOCK</span>}
-          </p>
-          <p className="truncate text-[11px] text-muted sm:text-xs">
-            {teamNameEs(entry.team.name)}
-          </p>
-        </div>
+            <ClubLogo
+              abbr={entry.team.abbreviation}
+              name={entry.team.name}
+              size="sm"
+            />
+            <div className="min-w-0">
+              <p
+                className={[
+                  'truncate font-display text-sm font-bold uppercase tracking-wide sm:text-lg',
+                  mine ? 'text-signal' : 'text-foreground',
+                ].join(' ')}
+              >
+                {entry.team.abbreviation}
+                {mine && <span className="ml-2 af-tele !text-signal">LOCK</span>}
+              </p>
+              <p className="truncate text-[11px] text-muted sm:text-xs">
+                {teamNameEs(entry.team.name)}
+              </p>
+            </div>
+          </Link>
+        ) : (
+          <>
+            <ClubLogo
+              abbr={entry.team.abbreviation}
+              name={entry.team.name}
+              size="sm"
+            />
+            <div className="min-w-0">
+              <p
+                className={[
+                  'truncate font-display text-sm font-bold uppercase tracking-wide sm:text-lg',
+                  mine ? 'text-signal' : 'text-foreground',
+                ].join(' ')}
+              >
+                {entry.team.abbreviation}
+                {mine && <span className="ml-2 af-tele !text-signal">LOCK</span>}
+              </p>
+              <p className="truncate text-[11px] text-muted sm:text-xs">
+                {teamNameEs(entry.team.name)}
+              </p>
+            </div>
+          </>
+        )}
       </div>
       <span className="text-center text-xs tabular-nums text-muted">{entry.gp}</span>
       <span className="text-center text-xs tabular-nums text-muted">{entry.w}</span>

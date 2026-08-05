@@ -940,6 +940,13 @@ function recountH2hForPair(
   return { ...summary, homeWins, draws, awayWins, played: summary.meetings.length };
 }
 
+/** Last N finished matches for a club (Liga MX preferred). */
+export async function fetchClubForm(teamId: string, limit = 5): Promise<FormMatch[]> {
+  return singleFlight(`sm-team-form-v1-${teamId}`, FORM_TTL_MS, () =>
+    fetchTeamForm(teamId, limit)
+  );
+}
+
 async function fetchTeamForm(teamId: string, limit = 5): Promise<FormMatch[]> {
   try {
     const leagueId = ligaMxLeagueId();
@@ -1010,12 +1017,8 @@ async function loadMatchSnapshot(fixtureId: string): Promise<MatchSnapshot | nul
 
     // Always load Contexto (form + H2H). Long TTL so live score polls don't re-tax SM.
     const [homeForm, awayForm, h2hRaw] = await Promise.all([
-      singleFlight(`sm-team-form-v1-${base.home.id}`, FORM_TTL_MS, () =>
-        fetchTeamForm(base.home.id, 5)
-      ),
-      singleFlight(`sm-team-form-v1-${base.away.id}`, FORM_TTL_MS, () =>
-        fetchTeamForm(base.away.id, 5)
-      ),
+      fetchClubForm(base.home.id, 5),
+      fetchClubForm(base.away.id, 5),
       singleFlight(
         `sm-h2h-v1-${[base.home.id, base.away.id].sort().join('-')}`,
         H2H_TTL_MS,

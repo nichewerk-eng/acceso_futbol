@@ -9,6 +9,11 @@ type Props = {
   surface?: 'paper' | 'ink';
   className?: string;
   compact?: boolean;
+  /**
+   * Single-line logo strip (no Dónde ver label / MX·US rows).
+   * For match rows on narrow screens — keeps row height flat.
+   */
+  inline?: boolean;
 };
 
 function ChannelMark({
@@ -83,6 +88,17 @@ function RegionRow({
   );
 }
 
+function uniqueChannels(mx?: TvChannelId[], us?: TvChannelId[]): TvChannelId[] {
+  const out: TvChannelId[] = [];
+  const seen = new Set<TvChannelId>();
+  for (const id of [...(mx ?? []), ...(us ?? [])]) {
+    if (!TV_CHANNELS[id] || seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+  }
+  return out;
+}
+
 /** MX ↔ US broadcast strip with channel marks. */
 export function BroadcastChannels({
   mx,
@@ -92,9 +108,42 @@ export function BroadcastChannels({
   surface = 'paper',
   className = '',
   compact = false,
+  inline = false,
 }: Props) {
   if ((!mx || mx.length === 0) && (!us || us.length === 0) && !mxLabel && !usLabel) {
     return null;
+  }
+
+  if (inline) {
+    const marks = uniqueChannels(mx, us);
+    if (marks.length === 0) {
+      const fallback = [mxLabel, usLabel].filter(Boolean).join(' · ');
+      if (!fallback) return null;
+      return (
+        <span
+          className={['inline-flex items-center tv-inline', className]
+            .filter(Boolean)
+            .join(' ')}
+          data-testid="donde-ver"
+          title={fallback}
+        >
+          <span className="tv-inline-fallback">{fallback}</span>
+        </span>
+      );
+    }
+    return (
+      <span
+        className={['inline-flex items-center tv-inline', className]
+          .filter(Boolean)
+          .join(' ')}
+        data-testid="donde-ver"
+        title={[mxLabel, usLabel].filter(Boolean).join(' · ') || 'Dónde ver'}
+      >
+        {marks.map((id) => (
+          <ChannelMark key={id} id={id} surface={surface} compact />
+        ))}
+      </span>
+    );
   }
 
   return (

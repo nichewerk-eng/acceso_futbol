@@ -85,10 +85,24 @@ export interface Fixture {
     mx?: string;
     us?: string;
     mxChannels?: Array<
-      'tudn' | 'vix' | 'canal-5' | 'layvtime' | 'univision' | 'apple-tv' | 'fs1'
+      | 'tudn'
+      | 'vix'
+      | 'canal-5'
+      | 'layvtime'
+      | 'univision'
+      | 'apple-tv'
+      | 'fs1'
+      | 'imagen-tv'
     >;
     usChannels?: Array<
-      'tudn' | 'vix' | 'canal-5' | 'layvtime' | 'univision' | 'apple-tv' | 'fs1'
+      | 'tudn'
+      | 'vix'
+      | 'canal-5'
+      | 'layvtime'
+      | 'univision'
+      | 'apple-tv'
+      | 'fs1'
+      | 'imagen-tv'
     >;
   };
 }

@@ -9,7 +9,16 @@ import {
 import { TV_CHANNELS, type TvChannelId } from '@/config/dondeVer';
 import { mlsLogoSrc } from '@/config/mlsLogos';
 import { ligaMxLogoSrc } from '@/config/ligaMxLogos';
+import { FRESH, isNearKickoff } from './freshness';
 import { scheduleAbbr } from './ligaMxAbbr';
+import {
+  fetchFixturesByDate,
+  fetchLeaguesCupSeasonFixtures,
+  fetchLivescores,
+  leaguesCupLeagueId,
+  overlayLiveFixtures,
+  sportmonksEnabled,
+} from './sportmonks';
 import type { Fixture, TeamRef } from './types';
 
 function norm(abbr: string): string {
@@ -47,9 +56,9 @@ function pickSide(sm: Fixture, want: string): TeamRef | undefined {
 }
 
 function channelsFor(kick: LcKick): Fixture['dondeVer'] {
-  // US: exact LeaguesCup.com listing. MX: Apple TV every match (Imagen/Televisa select not on US board).
+  // US: LeaguesCup.com listing. MX: Apple TV + optional Imagen TV select grid.
   const us = kick.us;
-  const mx: TvChannelId[] = ['apple-tv'];
+  const mx: TvChannelId[] = kick.mx ?? ['apple-tv'];
   return {
     mx: mx.map((id) => TV_CHANNELS[id].label).join(' · '),
     us: us.map((id) => TV_CHANNELS[id].label).join(' · '),
@@ -135,6 +144,64 @@ export function buildLeaguesCupBoard(smFixtures: Fixture[]): Fixture[] {
   );
   const knockout = LEAGUES_CUP_KNOCKOUT.map(knockoutFixture);
   return [...phaseOne, ...knockout].sort((a, b) => +new Date(a.date) - +new Date(b.date));
+}
+
+/** Board / UTC days that may have moved scores (livescores drop FT games). */
+export function lcActiveDateKeys(now = Date.now()): string[] {
+  const keys = new Set<string>();
+  const afterMs = 6 * 60 * 60_000;
+  for (const kick of LEAGUES_CUP_PHASE_ONE) {
+    const iso = lcLocalToIso(kick.boardDate, kick.localTime, kick.tz);
+    const kickAt = +new Date(iso);
+    if (!Number.isFinite(kickAt)) continue;
+    if (kickAt - now > FRESH.nearKickoffBeforeMs) continue;
+    if (now - kickAt > afterMs) continue;
+    keys.add(kick.boardDate);
+    keys.add(new Date(iso).toISOString().slice(0, 10));
+  }
+  return [...keys];
+}
+
+/**
+ * Official LC board with season schedule + date FT scores + livescores.
+ * Use everywhere (SSR, fixtures API, standings) so tabla matches partidos.
+ */
+export async function fetchLeaguesCupLiveBoard(): Promise<{
+  fixtures: Fixture[];
+  source: 'official+sportmonks' | 'official';
+}> {
+  if (!sportmonksEnabled()) {
+    return { fixtures: buildLeaguesCupBoard([]), source: 'official' };
+  }
+
+  const raw = await fetchLeaguesCupSeasonFixtures().catch(() => [] as Fixture[]);
+  const now = Date.now();
+  const lcId = leaguesCupLeagueId();
+
+  const dated = (
+    await Promise.all(
+      lcActiveDateKeys(now).map((day) =>
+        fetchFixturesByDate(day, [lcId]).catch(() => [] as Fixture[])
+      )
+    )
+  ).flat();
+  const withDated = dated.length ? overlayLiveFixtures(raw, dated) : raw;
+
+  const board = buildLeaguesCupBoard(withDated);
+  const playable = board.filter((f) => !f.id.startsWith('lc-'));
+  const mayBeLive = playable.some(
+    (f) => f.state === 'in' || isNearKickoff(f.date, now, f.state)
+  );
+  const live = mayBeLive
+    ? await fetchLivescores([lcId]).catch(() => [] as Fixture[])
+    : [];
+
+  return {
+    fixtures: live.length
+      ? buildLeaguesCupBoard(overlayLiveFixtures(withDated, live))
+      : board,
+    source: 'official+sportmonks',
+  };
 }
 
 /** Overlay official venue / kickoff / sides onto a single Sportmonks match snapshot. */

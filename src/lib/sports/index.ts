@@ -24,6 +24,7 @@ export type { JornadaOverview } from './jornada';
 export {
   sportmonksEnabled,
   fetchMatchSnapshot,
+  fetchClubForm,
   ligaMxLeagueId,
   ligaMxSeasonId,
   leaguesCupLeagueId,
@@ -31,14 +32,20 @@ export {
   livingRoomLeagueIds,
   fetchLigaMxSeasonFixtures,
   fetchLeaguesCupSeasonFixtures,
+  fetchFixturesByDate,
   fetchLivescores,
   overlayLiveFixtures,
   fetchLigaMxStandings,
   fetchLeaguesCupStandings,
 } from './sportmonks';
+export { getClubBoard } from './clubBoard';
+export type { ClubBoard, ClubTableRow } from './clubBoard';
+export { fetchSeleccionSchedule, fetchSeleccionGamesOfDay } from './seleccion';
 export {
   applyLeaguesCupOfficial,
   buildLeaguesCupBoard,
+  fetchLeaguesCupLiveBoard,
+  lcActiveDateKeys,
   leaguesCupKnockoutSlots,
 } from './leaguesCupBoard';
 export {

@@ -9,7 +9,8 @@ export type TvChannelId =
   | 'layvtime'
   | 'univision'
   | 'apple-tv'
-  | 'fs1';
+  | 'fs1'
+  | 'imagen-tv';
 
 export type TvChannel = {
   id: TvChannelId;
@@ -56,6 +57,11 @@ export const TV_CHANNELS: Record<TvChannelId, TvChannel> = {
     id: 'fs1',
     label: 'FS1',
     src: '/tv_logos/fs1-seeklogo.png',
+  },
+  'imagen-tv': {
+    id: 'imagen-tv',
+    label: 'Imagen TV',
+    src: '/tv_logos/Imagen-TV.png',
   },
 };
 
