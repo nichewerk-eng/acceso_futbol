@@ -648,27 +648,16 @@ body {
   box-shadow: inset 3px 0 0 var(--signal);
 }
 
+/* Gravity lock: light signal wash — keep scores readable on paper */
 .jor-stamp-mine {
-  background: #141414;
-  color: #f6f5f2;
-  border-color: #141414;
+  background: color-mix(in srgb, var(--signal) 7%, var(--bg-2));
+  color: var(--foreground);
+  border-color: color-mix(in srgb, var(--signal) 45%, var(--line));
+  box-shadow: inset 3px 0 0 var(--signal);
 }
 
 .jor-stamp-mine:hover {
   border-color: var(--signal);
-}
-
-.jor-stamp-mine .jor-stamp-meta,
-.jor-stamp-mine .jor-stamp-scorers {
-  color: rgba(246, 245, 242, 0.45);
-}
-
-.jor-stamp-mine .jor-team-lose {
-  color: rgba(246, 245, 242, 0.35);
-}
-
-.jor-stamp-mine .jor-team-win {
-  color: var(--signal);
 }
 
 .jor-stamp-score {
@@ -681,10 +670,6 @@ body {
 }
 
 .jor-stamp-score .is-win {
-  color: var(--signal);
-}
-
-.jor-stamp-mine .jor-stamp-score .is-win {
   color: var(--signal);
 }
 
