@@ -83,10 +83,10 @@ function ResultStamp({ f, mine }: { f: Fixture; mine: boolean }) {
         <div className="jor-stamp-teams">
           <span className={['jor-stamp-home inline-flex items-center gap-2', homeCls].join(' ')}>
             <ClubLogo abbr={f.home.abbreviation} name={f.home.name} size="sm" />
-            {f.home.abbreviation}
+            <span className="club-word club-word-sm">{f.home.abbreviation}</span>
           </span>
           <span className={['jor-stamp-away inline-flex items-center justify-end gap-2', awayCls].join(' ')}>
-            {f.away.abbreviation}
+            <span className="club-word club-word-sm">{f.away.abbreviation}</span>
             <ClubLogo abbr={f.away.abbreviation} name={f.away.name} size="sm" />
           </span>
         </div>

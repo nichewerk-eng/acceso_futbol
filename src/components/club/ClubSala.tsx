@@ -25,19 +25,6 @@ function kickWhen(iso: string, tz: string) {
   }
 }
 
-function kickDay(iso: string, tz: string) {
-  try {
-    return new Date(iso).toLocaleDateString('es-MX', {
-      timeZone: tz,
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-    });
-  } catch {
-    return '';
-  }
-}
-
 function resultForClub(f: Fixture, clubAbbr: string): 'W' | 'D' | 'L' | null {
   if (f.state !== 'post') return null;
   const hs = Number(f.home.score);
@@ -52,61 +39,95 @@ function partidoHref(f: Fixture) {
   return `/partido/${f.league}/${f.id}`;
 }
 
+function scorerLine(f: Fixture): string {
+  const list = f.scorers ?? [];
+  if (list.length === 0) {
+    const hs = Number(f.home.score ?? 0);
+    const as = Number(f.away.score ?? 0);
+    if (f.state === 'post' && hs === 0 && as === 0) return '0-0';
+    return '';
+  }
+  const parts = list.map((s) => {
+    const tag = s.pen ? ' (P)' : s.og ? ' (OG)' : '';
+    return `${s.name}${s.minute ? ` ${s.minute}` : ''}${tag}`;
+  });
+  if (parts.length <= 3) return parts.join(' · ');
+  return `${parts.slice(0, 2).join(' · ')} · +${parts.length - 2}`;
+}
+
 function ClubTapeStamp({
   f,
   clubAbbr,
-  tz,
 }: {
   f: Fixture;
   clubAbbr: string;
-  tz: string;
 }) {
   const live = f.state === 'in';
-  const done = f.state === 'post';
-  const hs = Number(f.home.score ?? 0);
-  const as = Number(f.away.score ?? 0);
-  const homeWin = done && hs > as;
-  const awayWin = done && as > hs;
+  const winner = f.winnerSide ?? null;
+  const draw = !live && winner === null && f.state === 'post';
+  const homeCls =
+    winner === 'home'
+      ? 'jor-team-win is-win'
+      : winner === 'away'
+        ? 'jor-team-lose is-lose'
+        : draw
+          ? 'jor-team-draw'
+          : '';
+  const awayCls =
+    winner === 'away'
+      ? 'jor-team-win is-win'
+      : winner === 'home'
+        ? 'jor-team-lose is-lose'
+        : draw
+          ? 'jor-team-draw'
+          : '';
   const chip = resultForClub(f, clubAbbr);
+  const scorers = scorerLine(f);
 
   return (
     <Link
       href={partidoHref(f)}
       data-testid={`club-recent-${f.id}`}
-      className={[
-        'club-chip',
-        live ? 'is-live' : '',
-        chip === 'W' ? 'is-win' : '',
-        chip === 'L' ? 'is-loss' : '',
-      ].join(' ')}
+      className={['jor-stamp jor-rise', live ? 'jor-stamp-live' : ''].join(' ')}
     >
-      <div className="club-chip-top">
-        <span className="club-chip-when">
-          {live && <span className="hoy-live-dot" aria-hidden />}
-          {live ? f.clock || 'LIVE' : kickDay(f.date, tz)}
+      <div className="jor-stamp-meta">
+        {live && <span className="hoy-live-dot" aria-hidden />}
+        <span>
+          {live
+            ? f.clock === 'HT' || /descanso/i.test(f.statusLabel || '')
+              ? 'HT'
+              : f.clock || 'LIVE'
+            : 'FT'}
         </span>
-        {chip && <span className={`club-chip-wdl is-${chip.toLowerCase()}`}>{chip}</span>}
+        {chip && <span aria-hidden>· {chip}</span>}
       </div>
-      <div className="club-chip-line">
-        <span className={['club-chip-side', homeWin ? 'won' : awayWin ? 'lost' : ''].join(' ')}>
-          <ClubLogo abbr={f.home.abbreviation} name={f.home.name} size="xs" />
-          {f.home.abbreviation}
-        </span>
-        <span className="club-chip-score">
-          {done || live ? (
-            <>
-              <b>{f.home.score ?? 0}</b>
-              <i>–</i>
-              <b>{f.away.score ?? 0}</b>
-            </>
-          ) : (
-            <em>VS</em>
-          )}
-        </span>
-        <span className={['club-chip-side end', awayWin ? 'won' : homeWin ? 'lost' : ''].join(' ')}>
-          {f.away.abbreviation}
-          <ClubLogo abbr={f.away.abbreviation} name={f.away.name} size="xs" />
-        </span>
+      <div>
+        <p className="jor-stamp-score">
+          <span className={homeCls}>{f.home.score ?? 0}</span>
+          <span className="mx-1 opacity-35">:</span>
+          <span className={awayCls}>{f.away.score ?? 0}</span>
+        </p>
+        <div className="jor-stamp-teams">
+          <span className={['jor-stamp-home inline-flex items-center gap-2', homeCls].join(' ')}>
+            <ClubLogo abbr={f.home.abbreviation} name={f.home.name} size="sm" />
+            <span className="club-word club-word-sm">{f.home.abbreviation}</span>
+          </span>
+          <span
+            className={['jor-stamp-away inline-flex items-center justify-end gap-2', awayCls].join(
+              ' '
+            )}
+          >
+            <span className="club-word club-word-sm">{f.away.abbreviation}</span>
+            <ClubLogo abbr={f.away.abbreviation} name={f.away.name} size="sm" />
+          </span>
+        </div>
+        {scorers ? (
+          <p className="jor-stamp-scorers" title={scorers}>
+            {scorers}
+          </p>
+        ) : (
+          <p className="jor-stamp-scorers">&nbsp;</p>
+        )}
       </div>
     </Link>
   );
@@ -114,23 +135,26 @@ function ClubTapeStamp({
 
 function ClubTapeNext({ f, tz }: { f: Fixture; tz: string }) {
   return (
-    <Link href={partidoHref(f)} data-testid={`club-upcoming-${f.id}`} className="club-chip is-next">
-      <div className="club-chip-top">
-        <span className="club-chip-when">{kickWhen(f.date, tz)}</span>
+    <Link
+      href={partidoHref(f)}
+      data-testid={`club-upcoming-${f.id}`}
+      className="jor-next jor-rise"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <p className="jor-next-when">{kickWhen(f.date, tz)}</p>
       </div>
-      <div className="club-chip-line">
-        <span className="club-chip-side">
-          <ClubLogo abbr={f.home.abbreviation} name={f.home.name} size="xs" />
-          {f.home.abbreviation}
+      <div className="jor-next-vs">
+        <span className="jor-next-side jor-next-home">
+          <ClubLogo abbr={f.home.abbreviation} name={f.home.name} size="sm" />
+          <span className="jor-next-abbr">{f.home.abbreviation}</span>
         </span>
-        <span className="club-chip-score">
-          <em>VS</em>
-        </span>
-        <span className="club-chip-side end">
-          {f.away.abbreviation}
-          <ClubLogo abbr={f.away.abbreviation} name={f.away.name} size="xs" />
+        <span className="jor-next-mid">VS</span>
+        <span className="jor-next-side jor-next-away">
+          <ClubLogo abbr={f.away.abbreviation} name={f.away.name} size="sm" />
+          <span className="jor-next-abbr">{f.away.abbreviation}</span>
         </span>
       </div>
+      <p className="jor-next-when jor-next-cta">Ficha del partido</p>
     </Link>
   );
 }
@@ -273,7 +297,7 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
                     name={next.home.name}
                     size="lg"
                   />
-                  <p className="font-display text-2xl font-bold uppercase tracking-wide sm:text-3xl">
+                  <p className="club-word club-word-lg">
                     {next.home.abbreviation}
                     <span className="mx-2 text-muted">
                       {next.state === 'pre'
@@ -354,9 +378,9 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
               <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
                 Recientes
               </p>
-              <div className="club-tape-rail mt-3">
+              <div className="jor-mosaic mt-3">
                 {recent.map((f) => (
-                  <ClubTapeStamp key={f.id} f={f} clubAbbr={club.abbreviation} tz={tz} />
+                  <ClubTapeStamp key={f.id} f={f} clubAbbr={club.abbreviation} />
                 ))}
               </div>
             </div>
@@ -367,7 +391,7 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
               <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
                 Próximos
               </p>
-              <div className="club-tape-rail club-tape-rail-next mt-3">
+              <div className="jor-mosaic mt-3">
                 {(upcoming.length > 0 ? upcoming : next ? [next] : []).map((f) => (
                   <ClubTapeNext key={`up-${f.id}`} f={f} tz={tz} />
                 ))}

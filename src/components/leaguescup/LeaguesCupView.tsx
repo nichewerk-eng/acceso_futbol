@@ -467,9 +467,13 @@ function StandingsTable({
                         logoUrl={entry.team.logo}
                         size="sm"
                       />
-                      <span className="truncate font-display text-sm font-bold uppercase tracking-wide">
-                        <span className="sm:hidden">{entry.team.abbreviation}</span>
-                        <span className="hidden sm:inline">{entry.team.name}</span>
+                      <span className="truncate">
+                        <span className="club-word club-word-sm sm:hidden">
+                          {entry.team.abbreviation}
+                        </span>
+                        <span className="hidden font-display text-base font-bold uppercase tracking-wide sm:inline">
+                          {entry.team.name}
+                        </span>
                       </span>
                     </>
                   );
@@ -630,13 +634,9 @@ function MatchRow({
             logoUrl={f.home.logo}
             size="sm"
           />
-          <span className="truncate font-display text-sm font-bold uppercase tracking-wide sm:text-base">
-            {f.home.abbreviation}
-          </span>
+          <span className="club-word club-word-sm truncate">{f.home.abbreviation}</span>
           <span className="af-tele shrink-0 text-signal">{score}</span>
-          <span className="truncate font-display text-sm font-bold uppercase tracking-wide sm:text-base">
-            {f.away.abbreviation}
-          </span>
+          <span className="club-word club-word-sm truncate">{f.away.abbreviation}</span>
           <ClubLogo
             abbr={f.away.abbreviation}
             clubId={f.away.id}

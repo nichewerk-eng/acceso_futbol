@@ -405,6 +405,30 @@ function StandingsRow({ entry, mine }: { entry: LigaMXEntry; mine: boolean }) {
   const inLiguilla = entry.position <= LIGUILLA_SPOTS;
   const zoneEdge = entry.position === LIGUILLA_SPOTS + 1;
   const clubSlug = ligaMxClubIdFromAbbr(entry.team.abbreviation);
+  const nameTone = mine ? 'text-signal' : 'text-foreground';
+  const lockMark = mine ? (
+    <span className="ml-2 af-tele !text-signal">LOCK</span>
+  ) : null;
+  const teamLabel = (
+    <>
+      <ClubLogo abbr={entry.team.abbreviation} name={entry.team.name} size="sm" />
+      <span className="min-w-0 truncate">
+        <span className={['club-word club-word-sm sm:hidden', nameTone].join(' ')}>
+          {entry.team.abbreviation}
+          {lockMark}
+        </span>
+        <span
+          className={[
+            'hidden font-display text-base font-bold uppercase tracking-wide sm:inline',
+            nameTone,
+          ].join(' ')}
+        >
+          {teamNameEs(entry.team.name)}
+          {mine ? <span className="ml-2 af-tele !text-signal">LOCK</span> : null}
+        </span>
+      </span>
+    </>
+  );
 
   return (
     <div
@@ -431,48 +455,10 @@ function StandingsRow({ entry, mine }: { entry: LigaMXEntry; mine: boolean }) {
             className="flex min-w-0 items-center gap-2 sm:gap-2.5 transition hover:opacity-90"
             data-testid={`ligamx-club-${clubSlug}`}
           >
-            <ClubLogo
-              abbr={entry.team.abbreviation}
-              name={entry.team.name}
-              size="sm"
-            />
-            <div className="min-w-0">
-              <p
-                className={[
-                  'truncate font-display text-sm font-bold uppercase tracking-wide sm:text-lg',
-                  mine ? 'text-signal' : 'text-foreground',
-                ].join(' ')}
-              >
-                {entry.team.abbreviation}
-                {mine && <span className="ml-2 af-tele !text-signal">LOCK</span>}
-              </p>
-              <p className="truncate text-[11px] text-muted sm:text-xs">
-                {teamNameEs(entry.team.name)}
-              </p>
-            </div>
+            {teamLabel}
           </Link>
         ) : (
-          <>
-            <ClubLogo
-              abbr={entry.team.abbreviation}
-              name={entry.team.name}
-              size="sm"
-            />
-            <div className="min-w-0">
-              <p
-                className={[
-                  'truncate font-display text-sm font-bold uppercase tracking-wide sm:text-lg',
-                  mine ? 'text-signal' : 'text-foreground',
-                ].join(' ')}
-              >
-                {entry.team.abbreviation}
-                {mine && <span className="ml-2 af-tele !text-signal">LOCK</span>}
-              </p>
-              <p className="truncate text-[11px] text-muted sm:text-xs">
-                {teamNameEs(entry.team.name)}
-              </p>
-            </div>
-          </>
+          <span className="flex min-w-0 items-center gap-2 sm:gap-2.5">{teamLabel}</span>
         )}
       </div>
       <span className="text-center text-xs tabular-nums text-muted">{entry.gp}</span>
@@ -545,21 +531,21 @@ function MatchStamp({
       <div className="jor-stamp-teams">
         <span
           className={[
-            'inline-flex items-center gap-1.5',
+            'inline-flex items-center gap-2',
             homeWin ? 'jor-team-win' : awayWin ? 'jor-team-lose' : draw ? 'jor-team-draw' : '',
           ].join(' ')}
         >
-          <ClubLogo abbr={f.home.abbreviation} name={f.home.name} size="xs" />
-          {f.home.abbreviation}
+          <ClubLogo abbr={f.home.abbreviation} name={f.home.name} size="sm" />
+          <span className="club-word club-word-sm">{f.home.abbreviation}</span>
         </span>
         <span
           className={[
-            'inline-flex items-center justify-end gap-1.5',
+            'inline-flex items-center justify-end gap-2',
             awayWin ? 'jor-team-win' : homeWin ? 'jor-team-lose' : draw ? 'jor-team-draw' : '',
           ].join(' ')}
         >
-          {f.away.abbreviation}
-          <ClubLogo abbr={f.away.abbreviation} name={f.away.name} size="xs" />
+          <span className="club-word club-word-sm">{f.away.abbreviation}</span>
+          <ClubLogo abbr={f.away.abbreviation} name={f.away.name} size="sm" />
         </span>
       </div>
       <p className="jor-stamp-scorers">{fmtDate(f.date, tz)}</p>

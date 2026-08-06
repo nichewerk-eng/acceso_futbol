@@ -330,9 +330,10 @@ body {
 .hero-stage-abbr {
   font-family: var(--font-oswald), sans-serif;
   font-weight: 700;
-  font-size: clamp(2.8rem, 11vw, 5.5rem);
-  line-height: 0.85;
-  letter-spacing: -0.04em;
+  /* Tracks club-logo-lg (~52px); keep slight presence above crest */
+  font-size: clamp(2.15rem, 6vw, 2.75rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
   text-transform: uppercase;
   transition: color 0.2s ease;
   white-space: nowrap;
@@ -463,8 +464,8 @@ body {
   }
 
   .hero-stage-abbr {
-    font-size: clamp(1.85rem, 12vw, 2.6rem);
-    line-height: 0.9;
+    font-size: clamp(1.85rem, 8vw, 2.15rem); /* ~crest when stacked */
+    line-height: 1;
   }
 
   .hero-stage-score {
@@ -486,7 +487,7 @@ body {
 
   .hero-band-home,
   .hero-band-away {
-    font-size: 1.15rem;
+    font-size: 1.35rem; /* tracks club-logo-sm */
     min-width: 0;
     gap: 0.35rem;
   }
@@ -629,10 +630,11 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 8.25rem;
-  max-height: 8.25rem;
+  min-height: 8.75rem;
+  max-height: 8.75rem;
   padding: 0.7rem 0.85rem 0.75rem;
-  background: var(--bg-2);
+  background: #ffffff;
+  color: var(--foreground);
   border: 1px solid var(--line);
   overflow: hidden;
   transition: border-color 0.2s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -650,7 +652,7 @@ body {
 
 /* Gravity lock: light signal wash — keep scores readable on paper */
 .jor-stamp-mine {
-  background: color-mix(in srgb, var(--signal) 7%, var(--bg-2));
+  background: color-mix(in srgb, var(--signal) 7%, #ffffff);
   color: var(--foreground);
   border-color: color-mix(in srgb, var(--signal) 45%, var(--line));
   box-shadow: inset 3px 0 0 var(--signal);
@@ -683,11 +685,11 @@ body {
   justify-content: space-between;
   gap: 0.5rem;
   margin-top: 0.4rem;
-  font-family: var(--font-oswald), sans-serif;
-  font-weight: 700;
-  font-size: 1.05rem;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
+}
+
+/* Cap height ≈ club-logo-sm (28px) */
+.jor-stamp-teams .club-word {
+  font-size: 1.75rem;
   line-height: 1;
 }
 
@@ -773,9 +775,9 @@ body {
   justify-content: space-between;
   min-height: 11rem;
   padding: 1.1rem 1.15rem 1.2rem;
-  background: #0c0c0c;
-  color: #f6f5f2;
-  border: 1px solid rgba(246, 245, 242, 0.14);
+  background: #ffffff;
+  color: var(--foreground);
+  border: 1px solid var(--line);
   transition: border-color 0.2s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -794,12 +796,13 @@ body {
 }
 
 .jor-next:hover {
-  border-color: rgba(246, 245, 242, 0.55);
+  border-color: var(--foreground);
   transform: translateY(-2px);
 }
 
 .jor-next-mine {
-  border-color: var(--signal);
+  background: color-mix(in srgb, var(--signal) 7%, #ffffff);
+  border-color: color-mix(in srgb, var(--signal) 45%, var(--line));
   box-shadow: inset 3px 0 0 var(--signal);
 }
 
@@ -809,7 +812,7 @@ body {
   font-weight: 500;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(246, 245, 242, 0.45);
+  color: var(--muted);
 }
 
 .jor-next-cta {
@@ -845,9 +848,9 @@ body {
 .jor-next-abbr {
   font-family: var(--font-oswald), sans-serif;
   font-weight: 700;
-  font-size: clamp(1.75rem, 5vw, 3.25rem);
-  line-height: 0.85;
-  letter-spacing: -0.04em;
+  font-size: clamp(1.35rem, 3.5vw, 1.85rem); /* tracks club-logo-sm */
+  line-height: 1;
+  letter-spacing: -0.03em;
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -856,7 +859,7 @@ body {
   font-family: var(--font-plex-mono), ui-monospace, monospace;
   font-size: 10px;
   letter-spacing: 0.14em;
-  color: rgba(246, 245, 242, 0.35);
+  color: var(--muted);
   padding-bottom: 0.45rem;
 }
 
@@ -894,8 +897,8 @@ body {
   }
 
   .jor-mosaic .jor-next-abbr {
-    font-size: clamp(1.35rem, 6.5vw, 1.7rem);
-    line-height: 0.9;
+    font-size: 1.1rem; /* tracks shrunk 22px crest */
+    line-height: 1;
   }
 
   .jor-mosaic .jor-next-mid {
@@ -1304,10 +1307,11 @@ body {
   background: var(--bg-1);
   color: var(--muted);
   font-family: var(--font-oswald), sans-serif;
-  font-weight: 600;
-  font-size: 0.8rem;
-  letter-spacing: 0.06em;
+  font-weight: 700;
+  font-size: 1.35rem; /* tracks club-logo-md (~36px) */
+  letter-spacing: -0.02em;
   text-transform: uppercase;
+  line-height: 1;
   padding: 0.7rem 0.25rem 0.65rem;
   transition: background 0.15s ease, color 0.15s ease;
 }
@@ -1700,6 +1704,38 @@ body {
   height: 72px;
 }
 
+/**
+ * Team abbr/name sized to sit with ClubLogo (≈ crest height).
+ * Pair: club-logo-xs → club-word-xs, … club-logo-xl → club-word-xl
+ */
+.club-word {
+  font-family: var(--font-oswald), Arial, Helvetica, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.club-word-xs {
+  font-size: 1.1rem; /* ~22px crest */
+}
+
+.club-word-sm {
+  font-size: 1.35rem; /* ~28px crest */
+}
+
+.club-word-md {
+  font-size: 1.65rem; /* ~36px crest */
+}
+
+.club-word-lg {
+  font-size: 2.15rem; /* ~52px crest */
+}
+
+.club-word-xl {
+  font-size: 2.5rem; /* ~72px / match-side crest */
+}
+
 /* ── Match chapter (partido) ── */
 .match-chapter {
   min-height: 100vh;
@@ -1806,12 +1842,21 @@ body {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 0.35rem;
+  gap: 0.45rem;
   min-width: 0;
 }
 
 .match-side-away {
   animation-delay: 0.06s;
+}
+
+/* Crest + abbr as one mark — abbr height tracks crest */
+.match-side-mark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
 }
 
 .match-crest {
@@ -1830,13 +1875,31 @@ body {
   }
 }
 
-.match-club {
+.match-abbr {
   font-family: var(--font-oswald), Arial, Helvetica, sans-serif;
-  font-size: clamp(0.95rem, 2.4vw, 1.35rem);
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-weight: 700;
+  letter-spacing: -0.03em;
   text-transform: uppercase;
-  line-height: 1.1;
+  line-height: 1;
+  color: #f6f5f2;
+  font-size: 1.85rem; /* ~48px crest on mobile */
+}
+
+@media (min-width: 640px) {
+  .match-abbr {
+    font-size: 2.75rem; /* ~72px crest */
+  }
+}
+
+/* Full club name as secondary caption under the mark */
+.match-club {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1.25;
+  color: rgba(246, 245, 242, 0.45);
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1845,27 +1908,9 @@ body {
   -webkit-box-orient: vertical;
 }
 
-/* Narrow phones: abbr is the readable label; full name is title tooltip */
 @media (max-width: 639px) {
   .match-club {
     display: none;
-  }
-}
-
-.match-abbr {
-  font-family: var(--font-plex-mono), ui-monospace, monospace;
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba(246, 245, 242, 0.4);
-}
-
-@media (max-width: 639px) {
-  .match-abbr {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.14em;
-    color: rgba(246, 245, 242, 0.88);
   }
 }
 
@@ -2030,10 +2075,12 @@ body {
   gap: 0.4rem;
   min-width: 3.25rem;
   flex-shrink: 0;
-  font-family: var(--font-plex-mono), ui-monospace, monospace;
-  font-size: 11px;
-  letter-spacing: 0.12em;
+  font-family: var(--font-oswald), Arial, Helvetica, sans-serif;
+  font-weight: 700;
+  font-size: 1.35rem; /* tracks club-logo-sm */
+  letter-spacing: -0.02em;
   text-transform: uppercase;
+  line-height: 1;
 }
 
 .match-form-marks {
@@ -2489,11 +2536,12 @@ body {
 }
 
 .match-form-detail-abbr {
-  font-family: var(--font-plex-mono), ui-monospace, monospace;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  font-family: var(--font-oswald), Arial, Helvetica, sans-serif;
+  font-size: 1.35rem; /* tracks club-logo-sm */
+  font-weight: 700;
+  letter-spacing: -0.02em;
   text-transform: uppercase;
+  line-height: 1;
 }
 
 .match-form-detail-head .match-form-marks {
@@ -3381,165 +3429,6 @@ body {
 }
 
 .club-form-cell.is-d {
-  color: var(--muted);
-}
-
-.club-tape-rail {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(9.25rem, 1fr);
-  gap: 6px;
-  overflow-x: auto;
-  padding-bottom: 0.25rem;
-  scrollbar-width: thin;
-}
-
-.club-tape-rail-next {
-  grid-auto-columns: minmax(10.5rem, 1fr);
-}
-
-@media (min-width: 640px) {
-  .club-tape-rail {
-    grid-auto-flow: row;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    overflow: visible;
-  }
-}
-
-@media (min-width: 960px) {
-  .club-tape-rail {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .club-tape-rail-next {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
-/* Compact match chip — one glance, not a card stack */
-.club-chip {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  min-height: 0;
-  padding: 0.5rem 0.65rem 0.55rem;
-  background: var(--bg-2);
-  border: 1px solid var(--line);
-  transition: border-color 0.15s ease, background 0.15s ease;
-}
-
-.club-chip:hover {
-  border-color: var(--foreground);
-  background: var(--bg-3);
-}
-
-.club-chip.is-live {
-  border-color: var(--signal);
-  box-shadow: inset 2px 0 0 var(--signal);
-}
-
-.club-chip.is-win {
-  box-shadow: inset 2px 0 0 var(--signal);
-}
-
-.club-chip.is-loss {
-  opacity: 0.88;
-}
-
-.club-chip-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.4rem;
-}
-
-.club-chip-when {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-family: var(--font-plex-mono), ui-monospace, monospace;
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.club-chip-wdl {
-  font-family: var(--font-plex-mono), ui-monospace, monospace;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--muted);
-}
-
-.club-chip-wdl.is-w {
-  color: var(--signal);
-}
-
-.club-chip-wdl.is-l {
-  color: var(--foreground);
-}
-
-.club-chip-line {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.club-chip-side {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  min-width: 0;
-  font-family: var(--font-oswald), sans-serif;
-  font-weight: 700;
-  font-size: 0.95rem;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
-  line-height: 1;
-}
-
-.club-chip-side.end {
-  justify-content: flex-end;
-}
-
-.club-chip-side.won {
-  color: var(--signal);
-}
-
-.club-chip-side.lost {
-  opacity: 0.4;
-}
-
-.club-chip-score {
-  display: inline-flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 0.15rem;
-  font-family: var(--font-oswald), sans-serif;
-  font-weight: 700;
-  font-size: 1.15rem;
-  line-height: 1;
-  letter-spacing: -0.03em;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.club-chip-score i {
-  font-style: normal;
-  opacity: 0.35;
-  font-size: 0.9em;
-}
-
-.club-chip-score em {
-  font-style: normal;
-  font-size: 0.75rem;
-  letter-spacing: 0.12em;
   color: var(--muted);
 }
 

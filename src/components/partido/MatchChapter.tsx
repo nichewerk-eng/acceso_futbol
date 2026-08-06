@@ -691,18 +691,22 @@ export function MatchChapter({ league, id }: Props) {
 
           <div className="match-scoreboard">
             <div className="match-side">
-              <ClubLogo
-                abbr={match.home.abbreviation}
-                clubId={match.home.id}
-                name={match.home.name}
-                logoUrl={match.home.logo}
-                size="xl"
-                className="match-crest"
-              />
+              <div className="match-side-mark">
+                <ClubLogo
+                  abbr={match.home.abbreviation}
+                  clubId={match.home.id}
+                  name={match.home.name}
+                  logoUrl={match.home.logo}
+                  size="xl"
+                  className="match-crest"
+                />
+                <p className="match-abbr" title={match.home.name}>
+                  {match.home.abbreviation}
+                </p>
+              </div>
               <p className="match-club" title={match.home.name}>
                 {match.home.name}
               </p>
-              <p className="match-abbr">{match.home.abbreviation}</p>
               {!pre && homeLines.length > 0 && (
                 <ul className="match-scorers">
                   {homeLines.map((s) => (
@@ -738,18 +742,22 @@ export function MatchChapter({ league, id }: Props) {
             </div>
 
             <div className="match-side match-side-away">
-              <ClubLogo
-                abbr={match.away.abbreviation}
-                clubId={match.away.id}
-                name={match.away.name}
-                logoUrl={match.away.logo}
-                size="xl"
-                className="match-crest"
-              />
+              <div className="match-side-mark">
+                <ClubLogo
+                  abbr={match.away.abbreviation}
+                  clubId={match.away.id}
+                  name={match.away.name}
+                  logoUrl={match.away.logo}
+                  size="xl"
+                  className="match-crest"
+                />
+                <p className="match-abbr" title={match.away.name}>
+                  {match.away.abbreviation}
+                </p>
+              </div>
               <p className="match-club" title={match.away.name}>
                 {match.away.name}
               </p>
-              <p className="match-abbr">{match.away.abbreviation}</p>
               {!pre && awayLines.length > 0 && (
                 <ul className="match-scorers">
                   {awayLines.map((s) => (

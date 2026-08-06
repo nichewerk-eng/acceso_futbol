@@ -58,11 +58,11 @@ export function EngagementDock() {
               `HOY · ${String(count).padStart(2, '0')}`
             )}
           </p>
-          <p className="flex items-center gap-2 truncate font-display text-lg font-bold uppercase tracking-wide text-[#f6f5f2]">
+          <p className="flex items-center gap-2 truncate text-[#f6f5f2]">
             <ClubLogo abbr={game.home.abbreviation} name={game.home.name} size="sm" />
-            {game.home.abbreviation}
+            <span className="club-word club-word-sm">{game.home.abbreviation}</span>
             <span className="mx-0.5 text-white/40">{score}</span>
-            {game.away.abbreviation}
+            <span className="club-word club-word-sm">{game.away.abbreviation}</span>
             <ClubLogo abbr={game.away.abbreviation} name={game.away.name} size="sm" />
           </p>
         </div>
