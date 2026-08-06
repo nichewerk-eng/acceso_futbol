@@ -4,7 +4,7 @@ import { getClubIdentity } from '@/config/clubIdentity';
 import { aggregateStories } from '@/lib/news/aggregate';
 import type { StoriesPayload } from '@/lib/news/types';
 
-const CACHE_KEY = 'stories-v10-fresh-day';
+const CACHE_KEY = 'stories-v11-espn-web';
 const TTL_MS = 120_000;
 
 export async function GET(req: Request) {

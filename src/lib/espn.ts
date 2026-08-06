@@ -15,6 +15,7 @@ export async function espnFetch(
     const res = await fetch(url, {
       headers: {
         'User-Agent': UA,
+        Accept: 'application/json, text/plain, */*',
         'Accept-Language': 'es-MX,es;q=0.9',
       },
       signal: controller.signal,

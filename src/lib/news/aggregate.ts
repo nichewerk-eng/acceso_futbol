@@ -3,6 +3,7 @@ import { maybeEnrichAccesoLines } from './accesoLine';
 import { dedupeStories } from './dedupeStories';
 import { fetchEspnLigaMxNews } from './espnNews';
 import { filterFreshByPublishedAt } from './freshness';
+import { enrichWithOgImages } from './html';
 import { fetchMediotiempoStories } from './mediotiempo';
 import { fetchRss } from './rss';
 import { fetchTudnStories } from './tudn';
@@ -133,7 +134,9 @@ export async function aggregateStories(): Promise<StoriesPayload> {
   const wire = interleaveBySource(freshWire, 26);
   // Top news leads; Acceso own stories sit below the wire stack.
   const merged = pinWireLead([...wire, ...freshEditorial]);
-  const stories = await maybeEnrichAccesoLines(merged);
+  // RSS/MT often omit photos — fill lead stack from article og:image.
+  const withPhotos = await enrichWithOgImages(merged, 10);
+  const stories = await maybeEnrichAccesoLines(pinWireLead(withPhotos));
 
   return {
     generatedAt: new Date().toISOString(),

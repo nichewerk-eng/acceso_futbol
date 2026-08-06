@@ -13,8 +13,9 @@ type EspnArticle = {
 
 export async function fetchEspnLigaMxNews(): Promise<Story[]> {
   try {
+    // Prefer site.web.api — site.api is often 403'd from serverless/edge IPs.
     const raw = (await espnFetch(
-      `https://site.api.espn.com/apis/site/v2/sports/soccer/${SLUG.LIGA_MX}/news?lang=es&limit=20`
+      `https://site.web.api.espn.com/apis/site/v2/sports/soccer/${SLUG.LIGA_MX}/news?lang=es&limit=20`
     )) as { articles?: EspnArticle[] };
 
     const stories: Story[] = [];

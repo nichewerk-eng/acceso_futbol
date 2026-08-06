@@ -106,7 +106,10 @@ export function StoriesRail() {
                   fill
                   className="object-cover transition duration-500 group-hover:scale-[1.03]"
                   sizes="(max-width: 1024px) 100vw, 640px"
-                  unoptimized={/espncdn|akamaized\.net/i.test(lead.image)}
+                  referrerPolicy="no-referrer"
+                  unoptimized={/espncdn|akamaized\.net|mediotiempo\.com|uvnimg\.com|uecdn\.es/i.test(
+                    lead.image
+                  )}
                 />
               ) : (
                 <div className="flex h-full min-h-[220px] items-center justify-center af-tele">
