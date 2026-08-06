@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { useGravity } from '@/contexts/GravityContext';
 import { useGamesOfDay } from '@/lib/client/useGamesOfDay';
-import { leaguePath } from '@/lib/radio/phases';
+import { competitionBandTag, leaguePath } from '@/lib/radio/phases';
 import type { Story } from '@/lib/news/types';
 import type { DayGame } from '@/lib/sports';
 
@@ -106,6 +106,7 @@ export function PulseHero({ leadStory }: Props) {
   const liveCount = games.filter((g) => g.state === 'in').length;
   const lock = [club?.abbreviation, elTri ? 'TRI' : null].filter(Boolean).join('+');
   const stage = games.find((g) => g.state === 'in') ?? games[0] ?? null;
+  const stageTag = stage ? competitionBandTag(stage.league, stage.jornada) : null;
   const upcoming = Boolean(payload?.upcoming);
 
   return (
@@ -189,12 +190,9 @@ export function PulseHero({ leadStory }: Props) {
                   TU CLUB
                 </span>
               )}
-              {stage.league === 'seleccion' && (
-                <span className="af-tele hidden text-signal sm:inline">EL TRI</span>
-              )}
-              {stage.league === 'leagues-cup' && (
-                <span className="af-tele hidden text-signal sm:inline">LEAGUES CUP</span>
-              )}
+              {stageTag ? (
+                <span className="af-tele hidden text-signal sm:inline">{stageTag}</span>
+              ) : null}
             </div>
 
             <div className="hero-stage-grid">
@@ -277,6 +275,7 @@ export function PulseHero({ leadStory }: Props) {
               .map((g) => {
                 const meta = bandMeta(g, userTz, upcoming);
                 const href = `/partido/${leaguePath(g.league)}/${g.id}`;
+                const compTag = competitionBandTag(g.league, g.jornada);
                 const mine = matchesGravity(
                   g.home.name,
                   g.away.name,
@@ -316,8 +315,8 @@ export function PulseHero({ leadStory }: Props) {
                       data-testid={`hero-band-score-${g.id}`}
                     >
                       {meta.center}
-                      {g.league === 'leagues-cup' ? (
-                        <span className="af-tele hidden text-signal sm:inline"> · CUP</span>
+                      {compTag ? (
+                        <span className="af-tele hidden text-signal sm:inline"> · {compTag}</span>
                       ) : null}
                     </span>
                     <span className="hero-band-away inline-flex items-center justify-end gap-2">

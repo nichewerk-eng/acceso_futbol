@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useGravity } from '@/contexts/GravityContext';
 import { useGamesOfDay } from '@/lib/client/useGamesOfDay';
-import { leaguePath } from '@/lib/radio/phases';
+import { competitionBandTag, leaguePath } from '@/lib/radio/phases';
 import type { DayGame } from '@/lib/sports';
 
 function kickLabel(iso: string, tz: string) {
@@ -128,6 +128,7 @@ export function GamesOfDayBanner() {
               const path = leaguePath(g.league);
               const href = `/partido/${path}/${g.id}?tab=radio`;
               const line = cabinaLine(g, userTz);
+              const compTag = competitionBandTag(g.league, g.jornada);
               const mine = matchesGravity(
                 g.home.name,
                 g.away.name,
@@ -156,9 +157,7 @@ export function GamesOfDayBanner() {
                             : ''}
                         </span>
                       )}
-                      {g.league === 'leagues-cup' && (
-                        <span className="text-[var(--signal)]">· LEAGUES CUP</span>
-                      )}
+                      {compTag && <span className="text-[var(--signal)]">· {compTag}</span>}
                       {mine && <span className="text-[var(--signal)]">· TU CLUB</span>}
                     </p>
                     <p className="mt-1.5 font-display text-xl font-bold uppercase tracking-wide text-[var(--hoy-paper)] sm:text-2xl">

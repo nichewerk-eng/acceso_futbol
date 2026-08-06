@@ -81,7 +81,7 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
     [fixtures]
   );
 
-  const { live, phaseOneByDay, knockout } = useMemo(() => {
+  const { live, porJugarByDay, jugadosByDay, knockout, phaseCount } = useMemo(() => {
     const liveRows: Fixture[] = [];
     const phase: Fixture[] = [];
     const ko: Fixture[] = [];
@@ -96,42 +96,69 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
       if (f.state === 'in') liveRows.push(f);
       phase.push(f);
     }
-    const byDay = new Map<string, Fixture[]>();
-    for (const f of phase) {
-      const day = f.scheduleDay ?? dayKeyInTz(new Date(f.date), userTz);
-      const list = byDay.get(day) ?? [];
-      list.push(f);
-      byDay.set(day, list);
-    }
-    const phaseOneByDay = [...byDay.entries()]
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([day, rows]) => {
-        const anchor = `${day}T12:00:00.000Z`;
-        return {
-          day,
-          label: new Date(anchor).toLocaleDateString('es-MX', {
-            timeZone: 'UTC',
-            weekday: 'short',
-            day: 'numeric',
-            month: 'short',
-          }),
-          month: new Date(anchor).toLocaleDateString('es-MX', {
-            timeZone: 'UTC',
-            month: 'long',
-            year: 'numeric',
-          }),
-          rows: rows.sort((a, b) => +new Date(a.date) - +new Date(b.date)),
-        };
-      });
-    return { live: liveRows, phaseOneByDay, knockout: ko };
-  }, [fixtures, userTz]);
 
-  const phaseCount = phaseOneByDay.reduce((n, d) => n + d.rows.length, 0);
+    type DayGroup = {
+      day: string;
+      label: string;
+      rows: Fixture[];
+    };
+
+    const toGroups = (
+      rows: Fixture[],
+      sortDays: (a: string, b: string) => number
+    ): DayGroup[] => {
+      const byDay = new Map<string, Fixture[]>();
+      for (const f of rows) {
+        const day = f.scheduleDay ?? dayKeyInTz(new Date(f.date), userTz);
+        const list = byDay.get(day) ?? [];
+        list.push(f);
+        byDay.set(day, list);
+      }
+      return [...byDay.entries()]
+        .sort(([a], [b]) => sortDays(a, b))
+        .map(([day, dayRows]) => {
+          const anchor = `${day}T12:00:00.000Z`;
+          return {
+            day,
+            label: new Date(anchor).toLocaleDateString('es-MX', {
+              timeZone: 'UTC',
+              weekday: 'short',
+              day: 'numeric',
+              month: 'short',
+            }),
+            rows: dayRows.sort((a, b) => +new Date(a.date) - +new Date(b.date)),
+          };
+        });
+    };
+
+    // Live sits in its own block — Por jugar is kickoffs still pending.
+    const upcoming = phase.filter((f) => f.state === 'pre');
+    const played = phase.filter((f) => f.state === 'post');
+
+    const porJugarByDay = toGroups(upcoming, (a, b) => {
+      // Hoy first, then upcoming days ascending.
+      if (a === todayKey) return -1;
+      if (b === todayKey) return 1;
+      return a.localeCompare(b);
+    });
+    const jugadosByDay = toGroups(played, (a, b) => {
+      // Hoy first, then past days newest first.
+      if (a === todayKey) return -1;
+      if (b === todayKey) return 1;
+      return b.localeCompare(a);
+    });
+
+    return {
+      live: liveRows,
+      porJugarByDay,
+      jugadosByDay,
+      knockout: ko,
+      phaseCount: phase.length,
+    };
+  }, [fixtures, userTz, todayKey]);
 
   const isMine = (f: Fixture) =>
     matchesGravity(f.home.name, f.away.name, f.home.abbreviation, f.away.abbreviation);
-
-  let lastMonth = '';
 
   return (
     <div data-testid="page-leagues-cup" className="bg-bg-1 text-foreground">
@@ -269,31 +296,46 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
                 <p className="mb-6 font-mono text-[11px] text-muted">
                   4–13 agosto · 54 partidos MLS vs Liga MX
                 </p>
-                <div className="space-y-8">
-                  {phaseOneByDay.map((group) => {
-                    const showMonth = group.month !== lastMonth;
-                    lastMonth = group.month;
-                    const isToday = group.day === todayKey;
-                    return (
-                      <div key={group.day} data-testid={`lc-day-${group.day}`}>
-                        {showMonth && (
-                          <p className="mb-3 font-display text-xl font-bold uppercase tracking-wide">
-                            {group.month}
-                          </p>
-                        )}
-                        <div className="mb-2 flex items-baseline gap-3">
-                          <h3 className="af-tele text-signal">{group.label}</h3>
-                          {isToday && <span className="af-chip text-signal">Hoy</span>}
-                        </div>
-                        <ul className="divide-y divide-line border-y border-line">
-                          {group.rows.map((f) => (
-                            <MatchRow key={f.id} f={f} tz={userTz} mine={isMine(f)} />
-                          ))}
-                        </ul>
-                      </div>
-                    );
-                  })}
-                </div>
+
+                {porJugarByDay.length > 0 && (
+                  <div className="mb-12" data-testid="lc-por-jugar">
+                    <div className="mb-4 flex items-baseline justify-between gap-3 border-b border-line pb-3">
+                      <h3 className="font-display text-2xl font-bold uppercase tracking-wide">
+                        Por jugar
+                      </h3>
+                      <p className="af-tele text-muted">
+                        {porJugarByDay.reduce((n, d) => n + d.rows.length, 0)}
+                      </p>
+                    </div>
+                    <LcDayGroups
+                      groups={porJugarByDay}
+                      todayKey={todayKey}
+                      userTz={userTz}
+                      isMine={isMine}
+                      testIdPrefix="upcoming"
+                    />
+                  </div>
+                )}
+
+                {jugadosByDay.length > 0 && (
+                  <div data-testid="lc-jugados">
+                    <div className="mb-4 flex items-baseline justify-between gap-3 border-b border-line pb-3">
+                      <h3 className="font-display text-2xl font-bold uppercase tracking-wide">
+                        Jugados
+                      </h3>
+                      <p className="af-tele text-muted">
+                        {jugadosByDay.reduce((n, d) => n + d.rows.length, 0)}
+                      </p>
+                    </div>
+                    <LcDayGroups
+                      groups={jugadosByDay}
+                      todayKey={todayKey}
+                      userTz={userTz}
+                      isMine={isMine}
+                      testIdPrefix="played"
+                    />
+                  </div>
+                )}
               </section>
             </>
           ))}
@@ -530,6 +572,41 @@ function Legend({ mark, label }: { mark: 'signal' | 'ink'; label: string }) {
       />
       {label}
     </p>
+  );
+}
+
+function LcDayGroups({
+  groups,
+  todayKey,
+  userTz,
+  isMine,
+  testIdPrefix,
+}: {
+  groups: { day: string; label: string; rows: Fixture[] }[];
+  todayKey: string;
+  userTz: string;
+  isMine: (f: Fixture) => boolean;
+  testIdPrefix: string;
+}) {
+  return (
+    <div className="space-y-8">
+      {groups.map((group) => {
+        const isToday = group.day === todayKey;
+        return (
+          <div key={group.day} data-testid={`lc-day-${testIdPrefix}-${group.day}`}>
+            <div className="mb-2 flex items-baseline gap-3">
+              <h4 className="af-tele text-signal">{group.label}</h4>
+              {isToday && <span className="af-chip text-signal">Hoy</span>}
+            </div>
+            <ul className="divide-y divide-line border-y border-line">
+              {group.rows.map((f) => (
+                <MatchRow key={f.id} f={f} tz={userTz} mine={isMine(f)} />
+              ))}
+            </ul>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

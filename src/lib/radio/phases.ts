@@ -64,3 +64,36 @@ export function leaguePath(league: Fixture['league']): string {
   if (league === 'liga-mx' || league === 'liga-mx-femenil') return 'liga-mx';
   return 'liga-mx';
 }
+
+const LEAGUE_LABELS: Record<Fixture['league'], string> = {
+  'liga-mx': 'Liga MX',
+  'liga-mx-femenil': 'Liga MX Femenil',
+  'leagues-cup': 'Leagues Cup',
+  seleccion: 'El Tri',
+  other: 'Partido',
+};
+
+/**
+ * Human competition name for a fixture.
+ * Prefer jornada when it names the competition (amistoso, etc.); else league map.
+ */
+export function competitionLabel(
+  league: Fixture['league'],
+  jornada?: string | null
+): string {
+  const round = jornada?.trim() || '';
+  if (league === 'other' && round) return round;
+  if (league === 'seleccion' && round && !/^el\s*tri$/i.test(round)) return round;
+  return LEAGUE_LABELS[league] ?? (round || 'Partido');
+}
+
+/**
+ * Desktop hero-band / stage tag. Omit plain Liga MX (default living-room slate).
+ */
+export function competitionBandTag(
+  league: Fixture['league'],
+  jornada?: string | null
+): string | null {
+  if (league === 'liga-mx') return null;
+  return competitionLabel(league, jornada);
+}
