@@ -1,16 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  async redirects() {
-    return [
-      {
-        source: '/:path*',
-        has: [{ type: 'host', value: 'www.accesofutbol.com' }],
-        destination: 'https://accesofutbol.com/:path*',
-        permanent: true,
-      },
-    ];
-  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'a.espncdn.com' },
