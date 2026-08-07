@@ -9,6 +9,7 @@ import { applyLeaguesCupOfficial } from './leaguesCupBoard';
 import {
   fetchLigaMxSeasonFixtures,
   fetchMatchSnapshot,
+  fetchMatchTick,
   findFixtureByDayPair,
   sportmonksEnabled,
 } from './sportmonks';
@@ -18,6 +19,10 @@ type LeagueKey = 'liga-mx' | 'mundial' | 'seleccion' | 'leagues-cup';
 /** Shared with `/api/sports/match` + radio so both surfaces coalesce. */
 export function sportsMatchCacheKey(league: string, id: string) {
   return `sports-match-v14-lc-board-${league}-${id}`;
+}
+
+export function sportsMatchTickCacheKey(league: string, id: string) {
+  return `sports-match-tick-v1-${league}-${id}`;
 }
 
 function espnSlug(league: LeagueKey) {
@@ -293,5 +298,42 @@ async function getMatchUncached(league: string, id: string): Promise<MatchSnapsh
   return fromEspn(key, id);
 }
 
+async function getMatchTickUncached(
+  league: string,
+  id: string
+): Promise<MatchSnapshot | null> {
+  const key = normalizeLeague(league);
+  if ((key !== 'liga-mx' && key !== 'leagues-cup') || !sportmonksEnabled()) {
+    return getMatchUncached(league, id);
+  }
+
+  try {
+    let fixtureId = id;
+    if (key === 'liga-mx' && (looksLikeEspnEventId(id) || id.startsWith('static-'))) {
+      const resolved = await resolveSportmonksFixtureId(id);
+      if (resolved) fixtureId = resolved;
+    }
+
+    let sm = await fetchMatchTick(fixtureId);
+    if (!sm && fixtureId !== id) sm = await fetchMatchTick(id);
+    if (!sm) return null;
+
+    if (key === 'leagues-cup') {
+      const board = applyLeaguesCupOfficial(sm);
+      sm = {
+        ...sm,
+        ...board,
+        home: { ...sm.home, ...board.home },
+        away: { ...sm.away, ...board.away },
+      };
+    }
+    return attachDondeVer(sm) as MatchSnapshot;
+  } catch {
+    return null;
+  }
+}
+
 /** Deduped per request (metadata + page share one fetch). */
 export const getMatch = cache(getMatchUncached);
+/** Lean live tick (scores/clock/events). */
+export const getMatchTick = cache(getMatchTickUncached);

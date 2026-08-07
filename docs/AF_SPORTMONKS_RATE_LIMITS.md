@@ -61,28 +61,27 @@ Almost all live UX burns the **Fixture** bucket:
 
 | Call | Cadence (warm instance) | Est. Fixture/hr |
 |------|-------------------------|-----------------|
-| `/livescores/latest` | every ~4s when near/live | ≤ **900** |
+| `/livescores/latest` | every ~2.5s when near/live | ≤ **1,440** |
 | `/fixtures/date/*` (×2 days) | every ~12s when GOD misses | ≤ **600** |
-| `/fixtures/{id}` match snap | every ~4s per watched match | ≤ **900** |
+| `/fixtures/{id}` match **tick** | every ~2.5s per watched match | ≤ **1,440** |
+| `/fixtures/{id}` match **detail** | first paint + pre/idle | low |
 
-Naive sum **~2,400** → **over Starter 2,000**.
-
-Why we still fit on Starter (one warm instance):
+Naive sum without coalesce **over Starter**. Fits because:
 
 1. Quiet hours → livescores **gated off** (near-kickoff only).
-2. Date + match + livescores **singleFlight** coalesce across users on the same instance.
-3. `/livescores/latest` empty responses still cost 1 call but keep sticky in-play state (no full board every tick).
-4. Season boards hit **Season** entity (separate 2,000/hr), not Fixture.
-5. Form/H2H skipped while `state === 'in'`.
+2. Date + match + livescores **singleFlight** + optional **Upstash KV** across isolates.
+3. Match chapter uses **tick** while live (lean include); detail for lineups/contexto.
+4. Form/H2H **skipped** while `state === 'in'` (warm cache only).
+5. Board routes coalesce at **live floor (2.5s)**; idle still short-circuits via pace peek.
 
-**Match-night rule of thumb (Starter, 1 region, warm):**
+**Match-night rule of thumb (Starter, 1 region, warm + KV):**
 
 | Mode | Target Fixture/hr | Notes |
 |------|-------------------|-------|
 | Idle home only | **&lt; 100** | dates only; no livescores |
 | Live boards, no match page | **≤ 1,200** | latest + dates |
-| Live + 1 match chapter | **≤ 1,800** | stay under soft cap |
-| Live + many match tabs / cold isolates | **Risk** | upgrade plan or add KV |
+| Live + 1 match chapter (tick) | **≤ 1,800** | stay under soft cap |
+| Live + many tabs / no KV | **Risk** | set Upstash or upgrade plan |
 
 If `remaining` trends under 200 with &gt;20 minutes left in the window → tighten polls or upgrade.
 
@@ -107,12 +106,23 @@ If `remaining` trends under 200 with &gt;20 minutes left in the window → tight
 ## 5. Ops checklist
 
 ```
-□ SPORTMONKS_PLAN set correctly in Vercel
-□ Watch Fixture remaining on match nights (dashboard or logs)
+□ SPORTMONKS_PLAN set correctly in Vercel (starter|growth|pro|enterprise)
+□ UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN set for shared KV
+□ Watch GET /api/ops/live-health on match nights (upgradeSuggested)
 □ Quiet day: Fixture/hr should stay tiny (no livescores)
-□ Prefer one warm region / KV before 50 concurrent cold starts
-□ Upgrade path: Growth (2.5k) → Pro (3k) before World Cup traffic
+□ Prefer one warm region + KV before 50 concurrent cold starts
+□ Upgrade to Growth (2.5k) / Pro (3k) only when remaining stays <400 on LC nights
 ```
+
+### When to upgrade the Sportmonks plan
+
+Do **not** upgrade on vibes. Upgrade when `/api/ops/live-health` shows `upgradeSuggested: true` for a full live window, or Fixture `remaining < 400` with >20 minutes left in the hour while LC/Liga MX is in-play.
+
+| Signal | Action |
+|--------|--------|
+| KV off + many cold starts | Turn on Upstash first |
+| KV on + still tight | Growth |
+| Mundial / multi-match night | Pro |
 
 ---
 
@@ -122,3 +132,5 @@ If `remaining` trends under 200 with &gt;20 minutes left in the window → tight
 - [`AF_SPORTMONKS_BEST_PRACTICES.md`](./AF_SPORTMONKS_BEST_PRACTICES.md) — includes, pagination, timeouts  
 - `src/lib/sports/smRateLimit.ts` — plan + throttle  
 - `src/lib/sports/sportmonks.ts` — `smFetch` + latest livescores  
+- `src/lib/sharedKv.ts` — Upstash L2  
+- `GET /api/ops/live-health` — remaining + upgrade flag  

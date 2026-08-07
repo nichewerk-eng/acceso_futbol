@@ -23,7 +23,7 @@ export async function GET() {
   }
 
   try {
-    const payload = await singleFlight(CACHE_KEY, apiTtlMsForPace('near'), () =>
+    const payload = await singleFlight(CACHE_KEY, apiTtlMsForPace('live'), () =>
       fetchLeaguesCupLiveBoard()
     );
 

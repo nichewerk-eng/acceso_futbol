@@ -4,7 +4,7 @@ Living ops doc for keeping scores competitive **without burning provider quota**
 Source of truth for intervals: `src/lib/sports/freshness.ts`.  
 Sportmonks API 3.0 patterns: [`AF_SPORTMONKS_BEST_PRACTICES.md`](./AF_SPORTMONKS_BEST_PRACTICES.md).  
 Rate limits (Starter 2k/entity/hr): [`AF_SPORTMONKS_RATE_LIMITS.md`](./AF_SPORTMONKS_RATE_LIMITS.md).  
-Last reviewed: 2026-08-02 (commit era: adaptive pace + single-flight).
+Last reviewed: 2026-08-07 (live tick/SSE + optional Upstash KV + 2.5s live coalesce).
 
 ---
 
@@ -24,7 +24,7 @@ Last reviewed: 2026-08-02 (commit era: adaptive pace + single-flight).
 
 | Pace | When | Client poll | API coalesce | CDN `s-maxage` |
 |------|------|-------------|--------------|----------------|
-| **live** | Any fixture `state === 'in'` | **5 s** | **4 s** | **4 s** |
+| **live** | Any fixture `state === 'in'` | **2.5 s** | **2.5 s** | **3 s** |
 | **near** | Kickoff within 45m before → 3.5h after | **12 s** | **12 s** | **12 s** |
 | **idle** | Quiet board | **35 s** | **30 s** | **30 s** |
 
@@ -76,7 +76,7 @@ CDN s-maxage (secondary coalesce across edges)
 |---------|-------------|------|--------|
 | Home living room | `/api/games-of-day` | adaptive | **Yes** — PulseHero + banner + dock + footer source |
 | Home jornada | `/api/jornada` | adaptive | No |
-| Match chapter | `/api/sports/match/...` | adaptive by match state | No |
+| Match chapter | detail once → `/tick` or SSE `/stream` while live | adaptive | No |
 | Match radio tab | `/api/radio/match/...` | idle 35s | No (`Cache-Control: no-store`) |
 | Liga MX board | `/api/ligamx/fixtures` (+ standings ≤45s) | adaptive | No |
 | Leagues Cup | `/api/leagues-cup/fixtures` | adaptive | No |
@@ -90,22 +90,23 @@ Orphan / unused poll surfaces: `/api/pulse` (no client), `LiveTicker` (not mount
 | Call | Skipped when |
 |------|----------------|
 | Sportmonks livescores | Quiet day on **games-of-day / pulse / leagues-cup** (no `in` + not near kickoff) |
-| Form + H2H | Match `state === 'in'` |
+| Form + H2H | Match `state === 'in'` (warm cache only; no new SM calls) |
 | ESPN crónica wait | Live enrich budget 550ms → serve cached Spanish lines |
 | Radio Anthropic/TTS | Beat already in process cache |
 | Client polls | Tab `visibilityState === 'hidden'` |
+| Match detail include | Live polls use **/tick**; detail for first paint / pre |
 
 ### Known leak / status
 
 | Item | Status |
 |------|--------|
-| `fetchLigaMxFixtures()` always hit livescores | **Fixed** — gated with `isNearKickoff` |
-| `fetchFixturesByDate` no module TTL | **Fixed** — `singleFlight` @ near TTL (12s) |
-| Heavy livescores includes | **Improved** — dropped `venue`/`round` on hot path |
+| Board `singleFlight` hard-coded to near (12s) while live | **Fixed** — live floor 2.5s |
+| Heavy livescores includes | **Improved** — slim `events` (type_id map); no `events.type` |
+| Match detail every live poll | **Fixed** — tick + SSE |
+| Multi-instance serverless | **Improved** — optional Upstash via `sharedKv` |
 | SM 429 handling | **Fixed** — one retry + backoff/jitter in `smFetch` |
-| Match detail re-fetched by radio | **Fixed** — radio reuses sports-match cache + snap TTL |
 | Stories mounted twice on home | Open — 2× `/api/stories` on first paint |
-| Multi-instance serverless | Open — need KV for beats / boards at scale |
+| Plan upgrade | Only when `/api/ops/live-health` says `upgradeSuggested` |
 
 ---
 
@@ -125,7 +126,7 @@ Track weekly. Prefer **upstream calls** over browser hits (CDN absorbs many of t
 | **ANTHROPIC_QPD** | Messages API calls / day | ≤ 50 (stories + cable) | ≤ 500 on busy jornada (beats) | Duplicate scripts for same beat id |
 | **ELEVEN_CHARS_QPD** | TTS characters / day | Cable cold only | Live radio + cable | Same audio regenerated across instances |
 | **CACHE_HIT_RATIO** | `singleFlight`/TTL hits ÷ API route hits | ≥ **85%** idle | ≥ **70%** live | < 50% |
-| **P95_SCORE_LAG** | Time from SM livescores payload → UI score update | n/a | **≤ 8 s** (5s poll + 4s TTL) | > 15 s with tab visible |
+| **P95_SCORE_LAG** | Time from SM livescores payload → UI score update | n/a | **≤ 5 s** (2.5s poll + 2.5s TTL / SSE) | > 12 s with tab visible |
 | **IDLE_POLL_RATIO** | Client polls while pace=idle ÷ all polls | ≥ 90% of calendar hours | — | Idle hours still at 5s |
 
 \*With one warm instance + 4s livescores TTL: theoretical floor ≈ `3600/4 = 900` Fixture calls/hr for latest alone. Match snap + date boards share the same **2,000/hr Starter** bucket — stay under soft cap **1,800**.

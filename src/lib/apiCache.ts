@@ -1,5 +1,7 @@
 // In-memory TTL cache + single-flight for API route handlers.
-// Warmed serverless instances reuse module state across users on the same instance.
+// Optional Upstash Redis L2 (sharedKv) so Vercel isolates share live boards.
+
+import { kvGetJson, kvSetJson, sharedKvEnabled } from '@/lib/sharedKv';
 
 interface Entry<T> {
   data: T;
@@ -38,6 +40,7 @@ export function peekCache<T>(key: string): T | null {
 /**
  * One upstream load per key while a request is in flight.
  * Concurrent callers share the same Promise (and the cached result).
+ * When Upstash is configured, also read/write shared KV (L2).
  */
 export async function singleFlight<T>(
   key: string,
@@ -52,8 +55,20 @@ export async function singleFlight<T>(
 
   const pending = (async () => {
     try {
+      if (sharedKvEnabled()) {
+        const remote = await kvGetJson<T>(key);
+        if (remote && Date.now() - remote.ts <= ttlMs) {
+          setCache(key, remote.data);
+          return remote.data;
+        }
+      }
+
       const data = await loader();
       setCache(key, data);
+      if (sharedKvEnabled()) {
+        // Keep KV a bit longer than local coalesce so cold isolates hit L2.
+        void kvSetJson(key, data, Math.max(ttlMs * 3, 12_000));
+      }
       return data;
     } finally {
       inflight.delete(key);

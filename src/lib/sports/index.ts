@@ -24,6 +24,7 @@ export type { JornadaOverview } from './jornada';
 export {
   sportmonksEnabled,
   fetchMatchSnapshot,
+  fetchMatchTick,
   fetchClubForm,
   ligaMxLeagueId,
   ligaMxSeasonId,

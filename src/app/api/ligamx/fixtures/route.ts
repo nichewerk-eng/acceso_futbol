@@ -32,7 +32,7 @@ export async function GET() {
   }
 
   try {
-    const fixtures = await singleFlight(CACHE_KEY, apiTtlMsForPace('near'), async () => {
+    const fixtures = await singleFlight(CACHE_KEY, apiTtlMsForPace('live'), async () => {
       let live: LigaMXFixture[] = [];
       try {
         const board = await fetchLigaMxFixtures();

@@ -537,27 +537,66 @@ export function MatchChapter({ league, id }: Props) {
   useEffect(() => {
     let cancelled = false;
     let pace: FreshPace = 'near';
-    const load = () => {
+    let es: EventSource | null = null;
+
+    const apply = (d: MatchSnapshot) => {
+      if (cancelled) return;
+      pace = d.state === 'in' ? 'live' : d.state === 'pre' ? 'near' : 'idle';
+      setMatch((prev) => mergeMatchSnapshot(prev, d));
+      setError(false);
+      setTab((prev) => {
+        if (prev) return prev;
+        return d.state === 'pre' ? 'contexto' : 'momentos';
+      });
+    };
+
+    const loadDetail = () =>
       fetch(`/api/sports/match/${league}/${id}`)
         .then((r) => (r.ok ? r.json() : Promise.reject()))
-        .then((d: MatchSnapshot) => {
-          if (!cancelled) {
-            pace = d.state === 'in' ? 'live' : d.state === 'pre' ? 'near' : 'idle';
-            setMatch((prev) => mergeMatchSnapshot(prev, d));
-            setError(false);
-            setTab((prev) => {
-              if (prev) return prev;
-              return d.state === 'pre' ? 'contexto' : 'momentos';
-            });
-          }
-        })
-        .catch(() => {
+        .then((d: MatchSnapshot) => apply(d));
+
+    const loadTick = () =>
+      fetch(`/api/sports/match/${league}/${id}/tick`)
+        .then((r) => (r.ok ? r.json() : Promise.reject()))
+        .then((d: MatchSnapshot) => apply(d));
+
+    // Full detail first (lineups / contexto); then lean tick or SSE while live.
+    void loadDetail()
+      .then(() => {
+        if (cancelled) return;
+        if (pace === 'live' && typeof EventSource !== 'undefined') {
+          es = new EventSource(`/api/sports/match/${league}/${id}/stream`);
+          es.onmessage = (ev) => {
+            try {
+              apply(JSON.parse(ev.data) as MatchSnapshot);
+            } catch {
+              /* ignore bad frames */
+            }
+          };
+          es.onerror = () => {
+            es?.close();
+            es = null;
+          };
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setError(true);
+      });
+
+    const stop = startLivePoll(
+      () => {
+        if (es && pace === 'live') return; // SSE owns live updates
+        if (pace === 'live') void loadTick().catch(() => loadDetail());
+        else void loadDetail().catch(() => {
           if (!cancelled) setError(true);
         });
-    };
-    const stop = startLivePoll(load, { getPace: () => pace });
+      },
+      { getPace: () => pace }
+    );
+
     return () => {
       cancelled = true;
+      es?.close();
       stop();
     };
   }, [league, id]);

@@ -31,7 +31,7 @@ export async function GET() {
     }
   }
 
-  const overview = await singleFlight(CACHE_KEY, apiTtlMsForPace('near'), async () => {
+  const overview = await singleFlight(CACHE_KEY, apiTtlMsForPace('live'), async () => {
     const o = await getJornadaOverview();
     return o ?? { empty: true as const };
   });

@@ -86,12 +86,13 @@ Sportmonks recommends caching entities that **rarely change**:
 
 | Call | Current includes | Gap vs SM advice |
 |------|------------------|------------------|
-| Livescores | `participants;scores;state;venue;round;league;periods;events.type` | Still includes `state` + `events.type` — candidates to replace with local state/type maps |
+| Livescores | `participants;scores;state;league;periods;events` | **Shipped** — `events.type` dropped; type_id map locally |
 | Date fixtures | `participants;scores;state;venue;round;league;periods` | Same for `state` |
 | Season fixtures | Nested `fixtures.*` + `events.type` | Heavy; OK behind **5 min** cache; don’t poll as live |
-| Match detail | Rich include (lineups, stats, comments, form…) | Correct for on-demand match page; skip form/H2H when live |
+| Match tick | scores/state/periods/events (+ player) | **Shipped** — live poll path |
+| Match detail | Rich include (lineups, stats, comments…) | First paint / pre; skip form/H2H when live |
 
-**Lean backlog:** Startup/cron load of `/states` + `/types` → strip `.type` / `state` includes from livescores.
+**Shared cache:** set `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` so `singleFlight` writes L2 (`src/lib/sharedKv.ts`).
 
 ---
 

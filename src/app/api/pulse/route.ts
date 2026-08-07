@@ -23,7 +23,7 @@ export async function GET() {
     }
   }
 
-  const pulse = await singleFlight(CACHE_KEY, apiTtlMsForPace('near'), () => getPulse());
+  const pulse = await singleFlight(CACHE_KEY, apiTtlMsForPace('live'), () => getPulse());
   const pace = paceFromFixtures([...pulse.live, ...pulse.upcoming, ...pulse.recent]);
   return NextResponse.json(pulse, {
     headers: { ...liveCacheHeaders(pace), 'X-AF-Pace': pace },

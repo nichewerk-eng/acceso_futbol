@@ -3,26 +3,26 @@
  * Live → short coalesce. Idle / no matchday pressure → longer TTL, fewer calls.
  */
 export const FRESH = {
-  /** Browser poll while something is in-play */
-  clientPollLiveMs: 5_000,
+  /** Browser poll while something is in-play (tick/SSE path) */
+  clientPollLiveMs: 2_500,
   /** Browser poll when a kickoff is soon (or just finished) */
   clientPollNearMs: 12_000,
   /** Browser poll on quiet boards */
   clientPollIdleMs: 35_000,
   /** Default = live (call sites that don't adapt yet) */
-  clientPollMs: 5_000,
+  clientPollMs: 2_500,
 
   /** API coalesce while live */
-  apiTtlLiveMs: 4_000,
+  apiTtlLiveMs: 2_500,
   /** API coalesce near kickoff */
   apiTtlNearMs: 12_000,
   /** API coalesce when nothing can move */
   apiTtlIdleMs: 30_000,
   /** Back-compat alias (live) */
-  apiTtlMs: 4_000,
+  apiTtlMs: 2_500,
 
-  liveTtlMs: 4_000,
-  sMaxAgeLive: 4,
+  liveTtlMs: 2_500,
+  sMaxAgeLive: 3,
   sMaxAgeNear: 12,
   sMaxAgeIdle: 30,
   swr: 8,

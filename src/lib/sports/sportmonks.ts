@@ -6,6 +6,7 @@ import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
 import {
   beforeSmRequest,
   entityForPath,
+  getSmRateSnapshot,
   noteSmRateLimit,
   type SmRateLimitInfo,
 } from './smRateLimit';
@@ -30,7 +31,15 @@ const BASE = 'https://api.sportmonks.com/v3/football';
 const TIMEOUT_MS = 12_000;
 const SEASON_CACHE_KEY = 'sm-ligamx-season-fixtures-v5-scorers';
 const LC_SEASON_CACHE_KEY = 'sm-leagues-cup-season-fixtures-v2';
-const LIVE_CACHE_KEY = 'sm-livescores-v4-latest';
+const LIVE_CACHE_KEY = 'sm-livescores-v5-slim';
+/** Hot-path livescores: drop events.type (resolve type_id locally). */
+const LIVESCORES_INCLUDE = 'participants;scores;state;league;periods;events';
+/** Lean in-play tick — scores/clock/events only. */
+const MATCH_TICK_INCLUDE =
+  'participants;scores;state;periods;events.type;events.player';
+/** Full match chapter (lineups, stats, comments). */
+const MATCH_DETAIL_INCLUDE =
+  'participants;scores;state;venue;round;league;periods;events.type;events.player;comments;statistics.type;lineups.type;lineups.player;referees.referee;formations';
 /** Sticky in-play board while /livescores/latest returns empty (no updates in ~10s). */
 const LIVE_STICKY_TTL_MS = 120_000;
 const DATE_CACHE_PREFIX = 'sm-fixtures-date-v1';
@@ -149,6 +158,12 @@ async function smFetch<T>(
       if (!res.ok) throw new Error(`Sportmonks HTTP ${res.status}`);
       const json = (await res.json()) as SmJson<T>;
       if (json.rate_limit) noteSmRateLimit(json.rate_limit);
+      if (process.env.AF_SM_DEBUG === '1') {
+        const snap = getSmRateSnapshot()[entity];
+        console.info(
+          `[sportmonks] ${path} ok · ${entity} remaining=${snap?.remaining ?? '?'} localHour=${snap?.localHourCount ?? '?'}`
+        );
+      }
       return json;
     } finally {
       clearTimeout(timer);
@@ -480,7 +495,22 @@ function shortName(raw?: string | null): string {
   return `${parts[0]} ${parts[parts.length - 1]}`;
 }
 
-function eventKind(dev?: string, code?: string): LiveEventKind {
+/** Sportmonks football event type_ids — used when `events.type` is omitted. */
+const EVENT_KIND_BY_TYPE_ID: Record<number, LiveEventKind> = {
+  14: 'goal',
+  15: 'own_goal',
+  16: 'penalty',
+  18: 'yellow',
+  19: 'red',
+  20: 'sub',
+  21: 'red', // second yellow → red
+  10: 'var',
+};
+
+function eventKind(dev?: string, code?: string, typeId?: number): LiveEventKind {
+  if (typeId != null && EVENT_KIND_BY_TYPE_ID[typeId]) {
+    return EVENT_KIND_BY_TYPE_ID[typeId];
+  }
   const key = (dev || code || '').toUpperCase();
   if (key.includes('OWN') && key.includes('GOAL')) return 'own_goal';
   if (key.includes('PENALTY') && key.includes('MISS')) return 'other';
@@ -524,7 +554,7 @@ function mapEvents(
 ): LiveEvent[] {
   return (events ?? [])
     .map((e) => {
-      const kind = eventKind(e.type?.developer_name, e.type?.code);
+      const kind = eventKind(e.type?.developer_name, e.type?.code, e.type_id);
       const type = eventTypeLabel(kind, e.type?.name || e.info);
       const player = shortName(
         e.player_name || e.player?.display_name || e.player?.name || e.player?.common_name
@@ -739,7 +769,7 @@ export async function fetchLivescores(leagueIds: number[] = [ligaMxLeagueId()]):
   const key = `${LIVE_CACHE_KEY}-${leagueIds.slice().sort().join(',')}`;
   const stickyKey = `${key}-sticky`;
   return singleFlight(key, LIVE_TTL_MS, async () => {
-    const include = 'participants;scores;state;league;periods;events.type';
+    const include = LIVESCORES_INCLUDE;
     const filters = `fixtureLeagues:${leagueIds.join(',')}`;
     const latest = await smFetch<{ data?: SmFixture[] }>(
       '/livescores/latest',
@@ -992,17 +1022,86 @@ async function fetchTeamForm(teamId: string, limit = 5): Promise<FormMatch[]> {
 
 export async function fetchMatchSnapshot(fixtureId: string): Promise<MatchSnapshot | null> {
   // Coalesce match-chapter + radio polls onto one SM fixture detail call.
-  const cacheKey = `sm-match-snap-v1-${fixtureId}`;
+  const cacheKey = `sm-match-snap-v2-${fixtureId}`;
   return singleFlight(cacheKey, FRESH.apiTtlLiveMs, () => loadMatchSnapshot(fixtureId));
 }
 
-async function loadMatchSnapshot(fixtureId: string): Promise<MatchSnapshot | null> {
-  const include =
-    'participants;scores;state;venue;round;league;periods;events.type;events.player;comments;statistics.type;lineups.type;lineups.player;referees.referee;formations';
+/** Lean live tick — scores/clock/events only (no lineups/form/H2H). */
+export async function fetchMatchTick(fixtureId: string): Promise<MatchSnapshot | null> {
+  const cacheKey = `sm-match-tick-v1-${fixtureId}`;
+  return singleFlight(cacheKey, FRESH.apiTtlLiveMs, () => loadMatchTick(fixtureId));
+}
+
+async function loadMatchTick(fixtureId: string): Promise<MatchSnapshot | null> {
   try {
     const data = await smFetch<{ data?: SmFixture }>(
       `/fixtures/${fixtureId}`,
-      { include },
+      { include: MATCH_TICK_INCLUDE },
+      { revalidate: false }
+    );
+    if (!data.data) return null;
+    const base = mapFixture(data.data);
+    const events = mapEvents(
+      data.data.events,
+      base.home.id,
+      base.away.id,
+      base.home.abbreviation,
+      base.away.abbreviation
+    );
+    return {
+      ...base,
+      scorers: scorersFromEvents(events),
+      events,
+      comments: [],
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function loadContexto(
+  homeId: string,
+  awayId: string,
+  homeAbbr: string,
+  awayAbbr: string,
+  live: boolean
+): Promise<{
+  form: { home: FormMatch[]; away: FormMatch[] };
+  headToHead: HeadToHeadSummary | null;
+}> {
+  const formKeyH = `sm-team-form-v1-${homeId}`;
+  const formKeyA = `sm-team-form-v1-${awayId}`;
+  const h2hKey = `sm-h2h-v1-${[homeId, awayId].sort().join('-')}`;
+
+  // Live: reuse warm Contexto only — never spend Fixture/Team calls mid-match.
+  if (live) {
+    const homeForm = getCache<FormMatch[]>(formKeyH, FORM_TTL_MS) ?? [];
+    const awayForm = getCache<FormMatch[]>(formKeyA, FORM_TTL_MS) ?? [];
+    const h2hRaw = getCache<HeadToHeadSummary | null>(h2hKey, H2H_TTL_MS) ?? null;
+    return {
+      form: { home: homeForm, away: awayForm },
+      headToHead: h2hRaw
+        ? recountH2hForPair(h2hRaw, homeAbbr, awayAbbr)
+        : null,
+    };
+  }
+
+  const [homeForm, awayForm, h2hRaw] = await Promise.all([
+    fetchClubForm(homeId, 5),
+    fetchClubForm(awayId, 5),
+    singleFlight(h2hKey, H2H_TTL_MS, () => fetchHeadToHead(homeId, awayId)),
+  ]);
+  return {
+    form: { home: homeForm, away: awayForm },
+    headToHead: recountH2hForPair(h2hRaw, homeAbbr, awayAbbr),
+  };
+}
+
+async function loadMatchSnapshot(fixtureId: string): Promise<MatchSnapshot | null> {
+  try {
+    const data = await smFetch<{ data?: SmFixture }>(
+      `/fixtures/${fixtureId}`,
+      { include: MATCH_DETAIL_INCLUDE },
       { revalidate: false }
     );
     if (!data.data) return null;
@@ -1015,16 +1114,13 @@ async function loadMatchSnapshot(fixtureId: string): Promise<MatchSnapshot | nul
       base.away.abbreviation
     );
 
-    // Always load Contexto (form + H2H). Long TTL so live score polls don't re-tax SM.
-    const [homeForm, awayForm, h2hRaw] = await Promise.all([
-      fetchClubForm(base.home.id, 5),
-      fetchClubForm(base.away.id, 5),
-      singleFlight(
-        `sm-h2h-v1-${[base.home.id, base.away.id].sort().join('-')}`,
-        H2H_TTL_MS,
-        () => fetchHeadToHead(base.home.id, base.away.id)
-      ),
-    ]);
+    const contexto = await loadContexto(
+      base.home.id,
+      base.away.id,
+      base.home.abbreviation,
+      base.away.abbreviation,
+      base.state === 'in'
+    );
 
     return {
       ...base,
@@ -1043,8 +1139,8 @@ async function loadMatchSnapshot(fixtureId: string): Promise<MatchSnapshot | nul
         base.home.abbreviation,
         base.away.abbreviation
       ),
-      form: { home: homeForm, away: awayForm },
-      headToHead: recountH2hForPair(h2hRaw, base.home.abbreviation, base.away.abbreviation),
+      form: contexto.form,
+      headToHead: contexto.headToHead,
     };
   } catch {
     return null;

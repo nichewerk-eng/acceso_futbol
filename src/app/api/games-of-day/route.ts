@@ -21,8 +21,8 @@ export async function GET() {
     }
   }
 
-  // Coalesce concurrent misses; TTL set inside singleFlight uses near as floor.
-  const payload = await singleFlight(CACHE_KEY, apiTtlMsForPace('near'), () =>
+  // Coalesce at live floor (4s). Idle/near still short-circuit via pace-aware peek above.
+  const payload = await singleFlight(CACHE_KEY, apiTtlMsForPace('live'), () =>
     getGamesOfDay()
   );
   const pace = paceFromFixtures(payload.games);
