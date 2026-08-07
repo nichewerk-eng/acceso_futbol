@@ -15,7 +15,7 @@ export const siteConfig = {
   tagline: "Tu acceso al fútbol mexicano.",
   taglineEn: "Mexican soccer media. Unfiltered. On your feed.",
   description:
-    "Pulso en vivo de Liga MX, Leagues Cup y la Selección Mexicana: marcadores, crónica, dónde ver y Acceso Radio. Fútbol mexicano para México y EE.UU.",
+    "Acceso Futbol: noticias, resultados, horarios, tabla, análisis y contenido de Liga MX, Selección Mexicana y Leagues Cup para aficionados en México y Estados Unidos.",
   url: "https://accesofutbol.com",
   email: "hello@accesofutbol.com",
   founded: 2026,
@@ -30,6 +30,12 @@ export const siteConfig = {
     get profileUrl() {
       return `https://www.tiktok.com/@${this.username}`;
     },
+  },
+  social: {
+    tiktok: "https://www.tiktok.com/@accesofutbolmx",
+    instagram: "https://www.instagram.com/accesofutbolmx",
+    facebook: "https://www.facebook.com/accesofutbol",
+    youtube: "https://www.youtube.com/@accesofutbolmx",
   },
   seoKeywords: [
     "Liga MX",

@@ -1,4 +1,6 @@
 import type { MetadataRoute } from 'next';
+import { allClubIdentities } from '@/config/clubIdentity';
+import { MOMENTS } from '@/config/moments';
 import { siteConfig } from '@/config/site';
 import {
   fetchLeaguesCupSeasonFixtures,
@@ -35,18 +37,42 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.75,
     },
     {
+      url: `${siteConfig.url}/nosotros`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.55,
+    },
+    {
+      url: `${siteConfig.url}/contacto`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.55,
+    },
+    {
       url: `${siteConfig.url}/mediakit`,
       lastModified: now,
       changeFrequency: 'monthly',
       priority: 0.5,
     },
-    {
-      url: `${siteConfig.url}/inicio`,
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 0.4,
-    },
   ];
+
+  for (const club of allClubIdentities()) {
+    entries.push({
+      url: `${siteConfig.url}/club/${club.id}`,
+      lastModified: now,
+      changeFrequency: 'daily',
+      priority: club.id === 'el-tri' ? 0.85 : 0.7,
+    });
+  }
+
+  for (const m of MOMENTS) {
+    entries.push({
+      url: `${siteConfig.url}/momento/${m.id}`,
+      lastModified: m.publishedAt ? new Date(m.publishedAt) : now,
+      changeFrequency: 'weekly',
+      priority: m.cable ? 0.65 : 0.5,
+    });
+  }
 
   if (!sportmonksEnabled()) return entries;
 

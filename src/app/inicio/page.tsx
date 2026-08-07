@@ -13,12 +13,12 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Landing · fútbol mexicano sin filtro",
   description: siteConfig.description,
-  alternates: { canonical: absoluteUrl("/inicio") },
-  robots: { index: true, follow: true },
+  alternates: { canonical: absoluteUrl("/") },
+  robots: { index: false, follow: true },
   openGraph: {
     title: "Acceso Futbol · el fútbol mexicano no espera",
     description: siteConfig.description,
-    url: absoluteUrl("/inicio"),
+    url: absoluteUrl("/"),
   },
 };
 

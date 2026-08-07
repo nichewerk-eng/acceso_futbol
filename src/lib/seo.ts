@@ -24,7 +24,7 @@ export function leagueLabel(league: string): string {
 export function organizationJsonLd() {
   return {
     '@context': 'https://schema.org',
-    '@type': 'Organization',
+    '@type': 'NewsMediaOrganization',
     name: siteConfig.name,
     legalName: siteConfig.legalName,
     url: siteConfig.url,
@@ -32,7 +32,12 @@ export function organizationJsonLd() {
     foundingDate: String(siteConfig.founded),
     description: siteConfig.description,
     logo: absoluteUrl('/logo.png'),
-    sameAs: [siteConfig.tiktok.profileUrl],
+    sameAs: [
+      siteConfig.social.tiktok,
+      siteConfig.social.instagram,
+      siteConfig.social.facebook,
+      siteConfig.social.youtube,
+    ],
     areaServed: ['MX', 'US'],
     knowsAbout: [
       'Liga MX',
@@ -41,6 +46,12 @@ export function organizationJsonLd() {
       'FIFA World Cup 2026',
       'Mexican soccer',
     ],
+    contactPoint: {
+      '@type': 'ContactPoint',
+      email: siteConfig.email,
+      contactType: 'customer service',
+      availableLanguage: ['es', 'en'],
+    },
   };
 }
 
@@ -53,6 +64,58 @@ export function websiteJsonLd() {
     description: siteConfig.description,
     inLanguage: 'es-MX',
     publisher: { '@type': 'Organization', name: siteConfig.name, url: siteConfig.url },
+  };
+}
+
+export function sportsTeamJsonLd(club: {
+  id: string;
+  name: string;
+  abbreviation: string;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'SportsTeam',
+    name: club.name,
+    alternateName: club.abbreviation,
+    sport: 'Soccer',
+    url: absoluteUrl(`/club/${club.id}`),
+    memberOf: {
+      '@type': 'SportsOrganization',
+      name: club.id === 'el-tri' ? 'FIFA' : 'Liga MX',
+    },
+  };
+}
+
+export function newsArticleJsonLd(opts: {
+  headline: string;
+  description: string;
+  path: string;
+  publishedAt?: string;
+  image?: string;
+  section?: string;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: opts.headline,
+    description: opts.description,
+    url: absoluteUrl(opts.path),
+    mainEntityOfPage: absoluteUrl(opts.path),
+    datePublished: opts.publishedAt,
+    dateModified: opts.publishedAt,
+    image: opts.image ? absoluteUrl(opts.image) : absoluteUrl('/logo.png'),
+    articleSection: opts.section ?? 'Fútbol mexicano',
+    inLanguage: 'es-MX',
+    author: {
+      '@type': 'Organization',
+      name: siteConfig.name,
+      url: siteConfig.url,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: siteConfig.name,
+      logo: { '@type': 'ImageObject', url: absoluteUrl('/logo.png') },
+    },
   };
 }
 

@@ -36,12 +36,28 @@ export function SiteFooter() {
         </div>
 
         <nav className="af-footer-channels" aria-label="Canales Acceso">
+          <Link href="/liga-mx" className="af-footer-channel" data-testid="footer-liga-mx">
+            <span className="af-footer-channel-key">Liga MX</span>
+            <span className="af-footer-channel-val">Jornada →</span>
+          </Link>
+          <Link href="/leagues-cup" className="af-footer-channel" data-testid="footer-leagues-cup">
+            <span className="af-footer-channel-key">Leagues Cup</span>
+            <span className="af-footer-channel-val">Board →</span>
+          </Link>
+          <Link href="/nosotros" className="af-footer-channel" data-testid="footer-nosotros">
+            <span className="af-footer-channel-key">Casa</span>
+            <span className="af-footer-channel-val">Quiénes somos →</span>
+          </Link>
+          <Link href="/contacto" className="af-footer-channel" data-testid="footer-contacto">
+            <span className="af-footer-channel-key">Cabina</span>
+            <span className="af-footer-channel-val">Contacto →</span>
+          </Link>
           <a
             href={`mailto:${siteConfig.email}`}
             className="af-footer-channel"
             data-testid="footer-email"
           >
-            <span className="af-footer-channel-key">Cabina</span>
+            <span className="af-footer-channel-key">Mail</span>
             <span className="af-footer-channel-val">{siteConfig.email}</span>
           </a>
           <a
