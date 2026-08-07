@@ -1435,8 +1435,8 @@ body {
 }
 
 .tv-channel[data-channel='univision'] .tv-channel-logo {
-  max-height: 1.25rem;
-  max-width: 1.25rem;
+  max-height: 0.85rem;
+  max-width: 2.6rem;
 }
 
 .tv-channel[data-channel='layvtime'] .tv-channel-logo {
@@ -1476,8 +1476,8 @@ body {
 }
 
 .tv-channel-compact[data-channel='univision'] .tv-channel-logo {
-  max-height: 1.05rem;
-  max-width: 1.05rem;
+  max-height: 0.7rem;
+  max-width: 2.2rem;
 }
 
 .tv-channel-compact[data-channel='layvtime'] .tv-channel-logo {

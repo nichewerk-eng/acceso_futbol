@@ -45,8 +45,8 @@ export const TV_CHANNELS: Record<TvChannelId, TvChannel> = {
   },
   univision: {
     id: 'univision',
-    label: 'Univision',
-    src: '/tv_logos/Uni_Vt_Pos_R_Sml_Flt_rgb.png',
+    label: 'UniMás',
+    src: '/tv_logos/UMas_SM_Sml_rgb.png',
   },
   'apple-tv': {
     id: 'apple-tv',
@@ -120,7 +120,7 @@ export function resolveDondeVer(
   }
 
   if (fixture.league === 'leagues-cup') {
-    // Every match on Apple TV. US linear (Univision / FS1) and MX linear (Imagen / Televisa) are select-only.
+    // Every match on Apple TV. US linear (UniMás / FS1) and MX linear (Imagen / Televisa) are select-only.
     return {
       mx: 'Apple TV',
       us: 'Apple TV',
