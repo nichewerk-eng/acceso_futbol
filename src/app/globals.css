@@ -520,6 +520,261 @@ body {
   display: none;
 }
 
+/* Mobile: clasificación glance above the calendar */
+.lc-mobile-tabla {
+  display: block;
+  margin-bottom: 1.75rem;
+}
+
+.lc-rail-tabla-desk {
+  display: none;
+}
+
+.lc-rail-block {
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  padding: 0.85rem 0.9rem;
+}
+
+.lc-clasificacion {
+  padding-inline: 0;
+  border-inline: 0;
+  background: transparent;
+}
+
+@media (min-width: 1024px) {
+  .lc-rail-tabla-desk .lc-clasificacion {
+    padding-inline: 0.9rem;
+    border: 1px solid var(--line);
+    background: var(--bg-2);
+  }
+}
+
+.lc-rail-block-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.lc-rail-link {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--signal);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.lc-rail-link:hover {
+  color: var(--foreground);
+}
+
+.lc-rail-note {
+  margin-top: 0.35rem;
+  margin-bottom: 0.75rem;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.lc-clasificacion-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem 0.85rem;
+  align-items: start;
+}
+
+/* Same column rails as rows so the league title lines up with crests */
+.lc-rail-mini-head,
+.lc-rail-mini-row {
+  display: grid;
+  grid-template-columns: 1.1rem auto minmax(0, 1fr) 0.9rem 1.35rem;
+  align-items: center;
+  column-gap: 0.3rem;
+}
+
+.lc-rail-mini-head {
+  margin-bottom: 0.35rem;
+  align-items: baseline;
+}
+
+.lc-rail-mini-head h4 {
+  grid-column: 2 / 4;
+  font-family: var(--font-oswald), sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.lc-rail-mini-head .af-tele {
+  grid-column: 5;
+  text-align: right;
+  justify-self: end;
+}
+
+.lc-rail-mini-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lc-rail-mini-row {
+  padding: 0.24rem 0;
+}
+
+.lc-rail-mini-cut {
+  border-bottom: 1px dashed color-mix(in srgb, var(--signal) 45%, var(--line));
+  padding-bottom: 0.35rem;
+  margin-bottom: 0.1rem;
+}
+
+.lc-rail-mini-out {
+  opacity: 0.55;
+}
+
+.lc-rail-mini-mine .lc-rail-mini-abbr {
+  color: var(--signal);
+}
+
+.lc-rail-mini-pos {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  color: var(--muted);
+  text-align: right;
+}
+
+.lc-rail-mini-abbr {
+  font-family: var(--font-oswald), sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.lc-rail-mini-mark {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--signal);
+  text-align: center;
+}
+
+.lc-rail-mini-out .lc-rail-mini-mark {
+  color: var(--muted);
+}
+
+.lc-rail-mini-pts {
+  font-family: var(--font-oswald), sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.lc-rail-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  margin-top: 0.55rem;
+}
+
+.lc-rail-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.lc-rail-stat-val {
+  font-family: var(--font-oswald), sans-serif;
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.lc-rail-stat-lab {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.lc-rail-next {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-top: 0.7rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--line);
+}
+
+.lc-rail-next-match {
+  font-family: var(--font-oswald), sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.lc-rail-mine-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.55rem;
+}
+
+.lc-rail-mine-name {
+  font-family: var(--font-oswald), sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.lc-rail-mine-pts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.1rem;
+  font-family: var(--font-oswald), sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.lc-rail-mine-mark {
+  margin-top: 0.55rem;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lc-rail-tv-list {
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
 .lc-day-stack {
   display: flex;
   flex-direction: column;
@@ -562,224 +817,23 @@ body {
     top: 1.25rem;
   }
 
-  .lc-rail-block {
-    border: 1px solid var(--line);
-    background: var(--bg-2);
-    padding: 0.85rem 0.9rem;
+  .lc-mobile-tabla {
+    display: none;
   }
 
-  .lc-rail-block-head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.5rem;
+  .lc-rail-tabla-desk {
+    display: block;
   }
 
-  .lc-rail-link {
-    font-family: var(--font-plex-mono), ui-monospace, monospace;
-    font-size: 9px;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--signal);
-    background: none;
-    border: 0;
-    padding: 0;
-    cursor: pointer;
+  .lc-clasificacion-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
   }
 
-  .lc-rail-link:hover {
-    color: var(--foreground);
-  }
-
-  .lc-rail-note {
-    margin-top: 0.35rem;
-    margin-bottom: 0.75rem;
-    font-family: var(--font-plex-mono), ui-monospace, monospace;
-    font-size: 10px;
-    color: var(--muted);
-    line-height: 1.4;
-  }
-
-  .lc-rail-stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem 1rem;
-    margin-top: 0.55rem;
-  }
-
-  .lc-rail-stat {
-    display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
-  }
-
-  .lc-rail-stat-val {
-    font-family: var(--font-oswald), sans-serif;
-    font-size: 1.45rem;
-    font-weight: 700;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .lc-rail-stat-lab {
-    font-family: var(--font-plex-mono), ui-monospace, monospace;
-    font-size: 9px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-
-  .lc-rail-next {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    margin-top: 0.7rem;
-    padding-top: 0.65rem;
-    border-top: 1px solid var(--line);
-  }
-
-  .lc-rail-next-match {
-    font-family: var(--font-oswald), sans-serif;
-    font-size: 0.95rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-  }
-
-  .lc-rail-mine-row {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 0.55rem;
-    margin-top: 0.55rem;
-  }
-
-  .lc-rail-mine-name {
-    font-family: var(--font-oswald), sans-serif;
-    font-size: 1.15rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    text-transform: uppercase;
-    line-height: 1;
-  }
-
-  .lc-rail-mine-pts {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0.1rem;
-    font-family: var(--font-oswald), sans-serif;
-    font-size: 1.35rem;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-  }
-
-  .lc-rail-mine-mark {
-    margin-top: 0.55rem;
-    font-family: var(--font-plex-mono), ui-monospace, monospace;
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .lc-rail-mini + .lc-rail-mini {
+  .lc-clasificacion-grid .lc-rail-mini + .lc-rail-mini {
     margin-top: 0.85rem;
     padding-top: 0.75rem;
     border-top: 1px solid var(--line);
-  }
-
-  .lc-rail-mini-head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    margin-bottom: 0.35rem;
-  }
-
-  .lc-rail-mini-head h4 {
-    font-family: var(--font-oswald), sans-serif;
-    font-size: 0.95rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-
-  .lc-rail-mini-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  .lc-rail-mini-row {
-    display: grid;
-    grid-template-columns: 1.1rem auto minmax(0, 1fr) 0.9rem 1.5rem;
-    align-items: center;
-    column-gap: 0.35rem;
-    padding: 0.28rem 0;
-  }
-
-  .lc-rail-mini-cut {
-    border-bottom: 1px dashed color-mix(in srgb, var(--signal) 45%, var(--line));
-    padding-bottom: 0.4rem;
-    margin-bottom: 0.1rem;
-  }
-
-  .lc-rail-mini-out {
-    opacity: 0.55;
-  }
-
-  .lc-rail-mini-mine .lc-rail-mini-abbr {
-    color: var(--signal);
-  }
-
-  .lc-rail-mini-pos {
-    font-family: var(--font-plex-mono), ui-monospace, monospace;
-    font-size: 10px;
-    color: var(--muted);
-    text-align: right;
-  }
-
-  .lc-rail-mini-abbr {
-    font-family: var(--font-oswald), sans-serif;
-    font-size: 0.95rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    text-transform: uppercase;
-  }
-
-  .lc-rail-mini-mark {
-    font-family: var(--font-plex-mono), ui-monospace, monospace;
-    font-size: 9px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--signal);
-    text-align: center;
-  }
-
-  .lc-rail-mini-out .lc-rail-mini-mark {
-    color: var(--muted);
-  }
-
-  .lc-rail-mini-pts {
-    font-family: var(--font-oswald), sans-serif;
-    font-size: 0.95rem;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    text-align: right;
-  }
-
-  .lc-rail-tv-list {
-    margin: 0.5rem 0 0;
-    padding: 0;
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    font-family: var(--font-plex-mono), ui-monospace, monospace;
-    font-size: 10px;
-    line-height: 1.45;
-    color: var(--muted);
   }
 }
 

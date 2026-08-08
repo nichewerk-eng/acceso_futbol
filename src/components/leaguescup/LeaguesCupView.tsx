@@ -305,6 +305,14 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
                   </BoardBlock>
                 )}
 
+                <div className="lc-mobile-tabla">
+                  <LcClasificacionCard
+                    standings={standings}
+                    matchesGravity={matchesGravity}
+                    onOpenTabla={() => setTab('tabla')}
+                  />
+                </div>
+
                 <section data-testid="lc-fase-1" className="lc-board">
                   {porJugarByDay.length > 0 && (
                     <div className="lc-section" data-testid="lc-por-jugar">
@@ -346,10 +354,7 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
 
               <LcPartidosRail
                 standings={standings}
-                live={live}
                 porJugarByDay={porJugarByDay}
-                jugadosByDay={jugadosByDay}
-                todayKey={todayKey}
                 userTz={userTz}
                 clubName={club?.name ?? null}
                 clubAbbr={club?.abbreviation ?? null}
@@ -365,10 +370,7 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
 
 function LcPartidosRail({
   standings,
-  live,
   porJugarByDay,
-  jugadosByDay,
-  todayKey,
   userTz,
   clubName,
   clubAbbr,
@@ -376,10 +378,7 @@ function LcPartidosRail({
   onOpenTabla,
 }: {
   standings: LcStandingsPayload;
-  live: Fixture[];
   porJugarByDay: { day: string; label: string; rows: Fixture[] }[];
-  jugadosByDay: { day: string; label: string; rows: Fixture[] }[];
-  todayKey: string;
   userTz: string;
   clubName: string | null;
   clubAbbr: string | null;
@@ -391,10 +390,6 @@ function LcPartidosRail({
   ) => boolean;
   onOpenTabla: () => void;
 }) {
-  const todayUpcoming = porJugarByDay.find((g) => g.day === todayKey)?.rows ?? [];
-  const todayPlayed = jugadosByDay.find((g) => g.day === todayKey)?.rows ?? [];
-  const nextKick = todayUpcoming[0] ?? porJugarByDay[0]?.rows[0] ?? null;
-
   const myEntry = useMemo(() => {
     if (!clubName && !clubAbbr) return null;
     const all = [...standings.ligaMx, ...standings.mls];
@@ -431,35 +426,6 @@ function LcPartidosRail({
 
   return (
     <aside className="lc-rail" data-testid="lc-rail">
-      <div className="lc-rail-block" data-testid="lc-rail-hoy">
-        <p className="af-tele text-signal">Hoy</p>
-        <div className="lc-rail-stats">
-          {live.length > 0 && (
-            <p className="lc-rail-stat">
-              <span className="lc-rail-stat-val text-signal">{live.length}</span>
-              <span className="lc-rail-stat-lab">en vivo</span>
-            </p>
-          )}
-          <p className="lc-rail-stat">
-            <span className="lc-rail-stat-val">{todayUpcoming.length}</span>
-            <span className="lc-rail-stat-lab">por jugar</span>
-          </p>
-          <p className="lc-rail-stat">
-            <span className="lc-rail-stat-val">{todayPlayed.length}</span>
-            <span className="lc-rail-stat-lab">jugados</span>
-          </p>
-        </div>
-        {nextKick && (
-          <p className="lc-rail-next">
-            <span className="af-tele text-muted">Próximo</span>
-            <span className="lc-rail-next-match">
-              {fmtTime(nextKick.date, nextKick.venueTz || userTz)} · {nextKick.home.abbreviation}–
-              {nextKick.away.abbreviation}
-            </span>
-          </p>
-        )}
-      </div>
-
       {myEntry && (
         <div className="lc-rail-block lc-rail-mine" data-testid="lc-rail-mine">
           <p className="af-tele text-signal">Tu club</p>
@@ -508,16 +474,12 @@ function LcPartidosRail({
         </div>
       )}
 
-      <div className="lc-rail-block" data-testid="lc-rail-tabla">
-        <div className="lc-rail-block-head">
-          <p className="af-tele text-foreground">Clasificación</p>
-          <button type="button" className="lc-rail-link" onClick={onOpenTabla}>
-            Tabla completa
-          </button>
-        </div>
-        <p className="lc-rail-note">Top {LC_KO_SPOTS} de cada liga → cuartos</p>
-        <RailMiniTable title="Liga MX" entries={standings.ligaMx} matchesGravity={matchesGravity} />
-        <RailMiniTable title="MLS" entries={standings.mls} matchesGravity={matchesGravity} />
+      <div className="lc-rail-tabla-desk">
+        <LcClasificacionCard
+          standings={standings}
+          matchesGravity={matchesGravity}
+          onOpenTabla={onOpenTabla}
+        />
       </div>
 
       <div className="lc-rail-block" data-testid="lc-rail-tv">
@@ -529,6 +491,41 @@ function LcPartidosRail({
         </ul>
       </div>
     </aside>
+  );
+}
+
+function LcClasificacionCard({
+  standings,
+  matchesGravity,
+  onOpenTabla,
+}: {
+  standings: LcStandingsPayload;
+  matchesGravity: (
+    homeName: string,
+    awayName: string,
+    homeAbbr?: string,
+    awayAbbr?: string
+  ) => boolean;
+  onOpenTabla: () => void;
+}) {
+  return (
+    <div className="lc-rail-block lc-clasificacion" data-testid="lc-rail-tabla">
+      <div className="lc-rail-block-head">
+        <p className="af-tele text-foreground">Clasificación</p>
+        <button type="button" className="lc-rail-link" onClick={onOpenTabla}>
+          Tabla completa
+        </button>
+      </div>
+      <p className="lc-rail-note">Top {LC_KO_SPOTS} de cada liga → cuartos</p>
+      <div className="lc-clasificacion-grid">
+        <RailMiniTable
+          title="Liga MX"
+          entries={standings.ligaMx}
+          matchesGravity={matchesGravity}
+        />
+        <RailMiniTable title="MLS" entries={standings.mls} matchesGravity={matchesGravity} />
+      </div>
+    </div>
   );
 }
 
