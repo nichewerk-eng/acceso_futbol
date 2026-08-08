@@ -28,13 +28,25 @@ function dayKeyInTz(d: Date, tz: string) {
 }
 
 function fmtTime(iso: string, tz: string) {
-  // Compact 24h stamp — scans cleaner in the mobile scoreboard center.
+  // Compact 24h stamp — scans cleaner in the scoreboard center.
   return new Date(iso).toLocaleTimeString('es-MX', {
     timeZone: tz,
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
   });
+}
+
+/** Condensed club label for match bands (full name when short, else abbr). */
+function bandName(name: string, abbr: string) {
+  const cleaned = name
+    .replace(/\b(F\.?C\.?|C\.?F\.?|S\.?C\.?|Club|Deportivo|CF)\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!cleaned) return abbr;
+  // Keep bands readable — long MLS names collapse to abbr on the rail.
+  if (cleaned.length > 14) return abbr;
+  return cleaned;
 }
 
 const STANDINGS_GRID = 'lc-standings-grid';
@@ -124,9 +136,8 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
             day,
             label: new Date(anchor).toLocaleDateString('es-MX', {
               timeZone: 'UTC',
-              weekday: 'short',
               day: 'numeric',
-              month: 'short',
+              month: 'long',
             }),
             rows: dayRows.sort((a, b) => +new Date(a.date) - +new Date(b.date)),
           };
@@ -296,15 +307,13 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
 
                 <section data-testid="lc-fase-1" className="lc-board">
                   {porJugarByDay.length > 0 && (
-                    <div className="mb-8" data-testid="lc-por-jugar">
-                      <div className="lc-day-head">
-                        <h3 className="font-display text-lg font-bold uppercase tracking-wide sm:text-xl">
-                          Por jugar
-                        </h3>
-                        <p className="af-tele text-muted">
+                    <div className="lc-section" data-testid="lc-por-jugar">
+                      <header className="lc-section-head">
+                        <p className="af-tele text-signal">Por jugar</p>
+                        <span className="lc-section-count">
                           {porJugarByDay.reduce((n, d) => n + d.rows.length, 0)}
-                        </p>
-                      </div>
+                        </span>
+                      </header>
                       <LcDayGroups
                         groups={porJugarByDay}
                         todayKey={todayKey}
@@ -316,15 +325,13 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
                   )}
 
                   {jugadosByDay.length > 0 && (
-                    <div data-testid="lc-jugados">
-                      <div className="lc-day-head">
-                        <h3 className="font-display text-lg font-bold uppercase tracking-wide sm:text-xl">
-                          Jugados
-                        </h3>
-                        <p className="af-tele text-muted">
+                    <div className="lc-section" data-testid="lc-jugados">
+                      <header className="lc-section-head">
+                        <p className="af-tele text-muted">Jugados</p>
+                        <span className="lc-section-count">
                           {jugadosByDay.reduce((n, d) => n + d.rows.length, 0)}
-                        </p>
-                      </div>
+                        </span>
+                      </header>
                       <LcDayGroups
                         groups={jugadosByDay}
                         todayKey={todayKey}
@@ -840,9 +847,8 @@ function LcDayGroups({
             className={['lc-day', isToday ? 'lc-day-today' : ''].filter(Boolean).join(' ')}
           >
             <div className="lc-day-head">
-              <h4 className="af-tele text-signal">{group.label}</h4>
-              {isToday && <span className="af-chip text-signal">Hoy</span>}
-              <span className="af-tele text-muted">{group.rows.length}</span>
+              {isToday && <span className="lc-day-kicker">Hoy</span>}
+              <h4 className="lc-day-title">{group.label}</h4>
             </div>
             <ul className="lc-day-list">
               {group.rows.map((f) => (
@@ -933,6 +939,8 @@ function MatchRow({
         ? 'FT'
         : kickTime;
   const center = f.state === 'pre' ? 'VS' : `${f.home.score ?? '0'}–${f.away.score ?? '0'}`;
+  const homeLabel = bandName(f.home.name, f.home.abbreviation);
+  const awayLabel = bandName(f.away.name, f.away.abbreviation);
 
   const hasTv = Boolean(
     f.dondeVer?.mxChannels?.length ||
@@ -942,7 +950,7 @@ function MatchRow({
   );
 
   return (
-    <li>
+    <li className="lc-match-item">
       <Link
         href={href}
         data-testid={`lc-match-${f.id}`}
@@ -951,25 +959,28 @@ function MatchRow({
           .join(' ')}
         title={f.venue || undefined}
       >
-        <div className="lc-match-when">
-          <p className="lc-match-when-primary">
-            {live && <span className="hoy-live-dot mr-1.5" aria-hidden />}
-            {whenPrimary}
-          </p>
-          {mine && <span className="lc-match-lock">TU CLUB</span>}
-        </div>
-
-        <div className="lc-match-pair">
-          <span className="lc-match-home">
-            <ClubLogo
-              abbr={f.home.abbreviation}
-              clubId={f.home.id}
-              name={f.home.name}
-              logoUrl={f.home.logo}
-              size="sm"
-            />
-            <span className="lc-match-abbr">{f.home.abbreviation}</span>
+        <span className="lc-match-home">
+          <ClubLogo
+            abbr={f.home.abbreviation}
+            clubId={f.home.id}
+            name={f.home.name}
+            logoUrl={f.home.logo}
+            size="sm"
+          />
+          <span className="lc-match-name" title={f.home.name}>
+            {homeLabel}
           </span>
+        </span>
+
+        <div className="lc-match-mid">
+          <div className="lc-match-when">
+            <p className="lc-match-when-primary">
+              {live && <span className="hoy-live-dot mr-1.5" aria-hidden />}
+              {whenPrimary}
+              {f.state === 'pre' ? <span className="lc-match-when-hrs"> hrs</span> : null}
+            </p>
+            {mine && <span className="lc-match-lock">TU CLUB</span>}
+          </div>
 
           <span
             className={[
@@ -980,34 +991,31 @@ function MatchRow({
             {center}
           </span>
 
-          <span className="lc-match-away">
-            <span className="lc-match-abbr">{f.away.abbreviation}</span>
-            <ClubLogo
-              abbr={f.away.abbreviation}
-              clubId={f.away.id}
-              name={f.away.name}
-              logoUrl={f.away.logo}
-              size="sm"
+          {hasTv ? (
+            <BroadcastChannels
+              className="lc-match-tv tv-inline-desk"
+              mx={f.dondeVer?.mxChannels}
+              us={f.dondeVer?.usChannels}
+              mxLabel={f.dondeVer?.mx}
+              usLabel={f.dondeVer?.us}
+              inline
+              maxMarks={3}
             />
-          </span>
+          ) : null}
         </div>
 
-        {(hasTv || f.venue) && (
-          <div className="lc-match-aside">
-            {hasTv ? (
-              <BroadcastChannels
-                className="lc-match-tv tv-inline-desk"
-                mx={f.dondeVer?.mxChannels}
-                us={f.dondeVer?.usChannels}
-                mxLabel={f.dondeVer?.mx}
-                usLabel={f.dondeVer?.us}
-                inline
-                maxMarks={3}
-              />
-            ) : null}
-            {f.venue ? <p className="lc-match-venue">{f.venue}</p> : null}
-          </div>
-        )}
+        <span className="lc-match-away">
+          <span className="lc-match-name" title={f.away.name}>
+            {awayLabel}
+          </span>
+          <ClubLogo
+            abbr={f.away.abbreviation}
+            clubId={f.away.id}
+            name={f.away.name}
+            logoUrl={f.away.logo}
+            size="sm"
+          />
+        </span>
       </Link>
     </li>
   );

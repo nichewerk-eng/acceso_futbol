@@ -523,7 +523,28 @@ body {
 .lc-day-stack {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.75rem;
+}
+
+.lc-section + .lc-section {
+  margin-top: 2.75rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--line);
+}
+
+.lc-section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  margin-bottom: 1.35rem;
+}
+
+.lc-section-count {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--muted);
 }
 
 @media (min-width: 1024px) {
@@ -762,169 +783,219 @@ body {
   }
 }
 
+/* Day boards — date leads; section label stays quiet above */
 .lc-day-head {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.45rem 0.65rem;
-  margin-bottom: 0.4rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
 }
 
-.lc-day-head .af-tele.text-muted {
-  margin-left: auto;
+.lc-day-kicker {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--signal);
 }
 
-.lc-day-today .lc-day-list {
-  border-color: color-mix(in srgb, var(--signal) 40%, var(--line));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--signal) 12%, transparent);
+.lc-day-title {
+  font-family: var(--font-oswald), sans-serif;
+  font-size: clamp(1.2rem, 2.8vw, 1.45rem);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--foreground);
+  line-height: 1;
+  text-align: left;
 }
 
 .lc-day-list {
   list-style: none;
   margin: 0;
   padding: 0;
-  border: 1px solid var(--line);
-  background: var(--bg-2);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 0;
+  border-block: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
+  background: transparent;
 }
 
+.lc-day-today .lc-day-title {
+  color: var(--signal);
+}
+
+.lc-day-today .lc-day-list {
+  border-block-color: color-mix(in srgb, var(--signal) 28%, var(--line));
+}
+
+.lc-match-item {
+  margin: 0;
+  padding: 0;
+}
+
+.lc-match-item + .lc-match-item {
+  border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+}
+
+/*
+ * Match band — same structure, quieter surface:
+ * open paper + hairline rules (no filled cards).
+ */
 .lc-match {
   display: grid;
-  grid-template-columns: 4.5rem auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 5.5rem minmax(0, 1fr);
   align-items: center;
-  column-gap: 0.9rem;
-  row-gap: 0.35rem;
-  padding: 0.65rem 0.8rem;
-  border-top: 1px solid var(--line);
+  column-gap: 0.45rem;
+  min-height: 3.6rem;
+  padding: 0.7rem 0.15rem 0.65rem;
+  background: transparent;
+  border: 0;
   color: inherit;
   text-decoration: none;
   transition: background 0.15s ease;
 }
 
-.lc-match:first-child {
-  border-top: 0;
-}
-
 .lc-match:hover {
-  background: var(--bg-3);
+  background: color-mix(in srgb, var(--foreground) 3.5%, transparent);
 }
 
 .lc-match-live {
+  background: color-mix(in srgb, var(--signal) 5%, transparent);
   box-shadow: inset 3px 0 0 var(--signal);
 }
 
-.lc-match-mine .lc-match-abbr {
+.lc-match-live:hover {
+  background: color-mix(in srgb, var(--signal) 8%, transparent);
+}
+
+.lc-match-mine .lc-match-name {
   color: var(--signal);
+}
+
+.lc-match-home,
+.lc-match-away {
+  display: grid;
+  align-items: center;
+  column-gap: 0.4rem;
+  min-width: 0;
+}
+
+.lc-match-home {
+  grid-template-columns: auto minmax(0, 1fr);
+  justify-self: stretch;
+}
+
+.lc-match-away {
+  grid-template-columns: minmax(0, 1fr) auto;
+  justify-self: stretch;
+}
+
+.lc-match-name {
+  font-family: var(--font-oswald), sans-serif;
+  font-weight: 700;
+  font-size: clamp(0.95rem, 2.4vw, 1.2rem);
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lc-match-home .lc-match-name {
+  text-align: left;
+}
+
+.lc-match-away .lc-match-name {
+  text-align: right;
+}
+
+.lc-match-mid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.12rem;
+  min-width: 0;
+  justify-self: center;
 }
 
 .lc-match-when {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
-  min-width: 0;
+  align-items: center;
+  gap: 0.12rem;
 }
 
 .lc-match-when-primary {
-  font-family: var(--font-plex-mono), ui-monospace, monospace;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--foreground);
-  line-height: 1.2;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0.18rem 0.4rem;
+  background: var(--foreground);
+  color: var(--bg-1);
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.lc-match-when-hrs {
+  letter-spacing: 0.06em;
+  opacity: 0.85;
 }
 
 .lc-match-lock {
   font-family: var(--font-plex-mono), ui-monospace, monospace;
   font-size: 8px;
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--signal);
 }
 
-/* Tight cluster — fixed rails so VS/score aligns down the day list */
-.lc-match-pair {
-  display: grid;
-  grid-template-columns: 6.5rem 2.85rem 6.5rem;
-  align-items: center;
-  column-gap: 0.45rem;
-  justify-self: start;
-}
-
-.lc-match-home,
-.lc-match-away {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-width: 0;
-}
-
-.lc-match-home {
-  justify-content: flex-end;
-}
-
-.lc-match-away {
-  justify-content: flex-start;
-}
-
-.lc-match-abbr {
+.lc-match-center {
   font-family: var(--font-oswald), sans-serif;
-  font-weight: 700;
-  font-size: 1.15rem;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
+  font-weight: 500;
+  font-size: 1.35rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  text-align: center;
+  white-space: nowrap;
   line-height: 1;
 }
 
-.lc-match-center {
-  font-family: var(--font-oswald), sans-serif;
-  font-weight: 600;
-  font-size: 1.05rem;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.04em;
-  text-align: center;
-  white-space: nowrap;
-}
-
 .lc-match-center-vs {
-  color: var(--muted);
-  font-weight: 500;
-  letter-spacing: 0.12em;
+  color: var(--foreground);
+  font-weight: 400;
+  letter-spacing: 0.14em;
 }
 
 .lc-match-center-score {
   color: var(--foreground);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-size: 1.25rem;
 }
 
-.lc-match-aside {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 0.2rem;
-  min-width: 0;
-  justify-self: end;
-}
-
-.lc-match-tv.tv-inline {
+.lc-match-tv.tv-inline,
+.lc-match-tv.tv-inline-desk {
+  display: inline-flex;
   max-width: none;
   overflow: visible;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  row-gap: 0.15rem;
-}
-
-.lc-match-venue {
-  font-family: var(--font-plex-mono), ui-monospace, monospace;
-  font-size: 9px;
-  color: var(--muted);
-  text-align: right;
-  max-width: 14rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0.4rem;
+  margin-top: 0.1rem;
 }
 
 @media (max-width: 640px) {
@@ -1012,176 +1083,136 @@ body {
     max-width: none;
   }
 
-  /*
-   * Mobile scoreboard — fixed rails so every row shares the same columns:
-   * logo | abbr | time/VS/TV | abbr | logo
-   */
-  .lc-match {
-    grid-template-columns: 24px minmax(0, 1fr) 3.4rem minmax(0, 1fr) 24px;
-    grid-template-rows: auto auto auto;
-    column-gap: 0.35rem;
-    row-gap: 0.1rem;
-    padding: 0.7rem 0.75rem 0.55rem;
-    align-items: center;
+  /* Poster bands — tighter on phone, same axis as desktop */
+  .lc-day-stack {
+    gap: 1.1rem;
   }
 
-  .lc-match-pair,
+  .lc-match {
+    grid-template-columns: minmax(0, 1fr) 4.75rem minmax(0, 1fr);
+    column-gap: 0.3rem;
+    min-height: 3.35rem;
+    padding: 0.55rem 0.1rem 0.5rem;
+  }
+
   .lc-match-home,
   .lc-match-away {
-    display: contents;
-  }
-
-  /* Outer crest rails — same x for every match */
-  .lc-match-home > :first-child {
-    grid-column: 1;
-    grid-row: 1 / 3;
-    justify-self: center;
-    align-self: center;
-  }
-
-  .lc-match-home .lc-match-abbr {
-    grid-column: 2;
-    grid-row: 1 / 3;
-    justify-self: end;
-    align-self: center;
-    text-align: right;
-  }
-
-  .lc-match-when {
-    grid-column: 3;
-    grid-row: 1;
-    justify-self: center;
-    align-self: end;
-    align-items: center;
-    text-align: center;
-    width: 100%;
-  }
-
-  .lc-match-when-primary {
-    font-size: 9px;
-    letter-spacing: 0.08em;
-    justify-content: center;
-    width: 100%;
-  }
-
-  .lc-match-lock {
-    letter-spacing: 0.1em;
-  }
-
-  .lc-match-center {
-    grid-column: 3;
-    grid-row: 2;
-    justify-self: center;
-    align-self: start;
-    width: 100%;
-    font-size: 1.05rem;
-    min-width: 0;
-    padding-inline: 0;
-    text-align: center;
-  }
-
-  .lc-match-away .lc-match-abbr {
-    grid-column: 4;
-    grid-row: 1 / 3;
-    justify-self: start;
-    align-self: center;
-    text-align: left;
-  }
-
-  .lc-match-away > :last-child {
-    grid-column: 5;
-    grid-row: 1 / 3;
-    justify-self: center;
-    align-self: center;
-  }
-
-  .lc-match-abbr {
-    font-size: 1.05rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 100%;
-  }
-
-  /* Channels on the VS rail — same center axis as time/score */
-  .lc-match-aside {
-    grid-column: 3;
-    grid-row: 3;
-    justify-self: center;
-    align-self: start;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    align-items: center;
-    justify-content: center;
-    gap: 0.35rem;
-    margin-top: 0.15rem;
-    padding-top: 0;
-    border-top: 0;
-    width: max-content;
-    max-width: none;
-  }
-
-  /* Venue-only aside collapses on mobile (venue is hidden) */
-  .lc-match-aside:not(:has(.tv-inline)) {
-    display: none;
+    column-gap: 0.3rem;
   }
 
   .lc-match-home .club-logo-sm,
-  .lc-match-away .club-logo-sm,
-  .lc-match-home > :first-child,
-  .lc-match-away > :last-child {
-    width: 24px;
-    height: 24px;
-    flex-shrink: 0;
+  .lc-match-away .club-logo-sm {
+    width: 26px;
+    height: 26px;
+  }
+
+  .lc-match-name {
+    font-size: 0.92rem;
+    letter-spacing: -0.02em;
+  }
+
+  .lc-match-mid {
+    gap: 0.08rem;
+  }
+
+  .lc-match-when-primary {
+    font-size: 8px;
+    padding: 0.16rem 0.32rem;
+  }
+
+  .lc-match-center {
+    font-size: 1.2rem;
+  }
+
+  .lc-match-center-score {
+    font-size: 1.1rem;
   }
 
   .lc-match-tv.tv-inline,
   .lc-match-tv.tv-inline-desk {
-    display: inline-flex;
-    max-width: none;
-    overflow: visible;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: nowrap;
-    gap: 0.28rem;
+    gap: 0.35rem;
   }
 
-  /* Match hero/inline mobile marks — desk sizes are too big in the foot */
+  /* Inline-density slots on desk class so wide marks don't collide */
   .lc-match-tv.tv-inline-desk .tv-channel,
   .lc-match-tv.tv-inline-desk .tv-channel-compact {
-    width: 1.35rem;
     height: 0.95rem;
-  }
-
-  .lc-match-tv.tv-inline-desk .tv-channel-logo {
-    max-height: 0.85rem;
-    max-width: 1.3rem;
   }
 
   .lc-match-tv.tv-inline-desk .tv-channel[data-channel='apple-tv'],
   .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='apple-tv'] {
     width: 0.95rem;
   }
-
   .lc-match-tv.tv-inline-desk .tv-channel[data-channel='apple-tv'] .tv-channel-logo,
   .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='apple-tv'] .tv-channel-logo {
-    max-height: 0.9rem;
     max-width: 0.9rem;
+    max-height: 0.9rem;
+  }
+
+  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='canal-5'],
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='canal-5'] {
+    width: 1rem;
+  }
+  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='canal-5'] .tv-channel-logo,
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='canal-5'] .tv-channel-logo {
+    max-width: 0.9rem;
+    max-height: 0.9rem;
+  }
+
+  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='vix'],
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='vix'] {
+    width: 1.15rem;
+  }
+  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='vix'] .tv-channel-logo,
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='vix'] .tv-channel-logo {
+    width: 1.05rem;
+    max-width: 1.05rem;
+    max-height: 0.45rem;
+    height: 0.45rem;
+  }
+
+  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='fs1'],
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='fs1'] {
+    width: 1.7rem;
+  }
+  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='fs1'] .tv-channel-logo,
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='fs1'] .tv-channel-logo {
+    max-width: 1.55rem;
+    max-height: 0.75rem;
+  }
+
+  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='layvtime'],
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='layvtime'] {
+    width: 2rem;
+  }
+  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='layvtime'] .tv-channel-logo,
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='layvtime'] .tv-channel-logo {
+    max-width: 1.9rem;
+    max-height: 0.55rem;
+  }
+
+  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='tudn'],
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='tudn'],
+  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='univision'],
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='univision'] {
+    width: 2.15rem;
+  }
+  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='tudn'] .tv-channel-logo,
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='tudn'] .tv-channel-logo,
+  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='univision'] .tv-channel-logo,
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='univision'] .tv-channel-logo {
+    max-width: 2.05rem;
+    max-height: 0.55rem;
   }
 
   .lc-match-tv.tv-inline-desk .tv-channel[data-channel='imagen-tv'],
   .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='imagen-tv'] {
     width: 2.1rem;
   }
-
   .lc-match-tv.tv-inline-desk .tv-channel[data-channel='imagen-tv'] .tv-channel-logo,
   .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='imagen-tv'] .tv-channel-logo {
+    max-width: 2rem;
     max-height: 0.85rem;
-    max-width: 2.05rem;
-  }
-
-  .lc-match-venue {
-    display: none;
   }
 }
 
@@ -2061,6 +2092,11 @@ body {
   color: var(--foreground);
 }
 
+/*
+  TV channel marks — one structure for every id:
+  slot (fixed width + overflow:hidden) → logo (max-width/height, contain).
+  Densities: default · compact · inline · inline-desk.
+*/
 .tv-channel {
   display: inline-flex;
   align-items: center;
@@ -2068,6 +2104,12 @@ body {
   flex-shrink: 0;
   width: 3.1rem;
   height: 1.4rem;
+  overflow: hidden;
+  padding: 0;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  background: transparent;
 }
 
 .tv-channel-compact {
@@ -2084,92 +2126,6 @@ body {
   object-fit: contain;
 }
 
-/*
-  Optical scales: ViX fills its PNG frame with thick glyphs + black pad,
-  so equal max-height makes it read ~2× heavier than TUDN/Canal 5.
-*/
-.tv-channel[data-channel='vix'] {
-  width: 2.35rem;
-}
-
-.tv-channel[data-channel='vix'] .tv-channel-logo {
-  width: 1.85rem;
-  max-width: 1.85rem;
-  max-height: 0.62rem;
-  height: 0.62rem;
-}
-
-.tv-channel[data-channel='tudn'] .tv-channel-logo {
-  max-height: 0.85rem;
-  max-width: 2.85rem;
-}
-
-.tv-channel[data-channel='canal-5'] .tv-channel-logo {
-  max-height: 1.2rem;
-  max-width: 1.2rem;
-}
-
-.tv-channel[data-channel='univision'] .tv-channel-logo {
-  max-height: 0.85rem;
-  max-width: 2.6rem;
-}
-
-.tv-channel[data-channel='layvtime'] .tv-channel-logo {
-  max-height: 0.9rem;
-  max-width: 2.7rem;
-}
-
-.tv-channel[data-channel='apple-tv'] {
-  width: 1.35rem;
-}
-
-.tv-channel[data-channel='apple-tv'] .tv-channel-logo {
-  max-height: 1.25rem;
-  max-width: 1.25rem;
-  border-radius: 0.28rem;
-}
-
-.tv-channel-compact[data-channel='vix'] {
-  width: 2rem;
-}
-
-.tv-channel-compact[data-channel='vix'] .tv-channel-logo {
-  width: 1.55rem;
-  max-width: 1.55rem;
-  max-height: 0.5rem;
-  height: 0.5rem;
-}
-
-.tv-channel-compact[data-channel='tudn'] .tv-channel-logo {
-  max-height: 0.7rem;
-  max-width: 2.35rem;
-}
-
-.tv-channel-compact[data-channel='canal-5'] .tv-channel-logo {
-  max-height: 1rem;
-  max-width: 1rem;
-}
-
-.tv-channel-compact[data-channel='univision'] .tv-channel-logo {
-  max-height: 0.7rem;
-  max-width: 2.2rem;
-}
-
-.tv-channel-compact[data-channel='layvtime'] .tv-channel-logo {
-  max-height: 0.75rem;
-  max-width: 2.25rem;
-}
-
-.tv-channel-compact[data-channel='apple-tv'] {
-  width: 1.15rem;
-}
-
-.tv-channel-compact[data-channel='apple-tv'] .tv-channel-logo {
-  max-height: 1.05rem;
-  max-width: 1.05rem;
-  border-radius: 0.22rem;
-}
-
 .tv-channel-text {
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: 9px;
@@ -2179,31 +2135,148 @@ body {
   color: var(--foreground);
 }
 
-.tv-channel[data-channel='fs1'],
-.tv-channel-compact[data-channel='fs1'] {
-  border: none;
-  outline: none;
-  box-shadow: none;
-  padding: 0;
-  background: transparent;
-  width: auto;
+.tv-channel-logo-invert {
+  filter: invert(1);
 }
 
+/* —— default density —— */
+.tv-channel[data-channel='apple-tv'] {
+  width: 1.35rem;
+}
+.tv-channel[data-channel='apple-tv'] .tv-channel-logo {
+  max-width: 1.25rem;
+  max-height: 1.25rem;
+  border-radius: 0.28rem;
+}
+
+.tv-channel[data-channel='canal-5'] {
+  width: 1.4rem;
+}
+.tv-channel[data-channel='canal-5'] .tv-channel-logo {
+  max-width: 1.2rem;
+  max-height: 1.2rem;
+}
+
+.tv-channel[data-channel='vix'] {
+  width: 2.35rem;
+}
+.tv-channel[data-channel='vix'] .tv-channel-logo {
+  width: 1.85rem;
+  max-width: 1.85rem;
+  max-height: 0.62rem;
+  height: 0.62rem;
+}
+
+.tv-channel[data-channel='fs1'] {
+  width: 2.7rem;
+}
 .tv-channel[data-channel='fs1'] .tv-channel-logo {
+  max-width: 2.55rem;
   max-height: 1.15rem;
-  max-width: 2.6rem;
-  border: none;
-  box-shadow: none;
   border-radius: 0.15rem;
 }
 
-.tv-channel-compact[data-channel='fs1'] .tv-channel-logo {
-  max-height: 1rem;
-  max-width: 2.2rem;
+.tv-channel[data-channel='layvtime'] {
+  width: 2.85rem;
+}
+.tv-channel[data-channel='layvtime'] .tv-channel-logo {
+  max-width: 2.7rem;
+  max-height: 0.9rem;
 }
 
-.tv-channel-logo-invert {
-  filter: invert(1);
+.tv-channel[data-channel='tudn'] {
+  width: 3rem;
+}
+.tv-channel[data-channel='tudn'] .tv-channel-logo {
+  max-width: 2.85rem;
+  max-height: 0.75rem;
+}
+
+.tv-channel[data-channel='univision'] {
+  width: 3rem;
+}
+.tv-channel[data-channel='univision'] .tv-channel-logo {
+  max-width: 2.85rem;
+  max-height: 0.75rem;
+}
+
+.tv-channel[data-channel='imagen-tv'] {
+  width: 3.4rem;
+}
+.tv-channel[data-channel='imagen-tv'] .tv-channel-logo {
+  max-width: 3.25rem;
+  max-height: 1.15rem;
+  border-radius: 0.15rem;
+}
+
+/* —— compact density —— */
+.tv-channel-compact[data-channel='apple-tv'] {
+  width: 1.15rem;
+}
+.tv-channel-compact[data-channel='apple-tv'] .tv-channel-logo {
+  max-width: 1.05rem;
+  max-height: 1.05rem;
+  border-radius: 0.22rem;
+}
+
+.tv-channel-compact[data-channel='canal-5'] {
+  width: 1.2rem;
+}
+.tv-channel-compact[data-channel='canal-5'] .tv-channel-logo {
+  max-width: 1rem;
+  max-height: 1rem;
+}
+
+.tv-channel-compact[data-channel='vix'] {
+  width: 2rem;
+}
+.tv-channel-compact[data-channel='vix'] .tv-channel-logo {
+  width: 1.55rem;
+  max-width: 1.55rem;
+  max-height: 0.5rem;
+  height: 0.5rem;
+}
+
+.tv-channel-compact[data-channel='fs1'] {
+  width: 2.3rem;
+}
+.tv-channel-compact[data-channel='fs1'] .tv-channel-logo {
+  max-width: 2.15rem;
+  max-height: 0.95rem;
+  border-radius: 0.12rem;
+}
+
+.tv-channel-compact[data-channel='layvtime'] {
+  width: 2.4rem;
+}
+.tv-channel-compact[data-channel='layvtime'] .tv-channel-logo {
+  max-width: 2.25rem;
+  max-height: 0.75rem;
+}
+
+.tv-channel-compact[data-channel='tudn'] {
+  width: 2.6rem;
+}
+.tv-channel-compact[data-channel='tudn'] .tv-channel-logo {
+  max-width: 2.45rem;
+  max-height: 0.65rem;
+}
+
+.tv-channel-compact[data-channel='univision'] {
+  width: 2.6rem;
+}
+.tv-channel-compact[data-channel='univision'] .tv-channel-logo {
+  max-width: 2.45rem;
+  max-height: 0.65rem;
+}
+
+.tv-channel-compact[data-channel='imagen-tv'] {
+  width: 3rem;
+}
+.tv-channel-compact[data-channel='imagen-tv'] .tv-channel-logo {
+  max-width: 2.85rem;
+  max-height: 1rem;
+  border-radius: 0.12rem;
 }
 
 .tv-donde-compact .tv-donde-label {
@@ -2247,86 +2320,160 @@ body {
   max-width: 1.65rem;
 }
 
+/* —— inline density (match rows / hero bands) —— */
 .tv-inline .tv-channel[data-channel='apple-tv'],
 .tv-inline .tv-channel-compact[data-channel='apple-tv'] {
   width: 0.95rem;
 }
-
-.tv-inline-desk .tv-channel[data-channel='apple-tv'],
-.tv-inline-desk .tv-channel-compact[data-channel='apple-tv'] {
-  width: 1.1rem;
-}
-
 .tv-inline .tv-channel[data-channel='apple-tv'] .tv-channel-logo,
 .tv-inline .tv-channel-compact[data-channel='apple-tv'] .tv-channel-logo {
-  max-height: 0.9rem;
   max-width: 0.9rem;
+  max-height: 0.9rem;
 }
 
-.tv-inline-desk .tv-channel[data-channel='apple-tv'] .tv-channel-logo,
-.tv-inline-desk .tv-channel-compact[data-channel='apple-tv'] .tv-channel-logo {
-  max-height: 1.05rem;
-  max-width: 1.05rem;
+.tv-inline .tv-channel[data-channel='canal-5'],
+.tv-inline .tv-channel-compact[data-channel='canal-5'] {
+  width: 1rem;
+}
+.tv-inline .tv-channel[data-channel='canal-5'] .tv-channel-logo,
+.tv-inline .tv-channel-compact[data-channel='canal-5'] .tv-channel-logo {
+  max-width: 0.9rem;
+  max-height: 0.9rem;
 }
 
 .tv-inline .tv-channel[data-channel='vix'],
 .tv-inline .tv-channel-compact[data-channel='vix'] {
   width: 1.15rem;
 }
-
 .tv-inline .tv-channel[data-channel='vix'] .tv-channel-logo,
 .tv-inline .tv-channel-compact[data-channel='vix'] .tv-channel-logo {
-  max-height: 0.45rem;
+  width: 1.05rem;
   max-width: 1.05rem;
+  max-height: 0.45rem;
   height: 0.45rem;
 }
 
+.tv-inline .tv-channel[data-channel='fs1'],
+.tv-inline .tv-channel-compact[data-channel='fs1'] {
+  width: 1.7rem;
+}
 .tv-inline .tv-channel[data-channel='fs1'] .tv-channel-logo,
 .tv-inline .tv-channel-compact[data-channel='fs1'] .tv-channel-logo {
+  max-width: 1.55rem;
   max-height: 0.75rem;
-  max-width: 1.35rem;
 }
 
-.tv-inline-desk .tv-channel[data-channel='fs1'] .tv-channel-logo,
-.tv-inline-desk .tv-channel-compact[data-channel='fs1'] .tv-channel-logo {
-  max-height: 0.95rem;
-  max-width: 1.85rem;
+.tv-inline .tv-channel[data-channel='layvtime'],
+.tv-inline .tv-channel-compact[data-channel='layvtime'] {
+  width: 2rem;
+}
+.tv-inline .tv-channel[data-channel='layvtime'] .tv-channel-logo,
+.tv-inline .tv-channel-compact[data-channel='layvtime'] .tv-channel-logo {
+  max-width: 1.9rem;
+  max-height: 0.55rem;
 }
 
-/* Imagen: wide wordmark on black — give it room, soft radius */
-.tv-channel[data-channel='imagen-tv'],
-.tv-channel-compact[data-channel='imagen-tv'] {
-  width: 3.4rem;
+.tv-inline .tv-channel[data-channel='tudn'],
+.tv-inline .tv-channel-compact[data-channel='tudn'],
+.tv-inline .tv-channel[data-channel='univision'],
+.tv-inline .tv-channel-compact[data-channel='univision'] {
+  width: 2.15rem;
 }
-
-.tv-channel[data-channel='imagen-tv'] .tv-channel-logo,
-.tv-channel-compact[data-channel='imagen-tv'] .tv-channel-logo {
-  max-height: 1.15rem;
-  max-width: 3.3rem;
-  border-radius: 0.15rem;
+.tv-inline .tv-channel[data-channel='tudn'] .tv-channel-logo,
+.tv-inline .tv-channel-compact[data-channel='tudn'] .tv-channel-logo,
+.tv-inline .tv-channel[data-channel='univision'] .tv-channel-logo,
+.tv-inline .tv-channel-compact[data-channel='univision'] .tv-channel-logo {
+  max-width: 2.05rem;
+  max-height: 0.55rem;
 }
 
 .tv-inline .tv-channel[data-channel='imagen-tv'],
 .tv-inline .tv-channel-compact[data-channel='imagen-tv'] {
   width: 2.1rem;
 }
-
 .tv-inline .tv-channel[data-channel='imagen-tv'] .tv-channel-logo,
 .tv-inline .tv-channel-compact[data-channel='imagen-tv'] .tv-channel-logo {
+  max-width: 2rem;
   max-height: 0.85rem;
-  max-width: 2.05rem;
   border-radius: 0.12rem;
+}
+
+/* —— inline-desk density —— */
+.tv-inline-desk .tv-channel[data-channel='apple-tv'],
+.tv-inline-desk .tv-channel-compact[data-channel='apple-tv'] {
+  width: 1.1rem;
+}
+.tv-inline-desk .tv-channel[data-channel='apple-tv'] .tv-channel-logo,
+.tv-inline-desk .tv-channel-compact[data-channel='apple-tv'] .tv-channel-logo {
+  max-width: 1.05rem;
+  max-height: 1.05rem;
+}
+
+.tv-inline-desk .tv-channel[data-channel='canal-5'],
+.tv-inline-desk .tv-channel-compact[data-channel='canal-5'] {
+  width: 1.15rem;
+}
+.tv-inline-desk .tv-channel[data-channel='canal-5'] .tv-channel-logo,
+.tv-inline-desk .tv-channel-compact[data-channel='canal-5'] .tv-channel-logo {
+  max-width: 1.05rem;
+  max-height: 1.05rem;
+}
+
+.tv-inline-desk .tv-channel[data-channel='vix'],
+.tv-inline-desk .tv-channel-compact[data-channel='vix'] {
+  width: 1.4rem;
+}
+.tv-inline-desk .tv-channel[data-channel='vix'] .tv-channel-logo,
+.tv-inline-desk .tv-channel-compact[data-channel='vix'] .tv-channel-logo {
+  width: 1.25rem;
+  max-width: 1.25rem;
+  max-height: 0.5rem;
+  height: 0.5rem;
+}
+
+.tv-inline-desk .tv-channel[data-channel='fs1'],
+.tv-inline-desk .tv-channel-compact[data-channel='fs1'] {
+  width: 2.1rem;
+}
+.tv-inline-desk .tv-channel[data-channel='fs1'] .tv-channel-logo,
+.tv-inline-desk .tv-channel-compact[data-channel='fs1'] .tv-channel-logo {
+  max-width: 1.95rem;
+  max-height: 0.95rem;
+}
+
+.tv-inline-desk .tv-channel[data-channel='layvtime'],
+.tv-inline-desk .tv-channel-compact[data-channel='layvtime'] {
+  width: 2.35rem;
+}
+.tv-inline-desk .tv-channel[data-channel='layvtime'] .tv-channel-logo,
+.tv-inline-desk .tv-channel-compact[data-channel='layvtime'] .tv-channel-logo {
+  max-width: 2.2rem;
+  max-height: 0.65rem;
+}
+
+.tv-inline-desk .tv-channel[data-channel='tudn'],
+.tv-inline-desk .tv-channel-compact[data-channel='tudn'],
+.tv-inline-desk .tv-channel[data-channel='univision'],
+.tv-inline-desk .tv-channel-compact[data-channel='univision'] {
+  width: 2.55rem;
+}
+.tv-inline-desk .tv-channel[data-channel='tudn'] .tv-channel-logo,
+.tv-inline-desk .tv-channel-compact[data-channel='tudn'] .tv-channel-logo,
+.tv-inline-desk .tv-channel[data-channel='univision'] .tv-channel-logo,
+.tv-inline-desk .tv-channel-compact[data-channel='univision'] .tv-channel-logo {
+  max-width: 2.4rem;
+  max-height: 0.65rem;
 }
 
 .tv-inline-desk .tv-channel[data-channel='imagen-tv'],
 .tv-inline-desk .tv-channel-compact[data-channel='imagen-tv'] {
   width: 2.85rem;
 }
-
 .tv-inline-desk .tv-channel[data-channel='imagen-tv'] .tv-channel-logo,
 .tv-inline-desk .tv-channel-compact[data-channel='imagen-tv'] .tv-channel-logo {
+  max-width: 2.7rem;
   max-height: 1.05rem;
-  max-width: 2.8rem;
+  border-radius: 0.12rem;
 }
 
 .tv-inline-fallback {
