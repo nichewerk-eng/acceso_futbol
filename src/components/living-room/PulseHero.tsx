@@ -2,12 +2,22 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { useGravity } from '@/contexts/GravityContext';
 import { useGamesOfDay } from '@/lib/client/useGamesOfDay';
 import { competitionBandTag, leaguePath } from '@/lib/radio/phases';
 import type { Story } from '@/lib/news/types';
 import type { DayGame } from '@/lib/sports';
+
+function showDondeVer(g: Pick<DayGame, 'state' | 'dondeVer'>) {
+  if (g.state === 'post') return false;
+  const d = g.dondeVer;
+  if (!d) return false;
+  return Boolean(
+    d.mxChannels?.length || d.usChannels?.length || d.mx || d.us
+  );
+}
 
 type Props = {
   leadStory: Story | null;
@@ -233,15 +243,28 @@ export function PulseHero({ leadStory }: Props) {
               </div>
             </div>
 
-            <p className="af-tele mt-4 text-muted">
-              {stage.state === 'in'
-                ? 'Toca para crónica'
-                : stage.state === 'post'
-                  ? 'Final · abre recap'
-                  : upcoming
-                    ? 'Próximo en cartelera · ficha'
-                    : 'Próximo · ficha'}
-            </p>
+            <div className="hero-stage-foot mt-4">
+              <p className="af-tele text-muted">
+                {stage.state === 'in'
+                  ? 'Toca para crónica'
+                  : stage.state === 'post'
+                    ? 'Final · abre recap'
+                    : upcoming
+                      ? 'Próximo en cartelera · ficha'
+                      : 'Próximo · ficha'}
+              </p>
+              {showDondeVer(stage) ? (
+                <BroadcastChannels
+                  className="hero-stage-tv tv-inline-desk"
+                  mx={stage.dondeVer?.mxChannels}
+                  us={stage.dondeVer?.usChannels}
+                  mxLabel={stage.dondeVer?.mx}
+                  usLabel={stage.dondeVer?.us}
+                  compact
+                  inline
+                />
+              ) : null}
+            </div>
           </Link>
         )}
 
@@ -329,7 +352,19 @@ export function PulseHero({ leadStory }: Props) {
                         size="sm"
                       />
                     </span>
-                    {mine && <span className="hero-band-lock af-tele text-signal">LOCK</span>}
+                    {showDondeVer(g) ? (
+                      <span className="hero-band-tv">
+                        <BroadcastChannels
+                          className="tv-inline-desk"
+                          mx={g.dondeVer?.mxChannels}
+                          us={g.dondeVer?.usChannels}
+                          mxLabel={g.dondeVer?.mx}
+                          usLabel={g.dondeVer?.us}
+                          compact
+                          inline
+                        />
+                      </span>
+                    ) : null}
                   </Link>
                 );
               })}

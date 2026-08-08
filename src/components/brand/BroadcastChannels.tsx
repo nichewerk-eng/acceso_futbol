@@ -14,6 +14,8 @@ type Props = {
    * For match rows on narrow screens — keeps row height flat.
    */
   inline?: boolean;
+  /** Cap logos in inline mode (keeps hero / dense rows calm). */
+  maxMarks?: number;
 };
 
 function ChannelMark({
@@ -109,15 +111,19 @@ export function BroadcastChannels({
   className = '',
   compact = false,
   inline = false,
+  maxMarks,
 }: Props) {
   if ((!mx || mx.length === 0) && (!us || us.length === 0) && !mxLabel && !usLabel) {
     return null;
   }
 
   if (inline) {
-    const marks = uniqueChannels(mx, us);
+    const all = uniqueChannels(mx, us);
+    const marks =
+      typeof maxMarks === 'number' && maxMarks > 0 ? all.slice(0, maxMarks) : all;
+    const title = [mxLabel, usLabel].filter(Boolean).join(' · ') || 'Dónde ver';
     if (marks.length === 0) {
-      const fallback = [mxLabel, usLabel].filter(Boolean).join(' · ');
+      const fallback = title === 'Dónde ver' ? '' : title;
       if (!fallback) return null;
       return (
         <span
@@ -137,7 +143,7 @@ export function BroadcastChannels({
           .filter(Boolean)
           .join(' ')}
         data-testid="donde-ver"
-        title={[mxLabel, usLabel].filter(Boolean).join(' · ') || 'Dónde ver'}
+        title={title}
       >
         {marks.map((id) => (
           <ChannelMark key={id} id={id} surface={surface} compact />

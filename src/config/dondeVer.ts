@@ -1,3 +1,4 @@
+import { LEAGUES_CUP_PHASE_ONE } from '@/config/leaguesCup2026';
 import { mexicoDayKey } from '@/lib/radio/phases';
 import { scheduleAbbr } from '@/lib/sports/ligaMxAbbr';
 import type { Fixture } from '@/lib/sports/types';
@@ -120,7 +121,7 @@ export function resolveDondeVer(
   }
 
   if (fixture.league === 'leagues-cup') {
-    // Every match on Apple TV. US linear (UniMás / FS1) and MX linear (Imagen / Televisa) are select-only.
+    // Fallback when fixture id is unknown — official board is preferred via attachDondeVer.
     return {
       mx: 'Apple TV',
       us: 'Apple TV',
@@ -156,8 +157,35 @@ export function resolveDondeVer(
   };
 }
 
+/** Official Leagues Cup TV grid by Sportmonks fixture id (Imagen / FS1 / UniMás selects). */
+function leaguesCupBoardDondeVer(fixtureId: string): {
+  mx: string;
+  us: string;
+  mxChannels: TvChannelId[];
+  usChannels: TvChannelId[];
+} | null {
+  const kick = LEAGUES_CUP_PHASE_ONE.find((k) => String(k.smId) === fixtureId);
+  if (!kick) return null;
+  const us = kick.us;
+  const mx: TvChannelId[] = kick.mx ?? ['apple-tv'];
+  return {
+    mx: labelList(mx),
+    us: labelList(us),
+    mxChannels: mx,
+    usChannels: us,
+  };
+}
+
 export function attachDondeVer(fixture: Fixture): Fixture {
-  // Keep curated boards (e.g. Leagues Cup official TV grid).
+  // Leagues Cup: always prefer the official board listing (not Apple-TV-only defaults).
+  if (fixture.league === 'leagues-cup') {
+    const board = leaguesCupBoardDondeVer(fixture.id);
+    if (board) {
+      return { ...fixture, dondeVer: board };
+    }
+  }
+
+  // Keep other curated boards that already carry channel ids.
   if (fixture.dondeVer?.usChannels?.length || fixture.dondeVer?.mxChannels?.length) {
     return fixture;
   }

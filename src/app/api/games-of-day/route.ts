@@ -7,7 +7,7 @@ import {
 } from '@/lib/sports/freshness';
 import { getGamesOfDay, type GamesOfDayPayload } from '@/lib/sports/gamesOfDay';
 
-const CACHE_KEY = 'games-of-day-v6-next-day';
+const CACHE_KEY = 'games-of-day-v7-lc-tv';
 
 export async function GET() {
   const cached = peekCache<GamesOfDayPayload>(CACHE_KEY);

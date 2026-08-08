@@ -369,10 +369,12 @@ body {
 }
 
 .hero-band {
+  /* Stamp | home | score | away — equal home/away fr keeps the score centered */
   display: grid;
-  grid-template-columns: 5.5rem 1fr auto 1fr auto;
+  grid-template-columns: 5.5rem minmax(0, 1fr) minmax(3.5rem, auto) minmax(0, 1fr);
   align-items: center;
-  gap: 0.5rem;
+  column-gap: 0.65rem;
+  row-gap: 0.4rem;
   padding: 0.85rem 1rem;
   border-top: 1px solid var(--line);
   background: var(--bg-2);
@@ -410,14 +412,17 @@ body {
   letter-spacing: -0.02em;
   text-transform: uppercase;
   line-height: 1;
+  min-width: 0;
 }
 
 .hero-band-home {
   text-align: left;
+  justify-self: start;
 }
 
 .hero-band-away {
   text-align: right;
+  justify-self: end;
 }
 
 .hero-band-center {
@@ -443,7 +448,43 @@ body {
 }
 
 .hero-band-lock {
-  font-size: 9px;
+  display: none;
+}
+
+/* Channels on their own row so the score line stays symmetrical */
+.hero-band-tv {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-width: 0;
+  padding-top: 0.2rem;
+  border-top: 1px solid color-mix(in srgb, var(--line) 65%, transparent);
+}
+
+.hero-band-tv .tv-inline,
+.hero-stage-tv.tv-inline {
+  max-width: none;
+  overflow: visible;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  row-gap: 0.2rem;
+}
+
+.hero-stage-foot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  column-gap: 1rem;
+  row-gap: 0.45rem;
+}
+
+.hero-stage-foot > p {
+  justify-self: start;
+}
+
+.hero-stage-foot .hero-stage-tv {
+  justify-self: end;
 }
 
 @media (max-width: 640px) {
@@ -474,10 +515,10 @@ body {
   }
 
   .hero-band {
-    /* Stamp | home | score island | away — score keeps its own width */
     grid-template-columns: 3.5rem minmax(0, 1fr) minmax(3.1rem, auto) minmax(0, 1fr);
-    gap: 0.55rem;
-    padding: 0.85rem 0.9rem;
+    column-gap: 0.55rem;
+    row-gap: 0.35rem;
+    padding: 0.75rem 0.9rem 0.65rem;
   }
 
   .hero-band-stamp {
@@ -488,7 +529,6 @@ body {
   .hero-band-home,
   .hero-band-away {
     font-size: 1.35rem; /* tracks club-logo-sm */
-    min-width: 0;
     gap: 0.35rem;
   }
 
@@ -501,12 +541,15 @@ body {
     min-width: 3.1rem;
     font-size: 1.2rem;
     padding-inline: 0.45rem;
-    /* Soft separators so the result doesn't collide with abbrs */
     border-inline: 1px solid var(--line);
   }
 
-  .hero-band-lock {
-    display: none;
+  .hero-stage-foot {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-stage-foot .hero-stage-tv {
+    justify-self: start;
   }
 }
 
