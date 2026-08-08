@@ -1,23 +1,24 @@
 # Acceso Futbol — SEO / indexation plan
 
-Canonical host: **https://accesofutbol.com** (apex). `www` redirects 308 → apex.
+Canonical host: **https://www.accesofutbol.com** (matches Vercel primary). Apex `accesofutbol.com` should 307 → www at the Vercel domain layer — do **not** add app-level redirects the other way (that creates a loop).
 
 ## Phase 0 — GSC (ops, not code)
 
-Do in [Google Search Console](https://search.google.com/search-console) for the **apex** property:
+Do in [Google Search Console](https://search.google.com/search-console) on the **Domain** property `accesofutbol.com` (covers both hosts) or the URL-prefix **`https://www.accesofutbol.com/`**:
 
-1. Confirm property matches `https://accesofutbol.com` (not only www).
-2. Submit sitemap: `https://accesofutbol.com/sitemap.xml`.
-3. URL Inspection on `/`, `/liga-mx`, `/leagues-cup`, one `/club/*`, one `/momento/*`, one live `/partido/*`.
+1. Prefer Domain property `accesofutbol.com`, or URL-prefix www (the live host).
+2. Submit sitemap: `https://www.accesofutbol.com/sitemap.xml`.
+3. URL Inspection on www URLs: `/`, `/liga-mx`, `/leagues-cup`, one `/club/*`, one `/momento/*`, one `/partido/*`.
 4. Request indexing if “URL is unknown to Google” after deploy.
 5. Monitor Coverage / Page indexing for soft-404 or duplicate `/inicio`.
+6. Ignore “not on Google” for brand-new paths until after Request indexing + a few days.
 
 ## Phase 1 — Technical (shipped in code)
 
 | Item | Status |
 |------|--------|
 | Sitemap: hubs + clubs + momentos + partidos | Done |
-| www → apex redirect (middleware + next.config) | Done |
+| Canonical www; apex → www at Vercel only (no app www→apex) | Done |
 | `/inicio` noindex + canonical `/` + robots disallow | Done |
 | Home / partido / club SSR crawl shells | Done |
 | Momento canonical, OG article, NewsArticle JSON-LD | Done |
@@ -41,7 +42,7 @@ Do in [Google Search Console](https://search.google.com/search-console) for the 
 
 ## Phase 4 — Entity consistency
 
-- Keep `siteConfig.url`, Open Graph `url`, JSON-LD `url`, and sitemap host aligned on apex.
+- Keep `siteConfig.url`, Open Graph `url`, JSON-LD `url`, and sitemap host aligned on **www**.
 - Prefer one title pattern: topic + Acceso Futbol (layout template).
 - Social profile URLs live in `siteConfig.social` — update if handles change.
 
@@ -55,7 +56,7 @@ Do in [Google Search Console](https://search.google.com/search-console) for the 
 ## Quick verify after deploy
 
 ```bash
-curl -sI https://www.accesofutbol.com/ | grep -i location
-curl -s https://accesofutbol.com/sitemap.xml | head
-curl -sI https://accesofutbol.com/inicio | grep -i robots
+curl -sI https://accesofutbol.com/ | grep -i location   # expect → www
+curl -sI https://www.accesofutbol.com/liga-mx | head -1  # expect 200
+curl -s https://www.accesofutbol.com/sitemap.xml | head
 ```
