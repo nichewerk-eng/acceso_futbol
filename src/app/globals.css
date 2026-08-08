@@ -1018,8 +1018,9 @@ body {
   justify-content: center;
   margin: 0;
   padding: 0.18rem 0.4rem;
-  background: var(--foreground);
-  color: var(--bg-1);
+  background: var(--bg-2);
+  color: var(--foreground);
+  border: 1px solid var(--line);
   font-family: var(--font-plex-mono), ui-monospace, monospace;
   font-size: 9px;
   font-weight: 600;
