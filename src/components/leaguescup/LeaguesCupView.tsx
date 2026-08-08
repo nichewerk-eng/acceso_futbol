@@ -28,10 +28,12 @@ function dayKeyInTz(d: Date, tz: string) {
 }
 
 function fmtTime(iso: string, tz: string) {
+  // Compact 24h stamp — scans cleaner in the mobile scoreboard center.
   return new Date(iso).toLocaleTimeString('es-MX', {
     timeZone: tz,
-    hour: 'numeric',
+    hour: '2-digit',
     minute: '2-digit',
+    hour12: false,
   });
 }
 
@@ -42,7 +44,7 @@ type Props = {
 };
 
 export default function LeaguesCupView({ initialFixtures }: Props) {
-  const { matchesGravity } = useGravity();
+  const { matchesGravity, club } = useGravity();
   const [fixtures, setFixtures] = useState(initialFixtures);
   const [tab, setTab] = useState<'partidos' | 'tabla' | 'bracket'>('partidos');
   const [refreshing, setRefreshing] = useState(false);
@@ -282,64 +284,303 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
               </Link>
             </div>
           ) : (
-            <>
-              {live.length > 0 && (
-                <BoardBlock title="En vivo" testId="lc-live">
-                  {live.map((f) => (
-                    <MatchRow key={f.id} f={f} tz={userTz} mine={isMine(f)} live />
-                  ))}
-                </BoardBlock>
-              )}
-
-              <section data-testid="lc-fase-1">
-                <h2 className="af-tele mb-2 text-foreground">Fase 1</h2>
-                <p className="mb-6 font-mono text-[11px] text-muted">
-                  4–13 agosto · 54 partidos MLS vs Liga MX
-                </p>
-
-                {porJugarByDay.length > 0 && (
-                  <div className="mb-12" data-testid="lc-por-jugar">
-                    <div className="mb-4 flex items-baseline justify-between gap-3 border-b border-line pb-3">
-                      <h3 className="font-display text-2xl font-bold uppercase tracking-wide">
-                        Por jugar
-                      </h3>
-                      <p className="af-tele text-muted">
-                        {porJugarByDay.reduce((n, d) => n + d.rows.length, 0)}
-                      </p>
-                    </div>
-                    <LcDayGroups
-                      groups={porJugarByDay}
-                      todayKey={todayKey}
-                      userTz={userTz}
-                      isMine={isMine}
-                      testIdPrefix="upcoming"
-                    />
-                  </div>
+            <div className="lc-partidos-layout" data-testid="lc-partidos-layout">
+              <div className="lc-partidos-main">
+                {live.length > 0 && (
+                  <BoardBlock title="En vivo" testId="lc-live">
+                    {live.map((f) => (
+                      <MatchRow key={f.id} f={f} tz={userTz} mine={isMine(f)} live />
+                    ))}
+                  </BoardBlock>
                 )}
 
-                {jugadosByDay.length > 0 && (
-                  <div data-testid="lc-jugados">
-                    <div className="mb-4 flex items-baseline justify-between gap-3 border-b border-line pb-3">
-                      <h3 className="font-display text-2xl font-bold uppercase tracking-wide">
-                        Jugados
-                      </h3>
-                      <p className="af-tele text-muted">
-                        {jugadosByDay.reduce((n, d) => n + d.rows.length, 0)}
-                      </p>
+                <section data-testid="lc-fase-1" className="lc-board">
+                  {porJugarByDay.length > 0 && (
+                    <div className="mb-8" data-testid="lc-por-jugar">
+                      <div className="lc-day-head">
+                        <h3 className="font-display text-lg font-bold uppercase tracking-wide sm:text-xl">
+                          Por jugar
+                        </h3>
+                        <p className="af-tele text-muted">
+                          {porJugarByDay.reduce((n, d) => n + d.rows.length, 0)}
+                        </p>
+                      </div>
+                      <LcDayGroups
+                        groups={porJugarByDay}
+                        todayKey={todayKey}
+                        userTz={userTz}
+                        isMine={isMine}
+                        testIdPrefix="upcoming"
+                      />
                     </div>
-                    <LcDayGroups
-                      groups={jugadosByDay}
-                      todayKey={todayKey}
-                      userTz={userTz}
-                      isMine={isMine}
-                      testIdPrefix="played"
-                    />
-                  </div>
-                )}
-              </section>
-            </>
+                  )}
+
+                  {jugadosByDay.length > 0 && (
+                    <div data-testid="lc-jugados">
+                      <div className="lc-day-head">
+                        <h3 className="font-display text-lg font-bold uppercase tracking-wide sm:text-xl">
+                          Jugados
+                        </h3>
+                        <p className="af-tele text-muted">
+                          {jugadosByDay.reduce((n, d) => n + d.rows.length, 0)}
+                        </p>
+                      </div>
+                      <LcDayGroups
+                        groups={jugadosByDay}
+                        todayKey={todayKey}
+                        userTz={userTz}
+                        isMine={isMine}
+                        testIdPrefix="played"
+                      />
+                    </div>
+                  )}
+                </section>
+              </div>
+
+              <LcPartidosRail
+                standings={standings}
+                live={live}
+                porJugarByDay={porJugarByDay}
+                jugadosByDay={jugadosByDay}
+                todayKey={todayKey}
+                userTz={userTz}
+                clubName={club?.name ?? null}
+                clubAbbr={club?.abbreviation ?? null}
+                matchesGravity={matchesGravity}
+                onOpenTabla={() => setTab('tabla')}
+              />
+            </div>
           ))}
       </div>
+    </div>
+  );
+}
+
+function LcPartidosRail({
+  standings,
+  live,
+  porJugarByDay,
+  jugadosByDay,
+  todayKey,
+  userTz,
+  clubName,
+  clubAbbr,
+  matchesGravity,
+  onOpenTabla,
+}: {
+  standings: LcStandingsPayload;
+  live: Fixture[];
+  porJugarByDay: { day: string; label: string; rows: Fixture[] }[];
+  jugadosByDay: { day: string; label: string; rows: Fixture[] }[];
+  todayKey: string;
+  userTz: string;
+  clubName: string | null;
+  clubAbbr: string | null;
+  matchesGravity: (
+    homeName: string,
+    awayName: string,
+    homeAbbr?: string,
+    awayAbbr?: string
+  ) => boolean;
+  onOpenTabla: () => void;
+}) {
+  const todayUpcoming = porJugarByDay.find((g) => g.day === todayKey)?.rows ?? [];
+  const todayPlayed = jugadosByDay.find((g) => g.day === todayKey)?.rows ?? [];
+  const nextKick = todayUpcoming[0] ?? porJugarByDay[0]?.rows[0] ?? null;
+
+  const myEntry = useMemo(() => {
+    if (!clubName && !clubAbbr) return null;
+    const all = [...standings.ligaMx, ...standings.mls];
+    return (
+      all.find((e) =>
+        matchesGravity(e.team.name, e.team.name, e.team.abbreviation, e.team.abbreviation)
+      ) ?? null
+    );
+  }, [clubName, clubAbbr, standings, matchesGravity]);
+
+  const myLeague = myEntry
+    ? standings.ligaMx.some((e) => e.team.abbreviation === myEntry.team.abbreviation)
+      ? 'Liga MX'
+      : 'MLS'
+    : null;
+
+  const myNext = useMemo(() => {
+    if (!clubName && !clubAbbr) return null;
+    for (const g of porJugarByDay) {
+      const hit = g.rows.find((f) =>
+        matchesGravity(f.home.name, f.away.name, f.home.abbreviation, f.away.abbreviation)
+      );
+      if (hit) return hit;
+    }
+    return null;
+  }, [clubName, clubAbbr, porJugarByDay, matchesGravity]);
+
+  const markLabel = (mark?: 'x' | 'a' | 'e' | null) => {
+    if (mark === 'x') return '1º asegurado';
+    if (mark === 'a') return 'Avanza';
+    if (mark === 'e') return 'Eliminado';
+    return 'En carrera';
+  };
+
+  return (
+    <aside className="lc-rail" data-testid="lc-rail">
+      <div className="lc-rail-block" data-testid="lc-rail-hoy">
+        <p className="af-tele text-signal">Hoy</p>
+        <div className="lc-rail-stats">
+          {live.length > 0 && (
+            <p className="lc-rail-stat">
+              <span className="lc-rail-stat-val text-signal">{live.length}</span>
+              <span className="lc-rail-stat-lab">en vivo</span>
+            </p>
+          )}
+          <p className="lc-rail-stat">
+            <span className="lc-rail-stat-val">{todayUpcoming.length}</span>
+            <span className="lc-rail-stat-lab">por jugar</span>
+          </p>
+          <p className="lc-rail-stat">
+            <span className="lc-rail-stat-val">{todayPlayed.length}</span>
+            <span className="lc-rail-stat-lab">jugados</span>
+          </p>
+        </div>
+        {nextKick && (
+          <p className="lc-rail-next">
+            <span className="af-tele text-muted">Próximo</span>
+            <span className="lc-rail-next-match">
+              {fmtTime(nextKick.date, nextKick.venueTz || userTz)} · {nextKick.home.abbreviation}–
+              {nextKick.away.abbreviation}
+            </span>
+          </p>
+        )}
+      </div>
+
+      {myEntry && (
+        <div className="lc-rail-block lc-rail-mine" data-testid="lc-rail-mine">
+          <p className="af-tele text-signal">Tu club</p>
+          <div className="lc-rail-mine-row">
+            <ClubLogo
+              abbr={myEntry.team.abbreviation}
+              clubId={myEntry.team.id}
+              name={myEntry.team.name}
+              logoUrl={myEntry.team.logo}
+              size="sm"
+            />
+            <div className="min-w-0">
+              <p className="lc-rail-mine-name">{myEntry.team.abbreviation}</p>
+              <p className="af-tele text-muted">
+                {myLeague} · #{myEntry.position}
+              </p>
+            </div>
+            <p className="lc-rail-mine-pts">
+              <span>{myEntry.pts}</span>
+              <span className="af-tele text-muted">pts</span>
+            </p>
+          </div>
+          <p
+            className={[
+              'lc-rail-mine-mark',
+              myEntry.mark === 'e' ? 'text-muted' : 'text-signal',
+            ].join(' ')}
+          >
+            {markLabel(myEntry.mark)}
+            {myEntry.gd !== 0 && (
+              <span className="text-muted">
+                {' '}
+                · Dif {myEntry.gd > 0 ? `+${myEntry.gd}` : myEntry.gd}
+              </span>
+            )}
+          </p>
+          {myNext && (
+            <p className="lc-rail-next">
+              <span className="af-tele text-muted">Siguiente</span>
+              <span className="lc-rail-next-match">
+                {fmtTime(myNext.date, myNext.venueTz || userTz)} · {myNext.home.abbreviation}–
+                {myNext.away.abbreviation}
+              </span>
+            </p>
+          )}
+        </div>
+      )}
+
+      <div className="lc-rail-block" data-testid="lc-rail-tabla">
+        <div className="lc-rail-block-head">
+          <p className="af-tele text-foreground">Clasificación</p>
+          <button type="button" className="lc-rail-link" onClick={onOpenTabla}>
+            Tabla completa
+          </button>
+        </div>
+        <p className="lc-rail-note">Top {LC_KO_SPOTS} de cada liga → cuartos</p>
+        <RailMiniTable title="Liga MX" entries={standings.ligaMx} matchesGravity={matchesGravity} />
+        <RailMiniTable title="MLS" entries={standings.mls} matchesGravity={matchesGravity} />
+      </div>
+
+      <div className="lc-rail-block" data-testid="lc-rail-tv">
+        <p className="af-tele text-foreground">Dónde ver</p>
+        <ul className="lc-rail-tv-list">
+          <li>Todos los partidos en Apple TV</li>
+          <li>Selectos también en TV abierta (MX / US)</li>
+          <li>Canales en cada fila del calendario</li>
+        </ul>
+      </div>
+    </aside>
+  );
+}
+
+function RailMiniTable({
+  title,
+  entries,
+  matchesGravity,
+}: {
+  title: string;
+  entries: LcStandingEntry[];
+  matchesGravity: (
+    homeName: string,
+    awayName: string,
+    homeAbbr?: string,
+    awayAbbr?: string
+  ) => boolean;
+}) {
+  const rows = entries.slice(0, LC_KO_SPOTS + 1);
+  return (
+    <div className="lc-rail-mini">
+      <div className="lc-rail-mini-head">
+        <h4>{title}</h4>
+        <span className="af-tele text-muted">Pts</span>
+      </div>
+      <ul className="lc-rail-mini-list">
+        {rows.map((entry) => {
+          const mine = matchesGravity(
+            entry.team.name,
+            entry.team.name,
+            entry.team.abbreviation,
+            entry.team.abbreviation
+          );
+          const cut = entry.position === LC_KO_SPOTS;
+          return (
+            <li
+              key={entry.team.id || entry.team.abbreviation}
+              className={[
+                'lc-rail-mini-row',
+                cut ? 'lc-rail-mini-cut' : '',
+                entry.position > LC_KO_SPOTS ? 'lc-rail-mini-out' : '',
+                mine ? 'lc-rail-mini-mine' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              <span className="lc-rail-mini-pos">{entry.position}</span>
+              <ClubLogo
+                abbr={entry.team.abbreviation}
+                name={entry.team.name}
+                logoUrl={entry.team.logo}
+                size="xs"
+              />
+              <span className="lc-rail-mini-abbr">{entry.team.abbreviation}</span>
+              <span className="lc-rail-mini-mark">{entry.mark ?? '·'}</span>
+              <span className="lc-rail-mini-pts">{entry.pts}</span>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
@@ -589,16 +830,21 @@ function LcDayGroups({
   testIdPrefix: string;
 }) {
   return (
-    <div className="space-y-8">
+    <div className="lc-day-stack">
       {groups.map((group) => {
         const isToday = group.day === todayKey;
         return (
-          <div key={group.day} data-testid={`lc-day-${testIdPrefix}-${group.day}`}>
-            <div className="mb-2 flex items-baseline gap-3">
+          <div
+            key={group.day}
+            data-testid={`lc-day-${testIdPrefix}-${group.day}`}
+            className={['lc-day', isToday ? 'lc-day-today' : ''].filter(Boolean).join(' ')}
+          >
+            <div className="lc-day-head">
               <h4 className="af-tele text-signal">{group.label}</h4>
               {isToday && <span className="af-chip text-signal">Hoy</span>}
+              <span className="af-tele text-muted">{group.rows.length}</span>
             </div>
-            <ul className="divide-y divide-line border-y border-line">
+            <ul className="lc-day-list">
               {group.rows.map((f) => (
                 <MatchRow key={f.id} f={f} tz={userTz} mine={isMine(f)} />
               ))}
@@ -620,9 +866,11 @@ function BoardBlock({
   children?: ReactNode;
 }) {
   return (
-    <section data-testid={testId}>
-      <h2 className="af-tele mb-4 text-foreground">{title}</h2>
-      <ul className="divide-y divide-line border-y border-line">{children}</ul>
+    <section data-testid={testId} className="lc-board mb-10">
+      <div className="lc-day-head">
+        <h2 className="af-tele text-signal">{title}</h2>
+      </div>
+      <ul className="lc-day-list">{children}</ul>
     </section>
   );
 }
@@ -675,18 +923,16 @@ function MatchRow({
   const href = `/partido/leagues-cup/${f.id}`;
   // ESPN / LeaguesCup.com list venue-local wall times — match that, not browser TZ.
   const kickTz = f.venueTz || tz;
-  const score =
-    f.state === 'pre'
-      ? fmtTime(f.date, kickTz)
-      : `${f.home.score ?? '0'}–${f.away.score ?? '0'}`;
-  const clockStamp =
+  const kickTime = fmtTime(f.date, kickTz);
+  const whenPrimary =
     f.state === 'in'
       ? f.clock === 'HT' || /descanso/i.test(f.statusLabel || '')
         ? 'HT'
         : f.clock || 'LIVE'
       : f.state === 'post'
         ? 'FT'
-        : null;
+        : kickTime;
+  const center = f.state === 'pre' ? 'VS' : `${f.home.score ?? '0'}–${f.away.score ?? '0'}`;
 
   const hasTv = Boolean(
     f.dondeVer?.mxChannels?.length ||
@@ -703,60 +949,63 @@ function MatchRow({
         className={['lc-match', live ? 'lc-match-live' : '', mine ? 'lc-match-mine' : '']
           .filter(Boolean)
           .join(' ')}
+        title={f.venue || undefined}
       >
-        <div className="lc-match-stamp">
-          <p className="af-tele text-muted">
+        <div className="lc-match-when">
+          <p className="lc-match-when-primary">
             {live && <span className="hoy-live-dot mr-1.5" aria-hidden />}
-            {clockStamp ?? f.jornada ?? 'Fase 1'}
+            {whenPrimary}
           </p>
-          <p className="mt-1 font-mono text-[11px] text-muted">{fmtTime(f.date, kickTz)}</p>
+          {mine && <span className="lc-match-lock">TU CLUB</span>}
         </div>
 
-        <span className="lc-match-home">
-          <ClubLogo
-            abbr={f.home.abbreviation}
-            clubId={f.home.id}
-            name={f.home.name}
-            logoUrl={f.home.logo}
-            size="sm"
-          />
-          <span className="club-word club-word-sm truncate">{f.home.abbreviation}</span>
-        </span>
+        <div className="lc-match-pair">
+          <span className="lc-match-home">
+            <ClubLogo
+              abbr={f.home.abbreviation}
+              clubId={f.home.id}
+              name={f.home.name}
+              logoUrl={f.home.logo}
+              size="sm"
+            />
+            <span className="lc-match-abbr">{f.home.abbreviation}</span>
+          </span>
 
-        <span className="lc-match-center af-tele text-signal">{score}</span>
+          <span
+            className={[
+              'lc-match-center',
+              f.state === 'pre' ? 'lc-match-center-vs' : 'lc-match-center-score',
+            ].join(' ')}
+          >
+            {center}
+          </span>
 
-        <span className="lc-match-away">
-          <span className="club-word club-word-sm truncate">{f.away.abbreviation}</span>
-          <ClubLogo
-            abbr={f.away.abbreviation}
-            clubId={f.away.id}
-            name={f.away.name}
-            logoUrl={f.away.logo}
-            size="sm"
-          />
-        </span>
+          <span className="lc-match-away">
+            <span className="lc-match-abbr">{f.away.abbreviation}</span>
+            <ClubLogo
+              abbr={f.away.abbreviation}
+              clubId={f.away.id}
+              name={f.away.name}
+              logoUrl={f.away.logo}
+              size="sm"
+            />
+          </span>
+        </div>
 
-        {(mine || f.venue || hasTv) && (
-          <div className="lc-match-foot">
-            <div className="lc-match-meta">
-              {mine && <span className="af-tele text-signal">TU CLUB</span>}
-              {f.venue && (
-                <p className="truncate font-mono text-[10px] text-muted">{f.venue}</p>
-              )}
-            </div>
+        {(hasTv || f.venue) && (
+          <div className="lc-match-aside">
             {hasTv ? (
-              <span className="lc-match-tv">
-                <BroadcastChannels
-                  className="tv-inline-desk"
-                  mx={f.dondeVer?.mxChannels}
-                  us={f.dondeVer?.usChannels}
-                  mxLabel={f.dondeVer?.mx}
-                  usLabel={f.dondeVer?.us}
-                  compact
-                  inline
-                />
-              </span>
+              <BroadcastChannels
+                className="lc-match-tv tv-inline-desk"
+                mx={f.dondeVer?.mxChannels}
+                us={f.dondeVer?.usChannels}
+                mxLabel={f.dondeVer?.mx}
+                usLabel={f.dondeVer?.us}
+                inline
+                maxMarks={3}
+              />
             ) : null}
+            {f.venue ? <p className="lc-match-venue">{f.venue}</p> : null}
           </div>
         )}
       </Link>
