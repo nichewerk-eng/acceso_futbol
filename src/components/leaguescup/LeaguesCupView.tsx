@@ -1013,6 +1013,8 @@ function MatchRow({
             size="sm"
           />
         </span>
+
+        {f.venue ? <p className="lc-match-venue">{f.venue}</p> : null}
       </Link>
     </li>
   );

@@ -902,15 +902,42 @@ body {
 .lc-match {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 5.5rem minmax(0, 1fr);
+  grid-template-rows: auto auto;
   align-items: center;
   column-gap: 0.45rem;
+  row-gap: 0.35rem;
   min-height: 3.6rem;
-  padding: 0.7rem 0.15rem 0.65rem;
+  padding: 0.7rem 0.15rem 0;
   background: transparent;
   border: 0;
   color: inherit;
   text-decoration: none;
   transition: background 0.15s ease;
+}
+
+.lc-match-home,
+.lc-match-mid,
+.lc-match-away {
+  grid-row: 1;
+}
+
+.lc-match-venue {
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: start;
+  align-self: start;
+  margin: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1.2;
 }
 
 .lc-match:hover {
@@ -1146,7 +1173,7 @@ body {
     grid-template-columns: minmax(0, 1fr) 4.75rem minmax(0, 1fr);
     column-gap: 0.3rem;
     min-height: 3.35rem;
-    padding: 0.55rem 0.1rem 0.5rem;
+    padding: 0.55rem 0.1rem 0;
   }
 
   .lc-match-home,
