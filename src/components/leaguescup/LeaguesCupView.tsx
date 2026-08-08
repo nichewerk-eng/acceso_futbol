@@ -688,14 +688,23 @@ function MatchRow({
         ? 'FT'
         : null;
 
+  const hasTv = Boolean(
+    f.dondeVer?.mxChannels?.length ||
+      f.dondeVer?.usChannels?.length ||
+      f.dondeVer?.mx ||
+      f.dondeVer?.us
+  );
+
   return (
     <li>
       <Link
         href={href}
         data-testid={`lc-match-${f.id}`}
-        className="flex flex-wrap items-center gap-3 py-4 transition hover:bg-bg-2/60 sm:gap-4"
+        className={['lc-match', live ? 'lc-match-live' : '', mine ? 'lc-match-mine' : '']
+          .filter(Boolean)
+          .join(' ')}
       >
-        <div className="min-w-[5.5rem] shrink-0">
+        <div className="lc-match-stamp">
           <p className="af-tele text-muted">
             {live && <span className="hoy-live-dot mr-1.5" aria-hidden />}
             {clockStamp ?? f.jornada ?? 'Fase 1'}
@@ -703,7 +712,7 @@ function MatchRow({
           <p className="mt-1 font-mono text-[11px] text-muted">{fmtTime(f.date, kickTz)}</p>
         </div>
 
-        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+        <span className="lc-match-home">
           <ClubLogo
             abbr={f.home.abbreviation}
             clubId={f.home.id}
@@ -712,7 +721,11 @@ function MatchRow({
             size="sm"
           />
           <span className="club-word club-word-sm truncate">{f.home.abbreviation}</span>
-          <span className="af-tele shrink-0 text-signal">{score}</span>
+        </span>
+
+        <span className="lc-match-center af-tele text-signal">{score}</span>
+
+        <span className="lc-match-away">
           <span className="club-word club-word-sm truncate">{f.away.abbreviation}</span>
           <ClubLogo
             abbr={f.away.abbreviation}
@@ -721,27 +734,31 @@ function MatchRow({
             logoUrl={f.away.logo}
             size="sm"
           />
-        </div>
+        </span>
 
-        <div className="ml-auto flex shrink-0 flex-col items-end gap-0.5">
-          {mine && (
-            <span className="af-tele hidden text-signal sm:inline">TU CLUB</span>
-          )}
-          {f.venue && (
-            <p className="hidden max-w-[12rem] truncate text-right font-mono text-[10px] text-muted sm:block">
-              {f.venue}
-            </p>
-          )}
-          <BroadcastChannels
-            className="tv-inline-desk"
-            mx={f.dondeVer?.mxChannels}
-            us={f.dondeVer?.usChannels}
-            mxLabel={f.dondeVer?.mx}
-            usLabel={f.dondeVer?.us}
-            compact
-            inline
-          />
-        </div>
+        {(mine || f.venue || hasTv) && (
+          <div className="lc-match-foot">
+            <div className="lc-match-meta">
+              {mine && <span className="af-tele text-signal">TU CLUB</span>}
+              {f.venue && (
+                <p className="truncate font-mono text-[10px] text-muted">{f.venue}</p>
+              )}
+            </div>
+            {hasTv ? (
+              <span className="lc-match-tv">
+                <BroadcastChannels
+                  className="tv-inline-desk"
+                  mx={f.dondeVer?.mxChannels}
+                  us={f.dondeVer?.usChannels}
+                  mxLabel={f.dondeVer?.mx}
+                  usLabel={f.dondeVer?.us}
+                  compact
+                  inline
+                />
+              </span>
+            ) : null}
+          </div>
+        )}
       </Link>
     </li>
   );
