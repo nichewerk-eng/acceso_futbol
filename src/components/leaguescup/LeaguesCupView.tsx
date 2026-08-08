@@ -316,12 +316,6 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
                 <section data-testid="lc-fase-1" className="lc-board">
                   {porJugarByDay.length > 0 && (
                     <div className="lc-section" data-testid="lc-por-jugar">
-                      <header className="lc-section-head">
-                        <p className="af-tele text-signal">Por jugar</p>
-                        <span className="lc-section-count">
-                          {porJugarByDay.reduce((n, d) => n + d.rows.length, 0)}
-                        </span>
-                      </header>
                       <LcDayGroups
                         groups={porJugarByDay}
                         todayKey={todayKey}
@@ -334,12 +328,6 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
 
                   {jugadosByDay.length > 0 && (
                     <div className="lc-section" data-testid="lc-jugados">
-                      <header className="lc-section-head">
-                        <p className="af-tele text-muted">Jugados</p>
-                        <span className="lc-section-count">
-                          {jugadosByDay.reduce((n, d) => n + d.rows.length, 0)}
-                        </span>
-                      </header>
                       <LcDayGroups
                         groups={jugadosByDay}
                         todayKey={todayKey}
