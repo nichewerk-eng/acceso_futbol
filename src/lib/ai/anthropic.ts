@@ -1,11 +1,20 @@
-/** Shared Anthropic Messages API helper for Acceso Radio + cable copy. */
+import { anthropic } from '@ai-sdk/anthropic';
+import { generateText } from 'ai';
+
+/**
+ * Acceso Anthropic wiring (same pattern as TecoBid):
+ * - Packages: `ai` + `@ai-sdk/anthropic`
+ * - Key: `ANTHROPIC_API_KEY` in env only — SDK reads it automatically
+ * - No createAnthropic / no key in code
+ */
 
 export function anthropicEnabled(): boolean {
   return Boolean(process.env.ANTHROPIC_API_KEY?.trim());
 }
 
+/** Default Haiku for radio polish + cable lines (cheap). Override via env. */
 export function anthropicModel(): string {
-  return process.env.ANTHROPIC_RADIO_MODEL?.trim() || 'claude-haiku-4-5-20251001';
+  return process.env.ANTHROPIC_RADIO_MODEL?.trim() || 'claude-haiku-4-5';
 }
 
 export type AnthropicChatInput = {
@@ -13,36 +22,26 @@ export type AnthropicChatInput = {
   user: string;
   maxTokens: number;
   temperature?: number;
+  /** Optional override — e.g. Sonnet for heavier beats. */
+  model?: string;
 };
 
-/** Returns assistant text, or null on missing key / HTTP / parse failure. */
-export async function anthropicChat(input: AnthropicChatInput): Promise<string | null> {
-  const key = process.env.ANTHROPIC_API_KEY?.trim();
-  if (!key) return null;
+/** Returns assistant text, or null on missing key / provider failure. */
+export async function anthropicChat(
+  input: AnthropicChatInput
+): Promise<string | null> {
+  if (!anthropicEnabled()) return null;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: anthropicModel(),
-        max_tokens: input.maxTokens,
-        temperature: input.temperature ?? 0.7,
-        system: input.system,
-        messages: [{ role: 'user', content: input.user }],
-      }),
+    const { text } = await generateText({
+      model: anthropic(input.model ?? anthropicModel()),
+      system: input.system,
+      prompt: input.user,
+      maxOutputTokens: input.maxTokens,
+      temperature: input.temperature ?? 0.7,
     });
-    if (!res.ok) return null;
-
-    const data = (await res.json()) as {
-      content?: { type?: string; text?: string }[];
-    };
-    const text = data.content?.find((b) => b.type === 'text')?.text?.trim();
-    return text && text.length > 0 ? text : null;
+    const out = text?.trim();
+    return out && out.length > 0 ? out : null;
   } catch {
     return null;
   }

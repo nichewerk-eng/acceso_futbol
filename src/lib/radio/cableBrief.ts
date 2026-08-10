@@ -1,5 +1,6 @@
 import { anthropicChat, anthropicEnabled } from '@/lib/ai/anthropic';
 import type { Story } from '@/lib/news/types';
+import { isMexicoDay, mexicoDayKey } from '@/lib/radio/phases';
 import type { JornadaOverview } from '@/lib/sports/jornada';
 import {
   beatKey,
@@ -35,8 +36,8 @@ function briefBucket(now = Date.now()) {
 }
 
 export function cableBriefId(style: RadioStyle, now = Date.now()) {
-  // v4: wire-first picks that rotate every brief bucket
-  return `cable-brief-v4-${briefBucket(now)}-${style}`;
+  // v10: ~2:30 story-led brief
+  return `cable-brief-v10-${briefBucket(now)}-${style}`;
 }
 
 const WIRE_SOURCES = new Set(['espn', 'espn-rss', 'mediotiempo', 'tudn', 'marca']);
@@ -50,8 +51,27 @@ function storyBodyScore(s: Story): number {
 }
 
 /**
+ * Same lead + list order as StoriesRail ("Lo que prende") so the brief
+ * narrates what the fan sees on screen — not a rotated subset.
+ */
+export function pickCableDisplayStories(stories: Story[], listLimit = 8): Story[] {
+  const lead =
+    stories.find((s) => s.sourceId === 'espn' && s.image) ??
+    stories.find((s) => s.sourceId === 'espn') ??
+    stories.find((s) => s.sourceId !== 'acceso' && s.image) ??
+    stories.find((s) => s.sourceId !== 'acceso') ??
+    stories.find((s) => s.sourceId === 'acceso' && s.image) ??
+    stories.find((s) => s.sourceId === 'acceso') ??
+    null;
+  if (!lead) return stories.slice(0, listLimit + 1);
+  const rest = stories.filter((s) => s.id !== lead.id).slice(0, listLimit);
+  return [lead, ...rest];
+}
+
+/**
  * Top wire news for the brief. Acceso editorial is demoted (at most one take at the end).
  * Rotates the lead window every brief bucket so the cut changes every few hours.
+ * @deprecated Prefer pickCableDisplayStories for the on-page cable brief.
  */
 export function pickStories(stories: Story[], limit = 6, now = Date.now()): Story[] {
   const wire = stories.filter((s) => WIRE_SOURCES.has(s.sourceId));
@@ -68,13 +88,11 @@ export function pickStories(stories: Story[], limit = 6, now = Date.now()): Stor
     return acceso.slice(0, limit);
   }
 
-  // Keep a fresh top stack, then rotate which slice leads this bucket.
   const stack = pool.slice(0, Math.min(pool.length, Math.max(limit + 4, 10)));
   const bucket = briefBucket(now);
   const offset = stack.length <= limit ? 0 : (bucket * 2) % (stack.length - limit + 1);
   const picks = stack.slice(offset, offset + limit);
 
-  // One Acceso take at the end if we still have a slot — never the lead.
   if (picks.length < limit && acceso[0]) {
     picks.push(acceso[0]);
   }
@@ -82,86 +100,215 @@ export function pickStories(stories: Story[], limit = 6, now = Date.now()): Stor
   return picks.slice(0, limit);
 }
 
-function storyBlurb(s: Story): string {
-  const deck = s.summary?.trim();
-  const take = s.accesoLine?.trim();
-  if (deck && take) return `${s.title}. ${deck} Y la lectura Acceso: ${take}`;
-  if (deck) return `${s.title}. ${deck}`;
-  if (take) return `${s.title}. ${take}`;
-  return s.title;
+export type CableBriefExtras = {
+  /** Tonight / next slate from games-of-day. */
+  day?: {
+    dayKey: string;
+    upcoming?: boolean;
+    games: {
+      home: string;
+      away: string;
+      state: string;
+      score: string | null;
+      league: string;
+      clock?: string | null;
+    }[];
+  } | null;
+  /** Compact Liga MX tabla snapshot. */
+  tabla?: {
+    season: string;
+    top: { pos: number; team: string; pts: number }[];
+    liguillaCut?: { pos: number; team: string; pts: number } | null;
+  } | null;
+};
+
+/** Structured research packet — scripts are generated FROM this, never the other way around. */
+export type CableDossier = {
+  generatedAt: string;
+  style: RadioStyle;
+  /** Absolute clock for the model — do not invent relative days. */
+  tempo: {
+    mexicoNow: string;
+    mexicoDayKey: string;
+    framing: 'live' | 'today' | 'recent' | 'paused';
+    lastResultLabel: string | null;
+    hoursSinceLastResult: number | null;
+    guidance: string;
+  };
+  cancha: {
+    jornada: string | null;
+    live: { match: string; score: string; clock?: string | null }[];
+    results: { match: string; score: string; when: string; date: string }[];
+    upcoming: { match: string; when: string; date: string }[];
+    daySlate: CableBriefExtras['day'];
+  };
+  tabla: CableBriefExtras['tabla'];
+  /** Wire notes = stories on the cable rail, in display order. */
+  wire: {
+    slot: 'lead' | 'list';
+    index: number;
+    id: string;
+    source: string;
+    title: string;
+    summary: string;
+    accesoLine: string;
+  }[];
+};
+
+function fixtureScore(home: number | null | undefined, away: number | null | undefined) {
+  if (home == null || away == null) return null;
+  return `${home}-${away}`;
 }
 
-function jornadaBlurb(j: JornadaOverview | null): string {
-  if (!j) return '';
-  const left = j.upcoming
-    .slice(0, 3)
-    .map((f) => `${f.home.name} contra ${f.away.name}`)
-    .join(', ');
-  const sealed = j.played
-    .slice(0, 3)
-    .map((f) => `${f.home.name} ${f.home.score ?? 0} a ${f.away.score ?? 0} frente a ${f.away.name}`)
-    .join('. ');
-  const parts = [
-    `En la ${j.label} ya van ${j.played.length + j.live.length} partidos sellados y quedan ${j.upcoming.length} por jugar.`,
-    sealed ? `De lo que ya se jugó: ${sealed}.` : '',
-    left ? `Todavía faltan ${left}.` : 'La fecha ya casi se cierra.',
-  ];
-  return parts.filter(Boolean).join(' ');
+/** Calendar label in Mexico City — honest, never guesses "anoche". */
+export function mexicoWhenLabel(iso: string, now = Date.now()): string {
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(+d)) return '';
+    const day = mexicoDayKey(d);
+    const today = mexicoDayKey(new Date(now));
+    const [y, m, dd] = today.split('-').map(Number);
+    const yest = new Date(Date.UTC(y!, m! - 1, dd!));
+    yest.setUTCDate(yest.getUTCDate() - 1);
+    const yesterday = yest.toISOString().slice(0, 10);
+
+    if (day === today) {
+      const t = d.toLocaleTimeString('es-MX', {
+        timeZone: 'America/Mexico_City',
+        hour: 'numeric',
+        minute: '2-digit',
+      });
+      return `hoy ${t}`;
+    }
+    if (day === yesterday) return 'ayer';
+    return d.toLocaleDateString('es-MX', {
+      timeZone: 'America/Mexico_City',
+      weekday: 'long',
+      day: 'numeric',
+      month: 'short',
+    });
+  } catch {
+    return '';
+  }
 }
 
-/** Deterministic ~5 min shape: open + lead + story pairs + jornada + close. */
-export function templateCableBrief(
+function buildTempo(
+  jornada: JornadaOverview | null,
+  now: number
+): CableDossier['tempo'] {
+  const mexicoNow = new Date(now).toLocaleString('es-MX', {
+    timeZone: 'America/Mexico_City',
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+  const live = Boolean(jornada?.live?.length);
+  const played = [...(jornada?.played ?? [])].sort(
+    (a, b) => +new Date(b.date) - +new Date(a.date)
+  );
+  const last = played[0] ?? null;
+  const hoursSinceLastResult = last
+    ? Math.max(0, Math.round((now - +new Date(last.date)) / 3600_000))
+    : null;
+  const lastResultLabel = last ? mexicoWhenLabel(last.date, now) : null;
+
+  let framing: CableDossier['tempo']['framing'] = 'paused';
+  if (live) framing = 'live';
+  else if (last && isMexicoDay(last.date, mexicoDayKey(new Date(now)))) framing = 'today';
+  else if (hoursSinceLastResult != null && hoursSinceLastResult <= 36) framing = 'recent';
+  else framing = 'paused';
+
+  const guidance =
+    framing === 'live'
+      ? 'Hay partido en vivo: puedes decir "en vivo" / el reloj. No digas anoche.'
+      : framing === 'today'
+        ? 'Hubo partidos hoy (hora MX): puedes decir "hoy". No digas anoche salvo que when diga ayer.'
+        : framing === 'recent'
+          ? `Último resultado: ${lastResultLabel}. Usa esa etiqueta o el nombre de la jornada. PROHIBIDO "anoche" / "esta mañana" si when no lo dice.`
+          : `La Liga está en pausa o el último resultado fue hace ${hoursSinceLastResult ?? 'varios'} horas (${lastResultLabel ?? 'sin fecha'}). Di "en la ${jornada?.label ?? 'jornada'}" o la fecha explícita. PROHIBIDO "anoche", "hoy cerró", "esta noche".`;
+
+  return {
+    mexicoNow,
+    mexicoDayKey: mexicoDayKey(new Date(now)),
+    framing,
+    lastResultLabel,
+    hoursSinceLastResult,
+    guidance,
+  };
+}
+
+export function buildCableDossier(
   stories: Story[],
   jornada: JornadaOverview | null,
   style: RadioStyle,
+  extras: CableBriefExtras = {},
   now = Date.now()
-): ShowSegment[] {
-  const picks = pickStories(stories, 6, now);
-  const lead = picks[0];
-  const jLine = jornadaBlurb(jornada);
+): CableDossier {
+  const picks = pickCableDisplayStories(stories, 4);
+  return {
+    generatedAt: new Date(now).toISOString(),
+    style,
+    tempo: buildTempo(jornada, now),
+    cancha: {
+      jornada: jornada?.label ?? null,
+      live: (jornada?.live ?? []).map((f) => ({
+        match: `${f.home.name} vs ${f.away.name}`,
+        score: fixtureScore(f.home.score, f.away.score) ?? '0-0',
+        clock: f.clock ?? null,
+      })),
+      results: (jornada?.played ?? []).slice(0, 8).map((f) => ({
+        match: `${f.home.name} vs ${f.away.name}`,
+        score: fixtureScore(f.home.score, f.away.score) ?? '—',
+        when: mexicoWhenLabel(f.date, now),
+        date: f.date,
+      })),
+      upcoming: (jornada?.upcoming ?? []).slice(0, 6).map((f) => ({
+        match: `${f.home.name} vs ${f.away.name}`,
+        when: mexicoWhenLabel(f.date, now),
+        date: f.date,
+      })),
+      daySlate: extras.day ?? null,
+    },
+    tabla: extras.tabla ?? null,
+    wire: picks.map((s, i) => ({
+      slot: i === 0 ? ('lead' as const) : ('list' as const),
+      index: i,
+      id: s.id,
+      source: s.sourceLabel,
+      title: s.title,
+      summary: (s.summary ?? '').slice(0, 280),
+      accesoLine: s.accesoLine ?? '',
+    })),
+  };
+}
 
-  const open =
-    style === 'caliente'
-      ? `Oye, bienvenido a Acceso. Esto es el briefing del cable: unos minutos contigo, como si estuviéramos en el coche o en la cocina, poniéndonos al día de Liga MX y El Tri sin ahogarnos en el scroll. Yo te platico lo que prende, con nombre de la fuente, y tú decides si te metes al artículo. Arrancamos.`
-      : style === 'tactico'
-        ? `Hola. Acceso Radio, briefing del cable. Vamos a leer con calma lo que están soltando ESPN, Mediotiempo, TUDN y Marca: qué importa de verdad para la fecha y dónde vale la pena poner el ojo. Sin inventar, sin gritar. Como un podcast corto antes de la jornada. Empezamos.`
-        : `Desde este lado del puente — México o Estados Unidos, da igual — Acceso abre el micrófono. Un rato de cable para la afición binacional: lo que se discute en la CDMX y lo que se vive en Texas, California o Chicago. Siéntate un minuto. Te lo platico.`;
+/**
+ * Offline fallback: spoken overview from dossier data — still not a headline parade.
+ */
+export function templateCableBriefFromDossier(dossier: CableDossier): ShowSegment[] {
+  const { wire, style } = dossier;
+  const chunks: ShowSegment[] = [];
+  const lead = wire[0];
+  const list = wire.slice(1, 4);
 
-  const leadSeg = lead
-    ? style === 'tactico'
-      ? `Mira, ${lead.sourceLabel} está marcando el tono del día. ${storyBlurb(lead)}. Quédate con el marco, no con el clickbait. Si quieres el detalle fino, abre la fuente; aquí te dejo la lectura para que no llegues en frío.`
-      : `Lo primero que te quiero contar: según ${lead.sourceLabel}, ${storyBlurb(lead)}. Eso es lo que está arriba del cable. Si te late el tema, léelo completo allá; yo te dejo el pulso para la sobremesa.`
-    : `Hoy el cable viene un poco corto, y está bien. Cuando no hay decks, Acceso no inventa: te digo la verdad y te mando la mirada a la cancha.`;
+  chunks.push({
+    id: 'brief-1',
+    text: lead
+      ? `Cable Acceso — arriba del feed, ${lead.source}: ${lead.summary || lead.title}${lead.accesoLine ? ` — Acceso: ${lead.accesoLine}` : ''}.`
+      : 'Cable Acceso, el feed viene corto hoy.',
+  });
 
-  const chunks: ShowSegment[] = [
-    { id: 'brief-1', text: open },
-    { id: 'brief-2', text: leadSeg },
-  ];
-
-  const rest = picks.slice(1);
-  const bridges = [
-    'Ojo con esto también.',
-    'Y fíjate en otra cosa.',
-    'Sigo, porque hay más en el cable.',
-    'Una más que vale la pena.',
-  ];
-  for (let i = 0; i < rest.length; i += 2) {
-    const a = rest[i];
-    const b = rest[i + 1];
-    const bridge = bridges[chunks.length % bridges.length];
-    const body = b
-      ? `${bridge} ${a.sourceLabel} trae esto: ${storyBlurb(a)}. Y del otro lado, ${b.sourceLabel} dice: ${storyBlurb(b)}. Dos conversaciones distintas, misma liga: esto es lo que se está cocinando en el fútbol mexicano ahorita.`
-      : `${bridge} ${a.sourceLabel}: ${storyBlurb(a)}. Guárdalo. Es de esos temas que luego te llegan en el WhatsApp del grupo y ya vas un paso adelante.`;
-    chunks.push({ id: `brief-${chunks.length + 1}`, text: body });
-  }
-
-  if (jLine) {
+  for (let i = 0; i < list.length; i++) {
+    const s = list[i]!;
+    const body =
+      s.summary.length > 20
+        ? `${s.source} también trae esto, ${s.summary}${s.accesoLine ? ` — Acceso: ${s.accesoLine}` : ''}`
+        : `${s.source}: ${s.title}${s.accesoLine ? ` — Acceso: ${s.accesoLine}` : ''}`;
     chunks.push({
       id: `brief-${chunks.length + 1}`,
-      text:
-        style === 'tactico'
-          ? `Bajemos un segundo a la cancha, que el cable sin resultados se queda a medias. ${jLine} Si tu club ya jugó, el debate es lectura; si todavía falta, la cabina sigue con trabajo.`
-          : `Y ya, un giro a la cancha, porque sin partido el cable es puro humo. ${jLine} Cuando quieras entrar a la cabina o al pulso, aquí estamos.`,
+      text: body.endsWith('.') ? body : `${body}.`,
     });
   }
 
@@ -169,88 +316,95 @@ export function templateCableBrief(
     id: `brief-${chunks.length + 1}`,
     text:
       style === 'puente'
-        ? `Te dejo hasta aquí. Fuentes afuera, voz aquí: tocas el artículo si te late, nosotros no te lo leemos entero. Estés en México o del otro lado del puente, el cable es el mismo. Vuelve en un par de horas por el siguiente corte, o métete a la cabina cuando juegue tu gente. Nos escuchamos.`
-        : `Eso fue el briefing. Gracias por escucharnos de verdad, no solo por pasar el feed. Fuentes afuera, voz aquí, cancha al centro. Vuelve al cable cuando quieras, o entra a la cabina si tu club pide micrófono. Hasta el próximo corte.`,
+        ? `Hasta aquí el cable de la pantalla — fuentes afuera si quieres más.`
+        : `Eso es el cable de la pantalla, corto y al grano.`,
   });
 
   return chunks;
 }
 
-async function rewriteCableBrief(
-  style: RadioStyle,
+/** @deprecated Use templateCableBriefFromDossier — kept for callers/tests. */
+export function templateCableBrief(
   stories: Story[],
   jornada: JornadaOverview | null,
-  draft: ShowSegment[],
+  style: RadioStyle,
   now = Date.now()
-): Promise<ShowSegment[]> {
-  if (!anthropicEnabled()) return draft;
+): ShowSegment[] {
+  return templateCableBriefFromDossier(
+    buildCableDossier(stories, jornada, style, {}, now)
+  );
+}
+
+async function generateCableBriefFromDossier(
+  dossier: CableDossier
+): Promise<ShowSegment[] | null> {
+  if (!anthropicEnabled()) return null;
+
+  const style = dossier.style;
+  const persona = PERSONAS[style];
+  const voiceHint =
+    style === 'caliente'
+      ? 'Filo editorial, ritmo de cabina. Opinión corta solo cuando el dossier da pie.'
+      : style === 'tactico'
+        ? 'Lectura fría: prioridades de la fecha, incentivos de tabla, sin gritos.'
+        : 'Binacional solo cuando el dato lo pide (dónde se vive / El Tri / US).';
 
   try {
-    const persona = PERSONAS[style];
-    const voiceHint =
-      style === 'caliente'
-        ? 'Energía de amigo que te habla del partido: cálido, opinado, sin gritar todo el tiempo.'
-        : style === 'tactico'
-          ? 'Host analítico de podcast: calmado, claro, como si explicaras en la mesa.'
-          : 'Host binacional: cercano, puente MX–US, como conversación en el coche.';
     const raw = await anthropicChat({
-      system: `${persona.system.replace(/Máximo 2 oraciones\./gi, 'Bloques hablados de podcast.')}
+      system: `${persona.system.replace(/Máximo 2 oraciones\./gi, 'Bloques hablados de overview.')}
 
-Eres el host de un PODCAST corto de Acceso Futbol llamado "Briefing del cable" (~5 minutos). ${voiceHint}
+Escribes el BRIEFING DEL CABLE de Acceso Futbol: un overview hablado CORTO (~2 min 30 s, máximo ~350 palabras en total).
 
-REGLAS DE VOZ (crítico):
-- Suena a persona hablando a un micrófono, NO a boletín ni a titular leído.
-- Habla en segunda persona (tú / oye / mira / fíjate). Usa contracciones y ritmo oral del español mexicano.
-- Cada bloque fluye al siguiente; evita listas, "primero/segundo/tercer punto", y jerga de productora ("corte", "señal", "deck") salvo que suene natural.
-- Puedes hacer una pregunta retórica corta o un aparte ("la neta…", "ojo…") si ayuda.
-- ${draft.length} bloques. Cada bloque: 4 a 7 oraciones habladas, para oídos.
-- Atribuye fuentes por nombre (ESPN, Mediotiempo, TUDN, Marca). No inventes goles, citas ni hechos.
-- Prioriza el cable de agencias; Acceso editorial solo como toma corta al final si aparece.
-- No leas artículos enteros: solo titulares, resúmenes y tomas Acceso del input.
-- Reescribe el draft para que suene más humano; conserva los hechos.
-- Responde SOLO JSON: [{"id":"...","text":"..."}]`,
+INPUT = DOSSIER. Lo importante es dossier.wire (orden de pantalla: slot "lead" primero, luego "list"). cancha/tabla/tempo son contexto opcional — casi nunca los uses en este corte corto.
+
+DURACIÓN: ~2:30. Máximo 4–5 bloques. Cubrir lead + las 3–4 notas de lista; no expandas cada nota a un monólogo.
+
+ARCO OBLIGATORIO:
+1) Abre con la nota lead (wire[0]) — sustancia + fuente, 2–3 oraciones orales juntas.
+2–3) Dos o tres bloques más con el resto de wire EN ORDEN (puedes fusionar 2 notas hermanas). Cada bloque corto.
+4) Cierre en una frase. SIN bloque de cancha/tabla salvo que haya live real en dossier.
+
+PROHIBIDO abrir con jornada/tabla/resultados si hay wire. PROHIBIDO inventar notas. PROHIBIDO alargar para "llenar" los 5 minutos — este corte es corto.
+
+TIEMPO (si mencionas cancha):
+- Obedece dossier.tempo.guidance. NUNCA inventes "anoche" / "hoy cerró" si framing es paused.
+
+REGLAS DURAS:
+- PROHIBIDO leer solo el título en secuencia seca — da el ángulo con summary/accesoLine.
+- PROHIBIDO "oye bienvenido", coche, cocina, scroll, sobremesa, siéntate, arrancamos, gracias por escucharnos.
+- Español mexicano oral, seco, adulto.
+- No inventes hechos fuera del dossier.
+
+RITMO PARA TTS:
+- Frases fluidas de 12–22 palabras; comas y rayas (—); máximo 1–2 puntos por bloque.
+- Responde SOLO JSON: [{"id":"brief-1","text":"..."}, ...]`,
       user: JSON.stringify({
-        kind: 'cable-brief-podcast',
-        goal: 'El oyente debe sentir que escucha un podcast fresco del cable, no un resumen estático.',
-        jornada: jornada
-          ? {
-              label: jornada.label,
-              played: jornada.played.length,
-              live: jornada.live.length,
-              upcoming: jornada.upcoming.map(
-                (f) => `${f.home.name} vs ${f.away.name}`
-              ),
-              results: jornada.played.slice(0, 5).map(
-                (f) =>
-                  `${f.home.name} ${f.home.score ?? 0}-${f.away.score ?? 0} ${f.away.name}`
-              ),
-            }
-          : null,
-        stories: pickStories(stories, 6, now).map((s) => ({
-          source: s.sourceLabel,
-          title: s.title,
-          summary: s.summary?.slice(0, 220) ?? '',
-          accesoLine: s.accesoLine ?? '',
-        })),
-        draft,
+        kind: 'cable-brief-stories-on-screen',
+        goal: 'Narrar el cable en ~2:30 — lead + top lista — no un show largo.',
+        targetDuration: '2:30',
+        maxWords: 350,
+        voice: voiceHint,
+        primary: 'wire',
+        dossier,
       }),
-      temperature: 0.8,
-      maxTokens: 1800,
+      temperature: 0.55,
+      maxTokens: 900,
     });
-    if (!raw) return draft;
+    if (!raw) return null;
     const start = raw.indexOf('[');
     const end = raw.lastIndexOf(']');
-    if (start < 0 || end < 0) return draft;
+    if (start < 0 || end < 0) return null;
     const parsed = JSON.parse(raw.slice(start, end + 1)) as ShowSegment[];
-    if (!Array.isArray(parsed) || parsed.length < 3) return draft;
-    return parsed
-      .filter((s) => s && typeof s.text === 'string' && s.text.trim().length > 20)
+    if (!Array.isArray(parsed) || parsed.length < 3) return null;
+    const cleaned = parsed
+      .filter((s) => s && typeof s.text === 'string' && s.text.trim().length > 16)
       .map((s, i) => ({
         id: typeof s.id === 'string' ? s.id : `brief-${i + 1}`,
         text: s.text.trim(),
       }));
+    return cleaned.length >= 3 ? cleaned : null;
   } catch {
-    return draft;
+    return null;
   }
 }
 
@@ -258,10 +412,12 @@ export async function buildCableBriefSegments(
   stories: Story[],
   jornada: JornadaOverview | null,
   style: RadioStyle,
-  now = Date.now()
+  now = Date.now(),
+  extras: CableBriefExtras = {}
 ): Promise<ShowSegment[]> {
-  const draft = templateCableBrief(stories, jornada, style, now);
-  return rewriteCableBrief(style, stories, jornada, draft, now);
+  const dossier = buildCableDossier(stories, jornada, style, extras, now);
+  const generated = await generateCableBriefFromDossier(dossier);
+  return generated ?? templateCableBriefFromDossier(dossier);
 }
 
 async function ensureBriefBeat(
@@ -293,11 +449,12 @@ export async function buildCableBriefFeed(
   stories: Story[],
   jornada: JornadaOverview | null,
   style: RadioStyle,
-  now = new Date()
+  now = new Date(),
+  extras: CableBriefExtras = {}
 ): Promise<CableBriefPayload> {
   const id = cableBriefId(style, now.getTime());
   const enabled = radioEnabled();
-  const picks = pickStories(stories, 6, now.getTime());
+  const picks = pickCableDisplayStories(stories, 4);
   const sources = [...new Set(picks.map((s) => s.sourceLabel))];
 
   if (!enabled) {
@@ -318,13 +475,18 @@ export async function buildCableBriefFeed(
 
   let beats = listBeats(id, style).filter((b) => b.kind === 'show');
   if (beats.length < 3) {
-    const segments = await buildCableBriefSegments(stories, jornada, style, now.getTime());
+    const segments = await buildCableBriefSegments(
+      stories,
+      jornada,
+      style,
+      now.getTime(),
+      extras
+    );
     for (const seg of segments) {
       await ensureBriefBeat(id, style, seg);
     }
     beats = listBeats(id, style).filter((b) => b.kind === 'show');
   } else {
-    // Re-hydrate audio if the process kept beat text but lost buffers.
     for (const b of beats) {
       if (b.audioPath) continue;
       const parts = b.id.split(':');

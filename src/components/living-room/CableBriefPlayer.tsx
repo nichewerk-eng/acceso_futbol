@@ -30,7 +30,7 @@ export function CableBriefPlayer() {
   const [playing, setPlaying] = useState(false);
   const [payload, setPayload] = useState<BriefPayload | null>(null);
   const [loading, setLoading] = useState(true);
-  const [line, setLine] = useState('Briefing del cable · ~5 min');
+  const [line, setLine] = useState('Briefing del cable · ~2:30');
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const spokenRef = useRef<Set<string>>(new Set());
   const busyRef = useRef(false);
@@ -182,7 +182,7 @@ export function CableBriefPlayer() {
             {payload?.title ?? 'Briefing del cable'}
           </p>
           <p className="mt-1 af-tele">
-            {loading ? 'Armando cabina…' : meta || '~5 min · titulares del cable'}
+            {loading ? 'Armando cabina…' : meta || '~2:30 · titulares del cable'}
           </p>
         </div>
 
@@ -204,7 +204,7 @@ export function CableBriefPlayer() {
         {line}
       </p>
       <p className="mt-2 af-tele">
-        Corte fresco cada ~2 h · cable primero · toma Acceso al cierre.
+        Corte fresco cada ~2 h · las notas de esta pantalla.
       </p>
     </div>
   );

@@ -58,7 +58,9 @@ export async function generateScript(input: ScriptInput): Promise<string> {
   try {
     const persona = PERSONAS[input.style];
     const text = await anthropicChat({
-      system: persona.system,
+      system: `${persona.system}
+
+RITMO TTS: una o dos frases fluidas (comas/rayas), no varias oraciones cortas con punto. ElevenLabs pausa fuerte en cada punto.`,
       user: JSON.stringify({
         kind: input.kind,
         score: scoreLine(input.match),
