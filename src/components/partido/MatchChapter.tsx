@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { ClubLogo } from '@/components/brand/ClubLogo';
+import { LeaguesCupMark } from '@/components/brand/LeaguesCupMark';
+import { LigaMxMark } from '@/components/brand/LigaMxMark';
 import { PulseNav } from '@/components/living-room/PulseNav';
 import type { LigaMXEntry, LigaMXTable } from '@/app/api/ligamx/standings/route';
 import type {
@@ -703,12 +705,18 @@ export function MatchChapter({ league, id }: Props) {
             <Link href={back} className="match-back">
               ← {backLabel}
             </Link>
-            <p className="af-tele match-hero-path">
-              AF://CAPÍTULO
-              {match.jornada ? ` · ${match.jornada}` : ''}
-              {league === 'liga-mx' ? ' · Liga MX' : ''}
-              {league === 'leagues-cup' ? ' · Leagues Cup' : ''}
-            </p>
+            <div className="match-hero-meta-end">
+              {league === 'leagues-cup' ? (
+                <LeaguesCupMark size="sm" surface="ink" className="match-hero-lc-mark" />
+              ) : null}
+              {league === 'liga-mx' ? (
+                <LigaMxMark size="sm" className="match-hero-lm-mark" />
+              ) : null}
+              <p className="af-tele match-hero-path">
+                AF://CAPÍTULO
+                {match.jornada ? ` · ${match.jornada}` : ''}
+              </p>
+            </div>
           </div>
 
           <h1 className="sr-only">

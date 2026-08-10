@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ClubLogo } from '@/components/brand/ClubLogo';
+import { LigaMxMark } from '@/components/brand/LigaMxMark';
 import { useGravity } from '@/contexts/GravityContext';
 import { teamNameEs } from '@/components/standings/teamNames';
-import { ligaMxClubIdFromAbbr, ligaMxLeagueLogoSrc } from '@/config/ligaMxLogos';
+import { ligaMxClubIdFromAbbr } from '@/config/ligaMxLogos';
 import { getCurrentJornada } from '@/fixtures/ligamx-apertura-2026';
 import type { LigaMXTable, LigaMXEntry } from '@/app/api/ligamx/standings/route';
 import type { LigaMXFixture } from '@/app/api/ligamx/fixtures/route';
@@ -121,26 +122,17 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="af-tele flex items-center gap-2 text-foreground">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={ligaMxLeagueLogoSrc()}
-                  alt=""
-                  width={22}
-                  height={22}
-                  className="club-logo club-logo-sm"
-                />
-                <span>
-                  <span className="text-signal">AF</span>
-                  ://LIGA MX
-                </span>
+              <p className="af-tele text-signal">
+                <span className="text-signal">AF</span>
+                ://LIGA MX
               </p>
-              <h1
-                className="mt-2 font-display text-4xl font-bold uppercase tracking-wide sm:text-6xl"
-                data-testid="ligamx-title"
-              >
-                {table?.season ?? 'Apertura 2026'}
+              <h1 className="sr-only" data-testid="ligamx-title">
+                Liga MX · {table?.season ?? 'Apertura 2026'}
               </h1>
+              <LigaMxMark size="lg" priority className="lm-hero-mark mt-4" />
+              <p className="mt-3 font-display text-2xl font-bold uppercase tracking-wide text-foreground sm:text-3xl">
+                {table?.season ?? 'Apertura 2026'}
+              </p>
               <p className="mt-3 max-w-lg text-sm leading-6 text-muted">
                 Tabla, jornada y camino a Liguilla. Misma sala que el pulso.
                 {club ? ` Tu LOCK: ${club.abbreviation}.` : ''}

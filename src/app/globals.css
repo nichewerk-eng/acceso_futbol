@@ -502,6 +502,61 @@ body {
   width: 100%;
 }
 
+.lc-mark {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+/* Asset ships white-on-black — invert for AF paper */
+.lc-mark-paper {
+  filter: invert(1);
+}
+
+.lc-mark-ink {
+  filter: none;
+}
+
+.lc-hero-mark {
+  height: clamp(2.75rem, 7vw, 3.5rem);
+  width: auto;
+}
+
+.lm-mark {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.lm-hero-mark {
+  width: clamp(4.5rem, 14vw, 5.5rem);
+  height: auto;
+}
+
+.match-hero-meta-end {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  text-align: right;
+}
+
+.match-hero-lc-mark {
+  height: 1.15rem;
+  width: auto;
+  opacity: 0.92;
+}
+
+.match-hero-lm-mark {
+  width: 2rem;
+  height: auto;
+  opacity: 0.95;
+}
+
 /* Leagues Cup partidos — compact scoreboard + desktop info rail */
 .lc-partidos-layout {
   display: grid;

@@ -1,5 +1,8 @@
 import type { TvChannelId } from '@/config/dondeVer';
 
+/** Official Leagues Cup wordmark — white mark on black (`/public/mls_logos/lc_logo.png`). */
+export const LEAGUES_CUP_LOGO = '/mls_logos/lc_logo.png';
+
 /**
  * Official Leagues Cup 2026 Phase One + knockout skeleton.
  * Sportmonks often has wrong venues / home-away; this board is source of truth for schedule UI.

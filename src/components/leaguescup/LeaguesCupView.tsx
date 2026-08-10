@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
+import { LeaguesCupMark } from '@/components/brand/LeaguesCupMark';
 import { ligaMxClubIdFromAbbr } from '@/config/ligaMxLogos';
 import { useGravity } from '@/contexts/GravityContext';
 import { startLivePoll } from '@/lib/client/livePoll';
@@ -178,10 +179,9 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
       <section className="border-b border-line px-4 py-10 sm:px-6 sm:py-14">
         <div className="mx-auto max-w-6xl">
           <p className="af-tele text-signal">AF://LEAGUES CUP</p>
-          <h1 className="mt-2 font-display text-4xl font-bold uppercase tracking-wide sm:text-5xl">
-            Leagues Cup
-          </h1>
-          <p className="mt-3 max-w-xl font-mono text-[12px] leading-6 text-muted">
+          <h1 className="sr-only">Leagues Cup</h1>
+          <LeaguesCupMark size="lg" priority className="lc-hero-mark mt-4" />
+          <p className="mt-4 max-w-xl font-mono text-[12px] leading-6 text-muted">
             MLS × Liga MX. Fase 1 del 4 al 13 de agosto; eliminación hasta el 6 de septiembre.
             Top 4 de cada tabla pasan a cuartos. Todo en Apple TV; selectos en TV abierta.
           </p>
