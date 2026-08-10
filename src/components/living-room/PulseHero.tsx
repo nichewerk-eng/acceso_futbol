@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { ClubLogo } from '@/components/brand/ClubLogo';
+import { HeroWordmark } from '@/components/living-room/HeroWordmark';
 import { useGravity } from '@/contexts/GravityContext';
 import { useGamesOfDay } from '@/lib/client/useGamesOfDay';
 import { competitionBandTag, leaguePath } from '@/lib/radio/phases';
@@ -140,16 +141,7 @@ export function PulseHero({ leadStory }: Props) {
               ://CANCHA
               {settled && lock ? ` · LOCK ${lock}` : ' · LIGA MX · EL TRI'}
             </p>
-            <h1
-              className="hero-wordmark mt-2 text-foreground"
-              data-testid="hero-headline"
-            >
-              ACCESO
-              <span className="sr-only">
-                {' '}
-                Futbol · Liga MX, Leagues Cup y El Tri en vivo
-              </span>
-            </h1>
+            <HeroWordmark />
             <p className="af-tele mt-2 text-muted" data-testid="hero-support">
               {loading && !payload
                 ? 'Sincronizando jornada…'

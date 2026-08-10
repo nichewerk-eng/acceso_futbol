@@ -274,6 +274,55 @@ body {
   text-transform: uppercase;
 }
 
+.hero-wordmark-track {
+  display: inline-flex;
+  perspective: 480px;
+  transform-style: preserve-3d;
+}
+
+.hero-wordmark-letter {
+  display: inline-block;
+  min-width: 0.58em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  transform-origin: 50% 0%;
+  backface-visibility: hidden;
+  opacity: 0;
+  transform: rotateX(-85deg) translateY(0.12em);
+}
+
+.hero-wordmark.is-entered .hero-wordmark-letter {
+  animation: hero-flap-in 0.95s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(var(--i, 0) * 120ms);
+}
+
+@keyframes hero-flap-in {
+  0% {
+    opacity: 0;
+    transform: rotateX(-85deg) translateY(0.12em);
+  }
+  55% {
+    opacity: 1;
+    transform: rotateX(8deg) translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: rotateX(0deg) translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-wordmark-letter {
+    opacity: 1;
+    transform: none;
+    animation: none !important;
+  }
+
+  .hero-wordmark.is-entered .hero-wordmark-letter {
+    animation: none !important;
+  }
+}
+
 .hero-stage {
   border: 1px solid var(--line);
   background: var(--bg-2);
