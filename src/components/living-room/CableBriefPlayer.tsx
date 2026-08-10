@@ -6,7 +6,6 @@ type Beat = {
   id: string;
   text: string;
   kind: string;
-  audioPath?: string;
   createdAt: number;
 };
 
@@ -32,6 +31,7 @@ export function CableBriefPlayer() {
   const [loading, setLoading] = useState(true);
   const [line, setLine] = useState('Briefing del cable · ~2:30');
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const objectUrlRef = useRef<string | null>(null);
   const spokenRef = useRef<Set<string>>(new Set());
   const busyRef = useRef(false);
   const playingRef = useRef(false);
@@ -40,6 +40,13 @@ export function CableBriefPlayer() {
   useEffect(() => {
     playingRef.current = playing;
   }, [playing]);
+
+  const revokeObjectUrl = useCallback(() => {
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+  }, []);
 
   const loadBrief = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -52,6 +59,7 @@ export function CableBriefPlayer() {
         // New cut arrived — stop current playback so the next listen is fresh.
         setPlaying(false);
         audioRef.current?.pause();
+        revokeObjectUrl();
         if (typeof window !== 'undefined') window.speechSynthesis?.cancel();
         busyRef.current = false;
         spokenRef.current = new Set();
@@ -69,15 +77,18 @@ export function CableBriefPlayer() {
     } finally {
       if (!silent) setLoading(false);
     }
-  }, []);
+  }, [revokeObjectUrl]);
 
   useEffect(() => {
     void loadBrief(false);
     const tick = window.setInterval(() => {
       void loadBrief(true);
     }, REFRESH_MS);
-    return () => window.clearInterval(tick);
-  }, [loadBrief]);
+    return () => {
+      window.clearInterval(tick);
+      revokeObjectUrl();
+    };
+  }, [loadBrief, revokeObjectUrl]);
 
   function speakFallback(text: string, onEnd: () => void) {
     if (typeof window === 'undefined' || !window.speechSynthesis) {
@@ -91,6 +102,24 @@ export function CableBriefPlayer() {
     u.onend = onEnd;
     u.onerror = onEnd;
     window.speechSynthesis.speak(u);
+  }
+
+  async function fetchTtsBlob(beat: Beat): Promise<Blob | null> {
+    try {
+      const r = await fetch('/api/radio/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: beat.id,
+          text: beat.text,
+          style: RADIO_STYLE,
+        }),
+      });
+      if (!r.ok) return null;
+      return await r.blob();
+    } catch {
+      return null;
+    }
   }
 
   function playNext(queue: Beat[]) {
@@ -107,25 +136,42 @@ export function CableBriefPlayer() {
     busyRef.current = true;
 
     const done = () => {
+      revokeObjectUrl();
       busyRef.current = false;
       if (playingRef.current) playNext(queue);
     };
 
-    if (next.audioPath && typeof Audio !== 'undefined') {
-      try {
-        audioRef.current?.pause();
-        const a = new Audio(next.audioPath);
-        audioRef.current = a;
-        a.onended = done;
-        a.onerror = () => speakFallback(next.text, done);
-        void a.play().catch(() => speakFallback(next.text, done));
+    void (async () => {
+      if (!playingRef.current) {
+        busyRef.current = false;
         return;
-      } catch {
-        /* fall through */
       }
-    }
 
-    speakFallback(next.text, done);
+      const blob = await fetchTtsBlob(next);
+      if (!playingRef.current) {
+        busyRef.current = false;
+        return;
+      }
+
+      if (blob && typeof Audio !== 'undefined') {
+        try {
+          audioRef.current?.pause();
+          revokeObjectUrl();
+          const url = URL.createObjectURL(blob);
+          objectUrlRef.current = url;
+          const a = new Audio(url);
+          audioRef.current = a;
+          a.onended = done;
+          a.onerror = () => speakFallback(next.text, done);
+          await a.play();
+          return;
+        } catch {
+          /* fall through to browser voice */
+        }
+      }
+
+      speakFallback(next.text, done);
+    })();
   }
 
   useEffect(() => {
@@ -138,6 +184,7 @@ export function CableBriefPlayer() {
     if (playing) {
       setPlaying(false);
       audioRef.current?.pause();
+      revokeObjectUrl();
       if (typeof window !== 'undefined') window.speechSynthesis?.cancel();
       busyRef.current = false;
       return;

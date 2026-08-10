@@ -12,7 +12,7 @@ import {
 } from './cache';
 import { PERSONAS, type RadioStyle } from './personas';
 import type { ShowSegment } from './show';
-import { radioEnabled, synthesize } from './tts';
+import { radioEnabled } from './tts';
 
 /** Regenerate the cable brief on this cadence. */
 export const CABLE_BRIEF_TTL_MS = 2 * 60 * 60 * 1000;
@@ -28,7 +28,7 @@ export type CableBriefPayload = {
   sources: string[];
   storyCount: number;
   jornadaLabel: string | null;
-  beats: Pick<RadioBeat, 'id' | 'text' | 'kind' | 'audioPath' | 'createdAt'>[];
+  beats: Pick<RadioBeat, 'id' | 'text' | 'kind' | 'createdAt'>[];
 };
 
 function briefBucket(now = Date.now()) {
@@ -36,8 +36,8 @@ function briefBucket(now = Date.now()) {
 }
 
 export function cableBriefId(style: RadioStyle, now = Date.now()) {
-  // v10: ~2:30 story-led brief
-  return `cable-brief-v10-${briefBucket(now)}-${style}`;
+  // v11: text-only brief; TTS on play via /api/radio/tts (no ephemeral audioPath)
+  return `cable-brief-v11-${briefBucket(now)}-${style}`;
 }
 
 const WIRE_SOURCES = new Set(['espn', 'espn-rss', 'mediotiempo', 'tudn', 'marca']);
@@ -423,25 +423,23 @@ export async function buildCableBriefSegments(
   return generated ?? templateCableBriefFromDossier(dossier);
 }
 
-async function ensureBriefBeat(
+/** Text-only beat — TTS is deferred to play via POST /api/radio/tts (Vercel-safe). */
+function ensureBriefBeat(
   briefId: string,
   style: RadioStyle,
   seg: ShowSegment
-): Promise<RadioBeat> {
+): RadioBeat {
   const key = beatKey(briefId, seg.id, style);
   const existing = getBeat(key);
-  if (existing?.audioPath || (existing && !process.env.ELEVENLABS_API_KEY)) return existing;
+  if (existing?.text) return existing;
 
-  const text = existing?.text ?? seg.text;
-  const audioPath = await synthesize(key, text, style);
   const beat: RadioBeat = {
     id: key,
     matchId: briefId,
     style,
-    text,
+    text: seg.text,
     kind: 'show',
-    createdAt: existing?.createdAt ?? Date.now(),
-    audioPath: audioPath ?? existing?.audioPath,
+    createdAt: Date.now(),
   };
   setBeat(beat);
   pruneRadioCache();
@@ -486,15 +484,7 @@ export async function buildCableBriefFeed(
       extras
     );
     for (const seg of segments) {
-      await ensureBriefBeat(id, style, seg);
-    }
-    beats = listBeats(id, style).filter((b) => b.kind === 'show');
-  } else {
-    for (const b of beats) {
-      if (b.audioPath) continue;
-      const parts = b.id.split(':');
-      const eventId = parts.length >= 3 ? parts.slice(1, -1).join(':') : `brief-${parts.length}`;
-      await ensureBriefBeat(id, style, { id: eventId, text: b.text });
+      ensureBriefBeat(id, style, seg);
     }
     beats = listBeats(id, style).filter((b) => b.kind === 'show');
   }
@@ -510,11 +500,12 @@ export async function buildCableBriefFeed(
     sources,
     storyCount: picks.length,
     jornadaLabel: jornada?.label ?? null,
+    // No audioPath — ephemeral /api/radio/audio URLs 404 across Vercel isolates.
+    // Client synthesizes on play via POST /api/radio/tts.
     beats: beats.map((b) => ({
       id: b.id,
       text: b.text,
       kind: b.kind,
-      audioPath: b.audioPath,
       createdAt: b.createdAt,
     })),
   };
