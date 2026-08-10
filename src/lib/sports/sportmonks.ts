@@ -495,16 +495,19 @@ function shortName(raw?: string | null): string {
   return `${parts[0]} ${parts[parts.length - 1]}`;
 }
 
-/** Sportmonks football event type_ids — used when `events.type` is omitted. */
+/**
+ * Sportmonks football event type_ids — used when `events.type` is omitted.
+ * @see https://docs.sportmonks.com/v3/definitions/types/events
+ */
 const EVENT_KIND_BY_TYPE_ID: Record<number, LiveEventKind> = {
+  10: 'var',
   14: 'goal',
   15: 'own_goal',
   16: 'penalty',
-  18: 'yellow',
-  19: 'red',
-  20: 'sub',
-  21: 'red', // second yellow → red
-  10: 'var',
+  18: 'sub',
+  19: 'yellow',
+  20: 'red',
+  21: 'red', // yellowredcard — second yellow → red
 };
 
 function eventKind(dev?: string, code?: string, typeId?: number): LiveEventKind {
