@@ -155,8 +155,11 @@ export type CableDossier = {
   }[];
 };
 
-function fixtureScore(home: number | null | undefined, away: number | null | undefined) {
-  if (home == null || away == null) return null;
+function fixtureScore(
+  home: string | number | null | undefined,
+  away: string | number | null | undefined
+) {
+  if (home == null || away == null || home === '' || away === '') return null;
   return `${home}-${away}`;
 }
 
