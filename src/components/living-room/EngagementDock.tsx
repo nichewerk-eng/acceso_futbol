@@ -4,7 +4,15 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { useGamesOfDay } from '@/lib/client/useGamesOfDay';
-import { leaguePath } from '@/lib/radio/phases';
+import { leaguePath, mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
+
+function dockDayLabel(dayKey: string | undefined, upcoming: boolean, count: number) {
+  const n = String(count).padStart(2, '0');
+  if (!upcoming) return `HOY · ${n}`;
+  const today = mexicoDayKey();
+  if (dayKey && dayKey === shiftDayKey(today, 1)) return `MAÑANA · ${n}`;
+  return `PRÓXIMO · ${n}`;
+}
 
 export function EngagementDock() {
   const { payload } = useGamesOfDay();
@@ -18,6 +26,7 @@ export function EngagementDock() {
     games[0] ??
     null;
   const count = games.length;
+  const upcoming = Boolean(payload?.upcoming);
 
   useEffect(() => {
     const onScroll = () => setOn(window.scrollY > 420 && Boolean(game));
@@ -55,7 +64,7 @@ export function EngagementDock() {
             ) : game.phase === 'preshow' ? (
               <span className="text-signal">PRE</span>
             ) : (
-              `HOY · ${String(count).padStart(2, '0')}`
+              dockDayLabel(payload?.dayKey, upcoming, count)
             )}
           </p>
           <p className="flex items-center gap-2 truncate text-[#f6f5f2]">
