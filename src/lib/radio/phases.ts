@@ -9,6 +9,17 @@ export function mexicoDayKey(d = new Date()): string {
   return d.toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
 }
 
+/** Shift a YYYY-MM-DD calendar key by whole days (noon-UTC anchor). */
+export function shiftDayKey(dayKey: string, days: number): string {
+  const [y, m, d] = dayKey.split('-').map(Number);
+  const dt = new Date(Date.UTC(y!, m! - 1, d! + days, 12));
+  return dt.toISOString().slice(0, 10);
+}
+
+export function mexicoTomorrowKey(d = new Date()): string {
+  return shiftDayKey(mexicoDayKey(d), 1);
+}
+
 export function isMexicoDay(iso: string, dayKey = mexicoDayKey()): boolean {
   try {
     return (

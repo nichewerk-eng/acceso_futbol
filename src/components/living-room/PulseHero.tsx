@@ -7,7 +7,7 @@ import { ClubLogo } from '@/components/brand/ClubLogo';
 import { HeroWordmark } from '@/components/living-room/HeroWordmark';
 import { useGravity } from '@/contexts/GravityContext';
 import { useGamesOfDay } from '@/lib/client/useGamesOfDay';
-import { competitionBandTag, leaguePath } from '@/lib/radio/phases';
+import { competitionBandTag, leaguePath, mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
 import type { Story } from '@/lib/news/types';
 import type { DayGame } from '@/lib/sports';
 
@@ -36,11 +36,10 @@ function kickLabel(iso: string, tz: string) {
   }
 }
 
-function dayLabel(dayKey?: string) {
-  if (!dayKey) return '';
+function formatSlateDate(dayKey: string) {
   try {
     const [y, m, d] = dayKey.split('-').map(Number);
-    return new Date(y, m - 1, d).toLocaleDateString('es-MX', {
+    return new Date(y!, m! - 1, d!).toLocaleDateString('es-MX', {
       weekday: 'long',
       day: 'numeric',
       month: 'short',
@@ -50,7 +49,22 @@ function dayLabel(dayKey?: string) {
   }
 }
 
-function bandMeta(g: DayGame, tz: string, upcoming?: boolean) {
+/** Hoy / Mañana / weekday — never imply today when the slate rolled forward. */
+function slateHeadline(dayKey: string | undefined, upcoming: boolean, todayKey: string) {
+  if (!dayKey) return upcoming ? 'Próxima cartelera' : 'Hoy';
+  const dated = formatSlateDate(dayKey);
+  if (dayKey === todayKey) return `Hoy · ${dated}`;
+  if (dayKey === shiftDayKey(todayKey, 1)) return `Mañana · ${dated}`;
+  return dated;
+}
+
+function bandMeta(
+  g: DayGame,
+  tz: string,
+  upcoming: boolean,
+  dayKey: string | undefined,
+  todayKey: string
+) {
   if (g.state === 'in') {
     const clock = (g.clock || '').trim();
     const isHt = clock === 'HT' || /descanso|half\s*time/i.test(g.statusLabel || '');
@@ -64,6 +78,7 @@ function bandMeta(g: DayGame, tz: string, upcoming?: boolean) {
     return {
       kind: 'live' as const,
       stamp,
+      stageStamp: stamp,
       center: `${g.home.score ?? 0}–${g.away.score ?? 0}`,
     };
   }
@@ -71,17 +86,38 @@ function bandMeta(g: DayGame, tz: string, upcoming?: boolean) {
     return {
       kind: 'ft' as const,
       stamp: 'FT',
+      stageStamp: 'FT',
       center: `${g.home.score ?? 0}–${g.away.score ?? 0}`,
     };
   }
+
+  const time = kickLabel(g.date, tz);
+  let stamp = time;
+  if (upcoming && dayKey) {
+    // Stage uses a MAÑANA/PRÓXIMO kicker; wall rows need the day on the stamp.
+    if (dayKey === shiftDayKey(todayKey, 1)) {
+      stamp = time ? `Mañana · ${time}` : 'Mañana';
+    } else if (dayKey !== todayKey) {
+      try {
+        const [y, m, d] = dayKey.split('-').map(Number);
+        const short = new Date(y!, m! - 1, d!).toLocaleDateString('es-MX', {
+          weekday: 'short',
+          day: 'numeric',
+        });
+        stamp = time ? `${short} · ${time}` : short;
+      } catch {
+        stamp = time;
+      }
+    }
+  } else if (g.phase === 'preshow') {
+    stamp = 'PRE';
+  }
+
   return {
     kind: 'pre' as const,
-    // Upcoming slate is a single day — times only; day lives in the hero header.
-    stamp: upcoming
-      ? kickLabel(g.date, tz)
-      : g.phase === 'preshow'
-        ? 'PRE'
-        : kickLabel(g.date, tz),
+    stamp,
+    /** Time-only for featured stage (day lives in the MAÑANA/PRÓXIMO kicker). */
+    stageStamp: time || stamp,
     center: 'VS',
   };
 }
@@ -119,6 +155,10 @@ export function PulseHero({ leadStory }: Props) {
   const stage = games.find((g) => g.state === 'in') ?? games[0] ?? null;
   const stageTag = stage ? competitionBandTag(stage.league, stage.jornada) : null;
   const upcoming = Boolean(payload?.upcoming);
+  const todayKey = mexicoDayKey();
+  const slateKey = payload?.dayKey;
+  const headline = slateHeadline(slateKey, upcoming, todayKey);
+  const stageMeta = stage ? bandMeta(stage, userTz, upcoming, slateKey, todayKey) : null;
 
   return (
     <section
@@ -146,10 +186,10 @@ export function PulseHero({ leadStory }: Props) {
               {loading && !payload
                 ? 'Sincronizando jornada…'
                 : upcoming && games.length > 0
-                  ? `${dayLabel(payload?.dayKey)} · ${games.length} partido${games.length === 1 ? '' : 's'} · próxima cartelera`
+                  ? `${headline} · ${games.length} partido${games.length === 1 ? '' : 's'} · no hay cartelera hoy`
                   : games.length > 0
-                    ? `${dayLabel(payload?.dayKey)} · ${games.length} partido${games.length === 1 ? '' : 's'}${liveCount ? ` · ${liveCount} en vivo` : ''}`
-                    : `${dayLabel(payload?.dayKey) || 'Hoy'} · sin partidos en cartelera`}
+                    ? `${headline} · ${games.length} partido${games.length === 1 ? '' : 's'}${liveCount ? ` · ${liveCount} en vivo` : ''}`
+                    : `${headline} · sin partidos en cartelera`}
             </p>
           </div>
           <div className="flex flex-wrap gap-2" data-testid="hero-cta-group">
@@ -165,7 +205,7 @@ export function PulseHero({ leadStory }: Props) {
         </header>
 
         {/* Stage: one dominant live/featured match */}
-        {stage && (
+        {stage && stageMeta && (
           <Link
             href={`/partido/${leaguePath(stage.league)}/${stage.id}`}
             data-testid="hero-stage"
@@ -178,9 +218,12 @@ export function PulseHero({ leadStory }: Props) {
               <span className="af-tele flex items-center gap-2 text-foreground">
                 {stage.state === 'in' && <span className="hoy-live-dot" aria-hidden />}
                 {upcoming && stage.state === 'pre' ? (
-                  <span className="text-signal">PRÓXIMO · </span>
+                  <span className="text-signal">
+                    {slateKey === shiftDayKey(todayKey, 1) ? 'MAÑANA' : 'PRÓXIMO'}
+                    {' · '}
+                  </span>
                 ) : null}
-                {bandMeta(stage, userTz, upcoming).stamp}
+                {stageMeta.kind === 'pre' ? stageMeta.stageStamp : stageMeta.stamp}
               </span>
               {matchesGravity(
                 stage.home.name,
@@ -215,7 +258,7 @@ export function PulseHero({ leadStory }: Props) {
                 <p className="hero-stage-name">{stage.home.name}</p>
               </div>
               <div className="hero-stage-score" data-testid="hero-stage-score">
-                {bandMeta(stage, userTz, upcoming).center}
+                {stageMeta.center}
               </div>
               <div className="hero-stage-side hero-stage-away">
                 <div className="hero-stage-pair">
@@ -288,7 +331,7 @@ export function PulseHero({ leadStory }: Props) {
             {games
               .filter((g) => g.id !== stage?.id)
               .map((g) => {
-                const meta = bandMeta(g, userTz, upcoming);
+                const meta = bandMeta(g, userTz, upcoming, slateKey, todayKey);
                 const href = `/partido/${leaguePath(g.league)}/${g.id}`;
                 const compTag = competitionBandTag(g.league, g.jornada);
                 const mine = matchesGravity(
