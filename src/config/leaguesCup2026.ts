@@ -275,14 +275,17 @@ export const LC_TEAM_NAMES: Record<string, string> = {
   PUE: 'Puebla',
 };
 
-/** Liga MX Apertura pause while Leagues Cup runs (Fase 1 → Final). */
-export const LEAGUES_CUP_WINDOW = {
+/** Liga MX Apertura pause during Leagues Cup Fase 1 (domestic slate resumes Jornada 4). */
+export const LIGA_MX_LC_PAUSE_WINDOW = {
   start: '2026-08-04',
-  end: '2026-09-06',
+  end: '2026-08-13',
 } as const;
 
-/** True during the Leagues Cup competition window (Mexico City calendar). */
+/** @deprecated Prefer LIGA_MX_LC_PAUSE_WINDOW — kept for older imports. */
+export const LEAGUES_CUP_WINDOW = LIGA_MX_LC_PAUSE_WINDOW;
+
+/** True while Liga MX is paused for Leagues Cup Fase 1 (Mexico City calendar). */
 export function isLeaguesCupWindow(now = new Date()): boolean {
   const day = now.toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
-  return day >= LEAGUES_CUP_WINDOW.start && day <= LEAGUES_CUP_WINDOW.end;
+  return day >= LIGA_MX_LC_PAUSE_WINDOW.start && day <= LIGA_MX_LC_PAUSE_WINDOW.end;
 }

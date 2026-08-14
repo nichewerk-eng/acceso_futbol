@@ -941,6 +941,11 @@ body {
   }
 }
 
+/* Liga MX sala reuses LC partidos layout; single-league mini table stays full width */
+.lm-clasificacion-solo {
+  grid-template-columns: 1fr;
+}
+
 /* Day boards — date leads; section label stays quiet above */
 .lc-day-head {
   display: flex;

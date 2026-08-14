@@ -7,7 +7,7 @@ import {
 } from '@/lib/sports/freshness';
 import { getJornadaOverview, type JornadaOverview } from '@/lib/sports/jornada';
 
-const CACHE_KEY = 'jornada-overview-v8-paced';
+const CACHE_KEY = 'jornada-overview-v9-post-lc-pause';
 
 function jornadaRows(o: JornadaOverview) {
   return [...o.live, ...o.played, ...o.upcoming];

@@ -18,6 +18,13 @@ function jornadaNumber(label: string | null | undefined): number | null {
   return m ? Number(m[1]) : null;
 }
 
+/** Live, or pre with kickoff still ahead (ignore abandoned/stale board rows). */
+function stillOnBoard(f: Fixture, now: Date): boolean {
+  if (f.state === 'in') return true;
+  if (f.state !== 'pre') return false;
+  return +new Date(f.date) >= +now - 2 * 3600_000;
+}
+
 function pickActiveJornada(fixtures: Fixture[], now = new Date()): number | null {
   const dayKey = mexicoDayKey(now);
   const withNum = fixtures
@@ -41,20 +48,29 @@ function pickActiveJornada(fixtures: Fixture[], now = new Date()): number | null
     if (games.some((g) => g.state === 'in' || isMexicoDay(g.date, dayKey))) return n;
   }
 
-  // 2) Jornada in progress (has both finished and remaining)
+  // 2) Jornada in progress (finished + remaining real fixtures)
   for (const n of nums) {
     const games = byNum.get(n)!;
     const hasPost = games.some((g) => g.state === 'post');
-    const hasOpen = games.some((g) => g.state === 'pre' || g.state === 'in');
+    const hasOpen = games.some((g) => stillOnBoard(g, now));
     if (hasPost && hasOpen) return n;
   }
 
-  // 3) Latest jornada with any finished game
+  // 3) Latest finished jornada — if sealed, roll forward to next upcoming
   for (const n of [...nums].reverse()) {
-    if (byNum.get(n)!.some((g) => g.state === 'post')) return n;
+    const games = byNum.get(n)!;
+    if (!games.some((g) => g.state === 'post')) continue;
+    const hasOpen = games.some((g) => stillOnBoard(g, now));
+    if (hasOpen) return n;
+    const next = nums.find((m) => m > n && byNum.get(m)!.some((g) => stillOnBoard(g, now)));
+    if (next != null) return next;
+    return n;
   }
 
-  // 4) Earliest upcoming jornada
+  // 4) Earliest jornada with remaining games
+  for (const n of nums) {
+    if (byNum.get(n)!.some((g) => stillOnBoard(g, now))) return n;
+  }
   return nums[0] ?? null;
 }
 

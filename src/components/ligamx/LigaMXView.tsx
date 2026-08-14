@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { LigaMxMark } from '@/components/brand/LigaMxMark';
 import { useGravity } from '@/contexts/GravityContext';
@@ -37,6 +37,13 @@ function fmtTime(iso: string, tz: string) {
   });
 }
 
+type GravityFn = (
+  homeName: string,
+  awayName: string,
+  homeAbbr?: string,
+  awayAbbr?: string
+) => boolean;
+
 interface Props {
   initialTable: LigaMXTable | null;
   initialFixtures: LigaMXFixture[];
@@ -48,7 +55,7 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
 
   const [table, setTable] = useState<LigaMXTable | null>(initialTable);
   const [fixtures, setFixtures] = useState<LigaMXFixture[]>(baseFixtures);
-  const [tab, setTab] = useState<'tabla' | 'jornada'>('tabla');
+  const [tab, setTab] = useState<'tabla' | 'jornada'>('jornada');
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [userTz, setUserTz] = useState('America/Mexico_City');
@@ -112,6 +119,8 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
   const isMine = (f: LigaMXFixture) =>
     matchesGravity(f.home.name, f.away.name, f.home.abbreviation, f.away.abbreviation);
 
+  const openTabla = useCallback(() => setTab('tabla'), []);
+
   return (
     <div data-testid="page-liga-mx" className="bg-bg-1 text-foreground">
       {/* Hero */}
@@ -134,7 +143,7 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
                 {table?.season ?? 'Apertura 2026'}
               </p>
               <p className="mt-3 max-w-lg text-sm leading-6 text-muted">
-                Tabla, jornada y camino a Liguilla. Misma sala que el pulso.
+                Jornada + tabla en una sola sala. Camino a Liguilla (top 8).
                 {club ? ` Tu LOCK: ${club.abbreviation}.` : ''}
               </p>
             </div>
@@ -191,7 +200,7 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
         </div>
       </section>
 
-      {/* Tabs */}
+      {/* Tabs — Jornada (combined sala) first */}
       <div className="border-b border-line px-4 sm:px-6">
         <div
           className="mx-auto flex max-w-6xl gap-1 overflow-x-auto py-3"
@@ -200,8 +209,8 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
         >
           {(
             [
-              ['tabla', 'Tabla'],
               ['jornada', 'Jornada'],
+              ['tabla', 'Tabla'],
             ] as const
           ).map(([id, label]) => (
             <button
@@ -287,107 +296,324 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
         )}
 
         {tab === 'jornada' && (
-          <section data-testid="ligamx-jornada" className="space-y-8">
-            <div className="flex flex-wrap items-end justify-between gap-3 border-b border-line pb-4">
-              <div>
-                <p className="af-tele text-foreground">
-                  <span className="text-signal">AF</span>
-                  ://JORNADA
-                </p>
-                <h2 className="mt-1 font-display text-2xl font-bold uppercase tracking-wide sm:text-3xl">
-                  Jornada {selectedJornada}
-                </h2>
-                {jornadaFixtures[0]?.date && (
-                  <p className="mt-2 af-tele">
-                    {fmtDate(jornadaFixtures[0].date, userTz)}
-                    {jornadaFixtures.length > 1
-                      ? ` → ${fmtDate(jornadaFixtures[jornadaFixtures.length - 1].date, userTz)}`
-                      : ''}
-                  </p>
-                )}
-              </div>
-              <p className="af-tele">
-                {jornadaPast.length + jornadaLive.length}/{jornadaFixtures.length || '–'} sellados
-              </p>
-            </div>
-
-            <div
-              className="flex gap-1.5 overflow-x-auto pb-1"
-              data-testid="ligamx-jornada-picker"
-            >
-              {allJornadas.map((j) => {
-                const list = fixtures.filter((f) => f.jornada === `Jornada ${j}`);
-                const hasLive = list.some((f) => f.status.state === 'in');
-                const hasPast = list.some((f) => f.status.state === 'post');
-                const active = j === selectedJornada;
-                return (
-                  <button
-                    key={j}
-                    type="button"
-                    onClick={() => setSelectedJornada(j)}
-                    data-testid={`ligamx-jornada-${j}`}
-                    className={[
-                      'relative shrink-0 border px-3 py-2 font-mono text-[10px] font-semibold tracking-[0.14em] transition',
-                      active
-                        ? 'border-foreground bg-foreground text-bg-1'
-                        : hasLive
-                          ? 'border-signal text-signal'
-                          : hasPast
-                            ? 'border-line text-muted'
-                            : 'border-line text-muted/70 hover:border-foreground hover:text-foreground',
-                    ].join(' ')}
-                  >
-                    J{j}
-                    {hasLive && !active && (
-                      <span className="hoy-live-dot absolute -right-0.5 -top-0.5" aria-hidden />
+          <div className="lc-partidos-layout" data-testid="ligamx-jornada-layout">
+            <div className="lc-partidos-main space-y-8">
+              <section data-testid="ligamx-jornada">
+                <div className="flex flex-wrap items-end justify-between gap-3 border-b border-line pb-4">
+                  <div>
+                    <p className="af-tele text-foreground">
+                      <span className="text-signal">AF</span>
+                      ://JORNADA
+                    </p>
+                    <h2 className="mt-1 font-display text-2xl font-bold uppercase tracking-wide sm:text-3xl">
+                      Jornada {selectedJornada}
+                    </h2>
+                    {jornadaFixtures[0]?.date && (
+                      <p className="mt-2 af-tele">
+                        {fmtDate(jornadaFixtures[0].date, userTz)}
+                        {jornadaFixtures.length > 1
+                          ? ` → ${fmtDate(jornadaFixtures[jornadaFixtures.length - 1].date, userTz)}`
+                          : ''}
+                      </p>
                     )}
-                  </button>
-                );
-              })}
+                  </div>
+                  <p className="af-tele">
+                    {jornadaPast.length + jornadaLive.length}/{jornadaFixtures.length || '–'}{' '}
+                    sellados
+                  </p>
+                </div>
+
+                <div
+                  className="mt-6 flex gap-1.5 overflow-x-auto pb-1"
+                  data-testid="ligamx-jornada-picker"
+                >
+                  {allJornadas.map((j) => {
+                    const list = fixtures.filter((f) => f.jornada === `Jornada ${j}`);
+                    const hasLive = list.some((f) => f.status.state === 'in');
+                    const hasPast = list.some((f) => f.status.state === 'post');
+                    const active = j === selectedJornada;
+                    return (
+                      <button
+                        key={j}
+                        type="button"
+                        onClick={() => setSelectedJornada(j)}
+                        data-testid={`ligamx-jornada-${j}`}
+                        className={[
+                          'relative shrink-0 border px-3 py-2 font-mono text-[10px] font-semibold tracking-[0.14em] transition',
+                          active
+                            ? 'border-foreground bg-foreground text-bg-1'
+                            : hasLive
+                              ? 'border-signal text-signal'
+                              : hasPast
+                                ? 'border-line text-muted'
+                                : 'border-line text-muted/70 hover:border-foreground hover:text-foreground',
+                        ].join(' ')}
+                      >
+                        J{j}
+                        {hasLive && !active && (
+                          <span className="hoy-live-dot absolute -right-0.5 -top-0.5" aria-hidden />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+
+              <div className="lc-mobile-tabla">
+                <LmClasificacionCard
+                  entries={entries}
+                  matchesGravity={matchesGravity}
+                  onOpenTabla={openTabla}
+                />
+              </div>
+
+              {jornadaLive.length > 0 && (
+                <div>
+                  <p className="mb-3 af-tele text-signal">En vivo</p>
+                  <div className="jor-mosaic">
+                    {jornadaLive.map((f) => (
+                      <MatchStamp key={f.id} f={f} tz={userTz} mine={isMine(f)} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {jornadaUpcoming.length > 0 && (
+                <div>
+                  <p className="mb-3 af-tele text-foreground">Por jugar</p>
+                  <div className="jor-mosaic">
+                    {jornadaUpcoming.map((f) => (
+                      <MatchStamp key={f.id} f={f} tz={userTz} mine={isMine(f)} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {jornadaPast.length > 0 && (
+                <div>
+                  <p className="mb-3 af-tele text-foreground">Sellados</p>
+                  <div className="jor-mosaic">
+                    {jornadaPast.map((f) => (
+                      <MatchStamp key={f.id} f={f} tz={userTz} mine={isMine(f)} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {jornadaFixtures.length === 0 && (
+                <EmptyBoard
+                  title={`Jornada ${selectedJornada}`}
+                  body="Sin partidos registrados para esta fecha."
+                />
+              )}
             </div>
 
-            {jornadaLive.length > 0 && (
-              <div>
-                <p className="mb-3 af-tele text-signal">En vivo</p>
-                <div className="jor-mosaic">
-                  {jornadaLive.map((f) => (
-                    <MatchStamp key={f.id} f={f} tz={userTz} mine={isMine(f)} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {jornadaUpcoming.length > 0 && (
-              <div>
-                <p className="mb-3 af-tele text-foreground">Por jugar</p>
-                <div className="jor-mosaic">
-                  {jornadaUpcoming.map((f) => (
-                    <MatchStamp key={f.id} f={f} tz={userTz} mine={isMine(f)} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {jornadaPast.length > 0 && (
-              <div>
-                <p className="mb-3 af-tele text-foreground">Sellados</p>
-                <div className="jor-mosaic">
-                  {jornadaPast.map((f) => (
-                    <MatchStamp key={f.id} f={f} tz={userTz} mine={isMine(f)} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {jornadaFixtures.length === 0 && (
-              <EmptyBoard
-                title={`Jornada ${selectedJornada}`}
-                body="Sin partidos registrados para esta fecha."
-              />
-            )}
-          </section>
+            <LmPartidosRail
+              entries={entries}
+              jornadaUpcoming={jornadaUpcoming}
+              userTz={userTz}
+              clubName={club?.name ?? null}
+              clubAbbr={club?.abbreviation ?? null}
+              matchesGravity={matchesGravity}
+              onOpenTabla={openTabla}
+            />
+          </div>
         )}
+      </div>
+    </div>
+  );
+}
 
+function LmPartidosRail({
+  entries,
+  jornadaUpcoming,
+  userTz,
+  clubName,
+  clubAbbr,
+  matchesGravity,
+  onOpenTabla,
+}: {
+  entries: LigaMXEntry[];
+  jornadaUpcoming: LigaMXFixture[];
+  userTz: string;
+  clubName: string | null;
+  clubAbbr: string | null;
+  matchesGravity: GravityFn;
+  onOpenTabla: () => void;
+}) {
+  const myEntry = useMemo(() => {
+    if (!clubName && !clubAbbr) return null;
+    return (
+      entries.find((e) =>
+        matchesGravity(e.team.name, e.team.name, e.team.abbreviation, e.team.abbreviation)
+      ) ?? null
+    );
+  }, [clubName, clubAbbr, entries, matchesGravity]);
+
+  const myNext = useMemo(() => {
+    if (!clubName && !clubAbbr) return null;
+    return (
+      jornadaUpcoming.find((f) =>
+        matchesGravity(f.home.name, f.away.name, f.home.abbreviation, f.away.abbreviation)
+      ) ?? null
+    );
+  }, [clubName, clubAbbr, jornadaUpcoming, matchesGravity]);
+
+  return (
+    <aside className="lc-rail" data-testid="ligamx-rail">
+      {myEntry && (
+        <div className="lc-rail-block lc-rail-mine" data-testid="ligamx-rail-mine">
+          <p className="af-tele text-signal">Tu club</p>
+          <div className="lc-rail-mine-row">
+            <ClubLogo
+              abbr={myEntry.team.abbreviation}
+              name={myEntry.team.name}
+              logoUrl={myEntry.team.logo}
+              size="sm"
+            />
+            <div className="min-w-0">
+              <p className="lc-rail-mine-name">{myEntry.team.abbreviation}</p>
+              <p className="af-tele text-muted">#{myEntry.position}</p>
+            </div>
+            <p className="lc-rail-mine-pts">
+              <span>{myEntry.pts}</span>
+              <span className="af-tele text-muted">pts</span>
+            </p>
+          </div>
+          <p
+            className={[
+              'lc-rail-mine-mark',
+              myEntry.position <= LIGUILLA_SPOTS ? 'text-signal' : 'text-muted',
+            ].join(' ')}
+          >
+            {myEntry.position <= LIGUILLA_SPOTS ? 'Liguilla' : 'Fuera'}
+            {Number(myEntry.gd) !== 0 && (
+              <span className="text-muted">
+                {' '}
+                · Dif {Number(myEntry.gd) > 0 ? `+${myEntry.gd}` : myEntry.gd}
+              </span>
+            )}
+          </p>
+          {myNext && (
+            <p className="lc-rail-next">
+              <span className="af-tele text-muted">Siguiente</span>
+              <span className="lc-rail-next-match">
+                {fmtTime(myNext.date, userTz)} · {myNext.home.abbreviation}–
+                {myNext.away.abbreviation}
+              </span>
+            </p>
+          )}
+        </div>
+      )}
+
+      <div className="lc-rail-tabla-desk">
+        <LmClasificacionCard
+          entries={entries}
+          matchesGravity={matchesGravity}
+          onOpenTabla={onOpenTabla}
+        />
+      </div>
+
+      <div className="lc-rail-block" data-testid="ligamx-rail-liguilla">
+        <p className="af-tele text-foreground">Liguilla</p>
+        <ul className="lc-rail-tv-list">
+          <li>Top 8 directo a la fiesta grande</li>
+          <li>Sin Play-In en el Apertura 2026</li>
+          <li>Corte en la posición 8</li>
+        </ul>
+      </div>
+    </aside>
+  );
+}
+
+function LmClasificacionCard({
+  entries,
+  matchesGravity,
+  onOpenTabla,
+}: {
+  entries: LigaMXEntry[];
+  matchesGravity: GravityFn;
+  onOpenTabla: () => void;
+}) {
+  const rows = useMemo(() => {
+    if (entries.length === 0) return [] as LigaMXEntry[];
+    const window = entries.slice(0, LIGUILLA_SPOTS + 1);
+    const mine = entries.find((e) =>
+      matchesGravity(e.team.name, e.team.name, e.team.abbreviation, e.team.abbreviation)
+    );
+    if (mine && mine.position > LIGUILLA_SPOTS + 1) {
+      return [...window, mine];
+    }
+    return window;
+  }, [entries, matchesGravity]);
+
+  if (entries.length === 0) {
+    return (
+      <div className="lc-rail-block lc-clasificacion" data-testid="ligamx-rail-tabla">
+        <div className="lc-rail-block-head">
+          <p className="af-tele text-foreground">Clasificación</p>
+          <button type="button" className="lc-rail-link" onClick={onOpenTabla}>
+            Tabla completa
+          </button>
+        </div>
+        <p className="lc-rail-note">La tabla llega cuando hay datos del Apertura.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="lc-rail-block lc-clasificacion" data-testid="ligamx-rail-tabla">
+      <div className="lc-rail-block-head">
+        <p className="af-tele text-foreground">Clasificación</p>
+        <button type="button" className="lc-rail-link" onClick={onOpenTabla}>
+          Tabla completa
+        </button>
+      </div>
+      <p className="lc-rail-note">Top {LIGUILLA_SPOTS} → Liguilla</p>
+      <div className="lc-clasificacion-grid lm-clasificacion-solo">
+        <div className="lc-rail-mini">
+          <div className="lc-rail-mini-head">
+            <h4>Apertura</h4>
+            <span className="af-tele text-muted">Pts</span>
+          </div>
+          <ul className="lc-rail-mini-list">
+            {rows.map((entry) => {
+              const mine = matchesGravity(
+                entry.team.name,
+                entry.team.name,
+                entry.team.abbreviation,
+                entry.team.abbreviation
+              );
+              const cut = entry.position === LIGUILLA_SPOTS;
+              return (
+                <li
+                  key={entry.team.id || entry.team.abbreviation}
+                  className={[
+                    'lc-rail-mini-row',
+                    cut ? 'lc-rail-mini-cut' : '',
+                    entry.position > LIGUILLA_SPOTS ? 'lc-rail-mini-out' : '',
+                    mine ? 'lc-rail-mini-mine' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                >
+                  <span className="lc-rail-mini-pos">{entry.position}</span>
+                  <ClubLogo
+                    abbr={entry.team.abbreviation}
+                    name={entry.team.name}
+                    logoUrl={entry.team.logo}
+                    size="xs"
+                  />
+                  <span className="lc-rail-mini-abbr">{entry.team.abbreviation}</span>
+                  <span className="lc-rail-mini-mark">
+                    {entry.position <= LIGUILLA_SPOTS ? '·' : '×'}
+                  </span>
+                  <span className="lc-rail-mini-pts">{entry.pts}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       </div>
     </div>
   );

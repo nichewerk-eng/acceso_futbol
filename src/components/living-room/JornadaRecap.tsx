@@ -277,8 +277,8 @@ export function JornadaRecap() {
               Liga MX en espera
             </p>
             <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
-              El Apertura frena mientras corre Leagues Cup (4 ago – 6 sep). Los 18 clubes cruzan con
-              MLS; el pulso doméstico regresa al cerrar la Final.
+              El Apertura frenó durante Leagues Cup Fase 1 (4–13 ago). El pulso doméstico vuelve con
+              la siguiente jornada.
             </p>
             <Link href="/leagues-cup" className="af-cta mt-4 inline-flex !py-2">
               Ir a Leagues Cup
@@ -292,23 +292,21 @@ export function JornadaRecap() {
           </p>
         ) : (
           <div className="space-y-12" data-testid="jornada-columns">
-            <div data-testid="jornada-played">
-              <div className="mb-4 flex items-baseline justify-between gap-3">
-                <h3 className="font-display text-2xl font-bold uppercase tracking-wide">
-                  {live.length > 0 ? 'En vivo + sellados' : 'Sellados'}
-                </h3>
-                <p className="af-tele">{doneBlock.length}</p>
-              </div>
-              {doneBlock.length === 0 ? (
-                <p className="af-tele py-6 text-muted">Aún no hay resultados en esta fecha.</p>
-              ) : (
+            {doneBlock.length > 0 && (
+              <div data-testid="jornada-played">
+                <div className="mb-4 flex items-baseline justify-between gap-3">
+                  <h3 className="font-display text-2xl font-bold uppercase tracking-wide">
+                    {live.length > 0 ? 'En vivo + sellados' : 'Sellados'}
+                  </h3>
+                  <p className="af-tele">{doneBlock.length}</p>
+                </div>
                 <div className="jor-mosaic">
                   {doneBlock.map((f) => (
                     <ResultStamp key={f.id} f={f} mine={isMine(f)} />
                   ))}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {upcoming.length > 0 && (
               <div data-testid="jornada-upcoming">
