@@ -1775,9 +1775,11 @@ body {
   .lc-match-tv.tv-inline-desk .tv-channel[data-channel='apple-tv'],
   .lc-match-tv.tv-inline-desk .tv-channel[data-channel='unimas'],
   .lc-match-tv.tv-inline-desk .tv-channel[data-channel='imagen-tv'],
+  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='televisa'],
   .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='apple-tv'],
   .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='unimas'],
-  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='imagen-tv'] {
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='imagen-tv'],
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='televisa'] {
     height: 0.8rem;
   }
 }
@@ -2779,7 +2781,8 @@ body {
   [data-channel='univision'],
   [data-channel='unimas'],
   [data-channel='apple-tv'],
-  [data-channel='imagen-tv']
+  [data-channel='imagen-tv'],
+  [data-channel='televisa']
 ) {
   height: 0.8rem;
 }
@@ -2787,18 +2790,23 @@ body {
 .tv-inline .tv-channel[data-channel='apple-tv'],
 .tv-inline .tv-channel[data-channel='unimas'],
 .tv-inline .tv-channel[data-channel='imagen-tv'],
+.tv-inline .tv-channel[data-channel='televisa'],
 .tv-inline-desk .tv-channel[data-channel='apple-tv'],
 .tv-inline-desk .tv-channel[data-channel='unimas'],
 .tv-inline-desk .tv-channel[data-channel='imagen-tv'],
+.tv-inline-desk .tv-channel[data-channel='televisa'],
 .lc-match-tv .tv-channel[data-channel='apple-tv'],
 .lc-match-tv .tv-channel[data-channel='unimas'],
 .lc-match-tv .tv-channel[data-channel='imagen-tv'],
+.lc-match-tv .tv-channel[data-channel='televisa'],
 .lc-match-tv.tv-inline-desk .tv-channel[data-channel='apple-tv'],
 .lc-match-tv.tv-inline-desk .tv-channel[data-channel='unimas'],
 .lc-match-tv.tv-inline-desk .tv-channel[data-channel='imagen-tv'],
+.lc-match-tv.tv-inline-desk .tv-channel[data-channel='televisa'],
 .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='apple-tv'],
 .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='unimas'],
-.lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='imagen-tv'] {
+.lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='imagen-tv'],
+.lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='televisa'] {
   height: 0.8rem;
 }
 

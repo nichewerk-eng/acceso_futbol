@@ -18,7 +18,9 @@ export type TvChannelId =
   | 'disney-plus'
   | 'fox'
   | 'fox-one'
-  | 'fox-deportes';
+  | 'fox-deportes'
+  | 'tsn'
+  | 'televisa';
 
 export type TvChannel = {
   id: TvChannelId;
@@ -107,6 +109,15 @@ export const TV_CHANNELS: Record<TvChannelId, TvChannel> = {
     id: 'fox-deportes',
     label: 'Fox Deportes',
     src: '/tv_logos/Fox_Deportes.svg',
+  },
+  tsn: {
+    id: 'tsn',
+    label: 'TSN 5',
+  },
+  televisa: {
+    id: 'televisa',
+    label: 'Televisa',
+    src: '/tv_logos/Televisa.png',
   },
 };
 

@@ -131,7 +131,7 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
     ): DayGroup[] => {
       const byDay = new Map<string, Fixture[]>();
       for (const f of rows) {
-        const day = f.scheduleDay ?? dayKeyInTz(new Date(f.date), userTz);
+        const day = dayKeyInTz(new Date(f.date), userTz);
         const list = byDay.get(day) ?? [];
         list.push(f);
         byDay.set(day, list);
@@ -446,7 +446,7 @@ function LcPartidosRail({
             <p className="lc-rail-next">
               <span className="af-tele text-muted">Siguiente</span>
               <span className="lc-rail-next-match">
-                {fmtTime(myNext.date, myNext.venueTz || userTz)} · {myNext.home.abbreviation}–
+                {fmtTime(myNext.date, userTz)} · {myNext.home.abbreviation}–
                 {myNext.away.abbreviation}
               </span>
             </p>
@@ -871,9 +871,7 @@ function MatchRow({
 }) {
   const href = `/partido/leagues-cup/${f.id}`;
   const clickable = !f.id.startsWith('lc-');
-  // ESPN / LeaguesCup.com list venue-local wall times — match that, not browser TZ.
-  const kickTz = f.venueTz || tz;
-  const kickTime = fmtTime(f.date, kickTz);
+  const kickTime = fmtTime(f.date, tz);
   const whenPrimary =
     f.state === 'in'
       ? f.clock === 'HT' || /descanso/i.test(f.statusLabel || '')
@@ -939,7 +937,7 @@ function MatchRow({
               mxLabel={f.dondeVer?.mx}
               usLabel={f.dondeVer?.us}
               inline
-              maxMarks={3}
+              maxMarks={8}
             />
           ) : null}
         </div>

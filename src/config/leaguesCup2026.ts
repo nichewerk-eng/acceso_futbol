@@ -102,9 +102,10 @@ const TV_FS1 = ['apple-tv', 'fs1'] as TvChannelId[];
 const TV_UNI = ['apple-tv', 'unimas'] as TvChannelId[];
 const TV_UNI_FS1 = ['apple-tv', 'unimas', 'fs1'] as TvChannelId[];
 const TV_FS1_UNI = ['apple-tv', 'fs1', 'unimas'] as TvChannelId[];
-const TV_QF_TV = ['apple-tv', 'unimas', 'tudn', 'fs1'] as TvChannelId[];
+const TV_QF_US = ['apple-tv', 'unimas', 'tudn', 'fs1'] as TvChannelId[];
 /** MX: Apple TV + Imagen TV select grid */
 const MX_IMAGEN = ['apple-tv', 'imagen-tv'] as TvChannelId[];
+const MX_QF_TELE = ['apple-tv', 'televisa', 'imagen-tv'] as TvChannelId[];
 
 /** All 54 Phase One matches — Aug 4–13, 2026 (official board + US TV from LeaguesCup.com). */
 export const LEAGUES_CUP_PHASE_ONE: LcKick[] = [
@@ -209,7 +210,7 @@ export const LEAGUES_CUP_KNOCKOUT: LcKnockoutSlot[] = [
     venueLabel: 'Sports Illustrated Stadium',
     localTime: '20:30',
     tz: ET,
-    us: TV_QF_TV,
+    us: TV_QF_US,
     mx: MX_IMAGEN,
   },
   {
@@ -242,8 +243,8 @@ export const LEAGUES_CUP_KNOCKOUT: LcKnockoutSlot[] = [
     venueLabel: 'Dignity Health Sports Park',
     localTime: '19:45',
     tz: PT,
-    us: TV_QF_TV,
-    mx: MX_IMAGEN,
+    us: TV_QF_US,
+    mx: MX_QF_TELE,
   },
   {
     id: 'lc-sf-1',

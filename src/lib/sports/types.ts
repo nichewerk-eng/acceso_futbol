@@ -105,6 +105,8 @@ export interface Fixture {
       | 'fox'
       | 'fox-one'
       | 'fox-deportes'
+      | 'tsn'
+      | 'televisa'
     >;
     usChannels?: Array<
       | 'tudn'
@@ -122,6 +124,8 @@ export interface Fixture {
       | 'fox'
       | 'fox-one'
       | 'fox-deportes'
+      | 'tsn'
+      | 'televisa'
     >;
   };
 }
