@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { LigaMxMark } from '@/components/brand/LigaMxMark';
 import { useGravity } from '@/contexts/GravityContext';
 import { teamNameEs } from '@/components/standings/teamNames';
+import { resolveDondeVer } from '@/config/dondeVer';
 import { ligaMxClubIdFromAbbr } from '@/config/ligaMxLogos';
 import { getCurrentJornada } from '@/fixtures/ligamx-apertura-2026';
 import type { LigaMXTable, LigaMXEntry } from '@/app/api/ligamx/standings/route';
@@ -35,6 +37,51 @@ function fmtTime(iso: string, tz: string) {
     hour: 'numeric',
     minute: '2-digit',
   });
+}
+
+function dayKeyInTz(iso: string, tz: string) {
+  return new Date(iso).toLocaleDateString('en-CA', { timeZone: tz });
+}
+
+function groupByDay(rows: LigaMXFixture[], tz: string) {
+  const byDay = new Map<string, LigaMXFixture[]>();
+  for (const f of rows) {
+    const day = dayKeyInTz(f.date, tz);
+    const list = byDay.get(day) ?? [];
+    list.push(f);
+    byDay.set(day, list);
+  }
+  return [...byDay.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([day, dayRows]) => ({
+      day,
+      label: new Date(`${day}T12:00:00.000Z`).toLocaleDateString('es-MX', {
+        timeZone: 'UTC',
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+      }),
+      rows: [...dayRows].sort((a, b) => +new Date(a.date) - +new Date(b.date)),
+    }));
+}
+
+function fmtKick(iso: string, tz: string) {
+  return new Date(iso).toLocaleTimeString('es-MX', {
+    timeZone: tz,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+}
+
+function shortClubName(name: string, abbr: string) {
+  const cleaned = name
+    .replace(/\b(F\.?C\.?|C\.?F\.?|S\.?C\.?|Club|Deportivo|CF)\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!cleaned) return abbr;
+  if (cleaned.length > 14) return abbr;
+  return cleaned;
 }
 
 type GravityFn = (
@@ -113,6 +160,8 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
   const jornadaLive = jornadaFixtures.filter((f) => f.status.state === 'in');
   const jornadaPast = jornadaFixtures.filter((f) => f.status.state === 'post');
   const jornadaUpcoming = jornadaFixtures.filter((f) => f.status.state === 'pre');
+  const upcomingByDay = groupByDay(jornadaUpcoming, userTz);
+  const todayKey = dayKeyInTz(new Date().toISOString(), userTz);
   const entries = table?.entries ?? [];
   const isEmpty = entries.length === 0;
 
@@ -210,7 +259,7 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
           {(
             [
               ['jornada', 'Jornada'],
-              ['tabla', 'Tabla'],
+              ['tabla', 'Liga MX'],
             ] as const
           ).map(([id, label]) => (
             <button
@@ -370,20 +419,40 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
               {jornadaLive.length > 0 && (
                 <div>
                   <p className="mb-3 af-tele text-signal">En vivo</p>
-                  <div className="jor-mosaic">
+                  <ul className="lc-day-list">
                     {jornadaLive.map((f) => (
-                      <MatchStamp key={f.id} f={f} tz={userTz} mine={isMine(f)} />
+                      <KickRow key={f.id} f={f} tz={userTz} mine={isMine(f)} />
                     ))}
-                  </div>
+                  </ul>
                 </div>
               )}
 
-              {jornadaUpcoming.length > 0 && (
-                <div>
-                  <p className="mb-3 af-tele text-foreground">Por jugar</p>
-                  <div className="jor-mosaic">
-                    {jornadaUpcoming.map((f) => (
-                      <MatchStamp key={f.id} f={f} tz={userTz} mine={isMine(f)} />
+              {upcomingByDay.length > 0 && (
+                <div data-testid="ligamx-por-jugar">
+                  <p className="mb-4 af-tele text-foreground">Por jugar</p>
+                  <div className="lc-day-stack">
+                    {upcomingByDay.map((group) => (
+                      <div
+                        key={group.day}
+                        className={[
+                          'lc-day',
+                          group.day === todayKey ? 'lc-day-today' : '',
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
+                      >
+                        <div className="lc-day-head">
+                          {group.day === todayKey && (
+                            <span className="lc-day-kicker">Hoy</span>
+                          )}
+                          <h4 className="lc-day-title">{group.label}</h4>
+                        </div>
+                        <ul className="lc-day-list">
+                          {group.rows.map((f) => (
+                            <KickRow key={f.id} f={f} tz={userTz} mine={isMine(f)} />
+                          ))}
+                        </ul>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -697,6 +766,120 @@ function StandingsRow({ entry, mine }: { entry: LigaMXEntry; mine: boolean }) {
         {inLiguilla ? 'LIGUILLA' : 'FUERA'}
       </span>
     </div>
+  );
+}
+
+function KickRow({
+  f,
+  tz,
+  mine,
+}: {
+  f: LigaMXFixture;
+  tz: string;
+  mine: boolean;
+}) {
+  const live = f.status.state === 'in';
+  const done = f.status.state === 'post';
+  const when = live
+    ? f.status.displayClock || 'LIVE'
+    : done
+      ? 'FT'
+      : fmtKick(f.date, tz);
+  const center = done || live ? `${f.home.score ?? 0}–${f.away.score ?? 0}` : 'VS';
+  const homeId = ligaMxClubIdFromAbbr(f.home.abbreviation);
+  const awayId = ligaMxClubIdFromAbbr(f.away.abbreviation);
+  const tv = resolveDondeVer({
+    date: f.date,
+    league: 'liga-mx',
+    venue: f.venue,
+    city: f.city,
+    home: {
+      id: homeId ?? f.home.abbreviation,
+      name: f.home.name,
+      abbreviation: f.home.abbreviation,
+      score: f.home.score,
+    },
+    away: {
+      id: awayId ?? f.away.abbreviation,
+      name: f.away.name,
+      abbreviation: f.away.abbreviation,
+      score: f.away.score,
+    },
+  });
+  const hasTv = tv.mxChannels.length > 0 || tv.usChannels.length > 0;
+
+  return (
+    <li className="lc-match-item">
+      <Link
+        href={`/partido/liga-mx/${f.id}`}
+        data-testid={`ligamx-match-${f.id}`}
+        className={[
+          'lc-match lm-kick',
+          live ? 'lc-match-live' : '',
+          mine ? 'lc-match-mine' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        title={f.venue || undefined}
+      >
+        <span className="lc-match-home">
+          <ClubLogo
+            abbr={f.home.abbreviation}
+            clubId={homeId}
+            name={f.home.name}
+            size="sm"
+          />
+          <span className="lc-match-name" title={f.home.name}>
+            {shortClubName(f.home.name, f.home.abbreviation)}
+          </span>
+        </span>
+
+        <div className="lc-match-mid">
+          <div className="lc-match-when">
+            <p className="lc-match-when-primary">
+              {live && <span className="hoy-live-dot mr-1.5" aria-hidden />}
+              {when}
+              {!live && !done ? <span className="lc-match-when-hrs"> hrs</span> : null}
+            </p>
+            {mine && <span className="lc-match-lock">TU CLUB</span>}
+          </div>
+          <span
+            className={[
+              'lc-match-center',
+              done || live ? 'lc-match-center-score' : 'lc-match-center-vs',
+            ].join(' ')}
+          >
+            {center}
+          </span>
+        </div>
+
+        <span className="lc-match-away">
+          <span className="lc-match-name" title={f.away.name}>
+            {shortClubName(f.away.name, f.away.abbreviation)}
+          </span>
+          <ClubLogo
+            abbr={f.away.abbreviation}
+            clubId={awayId}
+            name={f.away.name}
+            size="sm"
+          />
+        </span>
+
+        {f.venue ? <p className="lc-match-venue">{f.venue}</p> : null}
+
+        {hasTv ? (
+          <BroadcastChannels
+            className="lc-match-tv tv-inline-desk"
+            mx={tv.mxChannels}
+            us={tv.usChannels}
+            mxLabel={tv.mx}
+            usLabel={tv.us}
+            inline
+            maxMarks={4}
+          />
+        ) : null}
+      </Link>
+    </li>
   );
 }
 

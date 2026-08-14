@@ -10,7 +10,7 @@ const LINKS = [
   { href: '/', label: 'Pulso' },
   { href: '/#jornada', label: 'Jornada' },
   { href: '/#noticias', label: 'Cable' },
-  { href: '/liga-mx', label: 'Tabla' },
+  { href: '/liga-mx', label: 'Liga MX' },
   { href: '/leagues-cup', label: 'Leagues Cup' },
 ];
 

@@ -372,9 +372,11 @@ export function PulseHero({ leadStory }: Props) {
                       ].join(' ')}
                       data-testid={`hero-band-score-${g.id}`}
                     >
-                      {meta.center}
+                      <span className="hero-band-center-mark">{meta.center}</span>
                       {compTag ? (
-                        <span className="af-tele hidden text-signal sm:inline"> · {compTag}</span>
+                        <span className="af-tele hero-band-center-tag hidden text-signal sm:block">
+                          {compTag}
+                        </span>
                       ) : null}
                     </span>
                     <span className="hero-band-away inline-flex items-center justify-end gap-2">

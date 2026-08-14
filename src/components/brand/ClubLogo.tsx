@@ -4,11 +4,11 @@ import { mlsLogoSrc } from '@/config/mlsLogos';
 type Size = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 const PX: Record<Size, number> = {
-  xs: 22,
-  sm: 28,
-  md: 36,
-  lg: 52,
-  xl: 72,
+  xs: 28,
+  sm: 36,
+  md: 44,
+  lg: 64,
+  xl: 88,
 };
 
 type Props = {

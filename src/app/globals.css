@@ -418,9 +418,9 @@ body {
 }
 
 .hero-band {
-  /* Stamp | home | score | away — equal home/away fr keeps the score centered */
+  /* Stamp | home | VS/score | away — equal home/away fr keeps VS on the matchup axis */
   display: grid;
-  grid-template-columns: 5.5rem minmax(0, 1fr) minmax(3.5rem, auto) minmax(0, 1fr);
+  grid-template-columns: minmax(5.5rem, 7.25rem) minmax(0, 1fr) 4.25rem minmax(0, 1fr);
   align-items: center;
   column-gap: 0.65rem;
   row-gap: 0.4rem;
@@ -475,15 +475,32 @@ body {
 }
 
 .hero-band-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   font-family: var(--font-oswald), sans-serif;
   font-weight: 600;
   font-size: 1.35rem;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
-  min-width: 3.5rem;
+  width: 100%;
+  min-width: 0;
   text-align: center;
   justify-self: center;
-  padding-inline: 0.35rem;
+  padding-inline: 0;
+}
+
+.hero-band-center-mark {
+  line-height: 1;
+}
+
+.hero-band-center-tag {
+  margin-top: 0.2rem;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .hero-band-center-vs {
@@ -500,24 +517,28 @@ body {
   display: none;
 }
 
-/* Channels on their own row so the score line stays symmetrical */
+/* Channels under the matchup (home–VS–away), not the stamp column */
 .hero-band-tv {
-  grid-column: 1 / -1;
+  grid-column: 2 / -1;
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 100%;
   min-width: 0;
-  padding-block: 0.35rem;
+  padding-block: 0.35rem 0.55rem;
 }
 
 .hero-band-tv .tv-inline,
+.hero-band-tv .tv-inline-desk,
 .hero-stage-tv.tv-inline {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
   max-width: none;
   overflow: visible;
   flex-wrap: wrap;
+  flex-shrink: 1;
   gap: 0.4rem;
   row-gap: 0.25rem;
 }
@@ -1189,6 +1210,21 @@ body {
   margin-top: 0.1rem;
 }
 
+/* Liga MX kick rows — TV sits on the footer so the mid column stays time + VS */
+.lm-kick {
+  padding-bottom: 0.45rem;
+}
+
+.lm-kick .lc-match-tv.tv-inline,
+.lm-kick .lc-match-tv.tv-inline-desk {
+  grid-column: 2 / -1;
+  grid-row: 2;
+  justify-self: end;
+  align-self: start;
+  margin-top: 0;
+  padding-bottom: 0.1rem;
+}
+
 @media (max-width: 640px) {
   .hero-stage {
     padding: 1.1rem 1rem 1.2rem;
@@ -1246,9 +1282,10 @@ body {
   .hero-band-center {
     grid-column: 2;
     grid-row: 2;
-    min-width: 3.1rem;
+    min-width: 0;
+    width: 100%;
     font-size: 1.2rem;
-    padding-inline: 0.45rem;
+    padding-inline: 0;
     border-inline: none;
     align-self: center;
   }
@@ -1322,6 +1359,14 @@ body {
   .lc-match-tv.tv-inline,
   .lc-match-tv.tv-inline-desk {
     gap: 0.35rem;
+  }
+
+  .lm-kick .lc-match-tv.tv-inline,
+  .lm-kick .lc-match-tv.tv-inline-desk {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    justify-self: start;
+    padding-bottom: 0.35rem;
   }
 
   /* Inline-density slots on desk class so wide marks don't collide */
@@ -2593,6 +2638,35 @@ body {
   gap: 0.4rem;
 }
 
+/* Hero wall: beat the default end-aligned inline strip */
+.hero-band-tv .tv-inline,
+.hero-band-tv .tv-inline-desk {
+  justify-content: center;
+  max-width: none;
+  overflow: visible;
+  width: 100%;
+  flex-shrink: 1;
+}
+
+.hero-band-tv .tv-inline .tv-channel,
+.hero-band-tv .tv-inline .tv-channel-compact,
+.hero-stage-tv .tv-channel,
+.hero-stage-tv .tv-channel-compact {
+  width: auto;
+  min-width: 2rem;
+  height: 1.5rem;
+}
+
+.hero-band-tv .tv-inline .tv-channel .tv-channel-logo,
+.hero-band-tv .tv-inline .tv-channel-compact .tv-channel-logo,
+.hero-stage-tv .tv-channel .tv-channel-logo,
+.hero-stage-tv .tv-channel-compact .tv-channel-logo {
+  max-width: 3.6rem;
+  max-height: 1.35rem;
+  width: auto;
+  height: auto;
+}
+
 .tv-inline .tv-channel,
 .tv-inline .tv-channel-compact {
   width: 1.35rem;
@@ -2805,28 +2879,28 @@ body {
 }
 
 .club-logo-xs {
-  width: 22px;
-  height: 22px;
-}
-
-.club-logo-sm {
   width: 28px;
   height: 28px;
 }
 
-.club-logo-md {
+.club-logo-sm {
   width: 36px;
   height: 36px;
 }
 
+.club-logo-md {
+  width: 44px;
+  height: 44px;
+}
+
 .club-logo-lg {
-  width: 52px;
-  height: 52px;
+  width: 64px;
+  height: 64px;
 }
 
 .club-logo-xl {
-  width: 72px;
-  height: 72px;
+  width: 88px;
+  height: 88px;
 }
 
 /**
