@@ -101,16 +101,22 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
     const liveRows: Fixture[] = [];
     const phase: Fixture[] = [];
     const ko: Fixture[] = [];
+    const calendar: Fixture[] = [];
     for (const f of fixtures) {
-      if (
+      const isKo =
         f.id.startsWith('lc-') ||
-        (f.jornada && /final|semifinal|quarter|third|tercer/i.test(f.jornada))
-      ) {
-        ko.push(f);
-        continue;
-      }
+        Boolean(f.jornada && /final|semifinal|quarter|third|tercer/i.test(f.jornada));
+      if (isKo) ko.push(f);
+      else phase.push(f);
+
+      const onCalendar =
+        !isKo ||
+        f.statusLabel === 'Programado' ||
+        f.state === 'in' ||
+        f.state === 'post';
+      if (!onCalendar) continue;
       if (f.state === 'in') liveRows.push(f);
-      phase.push(f);
+      calendar.push(f);
     }
 
     type DayGroup = {
@@ -147,8 +153,8 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
     };
 
     // Live sits in its own block — Por jugar is kickoffs still pending.
-    const upcoming = phase.filter((f) => f.state === 'pre');
-    const played = phase.filter((f) => f.state === 'post');
+    const upcoming = calendar.filter((f) => f.state === 'pre');
+    const played = calendar.filter((f) => f.state === 'post');
 
     const porJugarByDay = toGroups(upcoming, (a, b) => {
       // Hoy first, then upcoming days ascending.
@@ -252,7 +258,7 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
                 Ronda eliminatoria
               </h2>
               <p className="mt-3 font-mono text-[11px] text-muted">
-                Cuartos (25–27 ago) · Semis (1–2 sep) · Tercer lugar y Final (6 sep)
+                Cuartos (25–26 ago) · Semis (1–2 sep) · Tercer lugar y Final (6 sep)
               </p>
             </div>
             <LcBracket fixtures={knockout} isMine={isMine} />
@@ -295,6 +301,13 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
                 <section data-testid="lc-fase-1" className="lc-board">
                   {porJugarByDay.length > 0 && (
                     <div className="lc-section" data-testid="lc-por-jugar">
+                      {porJugarByDay.some((g) =>
+                        g.rows.some((f) => f.jornada === 'Quarterfinals')
+                      ) ? (
+                        <div className="lc-section-head">
+                          <h3 className="af-tele text-signal">Cuartos de final</h3>
+                        </div>
+                      ) : null}
                       <LcDayGroups
                         groups={porJugarByDay}
                         todayKey={todayKey}
@@ -857,6 +870,7 @@ function MatchRow({
   live?: boolean;
 }) {
   const href = `/partido/leagues-cup/${f.id}`;
+  const clickable = !f.id.startsWith('lc-');
   // ESPN / LeaguesCup.com list venue-local wall times — match that, not browser TZ.
   const kickTz = f.venueTz || tz;
   const kickTime = fmtTime(f.date, kickTz);
@@ -879,16 +893,12 @@ function MatchRow({
       f.dondeVer?.us
   );
 
-  return (
-    <li className="lc-match-item">
-      <Link
-        href={href}
-        data-testid={`lc-match-${f.id}`}
-        className={['lc-match', live ? 'lc-match-live' : '', mine ? 'lc-match-mine' : '']
-          .filter(Boolean)
-          .join(' ')}
-        title={f.venue || undefined}
-      >
+  const className = ['lc-match', live ? 'lc-match-live' : '', mine ? 'lc-match-mine' : '']
+    .filter(Boolean)
+    .join(' ');
+
+  const body = (
+    <>
         <span className="lc-match-home">
           <ClubLogo
             abbr={f.home.abbreviation}
@@ -948,7 +958,20 @@ function MatchRow({
         </span>
 
         {f.venue ? <p className="lc-match-venue">{f.venue}</p> : null}
-      </Link>
+    </>
+  );
+
+  return (
+    <li className="lc-match-item">
+      {clickable ? (
+        <Link href={href} data-testid={`lc-match-${f.id}`} className={className} title={f.venue || undefined}>
+          {body}
+        </Link>
+      ) : (
+        <div data-testid={`lc-match-${f.id}`} className={className} title={f.venue || undefined}>
+          {body}
+        </div>
+      )}
     </li>
   );
 }

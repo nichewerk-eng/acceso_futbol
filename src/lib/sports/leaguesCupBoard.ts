@@ -55,10 +55,9 @@ function pickSide(sm: Fixture, want: string): TeamRef | undefined {
   return undefined;
 }
 
-function channelsFor(kick: LcKick): Fixture['dondeVer'] {
-  // US: LeaguesCup.com listing. MX: Apple TV + optional Imagen TV select grid.
-  const us = kick.us;
-  const mx: TvChannelId[] = kick.mx ?? ['apple-tv'];
+function channelsFor(listing: { us: TvChannelId[]; mx?: TvChannelId[] }): Fixture['dondeVer'] {
+  const us = listing.us;
+  const mx: TvChannelId[] = listing.mx ?? ['apple-tv'];
   return {
     mx: mx.map((id) => TV_CHANNELS[id].label).join(' · '),
     us: us.map((id) => TV_CHANNELS[id].label).join(' · '),
@@ -117,30 +116,31 @@ function knockoutSide(
 }
 
 function knockoutFixture(slot: LcKnockoutSlot): Fixture {
+  const tz = slot.tz ?? 'America/New_York';
+  const localTime = slot.localTime ?? '20:00';
   const date = slot.boardDate
-    ? lcLocalToIso(slot.boardDate, '20:00', 'America/New_York')
+    ? lcLocalToIso(slot.boardDate, localTime, tz)
     : '2026-08-25T00:00:00.000Z';
   const sidesSet = Boolean(slot.home && slot.away);
+  const scheduled = sidesSet && Boolean(slot.localTime && slot.boardDate);
   return {
     id: slot.id,
     provider: 'sportmonks',
     league: 'leagues-cup',
     date,
     scheduleDay: slot.boardDate ?? undefined,
-    venueTz: 'America/New_York',
+    venueTz: tz,
     jornada: slot.stage,
     state: 'pre',
-    statusLabel: sidesSet ? 'Por anunciar' : 'Por definir',
+    statusLabel: scheduled ? 'Programado' : sidesSet ? 'Por anunciar' : 'Por definir',
     venue: slot.venueLabel,
     city: null,
     home: knockoutSide(slot.home, slot.homeLabel, slot.id, 'h'),
     away: knockoutSide(slot.away, slot.awayLabel, slot.id, 'a'),
-    dondeVer: {
-      mx: 'Apple TV',
-      us: 'Apple TV',
-      mxChannels: ['apple-tv'],
-      usChannels: ['apple-tv'],
-    },
+    dondeVer: channelsFor({
+      us: slot.us ?? ['apple-tv'],
+      mx: slot.mx,
+    }),
   };
 }
 
@@ -165,6 +165,16 @@ export function lcActiveDateKeys(now = Date.now()): string[] {
     if (kickAt - now > FRESH.nearKickoffBeforeMs) continue;
     if (now - kickAt > afterMs) continue;
     keys.add(kick.boardDate);
+    keys.add(new Date(iso).toISOString().slice(0, 10));
+  }
+  for (const slot of LEAGUES_CUP_KNOCKOUT) {
+    if (!slot.boardDate || !slot.localTime || !slot.tz) continue;
+    const iso = lcLocalToIso(slot.boardDate, slot.localTime, slot.tz);
+    const kickAt = +new Date(iso);
+    if (!Number.isFinite(kickAt)) continue;
+    if (kickAt - now > FRESH.nearKickoffBeforeMs) continue;
+    if (now - kickAt > afterMs) continue;
+    keys.add(slot.boardDate);
     keys.add(new Date(iso).toISOString().slice(0, 10));
   }
   return [...keys];

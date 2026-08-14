@@ -63,7 +63,7 @@ export function LcBracket({
         </div>
         <div className="lc-br-tree">
           <p className="lc-br-m-label" style={{ gridArea: 'lab-a' }}>
-            Cuartos · 25–27 ago
+            Cuartos · 25–26 ago
           </p>
           {cell('lc-qf-3', 'qf', 'qf-l1', 'right')}
           {cell('lc-qf-2', 'qf', 'qf-l2', 'right')}
@@ -71,7 +71,7 @@ export function LcBracket({
           {cell('lc-sf-1', 'sf', 'sf-l', 'center')}
           <div className="lc-br-join lc-br-join-ml" style={{ gridArea: 'join-ml' }} />
           <p className="lc-br-m-label" style={{ gridArea: 'lab-b' }}>
-            Cuartos · 25–27 ago
+            Cuartos · 25–26 ago
           </p>
           {cell('lc-qf-1', 'qf', 'qf-r1', 'left')}
           {cell('lc-qf-4', 'qf', 'qf-r2', 'left')}

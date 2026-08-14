@@ -45,6 +45,11 @@ export type LcKnockoutSlot = {
   homeSeed?: string;
   awaySeed?: string;
   venueLabel: string;
+  /** Venue-local kickoff when announced (24h). */
+  localTime?: string;
+  tz?: string;
+  us?: TvChannelId[];
+  mx?: TvChannelId[];
   /** Slot ids whose winners (or losers, for third place) feed this match. */
   feedsFrom?: [string, string];
 };
@@ -97,6 +102,7 @@ const TV_FS1 = ['apple-tv', 'fs1'] as TvChannelId[];
 const TV_UNI = ['apple-tv', 'unimas'] as TvChannelId[];
 const TV_UNI_FS1 = ['apple-tv', 'unimas', 'fs1'] as TvChannelId[];
 const TV_FS1_UNI = ['apple-tv', 'fs1', 'unimas'] as TvChannelId[];
+const TV_QF_TV = ['apple-tv', 'unimas', 'tudn', 'fs1'] as TvChannelId[];
 /** MX: Apple TV + Imagen TV select grid */
 const MX_IMAGEN = ['apple-tv', 'imagen-tv'] as TvChannelId[];
 
@@ -168,62 +174,76 @@ export const LEAGUES_CUP_PHASE_ONE: LcKick[] = [
 ];
 
 /**
- * Knockout tree — QF sides are official (MLS 1×LMX 4 … LMX 2×MLS 3).
- * Sportmonks has no 2026 KO fixtures yet; venues / kickoffs still TBD.
- * SF: winner(LEO–RSL) vs winner(ATX–TOL) · winner(CHI–MTY) vs winner(AME–COL).
+ * Knockout tree — QF sides, venues, and kickoffs are official.
+ * Sportmonks has no 2026 KO fixture ids yet.
+ * SF: winner(LEO–RSL) vs winner(TOL–ATX) · winner(MTY–CHI) vs winner(AME–COL).
  */
 export const LEAGUES_CUP_KNOCKOUT: LcKnockoutSlot[] = [
   {
     id: 'lc-qf-1',
     stage: 'Quarterfinals',
     boardDate: '2026-08-25',
-    boardDateLabel: '25–27 ago',
-    home: 'CHI',
-    away: 'MTY',
-    homeLabel: 'Chicago',
-    awayLabel: 'Monterrey',
-    homeSeed: 'MLS 1',
-    awaySeed: 'LMX 4',
-    venueLabel: 'Por anunciar',
+    boardDateLabel: '25 ago',
+    home: 'MTY',
+    away: 'CHI',
+    homeLabel: 'Monterrey',
+    awayLabel: 'Chicago',
+    homeSeed: 'LMX 4',
+    awaySeed: 'MLS 1',
+    venueLabel: 'SeatGeek Stadium',
+    localTime: '19:30',
+    tz: CT,
+    us: TV,
   },
   {
     id: 'lc-qf-2',
     stage: 'Quarterfinals',
-    boardDate: '2026-08-25',
-    boardDateLabel: '25–27 ago',
-    home: 'ATX',
-    away: 'TOL',
-    homeLabel: 'Austin',
-    awayLabel: 'Toluca',
-    homeSeed: 'MLS 2',
-    awaySeed: 'LMX 3',
-    venueLabel: 'Por anunciar',
+    boardDate: '2026-08-26',
+    boardDateLabel: '26 ago',
+    home: 'TOL',
+    away: 'ATX',
+    homeLabel: 'Toluca',
+    awayLabel: 'Austin',
+    homeSeed: 'LMX 3',
+    awaySeed: 'MLS 2',
+    venueLabel: 'Sports Illustrated Stadium',
+    localTime: '20:30',
+    tz: ET,
+    us: TV_QF_TV,
+    mx: MX_IMAGEN,
   },
   {
     id: 'lc-qf-3',
     stage: 'Quarterfinals',
     boardDate: '2026-08-25',
-    boardDateLabel: '25–27 ago',
+    boardDateLabel: '25 ago',
     home: 'LEO',
     away: 'RSL',
     homeLabel: 'León',
     awayLabel: 'Salt Lake',
     homeSeed: 'LMX 1',
     awaySeed: 'MLS 4',
-    venueLabel: 'Por anunciar',
+    venueLabel: "Dick's Sporting Goods Park",
+    localTime: '20:30',
+    tz: MT,
+    us: TV,
   },
   {
     id: 'lc-qf-4',
     stage: 'Quarterfinals',
-    boardDate: '2026-08-25',
-    boardDateLabel: '25–27 ago',
+    boardDate: '2026-08-26',
+    boardDateLabel: '26 ago',
     home: 'AME',
     away: 'COL',
     homeLabel: 'América',
     awayLabel: 'Columbus',
     homeSeed: 'LMX 2',
     awaySeed: 'MLS 3',
-    venueLabel: 'Por anunciar',
+    venueLabel: 'Dignity Health Sports Park',
+    localTime: '19:45',
+    tz: PT,
+    us: TV_QF_TV,
+    mx: MX_IMAGEN,
   },
   {
     id: 'lc-sf-1',
