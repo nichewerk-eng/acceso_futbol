@@ -68,11 +68,23 @@ export function EngagementDock() {
             )}
           </p>
           <p className="flex items-center gap-2 truncate text-[#f6f5f2]">
-            <ClubLogo abbr={game.home.abbreviation} name={game.home.name} size="sm" />
+            <ClubLogo
+              abbr={game.home.abbreviation}
+              clubId={game.home.id}
+              name={game.home.name}
+              logoUrl={game.home.logo}
+              size="sm"
+            />
             <span className="club-word club-word-sm">{game.home.abbreviation}</span>
             <span className="mx-0.5 text-white/40">{score}</span>
             <span className="club-word club-word-sm">{game.away.abbreviation}</span>
-            <ClubLogo abbr={game.away.abbreviation} name={game.away.name} size="sm" />
+            <ClubLogo
+              abbr={game.away.abbreviation}
+              clubId={game.away.id}
+              name={game.away.name}
+              logoUrl={game.away.logo}
+              size="sm"
+            />
           </p>
         </div>
         <Link href={href} className="hoy-cta shrink-0 !py-2" data-testid="dock-cta-ficha">
