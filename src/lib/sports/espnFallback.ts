@@ -1,5 +1,11 @@
 import { espnFetch, scoreboardUrl, SLUG } from '@/lib/espn';
-import { APERTURA_2026_FIXTURES } from '@/fixtures/ligamx-apertura-2026';
+import { preferSportmonksId } from '@/fixtures/ligamx-apertura-2026';
+import { smTeamIdFromAbbr } from './ligaMxTeams';
+import {
+  aperturaCalendar,
+  refreshAperturaSmMap,
+  rememberOverlaySmIds,
+} from './aperturaSmMap';
 import { mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
 import { dayPairKey, scheduleAbbr } from './ligaMxAbbr';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
@@ -137,7 +143,7 @@ function mapEvent(event: EventRaw): Fixture {
 }
 
 function mapStatic(): Fixture[] {
-  return APERTURA_2026_FIXTURES.map((f) => ({
+  return aperturaCalendar().map((f) => ({
     id: f.id,
     provider: 'espn' as const,
     league: 'liga-mx' as const,
@@ -149,13 +155,13 @@ function mapStatic(): Fixture[] {
     venue: f.venue,
     city: f.city,
     home: {
-      id: f.home.abbreviation,
+      id: smTeamIdFromAbbr(f.home.abbreviation) ?? f.home.abbreviation,
       name: f.home.name,
       abbreviation: f.home.abbreviation,
       score: f.home.score,
     },
     away: {
-      id: f.away.abbreviation,
+      id: smTeamIdFromAbbr(f.away.abbreviation) ?? f.away.abbreviation,
       name: f.away.name,
       abbreviation: f.away.abbreviation,
       score: f.away.score,
@@ -195,9 +201,10 @@ function mergeLiveOntoStatic(live: Fixture[]): Fixture[] {
     const jk = jornadaPairKey(f.jornada, f.home.abbreviation, f.away.abbreviation);
     if (jk) byJornada.set(jk, f);
   }
+  const seed = mapStatic();
   const usedLive = new Set<string>();
 
-  const merged = mapStatic().map((s) => {
+  const merged = seed.map((s) => {
     const dayKey = dayPairKey(s.date, s.home.abbreviation, s.away.abbreviation);
     const jk = jornadaPairKey(s.jornada, s.home.abbreviation, s.away.abbreviation);
     const overlay = byDay.get(dayKey) ?? (jk ? byJornada.get(jk) : undefined);
@@ -205,7 +212,7 @@ function mergeLiveOntoStatic(live: Fixture[]): Fixture[] {
     usedLive.add(overlay.id);
     return {
       ...s,
-      id: overlay.id,
+      id: preferSportmonksId(s.id, overlay.id),
       provider: overlay.provider,
       date: overlay.date,
       state: overlay.state,
@@ -230,6 +237,8 @@ function mergeLiveOntoStatic(live: Fixture[]): Fixture[] {
       },
     };
   });
+
+  rememberOverlaySmIds(seed, merged);
 
   for (const f of live) {
     if (!usedLive.has(f.id) && f.jornada) merged.push(f);
@@ -291,6 +300,7 @@ export async function fetchLigaMxFixtures(): Promise<{
   source: 'sportmonks' | 'espn' | 'static';
 }> {
   const seed = mapStatic();
+  refreshAperturaSmMap();
   if (sportmonksEnabled()) {
     try {
       const dated = await overlayNearDateBoards(seed);

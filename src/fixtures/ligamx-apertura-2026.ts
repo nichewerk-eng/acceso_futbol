@@ -1,5 +1,6 @@
 // Liga MX Apertura 2026 — Complete schedule (17 matchdays, 153 fixtures).
-// Used as a static fallback when the ESPN API hasn't populated the season yet.
+// Calendar (dates / pairs) is editorial. Sportmonks fixture ids in SM_IDS are a
+// bootstrap seed; `aperturaSmMap` refreshes them automatically from Sportmonks.
 // Times stored as ISO 8601 with Mexico City offset:
 //   CDT (UTC-5): Jul 16 – Oct 24
 //   CST (UTC-6): Oct 25 – Nov 22
@@ -201,9 +202,74 @@ const RAW: [string, string, string, number][] = [
   ['2026-11-22T19:00:00-06:00', 'QRO', 'NCX', 17],
 ];
 
+/** Sportmonks fixture ids, same order as RAW. Bootstrap seed only — live map refreshes in aperturaSmMap. */
+const SM_IDS: (number | null)[] = [
+  19715315, 19715314, 19715313, 19715312, 19715311, 19715310, 19715308, 19715309, 19715307,
+  19715306, 19715305, 19715304, 19715302, 19715303, 19715301, 19715300, 19715299, 19715298,
+  19715297, 19715295, 19715296, 19715294, 19715292, 19715293, 19715291, 19715290, 19715289,
+  19715288, 19715287, 19715286, 19715285, 19715284, 19715283, 19715282, 19715281, 19715280,
+  19715279, 19715278, 19715277, 19715276, 19715275, 19715274, 19715273, 19715272, 19715271,
+  19715269, 19715270, 19715268, 19715267, 19715266, 19715265, 19715264, 19715263, 19715262,
+  19715261, 19715260, 19715259, 19715258, 19715257, 19715256, 19715255, 19715254, 19715253,
+  19715250, 19715249, 19715248, 19715252, 19715251, 19715247, 19715245, 19715246, 19715244,
+  19715243, 19715242, 19715240, 19715241, 19715239, 19715238, 19715236, 19715237, 19715235,
+  19715234, 19715233, 19715232, 19715231, 19715230, 19715229, 19715228, 19715227, 19715226,
+  19715224, 19715225, 19715223, 19715222, 19715221, 19715220, 19715219, 19715218, 19715217,
+  19715216, 19715214, 19715215, 19715213, 19715212, 19715211, 19715210, 19715209, 19715208,
+  19715206, 19715207, 19715204, 19715205, 19715203, 19715202, 19715201, 19715200, 19715199,
+  19715198, 19715197, 19715196, 19715195, 19715194, 19715193, 19715192, 19715191, 19715190,
+  19715188, 19715189, 19715187, 19715186, 19715185, 19715184, 19715183, 19715182, 19715181,
+  19715179, 19715180, 19715178, 19715177, 19715176, 19715175, 19715174, 19715173, 19715172,
+  19715171, 19715170, 19715169, 19715168, 19715167, 19715166, 19715165, 19715164, 19715163,
+];
+
+export function isSportmonksFixtureId(id: string): boolean {
+  return /^\d{6,}$/.test(id) && !/^401\d{6,}$/.test(id);
+}
+
+/** Live Sportmonks overlay wins (postpone / renumber). Else keep a baked SM id over ESPN. */
+export function preferSportmonksId(seedId: string, overlayId: string): string {
+  if (isSportmonksFixtureId(overlayId)) return overlayId;
+  if (isSportmonksFixtureId(seedId)) return seedId;
+  return overlayId;
+}
+
+export function bakedAperturaSmMap(): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (let i = 0; i < SM_IDS.length; i++) {
+    const sm = SM_IDS[i];
+    if (sm == null) continue;
+    const staticId = `static-ap26-${i + 1}`;
+    const smId = String(sm);
+    out[staticId] = smId;
+    out[smId] = smId;
+  }
+  return out;
+}
+
+export type AperturaStaticRow = {
+  index: number;
+  staticId: string;
+  date: string;
+  home: string;
+  away: string;
+  jornada: string | null;
+};
+
+export function aperturaStaticRows(): AperturaStaticRow[] {
+  return RAW.map(([date, home, away, jornada], index) => ({
+    index,
+    staticId: `static-ap26-${index + 1}`,
+    date,
+    home,
+    away,
+    jornada: `Jornada ${jornada}`,
+  }));
+}
+
 export const APERTURA_2026_FIXTURES: LigaMXFixture[] = RAW.map(
   ([date, homeAbbr, awayAbbr, jornada], idx) => ({
-    id:      `static-ap26-${idx + 1}`,
+    id:      SM_IDS[idx] != null ? String(SM_IDS[idx]) : `static-ap26-${idx + 1}`,
     date,
     league:  'liga-mx' as const,
     jornada: `Jornada ${jornada}`,
@@ -216,7 +282,9 @@ export const APERTURA_2026_FIXTURES: LigaMXFixture[] = RAW.map(
 );
 
 // Current jornada: the matchday whose games are next (or currently in progress)
-export function getCurrentJornada(fixtures: LigaMXFixture[]): number {
+export function getCurrentJornada(
+  fixtures: { date: string; jornada: string | null; status: { state: string } }[]
+): number {
   const now = Date.now();
   const live = fixtures.find((f) => f.status.state === 'in');
   if (live) return Number(live.jornada?.replace('Jornada ', '') ?? 1);

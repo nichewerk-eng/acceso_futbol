@@ -10,7 +10,7 @@ import {
   type GamesOfDayPayload,
 } from '@/lib/sports/gamesOfDay';
 
-const CACHE_KEY = 'games-of-day-v10-lanes';
+const CACHE_KEY = 'games-of-day-v11-sm-ids';
 
 export async function GET() {
   return serveSwr<GamesOfDayPayload>({

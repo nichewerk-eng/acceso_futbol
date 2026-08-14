@@ -5,27 +5,37 @@ import { scheduleAbbr } from './ligaMxAbbr';
  * Sportmonks team ids for Liga MX clubs that appear in domestic + Leagues Cup.
  * Used to keep cup boards Acceso-relevant (MX-involved only).
  */
+export const LIGA_MX_SM_TEAM_BY_ABBR: Record<string, number> = {
+  GDL: 427,
+  QRO: 538,
+  UANL: 609,
+  ATS: 680,
+  TOL: 967,
+  CAZ: 2626,
+  MTY: 2662,
+  AME: 2687,
+  SAN: 2844,
+  UNAM: 2989,
+  PUE: 3849,
+  NCX: 3951,
+  JUA: 6335,
+  ATL: 7023,
+  PAC: 10036,
+  LEO: 10836,
+  TIJ: 11023,
+  ASL: 15522,
+};
+
 export const LIGA_MX_SM_TEAM_IDS = new Set<number>([
-  427, // Guadalajara
-  538, // Querétaro
-  609, // Tigres UANL
-  680, // Atlas
-  967, // Toluca
-  2626, // Cruz Azul
-  2662, // Monterrey
-  2687, // América
-  2844, // Santos Laguna
-  2989, // Pumas UNAM
-  3849, // Puebla
-  3951, // Necaxa
-  6335, // Juárez
-  7023, // Atlante
-  10036, // Pachuca
-  10836, // León
-  11023, // Tijuana
-  15522, // Atlético San Luis
+  ...Object.values(LIGA_MX_SM_TEAM_BY_ABBR),
   247689, // Mazatlán
 ]);
+
+export function smTeamIdFromAbbr(abbr: string | null | undefined): string | null {
+  if (!abbr) return null;
+  const id = LIGA_MX_SM_TEAM_BY_ABBR[scheduleAbbr(abbr)];
+  return id != null ? String(id) : null;
+}
 
 const LIGA_MX_ABBRS = new Set(LIGA_MX_CLUBS.map((c) => scheduleAbbr(c.abbreviation)));
 

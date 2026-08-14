@@ -153,6 +153,22 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
     [refreshFixtures]
   );
 
+  const contextoPrefetchKey = useMemo(() => {
+    const n = getCurrentJornada(fixtures);
+    return fixtures
+      .filter((f) => f.jornada === `Jornada ${n}` && f.status.state !== 'in')
+      .map((f) => f.id)
+      .join(',');
+  }, [fixtures]);
+
+  useEffect(() => {
+    if (!contextoPrefetchKey) return;
+    for (const id of contextoPrefetchKey.split(',')) {
+      if (!id) continue;
+      void fetch(`/api/sports/match/liga-mx/${id}/contexto`);
+    }
+  }, [contextoPrefetchKey]);
+
   const liveFixtures = fixtures.filter((f) => f.status.state === 'in');
   const allJornadas = Array.from({ length: 17 }, (_, i) => i + 1);
   const jornadaFixtures = fixtures

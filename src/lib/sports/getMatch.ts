@@ -1,8 +1,12 @@
 import { cache } from 'react';
 import { espnFetch, summaryUrl, SLUG } from '@/lib/espn';
 import { peekCache } from '@/lib/apiCache';
-import { APERTURA_2026_FIXTURES } from '@/fixtures/ligamx-apertura-2026';
+import {
+  getCurrentJornada,
+} from '@/fixtures/ligamx-apertura-2026';
+import { findAperturaFixture, resolveAperturaSmFixtureId } from './aperturaSmMap';
 import { attachDondeVer } from '@/config/dondeVer';
+import { smTeamIdFromAbbr } from './ligaMxTeams';
 import { mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
 import { enrichMatchWithEspnCommentary } from './espnCommentary';
 import { applyLeaguesCupOfficial } from './leaguesCupBoard';
@@ -103,7 +107,10 @@ async function resolveFromDateWindow(
 async function resolveSportmonksFixtureId(id: string): Promise<string | null> {
   if (looksLikeSmFixtureId(id)) return id;
 
-  const staticHit = APERTURA_2026_FIXTURES.find((f) => f.id === id);
+  const fromIndex = resolveAperturaSmFixtureId(id);
+  if (fromIndex) return fromIndex;
+
+  const staticHit = findAperturaFixture(id);
   if (staticHit) {
     const fromWindow = await resolveFromDateWindow(
       staticHit.date,
@@ -436,6 +443,22 @@ async function getMatchContextoUncached(
   league: string,
   id: string
 ): Promise<MatchContexto | null> {
+  const indexed = findAperturaFixture(id);
+  const homeId = indexed ? smTeamIdFromAbbr(indexed.home.abbreviation) : null;
+  const awayId = indexed ? smTeamIdFromAbbr(indexed.away.abbreviation) : null;
+  if (indexed && homeId && awayId) {
+    const live =
+      peekMatch(league, indexed.id)?.state === 'in' ||
+      peekMatch(league, id)?.state === 'in';
+    return fetchMatchContexto(
+      homeId,
+      awayId,
+      indexed.home.abbreviation,
+      indexed.away.abbreviation,
+      live
+    );
+  }
+
   const snap =
     peekMatch(league, id) ??
     (await fixtureFromDateBoards(id)) ??
@@ -448,6 +471,21 @@ async function getMatchContextoUncached(
     snap.home.abbreviation,
     snap.away.abbreviation,
     snap.state === 'in'
+  );
+}
+
+/** Warm form/H2H for the current jornada — fire-and-forget, coalesced by singleFlight. */
+export function prefetchCurrentJornadaContexto(
+  fixtures: { id: string; date: string; jornada: string | null; status: { state: string } }[]
+): void {
+  if (fixtures.length === 0) return;
+  const n = getCurrentJornada(fixtures);
+  const rows = fixtures.filter((f) => {
+    const j = Number(f.jornada?.match(/(\d+)/)?.[1]);
+    return j === n && f.status.state !== 'in';
+  });
+  void Promise.allSettled(
+    rows.slice(0, 9).map((f) => getMatchContextoUncached('liga-mx', f.id))
   );
 }
 

@@ -16,7 +16,8 @@ export type {
 } from './types';
 
 export { getPulse } from './pulse';
-export { getMatch, peekMatch, getMatchContexto } from './getMatch';
+export { getMatch, peekMatch, getMatchContexto, prefetchCurrentJornadaContexto } from './getMatch';
+export { refreshAperturaSmMap } from './aperturaSmMap';
 export { getGamesOfDay, seedGamesOfDay } from './gamesOfDay';
 export type { DayGame, GamesOfDayPayload } from './gamesOfDay';
 export { getJornadaOverview, seedJornadaOverview } from './jornada';

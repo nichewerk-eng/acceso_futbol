@@ -1,5 +1,4 @@
 import { espnFetch, scoreboardUrl, SLUG } from '@/lib/espn';
-import { APERTURA_2026_FIXTURES } from '@/fixtures/ligamx-apertura-2026';
 import { serveSwr } from '@/lib/serveSwr';
 import {
   apiTtlMsForPace,
@@ -9,15 +8,18 @@ import {
 import { mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
 import { localizeCity, localizeVenue } from '@/lib/sports/localizeEs';
 import { fetchLigaMxFixtures } from '@/lib/sports/espnFallback';
+import { prefetchCurrentJornadaContexto } from '@/lib/sports/getMatch';
+import { aperturaCalendar, refreshAperturaSmMap } from '@/lib/sports/aperturaSmMap';
 import type { Fixture } from '@/lib/sports/types';
 
 // Apertura 2026: July → December 2026
 const DATE_RANGE = '20260701-20261231';
-const CACHE_KEY = 'ligamx-fixtures-v12-lanes';
+const CACHE_KEY = 'ligamx-fixtures-v13-sm-ids';
 
 type FixturesPayload = { fixtures: LigaMXFixture[]; source: string };
 
 export async function GET() {
+  refreshAperturaSmMap();
   return serveSwr<FixturesPayload>({
     key: CACHE_KEY,
     ttlMs: (p) =>
@@ -43,10 +45,11 @@ export async function GET() {
       }
 
       const fixtures =
-        live.length > 0 ? mergeLigaMxSchedule(live) : APERTURA_2026_FIXTURES;
+        live.length > 0 ? mergeLigaMxSchedule(live) : aperturaCalendar();
+      prefetchCurrentJornadaContexto(fixtures);
       return { fixtures, source: live.length ? 'sportmonks' : 'static' };
     },
-    seed: () => ({ fixtures: APERTURA_2026_FIXTURES, source: 'static' }),
+    seed: () => ({ fixtures: aperturaCalendar(), source: 'static' }),
     headers: (payload, { stale }) => {
       const pace = paceFromFixtures(
         payload.fixtures.map((f) => ({ state: f.status.state, date: f.date }))

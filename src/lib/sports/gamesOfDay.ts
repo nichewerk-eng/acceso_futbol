@@ -1,5 +1,5 @@
 import { attachDondeVer } from '@/config/dondeVer';
-import { APERTURA_2026_FIXTURES } from '@/fixtures/ligamx-apertura-2026';
+import { aperturaCalendar, refreshAperturaSmMap } from './aperturaSmMap';
 import { espnFetch, scoreboardUrl, SLUG } from '@/lib/espn';
 import {
   isMexicoDay,
@@ -232,7 +232,7 @@ function firstUpcomingDay(
 
 function upcomingFromStatic(now: Date): { fixtures: Fixture[]; dayKey?: string } {
   const t = now.getTime();
-  const pool = APERTURA_2026_FIXTURES.filter(
+  const pool = aperturaCalendar().filter(
     (f) => f.status.state === 'pre' && +new Date(f.date) > t
   )
     .sort((a, b) => +new Date(a.date) - +new Date(b.date))
@@ -240,7 +240,7 @@ function upcomingFromStatic(now: Date): { fixtures: Fixture[]; dayKey?: string }
   return firstUpcomingDay(pool, t) ?? { fixtures: [] };
 }
 
-function staticRowToFixture(f: (typeof APERTURA_2026_FIXTURES)[number]): Fixture {
+function staticRowToFixture(f: ReturnType<typeof aperturaCalendar>[number]): Fixture {
   const state: MatchState =
     f.status.state === 'in' || f.status.state === 'post' ? f.status.state : 'pre';
   return attachDondeVer({
@@ -272,7 +272,7 @@ function staticRowToFixture(f: (typeof APERTURA_2026_FIXTURES)[number]): Fixture
 /** Instant hero slate from the Apertura calendar — no Sportmonks, no ESPN. */
 export function seedGamesOfDay(now = new Date()): GamesOfDayPayload {
   const dayKey = mexicoDayKey(now);
-  const todayStatic = APERTURA_2026_FIXTURES.filter((f) =>
+  const todayStatic = aperturaCalendar().filter((f) =>
     isMexicoDay(f.date, dayKey)
   ).map(staticRowToFixture);
 
@@ -301,6 +301,7 @@ function sleep(ms: number) {
 }
 
 export async function getGamesOfDay(now = new Date()): Promise<GamesOfDayPayload> {
+  refreshAperturaSmMap();
   const dayKey = mexicoDayKey(now);
   const seleccionP = fetchSeleccionGamesOfDay(dayKey).catch(() => [] as Fixture[]);
   const window = await ligaMxDateWindow(dayKey);

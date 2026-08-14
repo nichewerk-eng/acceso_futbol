@@ -1,4 +1,8 @@
-import { APERTURA_2026_FIXTURES } from '@/fixtures/ligamx-apertura-2026';
+import { preferSportmonksId } from '@/fixtures/ligamx-apertura-2026';
+import {
+  aperturaCalendar,
+  rememberOverlaySmIds,
+} from './aperturaSmMap';
 import { dayPairKey, scheduleAbbr } from './ligaMxAbbr';
 
 /** Minimal fixture shape shared by API + Liga MX UI. */
@@ -41,8 +45,9 @@ function jornadaPairKey(
  * Live provider (Sportmonks / ESPN) overlays state, scores, and real fixture ids.
  */
 export function mergeLigaMxSchedule(live: LigaMxScheduleFixture[]): LigaMxScheduleFixture[] {
-  if (live.length === 0) return APERTURA_2026_FIXTURES;
+  if (live.length === 0) return aperturaCalendar();
 
+  const seed = aperturaCalendar();
   const byDay = new Map(
     live.map((f) => [dayPairKey(f.date, f.home.abbreviation, f.away.abbreviation), f])
   );
@@ -53,7 +58,7 @@ export function mergeLigaMxSchedule(live: LigaMxScheduleFixture[]): LigaMxSchedu
   }
   const usedLive = new Set<string>();
 
-  const merged = APERTURA_2026_FIXTURES.map((s) => {
+  const merged = seed.map((s) => {
     const dayKey = dayPairKey(s.date, s.home.abbreviation, s.away.abbreviation);
     const jk = jornadaPairKey(s.jornada, s.home.abbreviation, s.away.abbreviation);
     const overlay = byDay.get(dayKey) ?? (jk ? byJornada.get(jk) : undefined);
@@ -61,7 +66,7 @@ export function mergeLigaMxSchedule(live: LigaMxScheduleFixture[]): LigaMxSchedu
     usedLive.add(overlay.id);
     return {
       ...s,
-      id: overlay.id,
+      id: preferSportmonksId(s.id, overlay.id),
       date: overlay.date,
       status: overlay.status,
       venue: overlay.venue ?? s.venue,
@@ -70,6 +75,7 @@ export function mergeLigaMxSchedule(live: LigaMxScheduleFixture[]): LigaMxSchedu
       away: { ...s.away, score: overlay.away.score },
     };
   });
+  rememberOverlaySmIds(seed, merged);
 
   for (const f of live) {
     if (!usedLive.has(f.id) && f.jornada) merged.push(f);
