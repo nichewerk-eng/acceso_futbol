@@ -1219,8 +1219,8 @@ body {
 .lm-kick .lc-match-tv.tv-inline-desk {
   grid-column: 1 / -1;
   grid-row: 3;
-  justify-self: start;
-  justify-content: flex-start;
+  justify-self: center;
+  justify-content: center;
   align-self: start;
   width: 100%;
   max-width: none;
@@ -1371,7 +1371,8 @@ body {
   .lm-kick .lc-match-tv.tv-inline-desk {
     grid-column: 1 / -1;
     grid-row: 3;
-    justify-self: start;
+    justify-self: center;
+    justify-content: center;
     padding-bottom: 0.35rem;
   }
 
