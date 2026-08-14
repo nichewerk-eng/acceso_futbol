@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { LigaMxMark } from '@/components/brand/LigaMxMark';
+import { PartidoLink } from '@/components/partido/PartidoLink';
 import { useGravity } from '@/contexts/GravityContext';
 import { teamNameEs } from '@/components/standings/teamNames';
 import { resolveDondeVer } from '@/config/dondeVer';
@@ -222,7 +223,7 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
           {liveFixtures.length > 0 && (
             <div className="mt-8 grid gap-2 sm:grid-cols-2" data-testid="ligamx-live">
               {liveFixtures.map((f) => (
-                <Link
+                <PartidoLink
                   key={f.id}
                   href={`/partido/liga-mx/${f.id}`}
                   className="hero-band hero-band-live"
@@ -242,7 +243,7 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
                     {f.away.abbreviation}
                     <ClubLogo abbr={f.away.abbreviation} name={f.away.name} size="sm" />
                   </span>
-                </Link>
+                </PartidoLink>
               ))}
             </div>
           )}
@@ -810,7 +811,7 @@ function KickRow({
 
   return (
     <li className="lc-match-item">
-      <Link
+      <PartidoLink
         href={`/partido/liga-mx/${f.id}`}
         data-testid={`ligamx-match-${f.id}`}
         className={[
@@ -877,7 +878,7 @@ function KickRow({
             inline
           />
         ) : null}
-      </Link>
+      </PartidoLink>
     </li>
   );
 }
@@ -900,7 +901,7 @@ function MatchStamp({
   const draw = done && hs === as;
 
   return (
-    <Link
+    <PartidoLink
       href={`/partido/liga-mx/${f.id}`}
       data-testid={`ligamx-match-${f.id}`}
       className={[
@@ -949,7 +950,7 @@ function MatchStamp({
         </span>
       </div>
       <p className="jor-stamp-scorers">{fmtDate(f.date, tz)}</p>
-    </Link>
+    </PartidoLink>
   );
 }
 

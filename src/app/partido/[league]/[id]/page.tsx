@@ -130,7 +130,7 @@ export default async function PartidoPage({ params }: PageParams) {
     <>
       <JsonLd data={schemas} />
       {match ? <MatchCrawlSummary match={match} league={league} /> : null}
-      <MatchChapter league={league} id={id} initialMatch={match} />
+      <MatchChapter key={`${league}-${id}`} league={league} id={id} initialMatch={match} />
     </>
   );
 }

@@ -20,6 +20,7 @@ import type { FreshPace } from '@/lib/sports/freshness';
 import { scheduleAbbr } from '@/lib/sports/ligaMxAbbr';
 import { localizeStatus } from '@/lib/sports/localizeEs';
 import { mergeMatchSnapshot } from '@/lib/sports/mergeMatchSnapshot';
+import { MatchChapterSkeleton } from '@/components/partido/MatchChapterSkeleton';
 
 type Props = { league: string; id: string; initialMatch?: MatchSnapshot | null };
 type TabId = 'contexto' | 'momentos' | 'alineacion' | 'datos' | 'radio';
@@ -61,6 +62,14 @@ const KEY_STAT_ORDER: { match: RegExp; label: string }[] = [
   { match: /yellow/i, label: 'Amarillas' },
   { match: /red card/i, label: 'Rojas' },
 ];
+
+function hasContexto(m: MatchSnapshot | null) {
+  if (!m) return false;
+  return (
+    (m.form?.home.length ?? 0) + (m.form?.away.length ?? 0) > 0 ||
+    (m.headToHead?.meetings.length ?? 0) > 0
+  );
+}
 
 const FORM_LETTER: Record<FormResult, string> = { W: 'G', D: 'E', L: 'P' };
 const FORM_TITLE: Record<FormResult, string> = {
@@ -522,13 +531,7 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
   const [feed, setFeed] = useState<FeedFilter>('clave');
   const [userTz, setUserTz] = useState('America/Mexico_City');
   const [tabla, setTabla] = useState<LigaMXEntry[] | null>(null);
-  const [richReady, setRichReady] = useState(() => {
-    if (!initialMatch) return false;
-    return (
-      (initialMatch.form?.home.length ?? 0) + (initialMatch.form?.away.length ?? 0) > 0 ||
-      (initialMatch.headToHead?.meetings.length ?? 0) > 0
-    );
-  });
+  const [richReady, setRichReady] = useState(() => hasContexto(initialMatch));
 
   useEffect(() => {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -536,20 +539,24 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
   }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    // Radio tab hidden until Acceso Radio is production-ready
-    const q = new URLSearchParams(window.location.search);
-    const tab = q.get('tab');
-    if (tab === 'momentos' || tab === 'contexto' || tab === 'alineacion' || tab === 'datos') {
-      setTab(tab);
-    }
-  }, []);
-
-  useEffect(() => {
     let cancelled = false;
     let pace: FreshPace = 'near';
     let es: EventSource | null = null;
-    setRichReady(false);
+    const q =
+      typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('tab')
+        : null;
+    const tabFromQuery =
+      q === 'momentos' || q === 'contexto' || q === 'alineacion' || q === 'datos'
+        ? q
+        : null;
+    setMatch(initialMatch);
+    setError(false);
+    setRichReady(hasContexto(initialMatch));
+    setTab(
+      tabFromQuery ??
+        (initialMatch ? (initialMatch.state === 'pre' ? 'contexto' : 'momentos') : null)
+    );
 
     let pendingCtx: {
       form: NonNullable<MatchSnapshot['form']>;
@@ -723,16 +730,11 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
     );
   }
 
-  if (!match || !tab) {
-    return (
-      <div className="match-chapter match-chapter-loading">
-        <PulseNav />
-        <div className="match-loading-copy">
-          <p className="af-tele">AF://CAPÍTULO</p>
-          <p className="mt-3 font-display text-2xl uppercase tracking-wide">Abriendo cabina…</p>
-        </div>
-      </div>
-    );
+  const waitingForChapter =
+    !match || !tab || (match.state === 'pre' && !richReady);
+
+  if (waitingForChapter || !match || !tab) {
+    return <MatchChapterSkeleton />;
   }
 
   const live = match.state === 'in';
