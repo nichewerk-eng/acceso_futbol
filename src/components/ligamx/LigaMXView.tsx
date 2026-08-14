@@ -875,7 +875,6 @@ function KickRow({
             mxLabel={tv.mx}
             usLabel={tv.us}
             inline
-            maxMarks={4}
           />
         ) : null}
       </Link>

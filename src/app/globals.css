@@ -1210,19 +1210,25 @@ body {
   margin-top: 0.1rem;
 }
 
-/* Liga MX kick rows — TV sits on the footer so the mid column stays time + VS */
+/* Liga MX kick rows — full channel strip under the matchup, no cap */
 .lm-kick {
   padding-bottom: 0.45rem;
 }
 
 .lm-kick .lc-match-tv.tv-inline,
 .lm-kick .lc-match-tv.tv-inline-desk {
-  grid-column: 2 / -1;
-  grid-row: 2;
-  justify-self: end;
+  grid-column: 1 / -1;
+  grid-row: 3;
+  justify-self: start;
+  justify-content: flex-start;
   align-self: start;
+  width: 100%;
+  max-width: none;
+  overflow: visible;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.55rem;
   margin-top: 0;
-  padding-bottom: 0.1rem;
+  padding-bottom: 0.35rem;
 }
 
 @media (max-width: 640px) {
@@ -1453,6 +1459,38 @@ body {
   .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='imagen-tv'] .tv-channel-logo {
     max-width: 2rem;
     max-height: 0.85rem;
+  }
+
+  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='fox'],
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='fox'] {
+    width: 1.9rem;
+  }
+  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='fox'] .tv-channel-logo,
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='fox'] .tv-channel-logo {
+    max-width: 1.75rem;
+    max-height: 0.7rem;
+  }
+
+  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='fox-one'],
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='fox-one'] {
+    width: 3.15rem;
+    overflow: visible;
+  }
+  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='fox-one'] .tv-channel-logo,
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='fox-one'] .tv-channel-logo {
+    max-width: 3.05rem;
+    max-height: 0.68rem;
+  }
+
+  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='fox-deportes'],
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='fox-deportes'] {
+    width: 4.15rem;
+    overflow: visible;
+  }
+  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='fox-deportes'] .tv-channel-logo,
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='fox-deportes'] .tv-channel-logo {
+    max-width: 4.05rem;
+    max-height: 0.68rem;
   }
 }
 
@@ -2484,19 +2522,21 @@ body {
 }
 
 .tv-channel[data-channel='fox-one'] {
-  width: 3.1rem;
+  width: 4.15rem;
+  overflow: visible;
 }
 .tv-channel[data-channel='fox-one'] .tv-channel-logo {
-  max-width: 2.95rem;
-  max-height: 0.72rem;
+  max-width: 4rem;
+  max-height: 0.88rem;
 }
 
 .tv-channel[data-channel='fox-deportes'] {
-  width: 3.5rem;
+  width: 5.5rem;
+  overflow: visible;
 }
 .tv-channel[data-channel='fox-deportes'] .tv-channel-logo {
-  max-width: 3.35rem;
-  max-height: 0.85rem;
+  max-width: 5.35rem;
+  max-height: 0.88rem;
 }
 
 /* —— compact density —— */
@@ -2604,19 +2644,21 @@ body {
 }
 
 .tv-channel-compact[data-channel='fox-one'] {
-  width: 2.65rem;
+  width: 3.4rem;
+  overflow: visible;
 }
 .tv-channel-compact[data-channel='fox-one'] .tv-channel-logo {
-  max-width: 2.5rem;
-  max-height: 0.58rem;
+  max-width: 3.25rem;
+  max-height: 0.72rem;
 }
 
 .tv-channel-compact[data-channel='fox-deportes'] {
-  width: 3rem;
+  width: 4.6rem;
+  overflow: visible;
 }
 .tv-channel-compact[data-channel='fox-deportes'] .tv-channel-logo {
-  max-width: 2.85rem;
-  max-height: 0.7rem;
+  max-width: 4.45rem;
+  max-height: 0.72rem;
 }
 
 .tv-donde-compact .tv-donde-label {
@@ -2851,6 +2893,70 @@ body {
   max-width: 2.7rem;
   max-height: 1.05rem;
   border-radius: 0.12rem;
+}
+
+.tv-inline .tv-channel[data-channel='fox'],
+.tv-inline .tv-channel-compact[data-channel='fox'] {
+  width: 1.9rem;
+}
+.tv-inline .tv-channel[data-channel='fox'] .tv-channel-logo,
+.tv-inline .tv-channel-compact[data-channel='fox'] .tv-channel-logo {
+  max-width: 1.75rem;
+  max-height: 0.7rem;
+}
+
+.tv-inline .tv-channel[data-channel='fox-one'],
+.tv-inline .tv-channel-compact[data-channel='fox-one'] {
+  width: 3.15rem;
+  overflow: visible;
+}
+.tv-inline .tv-channel[data-channel='fox-one'] .tv-channel-logo,
+.tv-inline .tv-channel-compact[data-channel='fox-one'] .tv-channel-logo {
+  max-width: 3.05rem;
+  max-height: 0.68rem;
+}
+
+.tv-inline .tv-channel[data-channel='fox-deportes'],
+.tv-inline .tv-channel-compact[data-channel='fox-deportes'] {
+  width: 4.15rem;
+  overflow: visible;
+}
+.tv-inline .tv-channel[data-channel='fox-deportes'] .tv-channel-logo,
+.tv-inline .tv-channel-compact[data-channel='fox-deportes'] .tv-channel-logo {
+  max-width: 4.05rem;
+  max-height: 0.68rem;
+}
+
+.tv-inline-desk .tv-channel[data-channel='fox'],
+.tv-inline-desk .tv-channel-compact[data-channel='fox'] {
+  width: 2.2rem;
+}
+.tv-inline-desk .tv-channel[data-channel='fox'] .tv-channel-logo,
+.tv-inline-desk .tv-channel-compact[data-channel='fox'] .tv-channel-logo {
+  max-width: 2.05rem;
+  max-height: 0.78rem;
+}
+
+.tv-inline-desk .tv-channel[data-channel='fox-one'],
+.tv-inline-desk .tv-channel-compact[data-channel='fox-one'] {
+  width: 3.75rem;
+  overflow: visible;
+}
+.tv-inline-desk .tv-channel[data-channel='fox-one'] .tv-channel-logo,
+.tv-inline-desk .tv-channel-compact[data-channel='fox-one'] .tv-channel-logo {
+  max-width: 3.6rem;
+  max-height: 0.8rem;
+}
+
+.tv-inline-desk .tv-channel[data-channel='fox-deportes'],
+.tv-inline-desk .tv-channel-compact[data-channel='fox-deportes'] {
+  width: 5.1rem;
+  overflow: visible;
+}
+.tv-inline-desk .tv-channel[data-channel='fox-deportes'] .tv-channel-logo,
+.tv-inline-desk .tv-channel-compact[data-channel='fox-deportes'] .tv-channel-logo {
+  max-width: 4.95rem;
+  max-height: 0.8rem;
 }
 
 .tv-inline-fallback {
