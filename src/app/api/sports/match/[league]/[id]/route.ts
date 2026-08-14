@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
-import { peekCache, peekCacheAgeMs, setCache, singleFlight } from '@/lib/apiCache';
+import { serveSwr } from '@/lib/serveSwr';
 import {
   apiTtlMsForPace,
   liveCacheHeaders,
+  paceFromFixtures,
   type FreshPace,
 } from '@/lib/sports/freshness';
 import { getMatch, sportsMatchCacheKey } from '@/lib/sports/getMatch';
 import { mergeMatchSnapshot } from '@/lib/sports/mergeMatchSnapshot';
+import { peekCache, setCache } from '@/lib/apiCache';
 import type { MatchSnapshot } from '@/lib/sports';
 
 function matchPace(m: MatchSnapshot): FreshPace {
@@ -25,30 +27,26 @@ export async function GET(
   }
 
   const CACHE_KEY = sportsMatchCacheKey(league, id);
-  const cached = peekCache<MatchSnapshot>(CACHE_KEY);
-  const age = peekCacheAgeMs(CACHE_KEY);
-  if (cached && age != null) {
-    const pace = matchPace(cached);
-    const hasStory =
-      (cached.comments?.length ?? 0) > 0 || (cached.events?.length ?? 0) > 0;
-    if (age <= apiTtlMsForPace(pace) && (pace === 'live' || hasStory || pace === 'near')) {
-      return NextResponse.json(cached, {
-        headers: { ...liveCacheHeaders(pace), 'X-AF-Pace': pace },
-      });
-    }
-  }
-
-  const match = await singleFlight(CACHE_KEY, apiTtlMsForPace('live'), () =>
-    getMatch(league, id)
-  );
-  if (!match) return NextResponse.json({ error: 'not_found' }, { status: 404 });
-
-  // Preserve Contexto / Alineación / Completa if a lean refresh thinned them out.
-  const merged = mergeMatchSnapshot(cached, match);
-  if (merged !== match) setCache(CACHE_KEY, merged);
-
-  const pace = matchPace(merged);
-  return NextResponse.json(merged, {
-    headers: { ...liveCacheHeaders(pace), 'X-AF-Pace': pace },
+  return serveSwr<MatchSnapshot | null>({
+    key: CACHE_KEY,
+    ttlMs: (m) => (m ? apiTtlMsForPace(matchPace(m)) : apiTtlMsForPace('idle')),
+    loader: async () => {
+      const match = await getMatch(league, id);
+      if (!match) return null;
+      const prev = peekCache<MatchSnapshot>(CACHE_KEY);
+      const merged = mergeMatchSnapshot(prev, match);
+      if (merged !== match) setCache(CACHE_KEY, merged);
+      return merged;
+    },
+    notFound: (m) => m == null,
+    headers: (m, { stale }) => {
+      if (!m) return undefined;
+      const pace = matchPace(m);
+      return {
+        ...liveCacheHeaders(pace),
+        'X-AF-Pace': pace,
+        'X-AF-Stale': stale ? '1' : '0',
+      };
+    },
   });
 }

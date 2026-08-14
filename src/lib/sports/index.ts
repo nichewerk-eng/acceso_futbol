@@ -16,10 +16,10 @@ export type {
 } from './types';
 
 export { getPulse } from './pulse';
-export { getMatch } from './getMatch';
-export { getGamesOfDay } from './gamesOfDay';
+export { getMatch, peekMatch, getMatchContexto } from './getMatch';
+export { getGamesOfDay, seedGamesOfDay } from './gamesOfDay';
 export type { DayGame, GamesOfDayPayload } from './gamesOfDay';
-export { getJornadaOverview } from './jornada';
+export { getJornadaOverview, seedJornadaOverview } from './jornada';
 export type { JornadaOverview } from './jornada';
 export {
   sportmonksEnabled,

@@ -1,32 +1,30 @@
-import { NextResponse } from 'next/server';
-import { peekCache, peekCacheAgeMs, singleFlight } from '@/lib/apiCache';
+import { serveSwr } from '@/lib/serveSwr';
 import {
   apiTtlMsForPace,
-  liveCacheHeaders,
+  boardCacheHeaders,
   paceFromFixtures,
 } from '@/lib/sports/freshness';
-import { getGamesOfDay, type GamesOfDayPayload } from '@/lib/sports/gamesOfDay';
+import {
+  getGamesOfDay,
+  seedGamesOfDay,
+  type GamesOfDayPayload,
+} from '@/lib/sports/gamesOfDay';
 
-const CACHE_KEY = 'games-of-day-v7-lc-tv';
+const CACHE_KEY = 'games-of-day-v10-lanes';
 
 export async function GET() {
-  const cached = peekCache<GamesOfDayPayload>(CACHE_KEY);
-  const age = peekCacheAgeMs(CACHE_KEY);
-  if (cached && age != null) {
-    const pace = paceFromFixtures(cached.games);
-    if (age <= apiTtlMsForPace(pace)) {
-      return NextResponse.json(cached, {
-        headers: { ...liveCacheHeaders(pace), 'X-AF-Pace': pace },
-      });
-    }
-  }
-
-  // Coalesce at live floor (4s). Idle/near still short-circuit via pace-aware peek above.
-  const payload = await singleFlight(CACHE_KEY, apiTtlMsForPace('live'), () =>
-    getGamesOfDay()
-  );
-  const pace = paceFromFixtures(payload.games);
-  return NextResponse.json(payload, {
-    headers: { ...liveCacheHeaders(pace), 'X-AF-Pace': pace },
+  return serveSwr<GamesOfDayPayload>({
+    key: CACHE_KEY,
+    ttlMs: (payload) => apiTtlMsForPace(paceFromFixtures(payload.games)),
+    loader: () => getGamesOfDay(),
+    seed: () => seedGamesOfDay(),
+    headers: (payload, { stale }) => {
+      const pace = paceFromFixtures(payload.games);
+      return {
+        ...boardCacheHeaders(pace),
+        'X-AF-Pace': pace,
+        'X-AF-Stale': stale ? '1' : '0',
+      };
+    },
   });
 }

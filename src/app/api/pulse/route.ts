@@ -1,31 +1,27 @@
-import { NextResponse } from 'next/server';
-import { peekCache, peekCacheAgeMs, singleFlight } from '@/lib/apiCache';
+import { serveSwr } from '@/lib/serveSwr';
+import { getPulse } from '@/lib/sports';
+import type { PulsePayload } from '@/lib/sports';
 import {
   apiTtlMsForPace,
   liveCacheHeaders,
   paceFromFixtures,
 } from '@/lib/sports/freshness';
-import { getPulse } from '@/lib/sports';
-import type { PulsePayload } from '@/lib/sports';
 
-const CACHE_KEY = 'pulse-v3-paced';
+const CACHE_KEY = 'pulse-v4-lanes';
 
 export async function GET() {
-  const cached = peekCache<PulsePayload>(CACHE_KEY);
-  const age = peekCacheAgeMs(CACHE_KEY);
-  if (cached && age != null) {
-    const rows = [...cached.live, ...cached.upcoming, ...cached.recent];
-    const pace = paceFromFixtures(rows);
-    if (age <= apiTtlMsForPace(pace)) {
-      return NextResponse.json(cached, {
-        headers: { ...liveCacheHeaders(pace), 'X-AF-Pace': pace },
-      });
-    }
-  }
-
-  const pulse = await singleFlight(CACHE_KEY, apiTtlMsForPace('live'), () => getPulse());
-  const pace = paceFromFixtures([...pulse.live, ...pulse.upcoming, ...pulse.recent]);
-  return NextResponse.json(pulse, {
-    headers: { ...liveCacheHeaders(pace), 'X-AF-Pace': pace },
+  return serveSwr<PulsePayload>({
+    key: CACHE_KEY,
+    ttlMs: (p) =>
+      apiTtlMsForPace(paceFromFixtures([...p.live, ...p.upcoming, ...p.recent])),
+    loader: () => getPulse(),
+    headers: (pulse, { stale }) => {
+      const pace = paceFromFixtures([...pulse.live, ...pulse.upcoming, ...pulse.recent]);
+      return {
+        ...liveCacheHeaders(pace),
+        'X-AF-Pace': pace,
+        'X-AF-Stale': stale ? '1' : '0',
+      };
+    },
   });
 }

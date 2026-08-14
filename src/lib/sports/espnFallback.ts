@@ -1,10 +1,11 @@
 import { espnFetch, scoreboardUrl, SLUG } from '@/lib/espn';
 import { APERTURA_2026_FIXTURES } from '@/fixtures/ligamx-apertura-2026';
+import { mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
 import { dayPairKey, scheduleAbbr } from './ligaMxAbbr';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
 import { isNearKickoff } from './freshness';
 import {
-  fetchLigaMxSeasonFixtures,
+  fetchFixturesByDate,
   fetchLivescores,
   ligaMxLeagueId,
   overlayLiveFixtures,
@@ -248,26 +249,61 @@ export async function fetchEspnLigaMxFixtures(): Promise<{ fixtures: Fixture[]; 
   }
 }
 
-/** Prefer Sportmonks season board; ESPN/static only if token missing or SM empty. */
+export function seedLigaMxFixtures(): Fixture[] {
+  return mapStatic();
+}
+
+function utcKeysForMexicoDays(days: Iterable<string>): string[] {
+  const keys = new Set<string>();
+  for (const d of days) {
+    keys.add(d);
+    keys.add(shiftDayKey(d, 1));
+  }
+  return [...keys];
+}
+
+/** Date-board overlay for the current jornada window — never a season include. */
+async function overlayNearDateBoards(seed: Fixture[]): Promise<Fixture[]> {
+  const now = Date.now();
+  const days = new Set<string>();
+  const today = mexicoDayKey(new Date(now));
+  days.add(shiftDayKey(today, -1));
+  days.add(today);
+  days.add(shiftDayKey(today, 1));
+  days.add(shiftDayKey(today, 2));
+  for (const f of seed) {
+    const t = +new Date(f.date);
+    if (!Number.isFinite(t)) continue;
+    if (t < now - 36 * 3600_000 || t > now + 8 * 86400_000) continue;
+    days.add(mexicoDayKey(new Date(f.date)));
+  }
+  const boards = await Promise.all(
+    utcKeysForMexicoDays(days).map((k) =>
+      fetchFixturesByDate(k, [ligaMxLeagueId()]).catch(() => [] as Fixture[])
+    )
+  );
+  return mergeLiveOntoStatic(boards.flat());
+}
+
+/** Static calendar + nearby Sportmonks date boards. Season include is not on this path. */
 export async function fetchLigaMxFixtures(): Promise<{
   fixtures: Fixture[];
   source: 'sportmonks' | 'espn' | 'static';
 }> {
+  const seed = mapStatic();
   if (sportmonksEnabled()) {
     try {
-      const sm = await fetchLigaMxSeasonFixtures();
-      if (sm.length > 0) {
-        // Season board is 5m-cached; only hit livescores when a kickoff window is open
-        // (date-based — season state alone can lag behind kickoff).
-        const now = Date.now();
-        const mayBeLive = sm.some(
-          (f) => f.state === 'in' || isNearKickoff(f.date, now, f.state)
-        );
-        const live = mayBeLive
-          ? await fetchLivescores([ligaMxLeagueId()]).catch(() => [] as Fixture[])
-          : [];
-        return { fixtures: overlayLiveFixtures(sm, live), source: 'sportmonks' };
-      }
+      const dated = await overlayNearDateBoards(seed);
+      const now = Date.now();
+      const mayBeLive = dated.some(
+        (f) => f.state === 'in' || isNearKickoff(f.date, now, f.state)
+      );
+      const live = mayBeLive
+        ? await fetchLivescores([ligaMxLeagueId()]).catch(() => [] as Fixture[])
+        : [];
+      const fixtures = live.length ? overlayLiveFixtures(dated, live) : dated;
+      const hasSm = fixtures.some((f) => f.provider === 'sportmonks' || /^\d+$/.test(f.id));
+      return { fixtures, source: hasSm ? 'sportmonks' : 'static' };
     } catch {
       /* fall through */
     }

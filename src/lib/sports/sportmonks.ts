@@ -3,13 +3,9 @@ import { FRESH } from './freshness';
 import { dayPairKey, scheduleAbbr } from './ligaMxAbbr';
 import { localizeComment } from './localizeComment';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
-import {
-  beforeSmRequest,
-  entityForPath,
-  getSmRateSnapshot,
-  noteSmRateLimit,
-  type SmRateLimitInfo,
-} from './smRateLimit';
+import { smFetch } from './sm/client';
+import { LANE } from './sm/lanes';
+import { ensureSmRefs, matchStateFromBlob, matchStateFromId } from './sm/refs';
 import type {
   CommentaryLine,
   Fixture,
@@ -27,38 +23,26 @@ import type {
   TeamLineup,
 } from './types';
 
-const BASE = 'https://api.sportmonks.com/v3/football';
-const TIMEOUT_MS = 12_000;
 const SEASON_CACHE_KEY = 'sm-ligamx-season-fixtures-v5-scorers';
 const LC_SEASON_CACHE_KEY = 'sm-leagues-cup-season-fixtures-v2';
-const LIVE_CACHE_KEY = 'sm-livescores-v5-slim';
-/** Hot-path livescores: drop events.type (resolve type_id locally). */
-const LIVESCORES_INCLUDE = 'participants;scores;state;league;periods;events';
+const LIVE_CACHE_KEY = 'sm-livescores-v6-lanes';
+/** Hot-path livescores: type_id locally; state_id via refs. */
+const LIVESCORES_INCLUDE = 'participants;scores;periods;events';
 /** Lean in-play tick — scores/clock/events only. */
-const MATCH_TICK_INCLUDE =
-  'participants;scores;state;periods;events.type;events.player';
+const MATCH_TICK_INCLUDE = 'participants;scores;periods;events;events.player';
 /** Full match chapter (lineups, stats, comments). */
 const MATCH_DETAIL_INCLUDE =
   'participants;scores;state;venue;round;league;periods;events.type;events.player;comments;statistics.type;lineups.type;lineups.player;referees.referee;formations';
 /** Sticky in-play board while /livescores/latest returns empty (no updates in ~10s). */
 const LIVE_STICKY_TTL_MS = 120_000;
-const DATE_CACHE_PREFIX = 'sm-fixtures-date-v1';
-const SEASON_TTL_MS = 5 * 60_000;
-/** Livescores must stay near-real-time — never share the 5m season TTL. */
-const LIVE_TTL_MS = FRESH.liveTtlMs;
-/** Date boards coalesce with near/idle pace — not as hot as livescores. */
-const DATE_TTL_MS = FRESH.apiTtlNearMs;
+const DATE_CACHE_PREFIX = 'sm-fixtures-date-v3-lanes';
+const SEASON_TTL_MS = LANE.catalog.memTtlMs;
+const LIVE_TTL_MS = LANE.live.memTtlMs;
+const DATE_TTL_MS = LANE.board.memTtlMs;
 const STANDINGS_CACHE_KEY = 'sm-ligamx-standings-v1';
 const STANDINGS_TTL_MS = FRESH.standingsTtlMs;
-/** Form / H2H barely move during a match — cache hard so live polls stay cheap. */
 const FORM_TTL_MS = 30 * 60_000;
 const H2H_TTL_MS = 30 * 60_000;
-
-function sleep(ms: number) {
-  return new Promise<void>((r) => setTimeout(r, ms));
-}
-
-type SmJson<T> = T & { rate_limit?: SmRateLimitInfo; retry_after?: number };
 
 /** Sportmonks Liga MX league id (Mexico · domestic). */
 export function ligaMxLeagueId(): number {
@@ -99,77 +83,6 @@ function playerPhoto(path?: string | null): string | undefined {
 
 export function sportmonksEnabled(): boolean {
   return Boolean(process.env.SPORTMONKS_API_TOKEN?.trim());
-}
-
-async function smFetch<T>(
-  path: string,
-  params: Record<string, string> = {},
-  opts?: { revalidate?: number | false; retries?: number }
-): Promise<T> {
-  const token = process.env.SPORTMONKS_API_TOKEN?.trim();
-  if (!token) throw new Error('SPORTMONKS_API_TOKEN missing');
-
-  const entity = entityForPath(path);
-  await beforeSmRequest(entity);
-
-  const url = new URL(`${BASE}${path}`);
-  url.searchParams.set('api_token', token);
-  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
-
-  const revalidate = opts?.revalidate;
-  const maxAttempts = 1 + (opts?.retries ?? 1);
-
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-    try {
-      const res = await fetch(url.toString(), {
-        signal: controller.signal,
-        ...(revalidate === false
-          ? { cache: 'no-store' as const }
-          : { next: { revalidate: revalidate ?? FRESH.sMaxAgeLive } }),
-      });
-
-      if (res.status === 429) {
-        let body: SmJson<Record<string, never>> | null = null;
-        try {
-          body = (await res.json()) as SmJson<Record<string, never>>;
-        } catch {
-          body = null;
-        }
-        if (body?.rate_limit) noteSmRateLimit(body.rate_limit);
-        const retrySec =
-          Number(body?.retry_after) ||
-          Number(body?.rate_limit?.resets_in_seconds) ||
-          Number(res.headers.get('Retry-After')) ||
-          0;
-        // Never block a serverless invoke for a full hour reset — short retry then fail to cache.
-        if (attempt < maxAttempts - 1 && retrySec > 0 && retrySec <= 8) {
-          await sleep(retrySec * 1000 + Math.floor(Math.random() * 200));
-          continue;
-        }
-        if (attempt < maxAttempts - 1 && retrySec > 8) {
-          await sleep(1_000 + Math.floor(Math.random() * 400));
-          continue;
-        }
-        throw new Error(`Sportmonks HTTP 429 (${entity})`);
-      }
-
-      if (!res.ok) throw new Error(`Sportmonks HTTP ${res.status}`);
-      const json = (await res.json()) as SmJson<T>;
-      if (json.rate_limit) noteSmRateLimit(json.rate_limit);
-      if (process.env.AF_SM_DEBUG === '1') {
-        const snap = getSmRateSnapshot()[entity];
-        console.info(
-          `[sportmonks] ${path} ok · ${entity} remaining=${snap?.remaining ?? '?'} localHour=${snap?.localHourCount ?? '?'}`
-        );
-      }
-      return json;
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-  throw new Error('Sportmonks request failed');
 }
 
 interface SmParticipant {
@@ -272,6 +185,8 @@ interface SmFixture {
   starting_at_timestamp?: number;
   name?: string;
   result_info?: string | null;
+  state_id?: number;
+  league_id?: number;
   state?: {
     id?: number;
     state?: string;
@@ -298,11 +213,8 @@ function stateBlob(f: SmFixture): string {
   return `${s?.developer_name ?? ''} ${s?.state ?? ''} ${s?.short_name ?? ''} ${s?.name ?? ''}`.toUpperCase();
 }
 
-function mapState(raw?: string): MatchState {
-  const s = (raw ?? '').toLowerCase();
-  if (s.includes('inplay') || s === 'live' || s === '1st' || s === '2nd' || s === 'ht') return 'in';
-  if (s.includes('ft') || s.includes('full') || s === 'finished' || s === 'completed') return 'post';
-  return 'pre';
+function mapState(raw?: string, stateId?: number | null): MatchState {
+  return matchStateFromId(stateId) ?? matchStateFromBlob(raw);
 }
 
 /** Live board stamp: 67' · 45+2' · HT · ET · PEN */
@@ -352,11 +264,19 @@ export function overlayLiveFixtures(base: Fixture[], live: Fixture[]): Fixture[]
   const byId = new Map(live.map((f) => [f.id, f]));
   const seen = new Set<string>();
   const merged = base.map((f) => {
-    const l = byId.get(f.id);
+    const l =
+      byId.get(f.id) ??
+      live.find(
+        (x) =>
+          dayPairKey(x.date, x.home.abbreviation, x.away.abbreviation) ===
+          dayPairKey(f.date, f.home.abbreviation, f.away.abbreviation)
+      );
     if (!l) return f;
     seen.add(l.id);
     return {
       ...f,
+      id: l.id,
+      provider: l.provider,
       state: l.state,
       statusLabel: l.statusLabel,
       clock: l.clock ?? f.clock,
@@ -364,11 +284,13 @@ export function overlayLiveFixtures(base: Fixture[], live: Fixture[]): Fixture[]
       scorers: l.scorers ?? f.scorers,
       home: {
         ...f.home,
+        id: l.home.id,
         score: l.home.score,
         logo: l.home.logo ?? f.home.logo,
       },
       away: {
         ...f.away,
+        id: l.away.id,
         score: l.away.score,
         logo: l.away.logo ?? f.away.logo,
       },
@@ -427,13 +349,13 @@ export function mapFixture(f: SmFixture): Fixture {
   const homeP = parts.find((p) => participantSide(p) === 'home') ?? parts[0];
   const awayP = parts.find((p) => participantSide(p) === 'away') ?? parts[1];
   const stateRaw = f.state?.state ?? f.state?.short_name ?? f.state?.name ?? f.state?.developer_name;
-  const state = mapState(stateRaw);
+  const state = mapState(stateRaw, f.state_id ?? f.state?.id);
 
   const homeScore = scoreFor(f.scores, 'home');
   const awayScore = scoreFor(f.scores, 'away');
   const homeId = String(homeP?.id ?? 'home');
   const awayId = String(awayP?.id ?? 'away');
-  const league = mapLeagueId(f.league?.id);
+  const league = mapLeagueId(f.league?.id ?? f.league_id);
   // Sportmonks Chicago Fire short_code is CHI; scheduleAbbr(CHI)→GDL is ESPN Chivas only.
   const rawHome = (homeP?.short_code ?? 'LOC').toUpperCase();
   const rawAway = (awayP?.short_code ?? 'VIS').toUpperCase();
@@ -774,10 +696,11 @@ export async function fetchLivescores(leagueIds: number[] = [ligaMxLeagueId()]):
   return singleFlight(key, LIVE_TTL_MS, async () => {
     const include = LIVESCORES_INCLUDE;
     const filters = `fixtureLeagues:${leagueIds.join(',')}`;
+    ensureSmRefs();
     const latest = await smFetch<{ data?: SmFixture[] }>(
       '/livescores/latest',
       { include, filters },
-      { revalidate: false }
+      'live'
     );
     const fresh = (latest.data ?? []).map(mapFixture);
     const prev = getCache<Fixture[]>(stickyKey, LIVE_STICKY_TTL_MS) ?? [];
@@ -790,7 +713,7 @@ export async function fetchLivescores(leagueIds: number[] = [ligaMxLeagueId()]):
       const full = await smFetch<{ data?: SmFixture[] }>(
         '/livescores',
         { include, filters },
-        { revalidate: false }
+        'live'
       );
       const hydrated = (full.data ?? []).map(mapFixture).filter((f) => f.state === 'in');
       setCache(stickyKey, hydrated);
@@ -822,7 +745,7 @@ export async function fetchFixturesByDate(
         include,
         filters: `fixtureLeagues:${leagueIds.join(',')}`,
       },
-      { revalidate: false }
+      'board'
     );
     return (data.data ?? []).map(mapFixture);
   });
@@ -838,7 +761,8 @@ export async function fetchLigaMxSeasonFixtures(): Promise<Fixture[]> {
     {
       include:
         'fixtures.participants;fixtures.scores;fixtures.state;fixtures.round;fixtures.venue;fixtures.events.type',
-    }
+    },
+    'catalog'
   );
   const fixtures = (data.data?.fixtures ?? []).map(mapFixture);
   setCache(SEASON_CACHE_KEY, fixtures);
@@ -855,7 +779,8 @@ export async function fetchLeaguesCupSeasonFixtures(): Promise<Fixture[]> {
     {
       include:
         'fixtures.participants;fixtures.scores;fixtures.state;fixtures.round;fixtures.venue;fixtures.league',
-    }
+    },
+    'catalog'
   );
   const fixtures = (data.data?.fixtures ?? []).map((f) =>
     mapFixture({
@@ -911,7 +836,8 @@ async function fetchHeadToHead(homeId: string, awayId: string): Promise<HeadToHe
       {
         include: 'participants;scores;state;league',
         per_page: '25',
-      }
+      },
+      'catalog'
     );
     const raw = data.data ?? [];
     const ligaRaw = raw.filter((f) => !f.league?.id || f.league.id === leagueId);
@@ -983,9 +909,13 @@ export async function fetchClubForm(teamId: string, limit = 5): Promise<FormMatc
 async function fetchTeamForm(teamId: string, limit = 5): Promise<FormMatch[]> {
   try {
     const leagueId = ligaMxLeagueId();
-    const data = await smFetch<{ data?: { latest?: SmFixture[] } }>(`/teams/${teamId}`, {
-      include: 'latest.participants;latest.scores;latest.state;latest.league',
-    });
+    const data = await smFetch<{ data?: { latest?: SmFixture[] } }>(
+      `/teams/${teamId}`,
+      {
+        include: 'latest.participants;latest.scores;latest.state;latest.league',
+      },
+      'catalog'
+    );
     const latest = data.data?.latest ?? [];
     // Prefer Liga MX; fall back to any finished if SM omits league on latest.
     const finished = latest
@@ -1024,23 +954,23 @@ async function fetchTeamForm(teamId: string, limit = 5): Promise<FormMatch[]> {
 }
 
 export async function fetchMatchSnapshot(fixtureId: string): Promise<MatchSnapshot | null> {
-  // Coalesce match-chapter + radio polls onto one SM fixture detail call.
-  const cacheKey = `sm-match-snap-v2-${fixtureId}`;
-  return singleFlight(cacheKey, FRESH.apiTtlLiveMs, () => loadMatchSnapshot(fixtureId));
+  const cacheKey = `sm-match-snap-v5-lanes-${fixtureId}`;
+  return singleFlight(cacheKey, LANE.catalog.memTtlMs, () => loadMatchSnapshot(fixtureId));
 }
 
 /** Lean live tick — scores/clock/events only (no lineups/form/H2H). */
 export async function fetchMatchTick(fixtureId: string): Promise<MatchSnapshot | null> {
-  const cacheKey = `sm-match-tick-v1-${fixtureId}`;
-  return singleFlight(cacheKey, FRESH.apiTtlLiveMs, () => loadMatchTick(fixtureId));
+  const cacheKey = `sm-match-tick-v2-lanes-${fixtureId}`;
+  return singleFlight(cacheKey, LANE.live.memTtlMs, () => loadMatchTick(fixtureId));
 }
 
 async function loadMatchTick(fixtureId: string): Promise<MatchSnapshot | null> {
   try {
+    ensureSmRefs();
     const data = await smFetch<{ data?: SmFixture }>(
       `/fixtures/${fixtureId}`,
       { include: MATCH_TICK_INCLUDE },
-      { revalidate: false }
+      'live'
     );
     if (!data.data) return null;
     const base = mapFixture(data.data);
@@ -1100,12 +1030,22 @@ async function loadContexto(
   };
 }
 
+export async function fetchMatchContexto(
+  homeId: string,
+  awayId: string,
+  homeAbbr: string,
+  awayAbbr: string,
+  live: boolean
+) {
+  return loadContexto(homeId, awayId, homeAbbr, awayAbbr, live);
+}
+
 async function loadMatchSnapshot(fixtureId: string): Promise<MatchSnapshot | null> {
   try {
     const data = await smFetch<{ data?: SmFixture }>(
       `/fixtures/${fixtureId}`,
       { include: MATCH_DETAIL_INCLUDE },
-      { revalidate: false }
+      'catalog'
     );
     if (!data.data) return null;
     const base = mapFixture(data.data);
@@ -1115,14 +1055,6 @@ async function loadMatchSnapshot(fixtureId: string): Promise<MatchSnapshot | nul
       base.away.id,
       base.home.abbreviation,
       base.away.abbreviation
-    );
-
-    const contexto = await loadContexto(
-      base.home.id,
-      base.away.id,
-      base.home.abbreviation,
-      base.away.abbreviation,
-      base.state === 'in'
     );
 
     return {
@@ -1142,8 +1074,6 @@ async function loadMatchSnapshot(fixtureId: string): Promise<MatchSnapshot | nul
         base.home.abbreviation,
         base.away.abbreviation
       ),
-      form: contexto.form,
-      headToHead: contexto.headToHead,
     };
   } catch {
     return null;
@@ -1198,7 +1128,7 @@ export async function fetchLigaMxStandings(): Promise<{
     }[];
   }>(`/standings/seasons/${ligaMxSeasonId()}`, {
     include: 'participant;details.type',
-  });
+  }, 'catalog');
 
   const entries: SmStandingEntry[] = (data.data ?? [])
     .map((row) => {
@@ -1270,7 +1200,7 @@ export async function fetchLeaguesCupStandings(): Promise<{
     }[];
   }>(`/standings/seasons/${leaguesCupSeasonId()}`, {
     include: 'participant;details.type;group',
-  });
+  }, 'catalog');
 
   const byGroup = new Map<string, SmLcStandingGroup>();
   for (const row of data.data ?? []) {

@@ -69,7 +69,8 @@ function mapEvent(event: EventRaw): Fixture {
 
 async function fetchSeleccionScheduleRaw(): Promise<Fixture[]> {
   const raw = (await espnFetch(
-    `https://site.web.api.espn.com/apis/site/v2/sports/soccer/${SLUG.WORLD_CUP}/teams/${MEXICO_TEAM_ID}/schedule`
+    `https://site.web.api.espn.com/apis/site/v2/sports/soccer/${SLUG.WORLD_CUP}/teams/${MEXICO_TEAM_ID}/schedule`,
+    { revalidate: 120 }
   )) as { events?: EventRaw[] };
   return (raw.events ?? []).map(mapEvent);
 }

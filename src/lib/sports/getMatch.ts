@@ -1,28 +1,56 @@
 import { cache } from 'react';
 import { espnFetch, summaryUrl, SLUG } from '@/lib/espn';
+import { peekCache } from '@/lib/apiCache';
 import { APERTURA_2026_FIXTURES } from '@/fixtures/ligamx-apertura-2026';
 import { attachDondeVer } from '@/config/dondeVer';
+import { mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
 import { enrichMatchWithEspnCommentary } from './espnCommentary';
-import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
-import type { CommentaryLine, MatchSnapshot } from './types';
 import { applyLeaguesCupOfficial } from './leaguesCupBoard';
+import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
 import {
+  fetchFixturesByDate,
   fetchLigaMxSeasonFixtures,
+  fetchMatchContexto,
   fetchMatchSnapshot,
   fetchMatchTick,
   findFixtureByDayPair,
+  ligaMxLeagueId,
+  livingRoomLeagueIds,
   sportmonksEnabled,
 } from './sportmonks';
+import type {
+  CommentaryLine,
+  FormMatch,
+  HeadToHeadSummary,
+  MatchSnapshot,
+} from './types';
 
 type LeagueKey = 'liga-mx' | 'mundial' | 'seleccion' | 'leagues-cup';
 
 /** Shared with `/api/sports/match` + radio so both surfaces coalesce. */
 export function sportsMatchCacheKey(league: string, id: string) {
-  return `sports-match-v14-lc-board-${league}-${id}`;
+  return `sports-match-v15-lc-board-${league}-${id}`;
 }
 
 export function sportsMatchTickCacheKey(league: string, id: string) {
   return `sports-match-tick-v1-${league}-${id}`;
+}
+
+export function sportsMatchContextoCacheKey(league: string, id: string) {
+  return `sports-match-contexto-v1-${league}-${id}`;
+}
+
+export type MatchContexto = {
+  form: { home: FormMatch[]; away: FormMatch[] };
+  headToHead: HeadToHeadSummary | null;
+};
+
+/** Warm snapshot from memory — never hits Sportmonks. */
+export function peekMatch(league: string, id: string): MatchSnapshot | null {
+  return (
+    peekCache<MatchSnapshot>(sportsMatchCacheKey(league, id)) ??
+    peekCache<MatchSnapshot>(sportsMatchTickCacheKey(league, id))
+  );
 }
 
 function espnSlug(league: LeagueKey) {
@@ -41,6 +69,10 @@ function looksLikeEspnEventId(id: string): boolean {
   return /^401\d{6,}$/.test(id);
 }
 
+function looksLikeSmFixtureId(id: string): boolean {
+  return /^\d{6,}$/.test(id) && !looksLikeEspnEventId(id);
+}
+
 function parseClockMinute(display?: string): number | undefined {
   if (!display) return undefined;
   const m = display.match(/(\d+)/);
@@ -52,62 +84,96 @@ function parseClockMinute(display?: string): number | undefined {
  * When Sportmonks is on, we only peek ESPN summary for id-bridging (date + abbrs),
  * never as the match data source.
  */
+async function resolveFromDateWindow(
+  dateIso: string,
+  homeAbbr: string,
+  awayAbbr: string
+): Promise<string | null> {
+  const dayKey = mexicoDayKey(new Date(dateIso));
+  const dated = (
+    await Promise.all(
+      [dayKey, shiftDayKey(dayKey, 1)].map((k) =>
+        fetchFixturesByDate(k, [ligaMxLeagueId()])
+      )
+    )
+  ).flat();
+  return findFixtureByDayPair(dated, dateIso, homeAbbr, awayAbbr)?.id ?? null;
+}
+
 async function resolveSportmonksFixtureId(id: string): Promise<string | null> {
-  const season = await fetchLigaMxSeasonFixtures();
-  if (season.some((f) => f.id === id)) return id;
+  if (looksLikeSmFixtureId(id)) return id;
 
   const staticHit = APERTURA_2026_FIXTURES.find((f) => f.id === id);
   if (staticHit) {
-    const byDay = findFixtureByDayPair(
-      season,
+    const fromWindow = await resolveFromDateWindow(
       staticHit.date,
       staticHit.home.abbreviation,
       staticHit.away.abbreviation
     );
-    if (byDay) return byDay.id;
+    if (fromWindow) return fromWindow;
+  }
 
-    // Date may have moved — match jornada + pair
-    const j = staticHit.jornada?.match(/(\d+)/)?.[1];
-    if (j) {
-      const hit = season.find(
-        (f) =>
-          f.jornada?.includes(j) &&
-          f.home.abbreviation === staticHit.home.abbreviation &&
-          f.away.abbreviation === staticHit.away.abbreviation
-      );
-      if (hit) return hit.id;
+  let espnPair: { date: string; home: string; away: string } | null = null;
+  if (looksLikeEspnEventId(id)) {
+    try {
+      const raw = (await espnFetch(summaryUrl(SLUG.LIGA_MX, id))) as {
+        header?: {
+          competitions?: {
+            date?: string;
+            competitors?: {
+              homeAway: string;
+              team: { abbreviation: string };
+            }[];
+          }[];
+        };
+      };
+      const comp = raw.header?.competitions?.[0];
+      const home =
+        comp?.competitors?.find((c) => c.homeAway === 'home') ?? comp?.competitors?.[0];
+      const away =
+        comp?.competitors?.find((c) => c.homeAway === 'away') ?? comp?.competitors?.[1];
+      if (comp?.date && home?.team?.abbreviation && away?.team?.abbreviation) {
+        espnPair = {
+          date: comp.date,
+          home: home.team.abbreviation,
+          away: away.team.abbreviation,
+        };
+        const fromWindow = await resolveFromDateWindow(
+          espnPair.date,
+          espnPair.home,
+          espnPair.away
+        );
+        if (fromWindow) return fromWindow;
+      }
+    } catch {
+      /* ignore */
     }
   }
 
-  if (!looksLikeEspnEventId(id)) return null;
+  const season = await fetchLigaMxSeasonFixtures();
+  if (season.some((f) => f.id === id)) return id;
 
-  // ID bridge only — not used as content provider.
-  try {
-    const raw = (await espnFetch(summaryUrl(SLUG.LIGA_MX, id))) as {
-      header?: {
-        competitions?: {
-          date?: string;
-          competitors?: {
-            homeAway: string;
-            team: { abbreviation: string };
-          }[];
-        }[];
-      };
-    };
-    const comp = raw.header?.competitions?.[0];
-    const home = comp?.competitors?.find((c) => c.homeAway === 'home') ?? comp?.competitors?.[0];
-    const away = comp?.competitors?.find((c) => c.homeAway === 'away') ?? comp?.competitors?.[1];
-    if (comp?.date && home?.team?.abbreviation && away?.team?.abbreviation) {
-      const hit = findFixtureByDayPair(
-        season,
-        comp.date,
-        home.team.abbreviation,
-        away.team.abbreviation
-      );
-      if (hit) return hit.id;
-    }
-  } catch {
-    /* ignore */
+  const pair = staticHit
+    ? {
+        date: staticHit.date,
+        home: staticHit.home.abbreviation,
+        away: staticHit.away.abbreviation,
+      }
+    : espnPair;
+  if (pair) {
+    const byDay = findFixtureByDayPair(season, pair.date, pair.home, pair.away);
+    if (byDay) return byDay.id;
+  }
+
+  const j = staticHit?.jornada?.match(/(\d+)/)?.[1];
+  if (j && staticHit) {
+    const hit = season.find(
+      (f) =>
+        f.jornada?.includes(j) &&
+        f.home.abbreviation === staticHit.home.abbreviation &&
+        f.away.abbreviation === staticHit.away.abbreviation
+    );
+    if (hit) return hit.id;
   }
 
   return null;
@@ -267,7 +333,11 @@ async function getMatchUncached(league: string, id: string): Promise<MatchSnapsh
 
       let sm = await fetchMatchSnapshot(fixtureId);
       if (!sm && fixtureId !== id) sm = await fetchMatchSnapshot(id);
-      if (!sm && key === 'liga-mx') {
+      if (
+        !sm &&
+        key === 'liga-mx' &&
+        (looksLikeEspnEventId(id) || id.startsWith('static-'))
+      ) {
         const resolved = await resolveSportmonksFixtureId(id);
         if (resolved) sm = await fetchMatchSnapshot(resolved);
       }
@@ -314,8 +384,17 @@ async function getMatchTickUncached(
       if (resolved) fixtureId = resolved;
     }
 
-    let sm = await fetchMatchTick(fixtureId);
-    if (!sm && fixtureId !== id) sm = await fetchMatchTick(id);
+    const dated =
+      (await fixtureFromDateBoards(fixtureId)) ??
+      (fixtureId !== id ? await fixtureFromDateBoards(id) : null);
+
+    // Pre-match: the date board (already warmed by the hero) is enough — skip a hanging fixture GET.
+    let sm =
+      dated && dated.state !== 'in'
+        ? dated
+        : (await fetchMatchTick(fixtureId)) ??
+          (fixtureId !== id ? await fetchMatchTick(id) : null) ??
+          dated;
     if (!sm) return null;
 
     if (key === 'leagues-cup') {
@@ -337,3 +416,40 @@ async function getMatchTickUncached(
 export const getMatch = cache(getMatchUncached);
 /** Lean live tick (scores/clock/events). */
 export const getMatchTick = cache(getMatchTickUncached);
+
+async function fixtureFromDateBoards(id: string): Promise<MatchSnapshot | null> {
+  const dayKey = mexicoDayKey();
+  const keys = [dayKey, shiftDayKey(dayKey, 1), shiftDayKey(dayKey, 2)];
+  try {
+    const boards = await Promise.all(
+      keys.map((k) => fetchFixturesByDate(k, livingRoomLeagueIds()))
+    );
+    const hit = boards.flat().find((f) => f.id === id);
+    if (!hit) return null;
+    return { ...attachDondeVer(hit), events: [], comments: [] } as MatchSnapshot;
+  } catch {
+    return null;
+  }
+}
+
+async function getMatchContextoUncached(
+  league: string,
+  id: string
+): Promise<MatchContexto | null> {
+  const snap =
+    peekMatch(league, id) ??
+    (await fixtureFromDateBoards(id)) ??
+    (await getMatchTickUncached(league, id));
+  if (!snap) return null;
+  if (snap.home.id === 'home' || snap.away.id === 'away') return null;
+  return fetchMatchContexto(
+    snap.home.id,
+    snap.away.id,
+    snap.home.abbreviation,
+    snap.away.abbreviation,
+    snap.state === 'in'
+  );
+}
+
+/** Form + H2H — independent of the fat match-detail include. */
+export const getMatchContexto = cache(getMatchContextoUncached);

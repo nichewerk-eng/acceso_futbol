@@ -1,6 +1,6 @@
 import { isMexicoDay, mexicoDayKey } from '@/lib/radio/phases';
 import type { Fixture } from './types';
-import { fetchLigaMxFixtures } from './espnFallback';
+import { fetchLigaMxFixtures, seedLigaMxFixtures } from './espnFallback';
 
 export type JornadaOverview = {
   label: string;
@@ -74,8 +74,11 @@ function pickActiveJornada(fixtures: Fixture[], now = new Date()): number | null
   return nums[0] ?? null;
 }
 
-export async function getJornadaOverview(now = new Date()): Promise<JornadaOverview | null> {
-  const { fixtures, source } = await fetchLigaMxFixtures();
+function overviewFrom(
+  fixtures: Fixture[],
+  source: JornadaOverview['source'],
+  now: Date
+): JornadaOverview | null {
   const n = pickActiveJornada(fixtures, now);
   if (n === null) return null;
 
@@ -93,4 +96,14 @@ export async function getJornadaOverview(now = new Date()): Promise<JornadaOverv
     played: games.filter((g) => g.state === 'post'),
     upcoming: games.filter((g) => g.state === 'pre'),
   };
+}
+
+/** Instant jornada from the Apertura calendar — no Sportmonks. */
+export function seedJornadaOverview(now = new Date()): JornadaOverview | null {
+  return overviewFrom(seedLigaMxFixtures(), 'static', now);
+}
+
+export async function getJornadaOverview(now = new Date()): Promise<JornadaOverview | null> {
+  const { fixtures, source } = await fetchLigaMxFixtures();
+  return overviewFrom(fixtures, source, now);
 }

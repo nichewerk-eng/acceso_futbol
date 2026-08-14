@@ -21,7 +21,7 @@ import { scheduleAbbr } from '@/lib/sports/ligaMxAbbr';
 import { localizeStatus } from '@/lib/sports/localizeEs';
 import { mergeMatchSnapshot } from '@/lib/sports/mergeMatchSnapshot';
 
-type Props = { league: string; id: string };
+type Props = { league: string; id: string; initialMatch?: MatchSnapshot | null };
 type TabId = 'contexto' | 'momentos' | 'alineacion' | 'datos' | 'radio';
 type FeedFilter = 'clave' | 'completa';
 
@@ -513,13 +513,22 @@ function DatosPanel({ match, keyStats }: { match: MatchSnapshot; keyStats: KeySt
   );
 }
 
-export function MatchChapter({ league, id }: Props) {
-  const [match, setMatch] = useState<MatchSnapshot | null>(null);
+export function MatchChapter({ league, id, initialMatch = null }: Props) {
+  const [match, setMatch] = useState<MatchSnapshot | null>(initialMatch);
   const [error, setError] = useState(false);
-  const [tab, setTab] = useState<TabId | null>(null);
+  const [tab, setTab] = useState<TabId | null>(
+    initialMatch ? (initialMatch.state === 'pre' ? 'contexto' : 'momentos') : null
+  );
   const [feed, setFeed] = useState<FeedFilter>('clave');
   const [userTz, setUserTz] = useState('America/Mexico_City');
   const [tabla, setTabla] = useState<LigaMXEntry[] | null>(null);
+  const [richReady, setRichReady] = useState(() => {
+    if (!initialMatch) return false;
+    return (
+      (initialMatch.form?.home.length ?? 0) + (initialMatch.form?.away.length ?? 0) > 0 ||
+      (initialMatch.headToHead?.meetings.length ?? 0) > 0
+    );
+  });
 
   useEffect(() => {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -540,11 +549,20 @@ export function MatchChapter({ league, id }: Props) {
     let cancelled = false;
     let pace: FreshPace = 'near';
     let es: EventSource | null = null;
+    setRichReady(false);
+
+    let pendingCtx: {
+      form: NonNullable<MatchSnapshot['form']>;
+      headToHead: MatchSnapshot['headToHead'];
+    } | null = null;
 
     const apply = (d: MatchSnapshot) => {
       if (cancelled) return;
       pace = d.state === 'in' ? 'live' : d.state === 'pre' ? 'near' : 'idle';
-      setMatch((prev) => mergeMatchSnapshot(prev, d));
+      const next = pendingCtx
+        ? { ...d, form: pendingCtx.form, headToHead: pendingCtx.headToHead }
+        : d;
+      setMatch((prev) => mergeMatchSnapshot(prev, next));
       setError(false);
       setTab((prev) => {
         if (prev) return prev;
@@ -562,28 +580,66 @@ export function MatchChapter({ league, id }: Props) {
         .then((r) => (r.ok ? r.json() : Promise.reject()))
         .then((d: MatchSnapshot) => apply(d));
 
-    // Full detail first (lineups / contexto); then lean tick or SSE while live.
-    void loadDetail()
-      .then(() => {
-        if (cancelled) return;
-        if (pace === 'live' && typeof EventSource !== 'undefined') {
-          es = new EventSource(`/api/sports/match/${league}/${id}/stream`);
-          es.onmessage = (ev) => {
-            try {
-              apply(JSON.parse(ev.data) as MatchSnapshot);
-            } catch {
-              /* ignore bad frames */
-            }
-          };
-          es.onerror = () => {
-            es?.close();
-            es = null;
-          };
+    const applyContexto = (d: NonNullable<typeof pendingCtx>) => {
+      if (cancelled) return;
+      pendingCtx = d;
+      setMatch((prev) => (prev ? { ...prev, form: d.form, headToHead: d.headToHead } : prev));
+      setRichReady(true);
+    };
+
+    const loadContexto = () =>
+      fetch(`/api/sports/match/${league}/${id}/contexto`)
+        .then((r) => (r.ok ? r.json() : Promise.reject()))
+        .then((d: NonNullable<typeof pendingCtx>) => applyContexto(d));
+
+    const startSse = () => {
+      if (cancelled || pace !== 'live' || typeof EventSource === 'undefined' || es) return;
+      es = new EventSource(`/api/sports/match/${league}/${id}/stream`);
+      es.onmessage = (ev) => {
+        try {
+          apply(JSON.parse(ev.data) as MatchSnapshot);
+        } catch {
+          /* ignore bad frames */
         }
-      })
-      .catch(() => {
-        if (!cancelled) setError(true);
-      });
+      };
+      es.onerror = () => {
+        es?.close();
+        es = null;
+      };
+    };
+
+    const loadDetailRetry = async () => {
+      for (let i = 0; i < 3; i++) {
+        try {
+          await loadDetail();
+          return;
+        } catch {
+          if (cancelled) return;
+          await new Promise((r) => setTimeout(r, 700 * (i + 1)));
+        }
+      }
+    };
+
+    const loadContextoRetry = async () => {
+      for (let i = 0; i < 3; i++) {
+        try {
+          await loadContexto();
+          return;
+        } catch {
+          if (cancelled) return;
+          await new Promise((r) => setTimeout(r, 600 * (i + 1)));
+        }
+      }
+      if (!cancelled) setRichReady(true);
+    };
+
+    const tickP = loadTick().then(() => startSse());
+    const detailP = loadDetailRetry();
+    void loadContextoRetry();
+    void Promise.allSettled([tickP, detailP]).then((results) => {
+      if (cancelled) return;
+      if (results.every((r) => r.status === 'rejected')) setError(true);
+    });
 
     const stop = startLivePoll(
       () => {
@@ -926,7 +982,11 @@ export function MatchChapter({ league, id }: Props) {
                 )}
 
                 {!h2h?.meetings.length && homeForm.length === 0 && awayForm.length === 0 && (
-                  <p className="match-empty">Sin historial ni forma aún para este duelo.</p>
+                  <p className="match-empty">
+                    {richReady
+                      ? 'Sin historial ni forma aún para este duelo.'
+                      : 'Cargando forma y cara a cara…'}
+                  </p>
                 )}
               </div>
 

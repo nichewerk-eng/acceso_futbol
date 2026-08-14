@@ -26,6 +26,9 @@ export const FRESH = {
   sMaxAgeNear: 12,
   sMaxAgeIdle: 30,
   swr: 8,
+  /** Quiet day boards — CDN can hold these; scores don't move. */
+  sMaxAgeIdleBoard: 60,
+  swrIdleBoard: 300,
 
   standingsTtlMs: 45_000,
   standingsSMaxAge: 45,
@@ -91,6 +94,19 @@ export function liveCacheHeaders(pace: FreshPace = 'live') {
         : FRESH.sMaxAgeIdle;
   return {
     'Cache-Control': `public, s-maxage=${sMaxAge}, stale-while-revalidate=${FRESH.swr}`,
+  };
+}
+
+/** Hero / jornada boards: tight while live, long SWR when idle. */
+export function boardCacheHeaders(pace: FreshPace = 'idle') {
+  if (pace === 'live') return liveCacheHeaders('live');
+  if (pace === 'near') {
+    return {
+      'Cache-Control': `public, s-maxage=${FRESH.sMaxAgeNear}, stale-while-revalidate=30`,
+    };
+  }
+  return {
+    'Cache-Control': `public, s-maxage=${FRESH.sMaxAgeIdleBoard}, stale-while-revalidate=${FRESH.swrIdleBoard}`,
   };
 }
 

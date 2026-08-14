@@ -1,15 +1,17 @@
-import { NextResponse } from 'next/server';
 import { espnFetch, standingsUrl, SLUG } from '@/lib/espn';
-import { peekCache, singleFlight } from '@/lib/apiCache';
+import { serveSwr } from '@/lib/serveSwr';
 import { FRESH, standingsCacheHeaders } from '@/lib/sports/freshness';
 import { fetchLigaMxStandings, sportmonksEnabled } from '@/lib/sports/sportmonks';
 
-const CACHE_KEY = 'ligamx-standings-v4-sm';
+const CACHE_KEY = 'ligamx-standings-v5-lanes';
 const ccHeaders = standingsCacheHeaders();
 
 export async function GET() {
-  try {
-    const table = await singleFlight(CACHE_KEY, FRESH.standingsTtlMs, async () => {
+  return serveSwr<LigaMXTable>({
+    key: CACHE_KEY,
+    ttlMs: FRESH.standingsTtlMs,
+    coalesceMs: FRESH.standingsTtlMs,
+    loader: async () => {
       if (sportmonksEnabled()) {
         try {
           const sm = await fetchLigaMxStandings();
@@ -24,13 +26,9 @@ export async function GET() {
         revalidate: FRESH.standingsSMaxAge,
       })) as RawRoot;
       return { ...parseTable(raw), source: 'espn' as const };
-    });
-    return NextResponse.json(table, { headers: ccHeaders });
-  } catch {
-    const stale = peekCache<LigaMXTable>(CACHE_KEY);
-    if (stale) return NextResponse.json({ ...stale, stale: true });
-    return NextResponse.json({ error: 'upstream_error' }, { status: 502 });
-  }
+    },
+    headers: () => ccHeaders,
+  });
 }
 
 export interface LigaMXEntry {
