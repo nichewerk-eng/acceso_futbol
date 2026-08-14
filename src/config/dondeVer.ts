@@ -9,9 +9,16 @@ export type TvChannelId =
   | 'canal-5'
   | 'layvtime'
   | 'univision'
+  | 'unimas'
   | 'apple-tv'
   | 'fs1'
-  | 'imagen-tv';
+  | 'imagen-tv'
+  | 'azteca-7'
+  | 'espn'
+  | 'disney-plus'
+  | 'fox'
+  | 'fox-one'
+  | 'fox-deportes';
 
 export type TvChannel = {
   id: TvChannelId;
@@ -36,7 +43,7 @@ export const TV_CHANNELS: Record<TvChannelId, TvChannel> = {
   'canal-5': {
     id: 'canal-5',
     label: 'Canal 5',
-    src: '/tv_logos/canal-5-seeklogo.png',
+    src: '/tv_logos/Canal_5_Mexico.svg',
   },
   layvtime: {
     id: 'layvtime',
@@ -46,6 +53,11 @@ export const TV_CHANNELS: Record<TvChannelId, TvChannel> = {
   },
   univision: {
     id: 'univision',
+    label: 'Univision',
+    src: '/tv_logos/Uni_Vt_Pos_R_Sml_Flt_rgb.png',
+  },
+  unimas: {
+    id: 'unimas',
     label: 'UniMás',
     src: '/tv_logos/UMas_SM_Sml_rgb.png',
   },
@@ -64,11 +76,43 @@ export const TV_CHANNELS: Record<TvChannelId, TvChannel> = {
     label: 'Imagen TV',
     src: '/tv_logos/Imagen-TV.png',
   },
+  'azteca-7': {
+    id: 'azteca-7',
+    label: 'Azteca 7',
+    src: '/tv_logos/Azteca7.png',
+  },
+  espn: {
+    id: 'espn',
+    label: 'ESPN',
+    src: '/tv_logos/ESPN.svg',
+  },
+  'disney-plus': {
+    id: 'disney-plus',
+    label: 'Disney+',
+    src: '/tv_logos/disney-plus.svg',
+  },
+  fox: {
+    id: 'fox',
+    label: 'FOX',
+    src: '/tv_logos/Fox.svg',
+    onDark: true,
+  },
+  'fox-one': {
+    id: 'fox-one',
+    label: 'FOX One',
+    src: '/tv_logos/FOX-ONE.svg',
+    onDark: true,
+  },
+  'fox-deportes': {
+    id: 'fox-deportes',
+    label: 'Fox Deportes',
+    src: '/tv_logos/Fox_Deportes.svg',
+  },
 };
 
 const DEFAULTS = {
   mx: ['vix', 'tudn'] as TvChannelId[],
-  us: ['univision', 'tudn', 'vix'] as TvChannelId[],
+  us: ['tudn', 'vix'] as TvChannelId[],
 };
 
 /**
@@ -84,6 +128,44 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
   '2026-08-02|NCX|TOL': {
     mx: ['vix', 'tudn', 'canal-5'],
     us: ['vix', 'tudn'],
+  },
+
+  // Jornada 4 · 15–17 ago 2026
+  '2026-08-15|ATL|TOL': {
+    mx: ['azteca-7', 'espn', 'disney-plus'],
+    us: ['tudn', 'univision', 'vix'],
+  },
+  '2026-08-15|JUA|MTY': {
+    mx: ['canal-5', 'tudn', 'vix'],
+    us: ['univision', 'vix'],
+  },
+  '2026-08-15|ATS|UANL': {
+    mx: ['canal-5', 'tudn', 'vix'],
+    us: ['univision', 'vix'],
+  },
+  '2026-08-16|QRO|UNAM': {
+    mx: ['vix'],
+    us: ['univision', 'vix'],
+  },
+  '2026-08-16|AME|ASL': {
+    mx: ['canal-5', 'tudn', 'vix', 'layvtime'],
+    us: ['tudn', 'vix'],
+  },
+  '2026-08-16|GDL|SAN': {
+    mx: ['canal-5', 'tudn', 'vix'],
+    us: ['tudn', 'vix'],
+  },
+  '2026-08-16|CAZ|TIJ': {
+    mx: ['fox-one'],
+    us: ['tudn', 'vix'],
+  },
+  '2026-08-17|LEO|NCX': {
+    mx: ['fox', 'fox-one'],
+    us: ['fox-deportes'],
+  },
+  '2026-08-17|PAC|PUE': {
+    mx: ['fox', 'fox-one'],
+    us: ['tudn'],
   },
 };
 

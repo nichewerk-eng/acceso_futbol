@@ -87,9 +87,9 @@ const VAN = 'America/Vancouver';
 /** US board shortcuts — order matches LeaguesCup.com listings. */
 const TV = ['apple-tv'] as TvChannelId[];
 const TV_FS1 = ['apple-tv', 'fs1'] as TvChannelId[];
-const TV_UNI = ['apple-tv', 'univision'] as TvChannelId[];
-const TV_UNI_FS1 = ['apple-tv', 'univision', 'fs1'] as TvChannelId[];
-const TV_FS1_UNI = ['apple-tv', 'fs1', 'univision'] as TvChannelId[];
+const TV_UNI = ['apple-tv', 'unimas'] as TvChannelId[];
+const TV_UNI_FS1 = ['apple-tv', 'unimas', 'fs1'] as TvChannelId[];
+const TV_FS1_UNI = ['apple-tv', 'fs1', 'unimas'] as TvChannelId[];
 /** MX: Apple TV + Imagen TV select grid */
 const MX_IMAGEN = ['apple-tv', 'imagen-tv'] as TvChannelId[];
 

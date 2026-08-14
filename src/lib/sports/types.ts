@@ -95,9 +95,16 @@ export interface Fixture {
       | 'canal-5'
       | 'layvtime'
       | 'univision'
+      | 'unimas'
       | 'apple-tv'
       | 'fs1'
       | 'imagen-tv'
+      | 'azteca-7'
+      | 'espn'
+      | 'disney-plus'
+      | 'fox'
+      | 'fox-one'
+      | 'fox-deportes'
     >;
     usChannels?: Array<
       | 'tudn'
@@ -105,9 +112,16 @@ export interface Fixture {
       | 'canal-5'
       | 'layvtime'
       | 'univision'
+      | 'unimas'
       | 'apple-tv'
       | 'fs1'
       | 'imagen-tv'
+      | 'azteca-7'
+      | 'espn'
+      | 'disney-plus'
+      | 'fox'
+      | 'fox-one'
+      | 'fox-deportes'
     >;
   };
 }

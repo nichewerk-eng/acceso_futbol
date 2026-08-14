@@ -1380,13 +1380,17 @@ body {
   .lc-match-tv.tv-inline-desk .tv-channel[data-channel='tudn'],
   .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='tudn'],
   .lc-match-tv.tv-inline-desk .tv-channel[data-channel='univision'],
-  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='univision'] {
+  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='unimas'],
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='univision'],
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='unimas'] {
     width: 2.15rem;
   }
   .lc-match-tv.tv-inline-desk .tv-channel[data-channel='tudn'] .tv-channel-logo,
   .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='tudn'] .tv-channel-logo,
-  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='univision'] .tv-channel-logo,
-  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='univision'] .tv-channel-logo {
+  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='univision'],
+  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='unimas'] .tv-channel-logo,
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='univision'],
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='unimas'] .tv-channel-logo {
     max-width: 2.05rem;
     max-height: 0.55rem;
   }
@@ -2378,10 +2382,12 @@ body {
   max-height: 0.75rem;
 }
 
-.tv-channel[data-channel='univision'] {
+.tv-channel[data-channel='univision'],
+.tv-channel[data-channel='unimas'] {
   width: 3rem;
 }
-.tv-channel[data-channel='univision'] .tv-channel-logo {
+.tv-channel[data-channel='univision'],
+.tv-channel[data-channel='unimas'] .tv-channel-logo {
   max-width: 2.85rem;
   max-height: 0.75rem;
 }
@@ -2393,6 +2399,54 @@ body {
   max-width: 3.25rem;
   max-height: 1.15rem;
   border-radius: 0.15rem;
+}
+
+.tv-channel[data-channel='azteca-7'] {
+  width: 1.45rem;
+}
+.tv-channel[data-channel='azteca-7'] .tv-channel-logo {
+  max-width: 1.3rem;
+  max-height: 1.3rem;
+}
+
+.tv-channel[data-channel='espn'] {
+  width: 2.6rem;
+}
+.tv-channel[data-channel='espn'] .tv-channel-logo {
+  max-width: 2.45rem;
+  max-height: 0.72rem;
+}
+
+.tv-channel[data-channel='disney-plus'] {
+  width: 2.7rem;
+}
+.tv-channel[data-channel='disney-plus'] .tv-channel-logo {
+  max-width: 2.55rem;
+  max-height: 0.85rem;
+}
+
+.tv-channel[data-channel='fox'] {
+  width: 2.4rem;
+}
+.tv-channel[data-channel='fox'] .tv-channel-logo {
+  max-width: 2.25rem;
+  max-height: 0.85rem;
+}
+
+.tv-channel[data-channel='fox-one'] {
+  width: 3.1rem;
+}
+.tv-channel[data-channel='fox-one'] .tv-channel-logo {
+  max-width: 2.95rem;
+  max-height: 0.72rem;
+}
+
+.tv-channel[data-channel='fox-deportes'] {
+  width: 3.5rem;
+}
+.tv-channel[data-channel='fox-deportes'] .tv-channel-logo {
+  max-width: 3.35rem;
+  max-height: 0.85rem;
 }
 
 /* —— compact density —— */
@@ -2448,10 +2502,12 @@ body {
   max-height: 0.65rem;
 }
 
-.tv-channel-compact[data-channel='univision'] {
+.tv-channel-compact[data-channel='univision'],
+.tv-channel-compact[data-channel='unimas'] {
   width: 2.6rem;
 }
-.tv-channel-compact[data-channel='univision'] .tv-channel-logo {
+.tv-channel-compact[data-channel='univision'],
+.tv-channel-compact[data-channel='unimas'] .tv-channel-logo {
   max-width: 2.45rem;
   max-height: 0.65rem;
 }
@@ -2463,6 +2519,54 @@ body {
   max-width: 2.85rem;
   max-height: 1rem;
   border-radius: 0.12rem;
+}
+
+.tv-channel-compact[data-channel='azteca-7'] {
+  width: 1.2rem;
+}
+.tv-channel-compact[data-channel='azteca-7'] .tv-channel-logo {
+  max-width: 1.05rem;
+  max-height: 1.05rem;
+}
+
+.tv-channel-compact[data-channel='espn'] {
+  width: 2.2rem;
+}
+.tv-channel-compact[data-channel='espn'] .tv-channel-logo {
+  max-width: 2.05rem;
+  max-height: 0.58rem;
+}
+
+.tv-channel-compact[data-channel='disney-plus'] {
+  width: 2.3rem;
+}
+.tv-channel-compact[data-channel='disney-plus'] .tv-channel-logo {
+  max-width: 2.15rem;
+  max-height: 0.7rem;
+}
+
+.tv-channel-compact[data-channel='fox'] {
+  width: 2rem;
+}
+.tv-channel-compact[data-channel='fox'] .tv-channel-logo {
+  max-width: 1.85rem;
+  max-height: 0.7rem;
+}
+
+.tv-channel-compact[data-channel='fox-one'] {
+  width: 2.65rem;
+}
+.tv-channel-compact[data-channel='fox-one'] .tv-channel-logo {
+  max-width: 2.5rem;
+  max-height: 0.58rem;
+}
+
+.tv-channel-compact[data-channel='fox-deportes'] {
+  width: 3rem;
+}
+.tv-channel-compact[data-channel='fox-deportes'] .tv-channel-logo {
+  max-width: 2.85rem;
+  max-height: 0.7rem;
 }
 
 .tv-donde-compact .tv-donde-label {
@@ -2562,13 +2666,17 @@ body {
 .tv-inline .tv-channel[data-channel='tudn'],
 .tv-inline .tv-channel-compact[data-channel='tudn'],
 .tv-inline .tv-channel[data-channel='univision'],
-.tv-inline .tv-channel-compact[data-channel='univision'] {
+.tv-inline .tv-channel[data-channel='unimas'],
+.tv-inline .tv-channel-compact[data-channel='univision'],
+.tv-inline .tv-channel-compact[data-channel='unimas'] {
   width: 2.15rem;
 }
 .tv-inline .tv-channel[data-channel='tudn'] .tv-channel-logo,
 .tv-inline .tv-channel-compact[data-channel='tudn'] .tv-channel-logo,
-.tv-inline .tv-channel[data-channel='univision'] .tv-channel-logo,
-.tv-inline .tv-channel-compact[data-channel='univision'] .tv-channel-logo {
+.tv-inline .tv-channel[data-channel='univision'],
+.tv-inline .tv-channel[data-channel='unimas'] .tv-channel-logo,
+.tv-inline .tv-channel-compact[data-channel='univision'],
+.tv-inline .tv-channel-compact[data-channel='unimas'] .tv-channel-logo {
   max-width: 2.05rem;
   max-height: 0.55rem;
 }
@@ -2640,13 +2748,17 @@ body {
 .tv-inline-desk .tv-channel[data-channel='tudn'],
 .tv-inline-desk .tv-channel-compact[data-channel='tudn'],
 .tv-inline-desk .tv-channel[data-channel='univision'],
-.tv-inline-desk .tv-channel-compact[data-channel='univision'] {
+.tv-inline-desk .tv-channel[data-channel='unimas'],
+.tv-inline-desk .tv-channel-compact[data-channel='univision'],
+.tv-inline-desk .tv-channel-compact[data-channel='unimas'] {
   width: 2.55rem;
 }
 .tv-inline-desk .tv-channel[data-channel='tudn'] .tv-channel-logo,
 .tv-inline-desk .tv-channel-compact[data-channel='tudn'] .tv-channel-logo,
-.tv-inline-desk .tv-channel[data-channel='univision'] .tv-channel-logo,
-.tv-inline-desk .tv-channel-compact[data-channel='univision'] .tv-channel-logo {
+.tv-inline-desk .tv-channel[data-channel='univision'],
+.tv-inline-desk .tv-channel[data-channel='unimas'] .tv-channel-logo,
+.tv-inline-desk .tv-channel-compact[data-channel='univision'],
+.tv-inline-desk .tv-channel-compact[data-channel='unimas'] .tv-channel-logo {
   max-width: 2.4rem;
   max-height: 0.65rem;
 }
