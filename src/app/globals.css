@@ -1771,6 +1771,15 @@ body {
     width: auto;
     height: 0.55rem;
   }
+
+  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='apple-tv'],
+  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='unimas'],
+  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='imagen-tv'],
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='apple-tv'],
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='unimas'],
+  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='imagen-tv'] {
+    height: 0.8rem;
+  }
 }
 
 /* ── Living-room engagement system (paper + signal, no gradients) ── */
@@ -2767,8 +2776,29 @@ body {
   [data-channel='azteca-7'],
   [data-channel='canal-5'],
   [data-channel='disney-plus'],
-  [data-channel='univision']
+  [data-channel='univision'],
+  [data-channel='unimas'],
+  [data-channel='apple-tv'],
+  [data-channel='imagen-tv']
 ) {
+  height: 0.8rem;
+}
+
+.tv-inline .tv-channel[data-channel='apple-tv'],
+.tv-inline .tv-channel[data-channel='unimas'],
+.tv-inline .tv-channel[data-channel='imagen-tv'],
+.tv-inline-desk .tv-channel[data-channel='apple-tv'],
+.tv-inline-desk .tv-channel[data-channel='unimas'],
+.tv-inline-desk .tv-channel[data-channel='imagen-tv'],
+.lc-match-tv .tv-channel[data-channel='apple-tv'],
+.lc-match-tv .tv-channel[data-channel='unimas'],
+.lc-match-tv .tv-channel[data-channel='imagen-tv'],
+.lc-match-tv.tv-inline-desk .tv-channel[data-channel='apple-tv'],
+.lc-match-tv.tv-inline-desk .tv-channel[data-channel='unimas'],
+.lc-match-tv.tv-inline-desk .tv-channel[data-channel='imagen-tv'],
+.lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='apple-tv'],
+.lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='unimas'],
+.lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='imagen-tv'] {
   height: 0.8rem;
 }
 
