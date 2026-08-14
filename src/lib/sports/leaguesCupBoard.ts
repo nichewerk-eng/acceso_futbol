@@ -101,10 +101,26 @@ function fixtureFromKick(kick: LcKick, sm?: Fixture): Fixture {
   };
 }
 
+function knockoutSide(
+  abbr: string | null,
+  label: string,
+  slotId: string,
+  side: 'h' | 'a'
+): TeamRef {
+  if (abbr) return teamFromAbbr(abbr);
+  return {
+    id: `${slotId}-${side}`,
+    name: label,
+    abbreviation: 'TBD',
+    score: null,
+  };
+}
+
 function knockoutFixture(slot: LcKnockoutSlot): Fixture {
   const date = slot.boardDate
     ? lcLocalToIso(slot.boardDate, '20:00', 'America/New_York')
     : '2026-08-25T00:00:00.000Z';
+  const sidesSet = Boolean(slot.home && slot.away);
   return {
     id: slot.id,
     provider: 'sportmonks',
@@ -114,21 +130,11 @@ function knockoutFixture(slot: LcKnockoutSlot): Fixture {
     venueTz: 'America/New_York',
     jornada: slot.stage,
     state: 'pre',
-    statusLabel: 'Por definir',
+    statusLabel: sidesSet ? 'Por anunciar' : 'Por definir',
     venue: slot.venueLabel,
     city: null,
-    home: {
-      id: 'tbc-h',
-      name: slot.homeLabel,
-      abbreviation: 'TBC',
-      score: null,
-    },
-    away: {
-      id: 'tbc-a',
-      name: slot.awayLabel,
-      abbreviation: 'TBC',
-      score: null,
-    },
+    home: knockoutSide(slot.home, slot.homeLabel, slot.id, 'h'),
+    away: knockoutSide(slot.away, slot.awayLabel, slot.id, 'a'),
     dondeVer: {
       mx: 'Apple TV',
       us: 'Apple TV',

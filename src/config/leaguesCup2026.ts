@@ -4,7 +4,7 @@ import type { TvChannelId } from '@/config/dondeVer';
 export const LEAGUES_CUP_LOGO = '/mls_logos/lc_logo.png';
 
 /**
- * Official Leagues Cup 2026 Phase One + knockout skeleton.
+ * Official Leagues Cup 2026 Phase One + knockout tree.
  * Sportmonks often has wrong venues / home-away; this board is source of truth for schedule UI.
  * `smId` links to Sportmonks for live scores when available.
  */
@@ -37,9 +37,16 @@ export type LcKnockoutSlot = {
   stage: 'Quarterfinals' | 'Semifinals' | 'Third Place Match' | 'Final';
   boardDate: string | null;
   boardDateLabel: string;
+  /** Club abbr when the side is set; null = TBD (use homeLabel). */
+  home: string | null;
+  away: string | null;
   homeLabel: string;
   awayLabel: string;
+  homeSeed?: string;
+  awaySeed?: string;
   venueLabel: string;
+  /** Slot ids whose winners (or losers, for third place) feed this match. */
+  feedsFrom?: [string, string];
 };
 
 /** Convert venue-local wall time → UTC ISO. */
@@ -160,79 +167,111 @@ export const LEAGUES_CUP_PHASE_ONE: LcKick[] = [
   { smId: 19687280, boardDate: '2026-08-13', localTime: '21:30', tz: PT, venue: 'Providence Park', home: 'POR', away: 'TIJ', us: TV_UNI_FS1, mx: MX_IMAGEN },
 ];
 
-/** Knockout skeleton — Sportmonks has no 2026 KO fixtures yet. */
+/**
+ * Knockout tree — QF sides are official (MLS 1×LMX 4 … LMX 2×MLS 3).
+ * Sportmonks has no 2026 KO fixtures yet; venues / kickoffs still TBD.
+ * SF: winner(LEO–RSL) vs winner(ATX–TOL) · winner(CHI–MTY) vs winner(AME–COL).
+ */
 export const LEAGUES_CUP_KNOCKOUT: LcKnockoutSlot[] = [
   {
     id: 'lc-qf-1',
     stage: 'Quarterfinals',
-    boardDate: null,
-    boardDateLabel: 'Por anunciar',
-    homeLabel: 'TBC',
-    awayLabel: 'TBC',
-    venueLabel: 'TBC',
+    boardDate: '2026-08-25',
+    boardDateLabel: '25–27 ago',
+    home: 'CHI',
+    away: 'MTY',
+    homeLabel: 'Chicago',
+    awayLabel: 'Monterrey',
+    homeSeed: 'MLS 1',
+    awaySeed: 'LMX 4',
+    venueLabel: 'Por anunciar',
   },
   {
     id: 'lc-qf-2',
     stage: 'Quarterfinals',
-    boardDate: null,
-    boardDateLabel: 'Por anunciar',
-    homeLabel: 'TBC',
-    awayLabel: 'TBC',
-    venueLabel: 'TBC',
+    boardDate: '2026-08-25',
+    boardDateLabel: '25–27 ago',
+    home: 'ATX',
+    away: 'TOL',
+    homeLabel: 'Austin',
+    awayLabel: 'Toluca',
+    homeSeed: 'MLS 2',
+    awaySeed: 'LMX 3',
+    venueLabel: 'Por anunciar',
   },
   {
     id: 'lc-qf-3',
     stage: 'Quarterfinals',
-    boardDate: null,
-    boardDateLabel: 'Por anunciar',
-    homeLabel: 'TBC',
-    awayLabel: 'TBC',
-    venueLabel: 'TBC',
+    boardDate: '2026-08-25',
+    boardDateLabel: '25–27 ago',
+    home: 'LEO',
+    away: 'RSL',
+    homeLabel: 'León',
+    awayLabel: 'Salt Lake',
+    homeSeed: 'LMX 1',
+    awaySeed: 'MLS 4',
+    venueLabel: 'Por anunciar',
   },
   {
     id: 'lc-qf-4',
     stage: 'Quarterfinals',
-    boardDate: null,
-    boardDateLabel: 'Por anunciar',
-    homeLabel: 'TBC',
-    awayLabel: 'TBC',
-    venueLabel: 'TBC',
+    boardDate: '2026-08-25',
+    boardDateLabel: '25–27 ago',
+    home: 'AME',
+    away: 'COL',
+    homeLabel: 'América',
+    awayLabel: 'Columbus',
+    homeSeed: 'LMX 2',
+    awaySeed: 'MLS 3',
+    venueLabel: 'Por anunciar',
   },
   {
     id: 'lc-sf-1',
     stage: 'Semifinals',
-    boardDate: null,
-    boardDateLabel: 'Por anunciar',
-    homeLabel: 'TBC',
-    awayLabel: 'TBC',
-    venueLabel: 'TBC',
+    boardDate: '2026-09-01',
+    boardDateLabel: '1–2 sep',
+    home: null,
+    away: null,
+    homeLabel: 'Ganador León / Salt Lake',
+    awayLabel: 'Ganador Austin / Toluca',
+    venueLabel: 'Por anunciar',
+    feedsFrom: ['lc-qf-3', 'lc-qf-2'],
   },
   {
     id: 'lc-sf-2',
     stage: 'Semifinals',
-    boardDate: null,
-    boardDateLabel: 'Por anunciar',
-    homeLabel: 'TBC',
-    awayLabel: 'TBC',
-    venueLabel: 'TBC',
+    boardDate: '2026-09-01',
+    boardDateLabel: '1–2 sep',
+    home: null,
+    away: null,
+    homeLabel: 'Ganador Chicago / Monterrey',
+    awayLabel: 'Ganador América / Columbus',
+    venueLabel: 'Por anunciar',
+    feedsFrom: ['lc-qf-1', 'lc-qf-4'],
   },
   {
     id: 'lc-third',
     stage: 'Third Place Match',
     boardDate: '2026-09-06',
     boardDateLabel: '6 sep',
-    homeLabel: 'TBC',
-    awayLabel: 'TBC',
-    venueLabel: 'TBC',
+    home: null,
+    away: null,
+    homeLabel: 'Perdedor semifinal 1',
+    awayLabel: 'Perdedor semifinal 2',
+    venueLabel: 'Por anunciar',
+    feedsFrom: ['lc-sf-1', 'lc-sf-2'],
   },
   {
     id: 'lc-final',
     stage: 'Final',
     boardDate: '2026-09-06',
     boardDateLabel: '6 sep',
-    homeLabel: 'TBC',
-    awayLabel: 'TBC',
-    venueLabel: 'TBC',
+    home: null,
+    away: null,
+    homeLabel: 'Ganador semifinal 1',
+    awayLabel: 'Ganador semifinal 2',
+    venueLabel: 'Por anunciar',
+    feedsFrom: ['lc-sf-1', 'lc-sf-2'],
   },
 ];
 

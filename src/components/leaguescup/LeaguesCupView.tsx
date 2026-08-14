@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 import { ClubLogo } from '@/components/brand/ClubLogo';
+import { LcBracket } from '@/components/leaguescup/LcBracket';
 import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { LeaguesCupMark } from '@/components/brand/LeaguesCupMark';
 import { ligaMxClubIdFromAbbr } from '@/config/ligaMxLogos';
@@ -254,29 +255,7 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
                 Cuartos (25–27 ago) · Semis (1–2 sep) · Tercer lugar y Final (6 sep)
               </p>
             </div>
-            <div className="space-y-6">
-              {(
-                [
-                  ['Quarterfinals', 'Cuartos de final'],
-                  ['Semifinals', 'Semifinales'],
-                  ['Third Place Match', 'Tercer lugar'],
-                  ['Final', 'Final'],
-                ] as const
-              ).map(([stage, title]) => {
-                const rows = knockout.filter((f) => f.jornada === stage);
-                if (!rows.length) return null;
-                return (
-                  <div key={stage}>
-                    <h3 className="af-tele mb-2 text-signal">{title}</h3>
-                    <ul className="divide-y divide-line border-y border-line">
-                      {rows.map((f) => (
-                        <KnockoutRow key={f.id} f={f} tz={userTz} />
-                      ))}
-                    </ul>
-                  </div>
-                );
-              })}
-            </div>
+            <LcBracket fixtures={knockout} isMine={isMine} />
           </section>
         )}
 
@@ -863,40 +842,6 @@ function BoardBlock({
       </div>
       <ul className="lc-day-list">{children}</ul>
     </section>
-  );
-}
-
-function KnockoutRow({ f }: { f: Fixture; tz: string }) {
-  const tbd = f.home.abbreviation === 'TBC';
-  const dateLabel = f.scheduleDay
-    ? new Date(`${f.scheduleDay}T12:00:00.000Z`).toLocaleDateString('es-MX', {
-        timeZone: 'UTC',
-        day: 'numeric',
-        month: 'short',
-      })
-    : 'Por anunciar';
-  return (
-    <li
-      className="flex flex-wrap items-center gap-3 py-4 sm:gap-4"
-      data-testid={`lc-ko-${f.id}`}
-    >
-      <div className="min-w-[5.5rem] shrink-0">
-        <p className="af-tele text-muted">{f.jornada}</p>
-        <p className="mt-1 font-mono text-[11px] text-muted">{dateLabel}</p>
-      </div>
-      <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-        <span className="font-display text-sm font-bold uppercase tracking-wide">
-          {tbd ? 'TBC' : f.home.abbreviation}
-        </span>
-        <span className="af-tele text-signal">TBD</span>
-        <span className="font-display text-sm font-bold uppercase tracking-wide">
-          {tbd ? 'TBC' : f.away.abbreviation}
-        </span>
-      </div>
-      <p className="w-full font-mono text-[11px] text-muted sm:w-auto sm:text-right">
-        {f.venue ?? 'TBC'}
-      </p>
-    </li>
   );
 }
 
