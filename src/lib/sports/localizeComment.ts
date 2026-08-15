@@ -4,7 +4,8 @@
  */
 
 function shortPlayer(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const cleaned = name.replace(/\s*\([^)]+\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
+  const parts = cleaned.split(/\s+/).filter(Boolean);
   if (parts.length <= 2) return parts.join(' ');
   return `${parts[0]} ${parts[parts.length - 1]}`;
 }
@@ -100,6 +101,10 @@ export function localizeComment(text: string): string {
       (m) => `Cabezazo de ${shortPlayer(m[1])} atajado.`,
     ],
     [/^Offside\.?$/i, 'Fuera de lugar.'],
+    [
+      /^Offside,\s*(.+?)\.\s+(.+?) is caught offside\.?$/i,
+      (m) => `Fuera de lugar · ${shortPlayer(m[2])} (${m[1]}).`,
+    ],
     [/^Offside,\s*(.+)\.?$/i, (m) => {
       const who = m[1].replace(/\.$/, '').trim();
       return who && who !== '.' ? `Fuera de lugar · ${shortPlayer(who)}.` : 'Fuera de lugar.';
@@ -148,11 +153,23 @@ export function localizeComment(text: string): string {
       (m) => `Gol de ${shortPlayer(m[1])} (izquierda).`,
     ],
     [
+      /^Foul by\s+(.+?)\s+\(([^)]+)\)\.?$/i,
+      (m) => `Falta de ${shortPlayer(m[1])}.`,
+    ],
+    [
       new RegExp(
         `^Foul by\\s+${PLAYER}\\.?$`,
         'i'
       ),
       (m) => `Falta de ${shortPlayer(m[1])}.`,
+    ],
+    [
+      /^(.+?)\s+\(([^)]+)\)\s+wins a free kick in the attacking half\.?$/i,
+      (m) => `${shortPlayer(m[1])} gana un tiro libre en ataque.`,
+    ],
+    [
+      /^(.+?)\s+\(([^)]+)\)\s+wins a free kick in the defensive half\.?$/i,
+      (m) => `${shortPlayer(m[1])} gana un tiro libre en defensa.`,
     ],
     [
       new RegExp(

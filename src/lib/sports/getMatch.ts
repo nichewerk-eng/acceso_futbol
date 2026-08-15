@@ -9,6 +9,7 @@ import { attachDondeVer } from '@/config/dondeVer';
 import { smTeamIdFromAbbr } from './ligaMxTeams';
 import { mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
 import { enrichMatchWithEspnCommentary } from './espnCommentary';
+import { FRESH } from './freshness';
 import { applyLeaguesCupOfficial } from './leaguesCupBoard';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
 import {
@@ -412,6 +413,11 @@ async function getMatchTickUncached(
         home: { ...sm.home, ...board.home },
         away: { ...sm.away, ...board.away },
       };
+    }
+    if (key === 'liga-mx' && sm.state === 'in') {
+      sm = await enrichMatchWithEspnCommentary(sm, {
+        budgetMs: FRESH.espnEnrichBudgetMs,
+      });
     }
     return attachDondeVer(sm) as MatchSnapshot;
   } catch {

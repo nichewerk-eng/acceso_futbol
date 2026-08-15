@@ -3,6 +3,7 @@ import { espnFetch, scoreboardUrl, summaryUrl, SLUG } from '@/lib/espn';
 import { mexicoDayKey } from '@/lib/radio/phases';
 import { FRESH } from './freshness';
 import { scheduleAbbr } from './ligaMxAbbr';
+import { localizeComment } from './localizeComment';
 import type { CommentaryLine, MatchSnapshot } from './types';
 
 type EspnCommentaryRow = {
@@ -72,11 +73,17 @@ async function boardForDay(dayKey: string): Promise<EspnBoardEvent[]> {
   }
 }
 
+const ESPN_ID_TTL_MS = 6 * 60 * 60_000;
+
 /** Resolve ESPN mex.1 event id from a Sportmonks (or other) match snapshot. */
 export async function resolveEspnLigaMxEventId(
   match: Pick<MatchSnapshot, 'date' | 'home' | 'away' | 'id'>
 ): Promise<string | null> {
   if (/^401\d{6,}$/.test(match.id)) return match.id;
+
+  const idKey = `espn-mx-id-${match.id}`;
+  const cachedId = getCache<string>(idKey, ESPN_ID_TTL_MS);
+  if (cachedId) return cachedId;
 
   const dayKey = mexicoDayKey(new Date(match.date));
   const next = new Date(`${dayKey}T12:00:00Z`);
@@ -97,7 +104,10 @@ export async function resolveEspnLigaMxEventId(
       const a = comps.find((c) => c.homeAway === 'away') ?? comps[1];
       const eh = normAbbr(h?.team?.abbreviation);
       const ea = normAbbr(a?.team?.abbreviation);
-      if (eh === home && ea === away) return e.id;
+      if (eh === home && ea === away) {
+        setCache(idKey, e.id);
+        return e.id;
+      }
     }
   }
   return null;
@@ -114,11 +124,26 @@ function shouldPreferEspn(comments: CommentaryLine[], match: MatchSnapshot): boo
   return comments.length >= smCount || smEnglish || smCount < 12;
 }
 
-async function fetchEspnComments(espnId: string, live: boolean): Promise<CommentaryLine[]> {
-  const raw = (await espnFetch(summaryUrl(SLUG.LIGA_MX, espnId, 'es'), {
+async function fetchEspnComments(
+  espnId: string,
+  live: boolean,
+  lang: 'es' | 'en'
+): Promise<CommentaryLine[]> {
+  const raw = (await espnFetch(summaryUrl(SLUG.LIGA_MX, espnId, lang), {
     revalidate: live ? false : 15,
   })) as { commentary?: EspnCommentaryRow[] };
   return mapEspnCommentary(raw.commentary);
+}
+
+/** Spanish package is often thin; English PBP is denser — localize it. */
+async function bestEspnComments(espnId: string, live: boolean): Promise<CommentaryLine[]> {
+  const [es, en] = await Promise.all([
+    fetchEspnComments(espnId, live, 'es'),
+    fetchEspnComments(espnId, live, 'en'),
+  ]);
+  const enMx = en.map((c) => ({ ...c, text: localizeComment(c.text) }));
+  if (es.length >= 8 && es.length + 3 >= enMx.length) return es;
+  return enMx.length >= es.length ? enMx : es;
 }
 
 /**
@@ -129,9 +154,12 @@ export async function enrichMatchWithEspnCommentary(
   match: MatchSnapshot,
   opts?: { budgetMs?: number }
 ): Promise<MatchSnapshot> {
-  const cacheKey = `espn-cronica-v1-${match.id}`;
+  const cacheKey = `espn-cronica-v2-${match.id}`;
   const cached = getCache<CommentaryLine[]>(cacheKey, FRESH.espnCronicaTtlMs);
-  // First Completa load: wait for Spanish PBP. Later live polls: keep scores snappy.
+  if (cached && shouldPreferEspn(cached, match)) {
+    return { ...match, comments: cached };
+  }
+  // First Completa load: wait for PBP. Later live polls: keep scores snappy.
   const budget =
     opts?.budgetMs ??
     (cached
@@ -146,7 +174,7 @@ export async function enrichMatchWithEspnCommentary(
     const espnId = await resolveEspnLigaMxEventId(match);
     if (!espnId) return match;
 
-    const comments = await fetchEspnComments(espnId, match.state === 'in');
+    const comments = await bestEspnComments(espnId, match.state === 'in');
     if (!shouldPreferEspn(comments, match)) return match;
 
     setCache(cacheKey, comments);
