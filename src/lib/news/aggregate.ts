@@ -10,7 +10,22 @@ import { fetchTudnStories } from './tudn';
 import type { StoriesPayload, Story, StorySourceId } from './types';
 
 const MX_HINT =
-  /liga\s*mx|apertura|clausura|chivas|américa|america|tigres|rayados|cruz azul|pumas|atlas|atlante|toluca|santos|xolos|necaxa|quer[eé]taro|le[oó]n|pachuca|ju[aá]rez|puebla|san luis|femenil|selecci[oó]n|el tri|futbol mexicano|fútbol mexicano/i;
+  /liga\s*mx|\bapertura\b|\bclausura\b|\bchivas\b|\bam[eé]rica\b|\btigres\b|\brayados\b|cruz\s+azul|\bpumas\b|\batlas\b|\batlante\b|\btoluca\b|\bsantos\b|\bxolos\b|\bnecaxa\b|quer[eé]taro|\ble[oó]n\b|\bpachuca\b|ju[aá]rez|\bpuebla\b|san\s+luis|\bfemenil\b|selecci[oó]n|\bel\s+tri\b|f[uú]tbol mexicano/i;
+
+/** Liga MX beat without the ambiguous word "Santos" (Brazilian Peixe vs Laguna). */
+const MX_HINT_WITHOUT_SANTOS =
+  /liga\s*mx|\bapertura\b|\bclausura\b|\bchivas\b|\bam[eé]rica\b|\btigres\b|\brayados\b|cruz\s+azul|\bpumas\b|\batlas\b|\batlante\b|\btoluca\b|santos\s+laguna|\bguerreros\b|\bxolos\b|\bnecaxa\b|quer[eé]taro|\ble[oó]n\b|\bpachuca\b|ju[aá]rez|\bpuebla\b|san\s+luis|\bfemenil\b|selecci[oó]n|\bel\s+tri\b|f[uú]tbol mexicano/i;
+
+/** Brazilian Santos / Sudamericana noise that ESPN soccer RSS tags as "Santos". */
+const FOREIGN_SANTOS =
+  /\bpeixe\b|\bneymar\b|\bmacar[aá]\b|vila\s*belmiro|\bsantos\s*fc\b|\bbrasileir[aã]o\b|\bbrasileiro\b|\bconmebol\b|\bsudamericana\b/i;
+
+function isMxCableBeat(title: string, description: string): boolean {
+  const text = `${title} ${description}`;
+  if (!MX_HINT.test(text)) return false;
+  if (FOREIGN_SANTOS.test(text) && !MX_HINT_WITHOUT_SANTOS.test(text)) return false;
+  return true;
+}
 
 type SourceDef = {
   id: StorySourceId;
@@ -70,7 +85,7 @@ async function loadSource(src: SourceDef): Promise<Story[]> {
   if (src.kind === 'tudn') return fetchTudnStories();
   const items = await fetchRss(src.url!);
   return items
-    .filter((it) => !src.filter || MX_HINT.test(`${it.title} ${it.description}`))
+    .filter((it) => !src.filter || isMxCableBeat(it.title, it.description))
     .slice(0, 12)
     .map((it) => toStory(it, src.id, src.label));
 }
@@ -127,7 +142,10 @@ export async function aggregateStories(): Promise<StoriesPayload> {
   const editorial = accesoEditorialStories();
 
   // Topic-aware collapse (same matchup / same deck across ESPN, MT, TUDN, etc.)
-  const deduped = dedupeStories(buckets.flat());
+  const wireIn = buckets.flat().filter(
+    (s) => s.sourceId !== 'espn-rss' || isMxCableBeat(s.title, s.summary)
+  );
+  const deduped = dedupeStories(wireIn);
   // Cable stays on the beat: Mexico City today + yesterday only.
   const freshWire = filterFreshByPublishedAt(deduped);
   const freshEditorial = filterFreshByPublishedAt(editorial);

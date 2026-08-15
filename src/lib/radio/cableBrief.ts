@@ -36,8 +36,8 @@ function briefBucket(now = Date.now()) {
 }
 
 export function cableBriefId(style: RadioStyle, now = Date.now()) {
-  // v11: text-only brief; TTS on play via /api/radio/tts (no ephemeral audioPath)
-  return `cable-brief-v11-${briefBucket(now)}-${style}`;
+  // v13: drop Brazilian Santos RSS false positives; TTS on play via /api/radio/tts
+  return `cable-brief-v13-${briefBucket(now)}-${style}`;
 }
 
 const WIRE_SOURCES = new Set(['espn', 'espn-rss', 'mediotiempo', 'tudn', 'marca']);
