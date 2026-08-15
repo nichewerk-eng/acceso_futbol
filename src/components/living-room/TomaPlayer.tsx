@@ -42,6 +42,7 @@ export function TomaDeskSkeleton() {
 export function TomaPlayer({ take }: { take: JornadaTake }) {
   const pathname = usePathname();
   const cortes = useMemo(() => jornadaTakeCortes(take), [take]);
+  const [episodeUrl, setEpisodeUrl] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
   const [busy, setBusy] = useState(false);
   const [held, setHeld] = useState(false);
@@ -55,10 +56,12 @@ export function TomaPlayer({ take }: { take: JornadaTake }) {
   const idxRef = useRef(0);
   const cortesRef = useRef(cortes);
   const pathRef = useRef(pathname);
+  const episodeUrlRef = useRef<string | null>(null);
   const takeKey = `${take.jornadaNum ?? 'x'}-${take.headline}-${take.body?.length ?? 0}`;
   const takeKeyRef = useRef(takeKey);
 
   cortesRef.current = cortes;
+  episodeUrlRef.current = episodeUrl;
 
   const revoke = useCallback(() => {
     if (objectUrlRef.current) {
@@ -98,6 +101,28 @@ export function TomaPlayer({ take }: { take: JornadaTake }) {
       stop();
     }
   }, [takeKey, stop]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = () => {
+      fetch('/api/toma/episode')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d: { episode?: { audioUrl?: string } | null } | null) => {
+          const url = d?.episode?.audioUrl;
+          if (!cancelled && url) setEpisodeUrl(url);
+        })
+        .catch(() => {});
+    };
+    load();
+    if (episodeUrl) return () => {
+      cancelled = true;
+    };
+    const t = setInterval(load, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+    };
+  }, [take.jornadaNum, episodeUrl]);
 
   useEffect(() => {
     if (pathname !== pathRef.current) {
@@ -188,7 +213,38 @@ export function TomaPlayer({ take }: { take: JornadaTake }) {
     }
   }
 
-  async function playAt(i: number) {
+  async function playEpisode(url: string) {
+    playingRef.current = true;
+    idxRef.current = 0;
+    setActive(0);
+    setPlaying(true);
+    setHeld(false);
+    setBusy(true);
+    setProgress(0);
+    audioRef.current?.pause();
+    revoke();
+    try {
+      const a = new Audio(url);
+      audioRef.current = a;
+      a.onended = () => stop();
+      a.onerror = () => {
+        if (playingRef.current) void playAt(0, true);
+      };
+      setBusy(false);
+      await a.play();
+      if (!playingRef.current) a.pause();
+    } catch {
+      setBusy(false);
+      if (playingRef.current) void playAt(0, true);
+    }
+  }
+
+  async function playAt(i: number, skipEpisode = false) {
+    const stored = skipEpisode ? null : episodeUrlRef.current;
+    if (stored && i === 0) {
+      await playEpisode(stored);
+      return;
+    }
     const list = cortesRef.current;
     const corte = list[i];
     if (!corte) {
@@ -272,7 +328,7 @@ export function TomaPlayer({ take }: { take: JornadaTake }) {
   const live = playing && !busy;
   const masterLabel = playing ? (busy ? 'Armando voz…' : 'Pausa') : held ? 'Seguir' : 'Al aire';
 
-  if (cortes.length === 0) return null;
+  if (cortes.length === 0 && !episodeUrl) return null;
 
   return (
     <div className="toma-senal" data-testid="toma-player" data-live={live ? '1' : '0'}>

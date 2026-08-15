@@ -61,3 +61,18 @@ export async function kvSetJson<T>(key: string, data: T, ttlMs: number): Promise
   const px = Math.max(1_000, Math.ceil(ttlMs));
   await kvCommand(['SET', `af:${key}`, payload, 'PX', String(px)]);
 }
+
+/** SET NX PX. Returns false if the key already exists or KV is off. */
+export async function kvSetNx(key: string, value: string, ttlMs: number): Promise<boolean> {
+  if (!kvConfigured()) return false;
+  const px = Math.max(1_000, Math.ceil(ttlMs));
+  const raw = await kvCommand<{ result: string | null }>([
+    'SET',
+    `af:${key}`,
+    value,
+    'PX',
+    String(px),
+    'NX',
+  ]);
+  return raw?.result === 'OK';
+}
