@@ -164,7 +164,7 @@ export function sportsEventJsonLd(match: MatchSnapshot, league: string) {
       name: leagueLabel(league),
     },
     url: absoluteUrl(`/partido/${league}/${match.id}`),
-    image: match.home.logo || match.away.logo || absoluteUrl('/logo.png'),
+    image: absoluteUrl(`/partido/${league}/${match.id}/opengraph-image`),
     inLanguage: 'es-MX',
   };
 }

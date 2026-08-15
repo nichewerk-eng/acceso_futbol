@@ -4155,6 +4155,27 @@ body {
   justify-content: center;
 }
 
+.match-share {
+  justify-self: start;
+  align-self: end;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(246, 245, 242, 0.7);
+  background: transparent;
+  border: 1px solid rgba(246, 245, 242, 0.18);
+  padding: 0.55rem 0.85rem;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.match-share:hover {
+  color: #f6f5f2;
+  border-color: rgba(246, 245, 242, 0.45);
+}
+
 @media (min-width: 768px) {
   .match-hero-actions {
     grid-template-columns: 1fr auto;
@@ -4165,6 +4186,10 @@ body {
 
   .match-radio-cta {
     width: auto;
+    justify-self: end;
+  }
+
+  .match-share {
     justify-self: end;
   }
 }

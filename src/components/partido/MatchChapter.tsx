@@ -21,6 +21,7 @@ import { scheduleAbbr } from '@/lib/sports/ligaMxAbbr';
 import { localizeStatus } from '@/lib/sports/localizeEs';
 import { mergeMatchSnapshot } from '@/lib/sports/mergeMatchSnapshot';
 import { MatchChapterSkeleton } from '@/components/partido/MatchChapterSkeleton';
+import { MatchShare } from '@/components/partido/MatchShare';
 
 type Props = { league: string; id: string; initialMatch?: MatchSnapshot | null };
 type TabId = 'contexto' | 'momentos' | 'alineacion' | 'datos' | 'radio';
@@ -917,6 +918,7 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
                 compact
               />
             </div>
+            <MatchShare match={match} league={league} />
           </div>
         </div>
       </section>
