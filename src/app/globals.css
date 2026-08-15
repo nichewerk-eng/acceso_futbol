@@ -2823,6 +2823,163 @@ body {
   margin-bottom: 0.1rem;
 }
 
+/* ── Dónde ver jornada guide ── */
+.dv-guide {
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  padding: 1.25rem 1.15rem 1.35rem;
+}
+
+@media (min-width: 640px) {
+  .dv-guide {
+    padding: 1.5rem 1.5rem 1.6rem;
+  }
+}
+
+.dv-guide-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+  padding-bottom: 1.15rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.dv-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.dv-row {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--line);
+  color: inherit;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.dv-row:hover {
+  background: var(--bg-3);
+}
+
+.dv-row-mine {
+  box-shadow: inset 3px 0 0 var(--signal);
+  padding-left: 0.85rem;
+}
+
+.dv-row-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.dv-kick {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.dv-pair {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.dv-side {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.dv-side-away {
+  justify-content: flex-end;
+}
+
+.dv-abbr {
+  font-family: var(--font-oswald), sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dv-mid {
+  flex-shrink: 0;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.dv-channels .tv-donde-label {
+  display: none;
+}
+
+.dv-pending {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.dv-ritual {
+  margin-top: 1.15rem;
+}
+
+.dv-guide-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.65rem;
+}
+
+.dv-share {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--foreground);
+  background: transparent;
+  border: 1px solid var(--line);
+  padding: 0.55rem 0.85rem;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.dv-share:hover {
+  border-color: var(--foreground);
+}
+
+@media (min-width: 768px) {
+  .dv-row {
+    grid-template-columns: minmax(9rem, 0.7fr) minmax(12rem, 1fr) minmax(12rem, 1.3fr);
+    align-items: center;
+    gap: 1rem 1.25rem;
+  }
+
+  .dv-row-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
+}
+
 /* Inline strip for match rows — logos only, shared cap height.
    Do not set `display` here — it fights Tailwind hide/show utilities. */
 .tv-inline {

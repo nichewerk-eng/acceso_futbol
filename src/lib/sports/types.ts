@@ -127,6 +127,8 @@ export interface Fixture {
       | 'tsn'
       | 'televisa'
     >;
+    /** True when MX/US marks come from a confirmed guide, not a guess. */
+    confirmed?: boolean;
   };
 }
 

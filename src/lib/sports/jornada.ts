@@ -1,3 +1,4 @@
+import { attachDondeVer } from '@/config/dondeVer';
 import { isMexicoDay, mexicoDayKey } from '@/lib/radio/phases';
 import type { Fixture } from './types';
 import { fetchLigaMxFixtures, seedLigaMxFixtures } from './espnFallback';
@@ -85,6 +86,7 @@ function overviewFrom(
   const label = `Jornada ${n}`;
   const games = fixtures
     .filter((f) => jornadaNumber(f.jornada) === n)
+    .map(attachDondeVer)
     .sort((a, b) => +new Date(a.date) - +new Date(b.date));
 
   return {

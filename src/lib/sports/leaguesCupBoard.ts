@@ -63,6 +63,7 @@ function channelsFor(listing: { us: TvChannelId[]; mx?: TvChannelId[] }): Fixtur
     us: us.map((id) => TV_CHANNELS[id].label).join(' · '),
     mxChannels: mx,
     usChannels: us,
+    confirmed: true,
   };
 }
 

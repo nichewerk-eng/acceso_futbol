@@ -25,6 +25,8 @@ export type TvChannelId =
 export type TvChannel = {
   id: TvChannelId;
   label: string;
+  /** Linear broadcast vs app / streamer */
+  kind: 'tv' | 'stream';
   /** Optional mark; text badge when missing */
   src?: string;
   /** Alternate mark for ink / black surfaces (two-color logos) */
@@ -37,96 +39,116 @@ export const TV_CHANNELS: Record<TvChannelId, TvChannel> = {
   tudn: {
     id: 'tudn',
     label: 'TUDN',
+    kind: 'tv',
     src: '/tv_logos/tudn-seeklogo.png',
   },
   vix: {
     id: 'vix',
     label: 'ViX',
+    kind: 'stream',
     src: '/tv_logos/vix-seeklogo.png',
   },
   'canal-5': {
     id: 'canal-5',
     label: 'Canal 5',
+    kind: 'tv',
     src: '/tv_logos/Canal_5_Mexico.svg',
     srcInk: '/tv_logos/Canal_5_Mexico_onDark.svg',
   },
   layvtime: {
     id: 'layvtime',
     label: 'LayVTime',
+    kind: 'stream',
     src: '/tv_logos/layvtime_white.svg',
     onDark: true,
   },
   univision: {
     id: 'univision',
     label: 'Univision',
+    kind: 'tv',
     src: '/tv_logos/Uni_Vt_Pos_R_Sml_Flt_rgb.png',
   },
   unimas: {
     id: 'unimas',
     label: 'UniMás',
+    kind: 'tv',
     src: '/tv_logos/UMas_SM_Sml_rgb.png',
   },
   'apple-tv': {
     id: 'apple-tv',
     label: 'Apple TV',
+    kind: 'stream',
     src: '/tv_logos/AppleTV-iOS.png',
   },
   fs1: {
     id: 'fs1',
     label: 'FS1',
+    kind: 'tv',
     src: '/tv_logos/fs1-seeklogo.png',
   },
   'imagen-tv': {
     id: 'imagen-tv',
     label: 'Imagen TV',
+    kind: 'tv',
     src: '/tv_logos/Imagen-TV.png',
   },
   'azteca-7': {
     id: 'azteca-7',
     label: 'Azteca 7',
+    kind: 'tv',
     src: '/tv_logos/Azteca7.png',
   },
   espn: {
     id: 'espn',
     label: 'ESPN',
+    kind: 'tv',
     src: '/tv_logos/ESPN.svg',
   },
   'disney-plus': {
     id: 'disney-plus',
     label: 'Disney+',
+    kind: 'stream',
     src: '/tv_logos/disney-plus.svg',
   },
   fox: {
     id: 'fox',
     label: 'FOX',
+    kind: 'tv',
     src: '/tv_logos/Fox.svg',
     onDark: true,
   },
   'fox-one': {
     id: 'fox-one',
     label: 'FOX One',
+    kind: 'stream',
     src: '/tv_logos/FOX-ONE.svg',
     onDark: true,
   },
   'fox-deportes': {
     id: 'fox-deportes',
     label: 'Fox Deportes',
+    kind: 'tv',
     src: '/tv_logos/Fox_Deportes.svg',
   },
   tsn: {
     id: 'tsn',
     label: 'TSN 5',
+    kind: 'tv',
   },
   televisa: {
     id: 'televisa',
     label: 'Televisa',
+    kind: 'tv',
     src: '/tv_logos/Televisa.png',
   },
 };
 
-const DEFAULTS = {
-  mx: ['vix', 'tudn'] as TvChannelId[],
-  us: ['tudn', 'vix'] as TvChannelId[],
+const UNCONFIRMED = {
+  mx: 'Por confirmar',
+  us: 'Por confirmar',
+  mxChannels: [] as TvChannelId[],
+  usChannels: [] as TvChannelId[],
+  confirmed: false,
 };
 
 /**
@@ -197,7 +219,7 @@ function labelList(ids: TvChannelId[]): string {
   return ids.map((id) => TV_CHANNELS[id].label).join(' · ');
 }
 
-/** Resolve MX/US channels for a fixture (known guide → defaults). */
+/** Resolve MX/US channels for a fixture (known guide → unconfirmed). */
 export function resolveDondeVer(
   fixture: Pick<Fixture, 'date' | 'home' | 'away' | 'venue' | 'city' | 'league'>
 ): {
@@ -205,6 +227,7 @@ export function resolveDondeVer(
   us: string;
   mxChannels: TvChannelId[];
   usChannels: TvChannelId[];
+  confirmed: boolean;
 } {
   const known = GUIDE[pairKey(fixture.date, fixture.home.abbreviation, fixture.away.abbreviation)];
   if (known) {
@@ -213,6 +236,7 @@ export function resolveDondeVer(
       us: labelList(known.us),
       mxChannels: known.mx,
       usChannels: known.us,
+      confirmed: true,
     };
   }
 
@@ -223,34 +247,11 @@ export function resolveDondeVer(
       us: 'Apple TV',
       mxChannels: ['apple-tv'],
       usChannels: ['apple-tv'],
+      confirmed: true,
     };
   }
 
-  const venue = `${fixture.venue ?? ''} ${fixture.city ?? ''}`.toLowerCase();
-  const inUs =
-    venue.includes('houston') ||
-    venue.includes('austin') ||
-    venue.includes('dallas') ||
-    venue.includes('los angeles') ||
-    venue.includes('chicago') ||
-    venue.includes('united states') ||
-    venue.includes('usa');
-
-  if (inUs) {
-    return {
-      mx: 'Consulta tu cable / streaming local',
-      us: 'Evento en EE.UU. · revisa TUDN / local',
-      mxChannels: [],
-      usChannels: ['tudn'],
-    };
-  }
-
-  return {
-    mx: labelList(DEFAULTS.mx),
-    us: labelList(DEFAULTS.us),
-    mxChannels: DEFAULTS.mx,
-    usChannels: DEFAULTS.us,
-  };
+  return { ...UNCONFIRMED };
 }
 
 /** Official Leagues Cup TV grid by Sportmonks fixture id (Imagen / FS1 selects). */
@@ -259,6 +260,7 @@ function leaguesCupBoardDondeVer(fixtureId: string): {
   us: string;
   mxChannels: TvChannelId[];
   usChannels: TvChannelId[];
+  confirmed: boolean;
 } | null {
   const kick = LEAGUES_CUP_PHASE_ONE.find((k) => String(k.smId) === fixtureId);
   if (!kick) return null;
@@ -269,6 +271,7 @@ function leaguesCupBoardDondeVer(fixtureId: string): {
     us: labelList(us),
     mxChannels: mx,
     usChannels: us,
+    confirmed: true,
   };
 }
 
@@ -283,7 +286,11 @@ export function attachDondeVer(fixture: Fixture): Fixture {
 
   // Keep other curated boards that already carry channel ids.
   if (fixture.dondeVer?.usChannels?.length || fixture.dondeVer?.mxChannels?.length) {
-    return fixture;
+    if (fixture.dondeVer.confirmed) return fixture;
+    return {
+      ...fixture,
+      dondeVer: { ...fixture.dondeVer, confirmed: true },
+    };
   }
   const d = resolveDondeVer(fixture);
   return {
@@ -293,6 +300,7 @@ export function attachDondeVer(fixture: Fixture): Fixture {
       us: d.us,
       mxChannels: d.mxChannels,
       usChannels: d.usChannels,
+      confirmed: d.confirmed,
     },
   };
 }

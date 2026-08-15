@@ -10,6 +10,7 @@ import { useGravity } from '@/contexts/GravityContext';
 const LINKS = [
   { href: '/', label: 'Pulso' },
   { href: '/#jornada', label: 'Jornada' },
+  { href: '/#donde-ver', label: 'Dónde ver' },
   { href: '/#noticias', label: 'Cable' },
   { href: '/liga-mx', label: 'Liga MX' },
   { href: '/leagues-cup', label: 'Leagues Cup' },

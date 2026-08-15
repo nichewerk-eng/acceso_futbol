@@ -3,27 +3,13 @@
 import Link from 'next/link';
 import { useEffect, useState, type CSSProperties } from 'react';
 import { ClubLogo } from '@/components/brand/ClubLogo';
+import { DondeVerGuide } from '@/components/living-room/DondeVerGuide';
 import { useGravity } from '@/contexts/GravityContext';
 import { isLeaguesCupWindow } from '@/config/leaguesCup2026';
 import { startLivePoll } from '@/lib/client/livePoll';
 import { paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
 import type { Fixture } from '@/lib/sports';
 import type { JornadaOverview } from '@/lib/sports/jornada';
-
-function kickWhen(iso: string, tz: string) {
-  try {
-    return new Date(iso).toLocaleString('es-MX', {
-      timeZone: tz,
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-  } catch {
-    return '';
-  }
-}
 
 function scorerLine(f: Fixture): string {
   const list = f.scorers ?? [];
@@ -98,33 +84,6 @@ function ResultStamp({ f, mine }: { f: Fixture; mine: boolean }) {
           <p className="jor-stamp-scorers">&nbsp;</p>
         )}
       </div>
-    </Link>
-  );
-}
-
-function NextCard({ f, mine, tz }: { f: Fixture; mine: boolean; tz: string }) {
-  return (
-    <Link
-      href={`/partido/liga-mx/${f.id}`}
-      data-testid={`jornada-match-${f.id}`}
-      className={['jor-next jor-rise', mine ? 'jor-next-mine' : ''].join(' ')}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <p className="jor-next-when">{kickWhen(f.date, tz)}</p>
-        {mine && <span className="af-tele !text-signal">LOCK</span>}
-      </div>
-      <div className="jor-next-vs">
-        <span className="jor-next-side jor-next-home">
-          <ClubLogo abbr={f.home.abbreviation} name={f.home.name} size="sm" />
-          <span className="jor-next-abbr">{f.home.abbreviation}</span>
-        </span>
-        <span className="jor-next-mid">VS</span>
-        <span className="jor-next-side jor-next-away">
-          <ClubLogo abbr={f.away.abbreviation} name={f.away.name} size="sm" />
-          <span className="jor-next-abbr">{f.away.abbreviation}</span>
-        </span>
-      </div>
-      <p className="jor-next-when jor-next-cta">Ficha del partido</p>
     </Link>
   );
 }
@@ -308,18 +267,14 @@ export function JornadaRecap() {
               </div>
             )}
 
-            {upcoming.length > 0 && (
-              <div data-testid="jornada-upcoming">
-                <div className="mb-4 flex items-baseline justify-between gap-3">
-                  <h3 className="font-display text-2xl font-bold uppercase tracking-wide">Quedan</h3>
-                  <p className="af-tele">{upcoming.length} por jugar</p>
-                </div>
-                <div className="jor-mosaic">
-                  {upcoming.map((f) => (
-                    <NextCard key={f.id} f={f} mine={isMine(f)} tz={userTz} />
-                  ))}
-                </div>
-              </div>
+            {(live.length > 0 || upcoming.length > 0) && (
+              <DondeVerGuide
+                jornadaNum={jornadaNum}
+                live={live}
+                upcoming={upcoming}
+                tz={userTz}
+                isMine={isMine}
+              />
             )}
           </div>
         )}
