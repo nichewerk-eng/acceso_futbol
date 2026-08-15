@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { RitualSlot } from '@/components/ritual/RitualSlot';
 import { startLivePoll } from '@/lib/client/livePoll';
 
@@ -8,7 +8,6 @@ type Beat = {
   id: string;
   text: string;
   kind: string;
-  audioPath?: string;
   createdAt: number;
 };
 
@@ -23,6 +22,7 @@ export function RadioCompanion({ league, matchId }: { league: string; matchId: s
   const [line, setLine] = useState('Pulsa play para entrar a la cabina.');
   const [mode, setMode] = useState<'live' | 'preshow' | 'recap' | 'off'>('live');
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const objectUrlRef = useRef<string | null>(null);
   const spokenRef = useRef<Set<string>>(new Set());
   const busyRef = useRef(false);
   const playingRef = useRef(false);
@@ -30,6 +30,13 @@ export function RadioCompanion({ league, matchId }: { league: string; matchId: s
   useEffect(() => {
     playingRef.current = playing;
   }, [playing]);
+
+  const revokeObjectUrl = useCallback(() => {
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,13 +54,13 @@ export function RadioCompanion({ league, matchId }: { league: string; matchId: s
         })
         .catch(() => {});
     };
-    // Radio beats are not score-critical — idle pace is enough.
     const stop = startLivePoll(load, { getPace: () => 'idle' });
     return () => {
       cancelled = true;
       stop();
+      revokeObjectUrl();
     };
-  }, [league, matchId]);
+  }, [league, matchId, revokeObjectUrl]);
 
   function speakFallback(text: string, onEnd: () => void) {
     if (typeof window === 'undefined' || !window.speechSynthesis) {
@@ -69,30 +76,70 @@ export function RadioCompanion({ league, matchId }: { league: string; matchId: s
     window.speechSynthesis.speak(u);
   }
 
+  async function fetchTtsBlob(beat: Beat): Promise<Blob | null> {
+    try {
+      const r = await fetch('/api/radio/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: beat.id,
+          text: beat.text,
+          style: RADIO_STYLE,
+        }),
+      });
+      if (!r.ok) return null;
+      return await r.blob();
+    } catch {
+      return null;
+    }
+  }
+
   function playNext(queue: Beat[]) {
     if (!playingRef.current || busyRef.current) return;
     const next = queue.find((b) => !spokenRef.current.has(b.id));
     if (!next) return;
 
-    busyRef.current = true;
     spokenRef.current.add(next.id);
     setLine(next.text);
+    busyRef.current = true;
 
     const done = () => {
+      revokeObjectUrl();
       busyRef.current = false;
       if (playingRef.current) playNext(queue);
     };
 
-    if (next.audioPath) {
-      const audio = new Audio(next.audioPath);
-      audioRef.current = audio;
-      audio.onended = done;
-      audio.onerror = () => speakFallback(next.text, done);
-      audio.play().catch(() => speakFallback(next.text, done));
-      return;
-    }
+    void (async () => {
+      if (!playingRef.current) {
+        busyRef.current = false;
+        return;
+      }
 
-    speakFallback(next.text, done);
+      const blob = await fetchTtsBlob(next);
+      if (!playingRef.current) {
+        busyRef.current = false;
+        return;
+      }
+
+      if (blob && typeof Audio !== 'undefined') {
+        try {
+          audioRef.current?.pause();
+          revokeObjectUrl();
+          const url = URL.createObjectURL(blob);
+          objectUrlRef.current = url;
+          const a = new Audio(url);
+          audioRef.current = a;
+          a.onended = done;
+          a.onerror = () => speakFallback(next.text, done);
+          await a.play();
+          return;
+        } catch {
+          /* fall through */
+        }
+      }
+
+      speakFallback(next.text, done);
+    })();
   }
 
   useEffect(() => {
@@ -107,38 +154,41 @@ export function RadioCompanion({ league, matchId }: { league: string; matchId: s
       playingRef.current = false;
       busyRef.current = false;
       audioRef.current?.pause();
+      revokeObjectUrl();
       window.speechSynthesis?.cancel();
-    } else {
-      setPlaying(true);
+      return;
     }
+    setPlaying(true);
   }
 
+  const ready = enabled && beats.length > 0;
+
   return (
-    <section id="radio" className="border border-line bg-bg-2">
+    <section id="radio" className="border border-line bg-bg-2" data-testid="match-radio">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
-            Acceso Radio
-            {mode === 'preshow' ? ' · Pre-show' : mode === 'recap' ? ' · Recap' : ''}
+          <p className="af-tele text-foreground">
+            <span className="text-signal">AF</span>
+            ://RADIO
+            {mode === 'preshow' ? ' · PRE-SHOW' : mode === 'recap' ? ' · RECAP' : ''}
           </p>
-          <p className="mt-0.5 text-[10px] uppercase tracking-[0.16em] text-muted/70">
+          <p className="mt-0.5 text-[10px] uppercase tracking-[0.16em] text-muted">
             {mode === 'preshow'
               ? 'Podcast previo · arranca ~15 min antes'
               : mode === 'recap'
                 ? 'Podcast postpartido · crónica + datos'
-                : `Transmisión Acceso · ~${delaySec}s de retraso`}
+                : `Cabina Acceso · ~${delaySec}s de retraso`}
             {!enabled ? ' · pausado' : ''}
           </p>
         </div>
         <button
           type="button"
           onClick={toggle}
-          className={[
-            'px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] transition',
-            playing ? 'border border-line text-foreground' : 'bg-signal text-on-signal',
-          ].join(' ')}
+          disabled={!ready}
+          data-testid="match-radio-play"
+          className="af-cta !py-2 disabled:opacity-40"
         >
-          {playing ? 'Pausa' : 'Play'}
+          {playing ? 'Pausa' : '▶ Escuchar'}
         </button>
       </div>
 
@@ -146,9 +196,8 @@ export function RadioCompanion({ league, matchId }: { league: string; matchId: s
         <p className="font-display text-lg font-semibold uppercase leading-snug tracking-wide text-foreground">
           {line}
         </p>
-        <p className="mt-2 text-[10px] uppercase tracking-[0.14em] text-muted">
-          {beats.length} segmentos
-          {beats.some((b) => b.audioPath) ? ' · ElevenLabs' : ' · voz del navegador'}
+        <p className="mt-2 af-tele">
+          {beats.length} segmentos · ~30s de retraso a propósito. No es TV en vivo.
         </p>
       </div>
 

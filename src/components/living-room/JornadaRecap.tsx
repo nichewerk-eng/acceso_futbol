@@ -4,12 +4,15 @@ import Link from 'next/link';
 import { useEffect, useState, type CSSProperties } from 'react';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { DondeVerGuide } from '@/components/living-room/DondeVerGuide';
+import { JornadaTakeBoard } from '@/components/living-room/JornadaTake';
 import { useGravity } from '@/contexts/GravityContext';
 import { isLeaguesCupWindow } from '@/config/leaguesCup2026';
 import { startLivePoll } from '@/lib/client/livePoll';
 import { paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
 import type { Fixture } from '@/lib/sports';
 import type { JornadaOverview } from '@/lib/sports/jornada';
+import { useTomaTake } from '@/lib/client/useTomaTake';
+import { buildJornadaTake, mergeJornadaTake } from '@/lib/sports/jornadaTake';
 
 function scorerLine(f: Fixture): string {
   const list = f.scorers ?? [];
@@ -89,7 +92,7 @@ function ResultStamp({ f, mine }: { f: Fixture; mine: boolean }) {
 }
 
 export function JornadaRecap() {
-  const { matchesGravity } = useGravity();
+  const { matchesGravity, club, elTri } = useGravity();
   const [data, setData] = useState<JornadaOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [userTz, setUserTz] = useState('America/Mexico_City');
@@ -127,6 +130,13 @@ export function JornadaRecap() {
     };
   }, []);
 
+  const lcPause =
+    data != null &&
+    data.upcoming.length === 0 &&
+    data.live.length + data.played.length > 0 &&
+    isLeaguesCupWindow();
+  const remote = useTomaTake(data, Boolean(data) && !lcPause);
+
   if (!loading && !data) return null;
 
   const played = data?.played ?? [];
@@ -137,10 +147,17 @@ export function JornadaRecap() {
   const doneCount = doneBlock.length;
   const jornadaNum = data?.number;
   const fechaCerrada = !loading && Boolean(data) && upcoming.length === 0 && doneCount > 0;
-  const lcPause = fechaCerrada && isLeaguesCupWindow();
 
   const isMine = (f: Fixture) =>
     matchesGravity(f.home.name, f.away.name, f.home.abbreviation, f.away.abbreviation);
+  const local =
+    data && !lcPause
+      ? buildJornadaTake(data, {
+          isMine,
+          lockAbbr: club?.abbreviation ?? (elTri ? 'MEX' : null),
+        })
+      : null;
+  const take = local && remote ? mergeJornadaTake(local, remote) : local;
 
   return (
     <section
@@ -266,6 +283,8 @@ export function JornadaRecap() {
                 </div>
               </div>
             )}
+
+            {take ? <JornadaTakeBoard take={take} /> : null}
 
             {(live.length > 0 || upcoming.length > 0) && (
               <DondeVerGuide

@@ -1,0 +1,30 @@
+---
+description: Acceso Toma / jornada copy follows the script guide (website recap)
+globs: src/lib/sports/jornadaTake*.ts,src/components/living-room/JornadaTake.tsx,src/components/living-room/Toma*.tsx,src/app/toma/**,src/app/api/toma/**
+alwaysApply: false
+---
+
+# Toma = website recap, not a VO script
+
+When writing or changing the jornada Toma (`/toma`, `jornadaTakeAi`, the paper board), read and follow:
+
+`doc/ACCESO_FUTBOL_SCRIPT_GUIDE.md`
+
+Use **Section 4** (website J4 recap) plus **Section 0** with the website exception.
+
+## Apply
+- Accents ON in website copy (`análisis`, `Selección`). The no-accent rule is VO/graphics only.
+- No em-dashes. Period or comma.
+- First-person take (`yo creo` / `honestamente` / `para mí`) in the column.
+- At least one verified stat from the dossier (Sportmonks / cable). Never invent scores.
+- Cover the **full jornada window**, including Monday. Not "sábado y domingo."
+- Spoken clocks only in Toma copy: `lunes a las nueve de la noche`, `Pachuca contra Puebla`. Never `9:06 p.m. (PAC–PUE)`.
+- Cover all games in the slate, not only América / Chivas / Cruz Azul.
+- Standings: Apertura 2026 corte is **top 8, no Play-In** (product override of the guide's Play-In line).
+- Close with a dividing question (binary or A/B/C), not "síguenos."
+- Blocklist as standalone hook: Márquez appointment, Almada arrival, Gignac departure, "Atlante regresó."
+
+## Do not apply (VO-only)
+- `Preparense que arrancamos`
+- Stripping vowel accents
+- TikTok runtime / hashtag packaging

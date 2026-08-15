@@ -11,7 +11,7 @@ import { radioPhase } from './phases';
 import { type RadioStyle } from './personas';
 import { generateScript } from './script';
 import { buildPreshowSegments, buildRecapSegments } from './show';
-import { radioEnabled, synthesize } from './tts';
+import { radioEnabled } from './tts';
 
 const DELAY_MS = Number(process.env.RADIO_DELAY_MS ?? 30_000);
 const seen = new Map<string, number>(); // eventKey -> firstSeen
@@ -50,7 +50,6 @@ async function ensureBeat(params: {
       minute: params.minute,
     }));
 
-  const audioPath = await synthesize(key, text, params.style);
   const beat: RadioBeat = {
     id: key,
     matchId: params.match.id,
@@ -58,7 +57,6 @@ async function ensureBeat(params: {
     text,
     kind: params.kind,
     createdAt: Date.now(),
-    audioPath,
   };
   setBeat(beat);
   pruneRadioCache();

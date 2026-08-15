@@ -25,6 +25,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.95,
     },
     {
+      url: `${siteConfig.url}/toma`,
+      lastModified: now,
+      changeFrequency: 'hourly',
+      priority: 0.9,
+    },
+    {
       url: `${siteConfig.url}/donde-ver`,
       lastModified: now,
       changeFrequency: 'hourly',

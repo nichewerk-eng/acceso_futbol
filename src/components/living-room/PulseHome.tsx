@@ -48,7 +48,7 @@ export function PulseHome() {
       <main className="flex-1" data-testid="pulse-main">
         <PulseHero leadStory={leadStory} />
         {!settled && <GravityClaim />}
-        {/* Cabina / Acceso Radio — hidden until radio is production-ready */}
+        {/* Cabina / Acceso Radio — hidden until scripts are ready */}
         {settled && <GravityClaim />}
         <JornadaRecap />
         <StoriesRail />

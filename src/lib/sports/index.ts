@@ -21,6 +21,8 @@ export { refreshAperturaSmMap } from './aperturaSmMap';
 export { getGamesOfDay, seedGamesOfDay } from './gamesOfDay';
 export type { DayGame, GamesOfDayPayload } from './gamesOfDay';
 export { getJornadaOverview, seedJornadaOverview } from './jornada';
+export { buildJornadaTake, jornadaTakeShareCopy, jornadaTakeNarration, mergeJornadaTake } from './jornadaTake';
+export type { JornadaTake, JornadaTakeBeat, JornadaTakePhase } from './jornadaTake';
 export type { JornadaOverview } from './jornada';
 export {
   sportmonksEnabled,

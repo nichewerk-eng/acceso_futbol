@@ -1,9 +1,10 @@
+import Link from 'next/link';
 import { siteConfig } from '@/config/site';
 
 const BEATS = [
-  { code: '01', label: 'Toma', line: 'Opinión caliente. Sin diplomacia de mesa.' },
-  { code: '02', label: 'Corte', line: 'Micro-análisis de Liga MX y El Tri en vertical.' },
-  { code: '03', label: 'Puente', line: 'Misma cabina para México y el otro lado.' },
+  { code: '01', label: 'Toma', line: 'Lo que importó en la fecha. Sin diplomacia de mesa.', href: '/#toma' },
+  { code: '02', label: 'Corte', line: 'Micro-análisis de Liga MX y El Tri en vertical.', href: null },
+  { code: '03', label: 'Puente', line: 'Misma cabina para México y el otro lado.', href: null },
 ];
 
 export function ShowStrip() {
@@ -57,9 +58,18 @@ export function ShowStrip() {
               >
                 <span className="af-tele text-signal">{b.code}</span>
                 <div>
-                  <p className="font-display text-xl font-bold uppercase tracking-wide text-[#f6f5f2]">
-                    {b.label}
-                  </p>
+                  {b.href ? (
+                    <Link
+                      href={b.href}
+                      className="font-display text-xl font-bold uppercase tracking-wide text-[#f6f5f2] hover:text-signal"
+                    >
+                      {b.label}
+                    </Link>
+                  ) : (
+                    <p className="font-display text-xl font-bold uppercase tracking-wide text-[#f6f5f2]">
+                      {b.label}
+                    </p>
+                  )}
                   <p className="mt-1 text-sm leading-5 text-white/50">{b.line}</p>
                 </div>
               </li>

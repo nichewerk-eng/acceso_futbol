@@ -2184,6 +2184,247 @@ body {
   }
 }
 
+.toma-board {
+  background: var(--bg-2);
+  color: var(--foreground);
+  border: 1px solid var(--line);
+  box-shadow: inset 4px 0 0 var(--signal);
+  padding: 1.35rem 1.2rem 1.45rem 1.35rem;
+}
+
+.toma-mast {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.15rem;
+}
+
+.toma-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.toma-stamp {
+  font-family: var(--font-oswald), sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--signal);
+}
+
+.toma-share {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--foreground);
+  background: transparent;
+  border: 1px solid var(--line);
+  padding: 0.5rem 0.8rem;
+  cursor: pointer;
+}
+
+.toma-share:hover {
+  border-color: var(--foreground);
+}
+
+.toma-share.is-on {
+  border-color: var(--signal);
+  color: var(--signal);
+}
+
+.toma-listen {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.toma-wave {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 11px;
+  width: 14px;
+}
+
+.toma-wave i {
+  display: block;
+  width: 2px;
+  height: 100%;
+  background: currentColor;
+  transform: scaleY(0.28);
+  transform-origin: center bottom;
+}
+
+.toma-wave i:nth-child(2) {
+  transform: scaleY(0.55);
+}
+.toma-wave i:nth-child(3) {
+  transform: scaleY(0.9);
+}
+.toma-wave i:nth-child(4) {
+  transform: scaleY(0.45);
+}
+
+.toma-wave.is-play i {
+  animation: toma-wave 0.85s ease-in-out infinite;
+}
+.toma-wave.is-play i:nth-child(2) {
+  animation-delay: 0.12s;
+}
+.toma-wave.is-play i:nth-child(3) {
+  animation-delay: 0.24s;
+}
+.toma-wave.is-play i:nth-child(4) {
+  animation-delay: 0.08s;
+}
+.toma-wave.is-play i:nth-child(5) {
+  animation-delay: 0.2s;
+}
+
+@keyframes toma-wave {
+  0%,
+  100% {
+    transform: scaleY(0.28);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toma-wave.is-play i {
+    animation: none;
+    transform: scaleY(0.7);
+  }
+}
+
+.toma-lead {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.toma-headline {
+  font-family: var(--font-oswald), sans-serif;
+  font-size: clamp(2.1rem, 7vw, 3.6rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  line-height: 0.88;
+  max-width: 18ch;
+}
+
+.toma-dek {
+  margin-top: 0.95rem;
+  max-width: 34rem;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.toma-body {
+  margin-top: 1.2rem;
+  max-width: 36rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.toma-body p {
+  font-size: 15.5px;
+  line-height: 1.65;
+  color: var(--foreground);
+}
+
+.toma-cites {
+  margin-top: 0.85rem;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.toma-stakes {
+  display: grid;
+  gap: 0;
+  margin-top: 1.5rem;
+  padding-top: 0.15rem;
+  border-top: 1px solid var(--line);
+  list-style: none;
+  counter-reset: none;
+}
+
+@media (min-width: 720px) {
+  .toma-stakes {
+    grid-template-columns: 1fr 1fr;
+    gap: 0 1.75rem;
+  }
+}
+
+.toma-stakes li {
+  border-bottom: 1px solid var(--line);
+}
+
+.toma-stakes a {
+  display: grid;
+  grid-template-columns: 2.1rem 1fr;
+  gap: 0.65rem;
+  align-items: start;
+  padding: 0.85rem 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.toma-n {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--signal);
+  padding-top: 0.2rem;
+}
+
+.toma-stake {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.toma-when {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.toma-stakes a.is-lock .toma-when {
+  color: var(--signal);
+}
+
+.toma-beat-line {
+  font-family: var(--font-oswald), sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  line-height: 1.15;
+}
+
+.toma-stakes a:hover .toma-beat-line {
+  color: var(--signal);
+}
+
 .jor-runway {
   display: flex;
   gap: 0.75rem;
