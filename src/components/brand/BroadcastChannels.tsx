@@ -30,6 +30,7 @@ function ChannelMark({
   const ch = TV_CHANNELS[id];
   if (!ch) return null;
   const invert = ch.onDark && surface === 'paper';
+  const src = surface === 'ink' && ch.srcInk ? ch.srcInk : ch.src;
 
   return (
     <span
@@ -37,11 +38,11 @@ function ChannelMark({
       data-channel={id}
       title={ch.label}
     >
-      {ch.src ? (
+      {src ? (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={ch.src}
+            src={src}
             alt={ch.label}
             className={['tv-channel-logo', invert ? 'tv-channel-logo-invert' : '']
               .filter(Boolean)

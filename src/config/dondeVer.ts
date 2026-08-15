@@ -27,6 +27,8 @@ export type TvChannel = {
   label: string;
   /** Optional mark; text badge when missing */
   src?: string;
+  /** Alternate mark for ink / black surfaces (two-color logos) */
+  srcInk?: string;
   /** White/light mark — invert on paper backgrounds */
   onDark?: boolean;
 };
@@ -46,6 +48,7 @@ export const TV_CHANNELS: Record<TvChannelId, TvChannel> = {
     id: 'canal-5',
     label: 'Canal 5',
     src: '/tv_logos/Canal_5_Mexico.svg',
+    srcInk: '/tv_logos/Canal_5_Mexico_onDark.svg',
   },
   layvtime: {
     id: 'layvtime',
