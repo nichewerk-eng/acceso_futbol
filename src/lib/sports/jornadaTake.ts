@@ -432,31 +432,48 @@ export function buildJornadaTake(
 
 export function jornadaTakeShareCopy(take: JornadaTake): { title: string; text: string } {
   const title = take.jornadaNum ? `Toma · Jornada ${take.jornadaNum}` : 'Toma Acceso';
-  const body = (take.body ?? []).join('\n\n');
+  const body = jornadaTakeColumnBody(take).join('\n\n');
   const beats = take.beats.map((b) => `· ${b.kicker} — ${b.line}`).join('\n');
   const text = [take.headline, take.dek, body, beats].filter(Boolean).join('\n\n');
   return { title, text };
 }
 
-/** Spoken column for ElevenLabs. No em-dashes. Full slate, then stakes. */
+/** Grafs for the column and the voice. Drops the slate rundown (times live in Dónde ver). */
+export function jornadaTakeColumnBody(take: JornadaTake): string[] {
+  const body = take.body ?? [];
+  if (body.length === 0) return [];
+  if (isSlateDump(body[0]!)) return body.slice(1);
+  if (body.length >= 3) return body.slice(1);
+  return body;
+}
+
+function isSlateDump(p: string): boolean {
+  const contra = (p.match(/\bcontra\b/gi) ?? []).length;
+  const clocks = (p.match(/\ba las\b/gi) ?? []).length;
+  return (
+    contra >= 4 ||
+    clocks >= 4 ||
+    /arranca con|el domingo sigue|el lunes cierra|nueve partidos en/i.test(p)
+  );
+}
+
+/** On-screen desk line. One sentence: window + how many games. */
+export function jornadaTakeDeskTitle(take: JornadaTake): string {
+  const print = (s: string) => s.replace(/LigaMX/gi, 'Liga MX').trim();
+  const dek = print(take.dek || '');
+  const first = (dek.split(/(?<=[.!?])\s+/)[0] ?? dek).replace(/[.!?]+$/, '');
+  if (first && first.length <= 80) return first;
+  return print(take.headline);
+}
+
+function spokenScript(take: JornadaTake): string {
+  return speakable(
+    [jornadaTakeDeskTitle(take), jornadaTakeColumnBody(take).join(' ')].filter(Boolean).join('. ')
+  );
+}
+
 export function jornadaTakeNarration(take: JornadaTake): string {
-  const stamp =
-    take.jornadaNum != null ? `Toma de la jornada ${take.jornadaNum}.` : 'Toma Acceso. Liga MX.';
-  const body = (take.body ?? []).join(' ');
-  const beats = take.beats
-    .map((b, i) => `${i + 1}. ${b.kicker}. ${b.line}.`)
-    .join(' ');
-  return [stamp, `${take.headline}.`, take.dek, body, beats]
-    .map((s) =>
-      s
-        .replace(/\s*[—–]\s*/g, '. ')
-        .replace(/\(\s*[A-ZÁÉÍÓÚÜÑ]{2,4}\s*[–\-]\s*[A-ZÁÉÍÓÚÜÑ]{2,4}\s*\)/gi, '')
-        .replace(/\b\d{1,2}:\d{2}\s*(?:a\.?\s*m\.?|p\.?\s*m\.?)?/gi, '')
-        .replace(/\s+/g, ' ')
-        .trim()
-    )
-    .filter(Boolean)
-    .join(' ');
+  return spokenScript(take);
 }
 
 export function jornadaTakeNarrationKey(take: JornadaTake): string {
@@ -465,6 +482,46 @@ export function jornadaTakeNarrationKey(take: JornadaTake): string {
   for (let i = 0; i < text.length; i++) h = (Math.imul(h, 31) + text.charCodeAt(i)) | 0;
   const n = take.jornadaNum ?? 'x';
   return `toma-${n}-${(h >>> 0).toString(36)}`;
+}
+
+export type TomaCorte = {
+  id: string;
+  n: number;
+  label: string;
+  cue: string;
+  text: string;
+  href?: string | null;
+};
+
+function speakable(s: string): string {
+  return s
+    .replace(/\s*[—–]\s*/g, '. ')
+    .replace(/\(\s*[A-ZÁÉÍÓÚÜÑ]{2,4}\s*[–\-]\s*[A-ZÁÉÍÓÚÜÑ]{2,4}\s*\)/gi, '')
+    .replace(/\b\d{1,2}:\d{2}\s*(?:a\.?\s*m\.?|p\.?\s*m\.?)?/gi, '')
+    .replace(/Liga\s*MX/gi, 'Liga eme equis')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function hashText(s: string): string {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (Math.imul(h, 31) + s.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+}
+
+/** One playable cut: the column. Duelos live in Leer la toma, not as extra tracks. */
+export function jornadaTakeCortes(take: JornadaTake): TomaCorte[] {
+  const text = spokenScript(take);
+  if (text.length < 12) return [];
+  return [
+    {
+      id: `toma-${hashText(text)}`,
+      n: 1,
+      label: take.jornadaNum != null ? `Jornada ${take.jornadaNum}` : 'Toma',
+      cue: take.headline,
+      text,
+    },
+  ];
 }
 
 /** Overlay the server column onto the LOCK-aware local board. Live scores stay local. */

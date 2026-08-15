@@ -37,7 +37,7 @@ export function TomaRoom() {
   const isMine = (f: Fixture) =>
     matchesGravity(f.home.name, f.away.name, f.home.abbreviation, f.away.abbreviation);
 
-  const remote = useTomaTake(data);
+  const { remote, pending } = useTomaTake(data);
 
   const take = useMemo(() => {
     if (!data) return null;
@@ -49,12 +49,8 @@ export function TomaRoom() {
     return remote ? mergeJornadaTake(local, remote) : local;
   }, [data, club, elTri, matchesGravity, remote]);
 
-  if (!data) {
-    return (
-      <p className="af-tele py-16" data-testid="toma-loading">
-        Cargando toma…
-      </p>
-    );
+  if (!data || pending) {
+    return <JornadaTakeBoard take={null} pending />;
   }
 
   if (!take) {

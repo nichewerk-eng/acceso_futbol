@@ -1,22 +1,17 @@
 'use client';
 
-import { jornadaTakeShareCopy, type JornadaTake } from '@/lib/sports/jornadaTake';
-
-export function TomaShare({ take }: { take: JornadaTake }) {
-  const copy = jornadaTakeShareCopy(take);
-
+export function TomaShare() {
   async function share() {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const url = `${origin}/toma`;
-    const payload = { title: copy.title, text: copy.text, url };
 
     try {
       if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-        await navigator.share(payload);
+        await navigator.share({ url });
         return;
       }
       if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(`${copy.title}\n${copy.text}\n${url}`);
+        await navigator.clipboard.writeText(url);
       }
     } catch (err) {
       const name = err instanceof DOMException ? err.name : '';

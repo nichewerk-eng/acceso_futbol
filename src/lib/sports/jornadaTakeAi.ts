@@ -15,6 +15,7 @@ import { APERTURA_MATCHDAYS, LIGUILLA_SPOTS } from '@/lib/sports/liguillaPath';
 import { getJornadaOverview, type JornadaOverview } from '@/lib/sports/jornada';
 import {
   buildJornadaTake,
+  jornadaTakeColumnBody,
   type JornadaTake,
   type JornadaTakeBeat,
   type JornadaTakePhase,
@@ -124,7 +125,7 @@ function phaseOf(j: JornadaOverview): JornadaTakePhase {
 export function tomaCacheKey(jornada: JornadaOverview): { key: string; ttlMs: number } {
   const phase = phaseOf(jornada);
   return {
-    key: `toma-v5-j${jornada.number}-${phase}`,
+    key: `toma-v8-j${jornada.number}-${phase}`,
     ttlMs: phase === 'live' ? LIVE_TTL_MS : IDLE_TTL_MS,
   };
 }
@@ -326,7 +327,7 @@ function buildSlate(fixtures: CompactFixture[]): TomaDossier['slate'] {
     window,
     lastKick,
     days,
-    rule: `La jornada son ${sorted.length} duelos, ${window} (hora MX). NO es solo fin de semana. El dek y el párrafo 1 DEBEN nombrar ${window} y el cierre (${lastKick ?? 'último partido'}). Si hay lunes, dilo: el lunes cuenta.`,
+    rule: `La jornada son ${sorted.length} duelos, ${window} (hora MX). NO es solo fin de semana. El dek nombra ${window} y el número de partidos, UNA frase corta. NO listes el slate partido por partido. Horarios van en Dónde ver. Si hay lunes, el dek lo cubre con ${window}.`,
   };
 }
 
@@ -389,40 +390,6 @@ function scorerClause(f: CompactFixture): string {
 
 function templateBody(d: TomaDossier): string[] {
   const paras: string[] = [];
-  const live = d.fixtures.filter((f) => f.state === 'in');
-  const played = d.fixtures.filter((f) => f.state === 'post');
-  const upcoming = d.fixtures.filter((f) => f.state === 'pre');
-
-  if (live.length) {
-    paras.push(
-      live
-        .map((f) => {
-          const clock = f.clock === 'HT' ? 'Descanso' : f.clock || 'LIVE';
-          return `${f.home} ${f.score ?? '0-0'} ${f.away} (${clock})${scorerClause(f)}`;
-        })
-        .join('. ') + '.'
-    );
-  }
-
-  if (played.length) {
-    const lines = played.slice(0, 6).map((f) => {
-      const when = f.whenSpoken ? ` ${f.whenSpoken}` : '';
-      return `${f.home} ${f.score ?? '0-0'} ${f.away}${scorerClause(f)}${when}`;
-    });
-    paras.push(`Sellados: ${lines.join('. ')}.`);
-  }
-
-  if (upcoming.length && paras.length < 3) {
-    const days = d.slate.days
-      .map((day) => {
-        const bits = day.matches.map((m) => `${m.pairSpoken}, ${m.whenSpoken}`).join(', ');
-        return `${day.weekday} (${day.count}): ${bits}`;
-      })
-      .join('. ');
-    paras.push(
-      `${d.jornada.label}: ${d.slate.total} duelos, ${d.slate.window}. ${days}.`
-    );
-  }
 
   if (d.tabla?.cut && d.tabla.top[0]) {
     const lead = d.tabla.top[0];
@@ -439,14 +406,26 @@ function templateBody(d: TomaDossier): string[] {
     );
   }
 
+  const live = d.fixtures.filter((f) => f.state === 'in');
+  if (live.length) {
+    paras.push(
+      live
+        .map((f) => {
+          const clock = f.clock === 'HT' ? 'Descanso' : f.clock || 'LIVE';
+          return `${f.home} ${f.score ?? '0-0'} ${f.away} (${clock})${scorerClause(f)}`;
+        })
+        .join('. ') + '.'
+    );
+  }
+
   const wire = d.wire[0];
-  if (wire && paras.length < 4) {
+  if (wire) {
     const angle = wire.accesoLine || wire.summary;
     const extra = angle ? ` ${angle}` : '';
     paras.push(`${wire.source}: ${wire.title}.${extra}`);
   }
 
-  return paras.filter((p) => p.trim().length > 12).slice(0, 4);
+  return paras.filter((p) => p.trim().length > 12).slice(0, 2);
 }
 
 function templateCites(d: TomaDossier): string[] {
@@ -467,6 +446,7 @@ function scrubClockNoise(text: string): string {
     .replace(/\(\s*[A-ZÁÉÍÓÚÜÑ]{2,4}\s*[–\-]\s*[A-ZÁÉÍÓÚÜÑ]{2,4}\s*\)/gi, '')
     .replace(/\b\d{1,2}:\d{2}\s*(?:a\.?\s*m\.?|p\.?\s*m\.?)?/gi, '')
     .replace(/\b\d{1,2}\s*(?:a\.?\s*m\.?|p\.?\s*m\.?)\b/gi, '')
+    .replace(/LigaMX/g, 'Liga MX')
     .replace(/\s{2,}/g, ' ')
     .replace(/\s+([.,;:])/g, '$1')
     .replace(/\(\s*\)/g, '')
@@ -493,7 +473,7 @@ function sanitizeBody(raw: unknown): string[] {
       )
     )
     .filter((p) => p.length >= 40)
-    .slice(0, 4);
+    .slice(0, 2);
 }
 
 type AiBeat = { id?: string; home?: string; away?: string; kicker?: string; line?: string };
@@ -642,12 +622,14 @@ OVERRIDES DE PRODUCTO (ganan a la guía si chocan):
 - Medio = website: acentos SÍ. NO uses "Preparense que arrancamos". NO quites acentos.
 - NUNCA em-dash (—). Punto o coma.
 - Apertura 2026: corte Liguilla = top ${LIGUILLA_SPOTS}. NO hay Play-In.
-- Formato corto: headline + dek + 3 grafs + 3 beats. No un artículo de 18 bloques.
-- Graf 1 cubre el slate COMPLETO (${dossier.slate.window}, ${dossier.slate.total} duelos) hasta ${dossier.slate.lastKick}. El lunes cuenta.
-- Graf 2 = tabla / quién entra o sale del 8º. Un número verificado del dossier.
-- Graf 3 = standout o cable citado + primera persona (yo creo / honestamente / para mí) + pregunta que divide (A/B o A/B/C).
-- Cubre todos los partidos en graf 1, no solo América/Chivas/Cruz Azul.
+- Formato corto: headline + dek + 2 grafs + 3 beats. No un artículo. No un programa de horarios.
+- Headline: máx 8 palabras. Una toma, no un sumario.
+- Dek: UNA frase, máx 12 palabras. Solo ventana + cuántos partidos. PROHIBIDO meter tabla, líder, puntos o el partido de cierre en el dek.
+- Graf 1 = tabla / quién entra o sale del 8º. Un número verificado del dossier. NO listes los ${dossier.slate.total} partidos ni sus horas.
+- Graf 2 = un duelo o standout + primera persona (yo creo / honestamente / para mí) + pregunta que divide (A/B o A/B/C).
+- PROHIBIDO el rundown del slate ("sábado arranca con… domingo sigue… lunes cierra"). Eso es Dónde ver, no la toma.
 - Horarios SOLO en palabras del dossier (whenSpoken): "hoy a las cinco de la tarde", "lunes a las nueve de la noche". Equipos en nombre completo (pairSpoken): "Pachuca contra Puebla".
+- Escribe "Liga MX" con espacio. La voz lo pronuncia aparte. Nunca "LigaMX" pegado.
 - PROHIBIDO relojes digitales: "9:06 p.m.", "7:10", "5:00 p.m.", "19:00".
 - PROHIBIDO pares de abreviaturas: "(PAC–PUE)", "PAC-PUE", "AME–SLP".
 - Toma no lista horas de US. Dónde ver guarda el reloj exacto.
@@ -658,9 +640,9 @@ OVERRIDES DE PRODUCTO (ganan a la guía si chocan):
 
 Responde SOLO JSON:
 {
-  "headline": "titular Acceso, máx 10 palabras, con acentos",
-  "dek": "Jornada ${dossier.jornada.number} Liga MX. ${dossier.slate.window}. Cierre en palabras, sin reloj digital.",
-  "body": ["graf1 slate completo con whenSpoken y pairSpoken", "graf2 tabla 8º", "graf3 yo creo + pregunta que divide"],
+  "headline": "titular Acceso, máx 8 palabras, con acentos",
+  "dek": "Jornada ${dossier.jornada.number} Liga MX: ${dossier.slate.total} duelos ${dossier.slate.window}.",
+  "body": ["graf1 tabla 8º, sin horarios", "graf2 yo creo + pregunta que divide"],
   "beats": [{"home":"AME","away":"SLP","kicker":"hoy a las siete de la noche","line":"mini-recap con pts, nombres completos"}]
 }
 3 beats. Si hay lunes, UNO es del lunes. kicker = whenSpoken, nunca "9:06 p.m.".`,
@@ -711,16 +693,17 @@ function applyAi(
       beats: overlayBeats(take.beats, jornada, dossier, undefined),
     };
   }
-  const body = sanitizeBody(ai.body).map((p) =>
+  const rawBody = sanitizeBody(ai.body).map((p) =>
     patchWindowCopy(scrubFalseMath(p, dossier), dossier)
   );
+  const body = jornadaTakeColumnBody({ ...take, body: rawBody });
   const headline =
     typeof ai.headline === 'string' && ai.headline.trim().length >= 8
-      ? clip(patchWindowCopy(ai.headline, dossier), 72)
+      ? clip(patchWindowCopy(ai.headline, dossier), 56)
       : take.headline;
   const dek =
-    typeof ai.dek === 'string' && ai.dek.trim().length >= 16
-      ? clip(patchWindowCopy(scrubFalseMath(ai.dek, dossier), dossier), 220)
+    typeof ai.dek === 'string' && ai.dek.trim().length >= 12
+      ? clip(patchWindowCopy(scrubFalseMath(ai.dek, dossier), dossier), 72)
       : take.dek;
   return {
     ...take,

@@ -20,6 +20,7 @@ function stripTerminalPunct(s: string) {
 export function prepareForTts(text: string): string {
   let t = text
     .replace(/\u00a0/g, ' ')
+    .replace(/\bLiga\s*MX\b/gi, 'Liga eme equis')
     .replace(/\s+/g, ' ')
     .replace(/\.{3,}/g, '…')
     .replace(/\s*;\s*/g, ', ')

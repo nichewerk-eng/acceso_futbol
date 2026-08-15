@@ -135,7 +135,7 @@ export function JornadaRecap() {
     data.upcoming.length === 0 &&
     data.live.length + data.played.length > 0 &&
     isLeaguesCupWindow();
-  const remote = useTomaTake(data, Boolean(data) && !lcPause);
+  const { remote, pending } = useTomaTake(data, Boolean(data) && !lcPause);
 
   if (!loading && !data) return null;
 
@@ -284,7 +284,9 @@ export function JornadaRecap() {
               </div>
             )}
 
-            {take ? <JornadaTakeBoard take={take} /> : null}
+            {!lcPause && (take || pending) ? (
+              <JornadaTakeBoard take={take} pending={pending} />
+            ) : null}
 
             {(live.length > 0 || upcoming.length > 0) && (
               <DondeVerGuide

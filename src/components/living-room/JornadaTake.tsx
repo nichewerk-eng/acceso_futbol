@@ -1,63 +1,67 @@
 'use client';
 
 import Link from 'next/link';
-import { TomaListen } from '@/components/living-room/TomaListen';
-import { TomaShare } from '@/components/living-room/TomaShare';
-import type { JornadaTake } from '@/lib/sports/jornadaTake';
+import { useState } from 'react';
+import { TomaDeskSkeleton, TomaPlayer } from '@/components/living-room/TomaPlayer';
+import { jornadaTakeColumnBody, type JornadaTake } from '@/lib/sports/jornadaTake';
 
-export function JornadaTakeBoard({ take }: { take: JornadaTake }) {
+export function JornadaTakeBoard({
+  take,
+  pending = false,
+}: {
+  take: JornadaTake | null;
+  pending?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const ready = Boolean(take) && !pending;
+
+  if (!take && !pending) return null;
+
   return (
     <section className="toma-board" id="toma" data-testid="section-toma">
-      <div className="toma-mast">
-        <p className="toma-stamp" data-testid="toma-stamp">
-          {take.jornadaNum != null ? `J${take.jornadaNum}` : 'MX'}
-        </p>
-        <div className="toma-actions">
-          <TomaListen take={take} />
-          <TomaShare take={take} />
-        </div>
-      </div>
+      {ready && take ? <TomaPlayer take={take} /> : <TomaDeskSkeleton />}
 
-      {take.href ? (
-        <Link href={take.href} className="toma-lead" data-testid="toma-lead">
-          <h3 className="toma-headline">{take.headline}</h3>
-        </Link>
+      {ready && take ? (
+        <button
+          type="button"
+          className="toma-leer"
+          data-testid="toma-leer"
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+        >
+          {open ? 'Cerrar texto' : 'Leer la toma'}
+        </button>
       ) : (
-        <h3 className="toma-headline" data-testid="toma-lead">
-          {take.headline}
-        </h3>
+        <p className="toma-leer is-wait" data-testid="toma-loading">
+          Armando la toma…
+        </p>
       )}
-      <p className="toma-dek">{take.dek}</p>
 
-      {take.body && take.body.length > 0 ? (
-        <>
-          <div className="toma-body" data-testid="toma-body">
-            {take.body.map((p, i) => (
-              <p key={i}>{p}</p>
-            ))}
-          </div>
-          {take.cites && take.cites.length > 0 ? (
-            <p className="toma-cites" data-testid="toma-cites">
-              {take.cites.join(' · ')}
-            </p>
-          ) : null}
-        </>
-      ) : null}
-
-      {take.beats.length > 0 ? (
-        <ol className="toma-stakes">
-          {take.beats.map((b, i) => (
-            <li key={b.id}>
-              <Link href={b.href} className={b.lock ? 'is-lock' : undefined}>
-                <span className="toma-n">{String(i + 1).padStart(2, '0')}</span>
-                <span className="toma-stake">
-                  <span className="toma-when">{b.lock ? `LOCK · ${b.kicker}` : b.kicker}</span>
-                  <span className="toma-beat-line">{b.line}</span>
-                </span>
-              </Link>
-            </li>
+      {open && take ? (
+        <div className="toma-script" data-testid="toma-body">
+          <h3 className="toma-headline">{take.headline.replace(/LigaMX/gi, 'Liga MX')}</h3>
+          {jornadaTakeColumnBody(take).map((p, i) => (
+            <p key={i}>{p.replace(/LigaMX/gi, 'Liga MX')}</p>
           ))}
-        </ol>
+          {take.cites && take.cites.length > 0 ? (
+            <p className="toma-cites">{take.cites.join(' · ')}</p>
+          ) : null}
+          {take.beats.length > 0 ? (
+            <ol className="toma-stakes">
+              {take.beats.map((b, i) => (
+                <li key={b.id}>
+                  <Link href={b.href} className={b.lock ? 'is-lock' : undefined}>
+                    <span className="toma-n">{String(i + 1).padStart(2, '0')}</span>
+                    <span className="toma-stake">
+                      <span className="toma-when">{b.lock ? `LOCK · ${b.kicker}` : b.kicker}</span>
+                      <span className="toma-beat-line">{b.line}</span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          ) : null}
+        </div>
       ) : null}
     </section>
   );

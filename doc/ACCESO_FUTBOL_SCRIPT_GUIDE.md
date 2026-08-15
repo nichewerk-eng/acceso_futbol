@@ -27,6 +27,7 @@ These are non-negotiable. If a script breaks one of these, it's not ready.
   - YES: `cinco de la tarde`, `siete de la noche`, `mediodía`, `lunes a las nueve de la noche`, `Pachuca contra Puebla`.
   - NO: `5:00 p.m.`, `7:10 p.m.`, `9:06 p.m.`, `19:00`, `(PAC–PUE)`, `PAC-PUE`.
   - Flatten awkward minutes (`:06`, `:10`) to the hour for voice. Exact clocks belong on Dónde ver / on-screen time blocks, not in the sentence the voice has to say.
+- **Liga MX on screen, "Liga eme equis" in the voice.** Never write `LigaMX` in Toma copy. TTS expands `Liga MX` / `LigaMX` to the Spanish letter names. Nav and SEO stay `Liga MX`.
 - **Channels:** Mexico first, then USA.
 - **Broadcast rule:** the **local (home) team determines the broadcaster.** Verify every time. Known exclusives: **Chivas home = Amazon Prime**, **San Luis home = ESPN/Disney+**.
 
