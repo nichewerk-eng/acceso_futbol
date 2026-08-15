@@ -1715,8 +1715,8 @@ body {
   .lc-match {
     grid-template-columns: minmax(0, 1fr) 4.75rem minmax(0, 1fr);
     column-gap: 0.3rem;
-    min-height: 3.35rem;
-    padding: 0.55rem 0.1rem 0;
+    min-height: 4.15rem;
+    padding: 0.95rem 0.1rem 0.85rem;
   }
 
   .lc-match-home,

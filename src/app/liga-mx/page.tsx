@@ -4,9 +4,9 @@ import LigaMXView from '@/components/ligamx/LigaMXView';
 import { PulseNav } from '@/components/living-room/PulseNav';
 import { JsonLd } from '@/components/seo/JsonLd';
 import type { LigaMXTable } from '@/app/api/ligamx/standings/route';
-import type { LigaMXFixture } from '@/app/api/ligamx/fixtures/route';
 import { absoluteUrl, breadcrumbJsonLd } from '@/lib/seo';
-import { mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
+import { fetchLigaMxFixtures } from '@/lib/sports/espnFallback';
+import { fixtureToLigaMxSchedule, mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
 
 export const metadata: Metadata = {
   title: 'Liga MX Apertura 2026 · Tabla y jornada en vivo',
@@ -67,58 +67,17 @@ async function fetchTable(): Promise<LigaMXTable | null> {
   }
 }
 
-async function fetchFixtures(): Promise<LigaMXFixture[]> {
+async function fetchFixtures() {
   try {
-    const res = await fetch(
-      'https://site.web.api.espn.com/apis/site/v2/sports/soccer/mex.1/scoreboard?dates=20260701-20261231&limit=200',
-      { next: { revalidate: 10 } }
-    );
-    if (!res.ok) return [];
-    const raw = await res.json();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mapped = (raw.events ?? []).map((event: any) => {
-      const comp = event.competitions?.[0];
-      const competitors = comp?.competitors ?? [];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const home = competitors.find((c: any) => c.homeAway === 'home') ?? competitors[0];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const away = competitors.find((c: any) => c.homeAway === 'away') ?? competitors[1];
-      return {
-        id: event.id,
-        date: event.date,
-        league: 'liga-mx' as const,
-        jornada: event.week?.number ? `Jornada ${event.week.number}` : null,
-        status: {
-          completed: event.status?.type?.completed ?? false,
-          state: event.status?.type?.state ?? 'pre',
-          description: event.status?.type?.description ?? '',
-          shortDetail: event.status?.type?.shortDetail ?? '',
-          displayClock: event.status?.displayClock ?? '',
-        },
-        venue: comp?.venue?.fullName ?? null,
-        city: comp?.venue?.address?.city ?? null,
-        home: {
-          name: home?.team?.displayName ?? '',
-          abbreviation: home?.team?.abbreviation ?? '',
-          score: home?.score ?? null,
-        },
-        away: {
-          name: away?.team?.displayName ?? '',
-          abbreviation: away?.team?.abbreviation ?? '',
-          score: away?.score ?? null,
-        },
-      };
-    });
-    // Return ESPN rows even without week/jornada — client/API merge onto static calendar.
-    return mapped;
+    const { fixtures } = await fetchLigaMxFixtures();
+    return mergeLigaMxSchedule(fixtures.map(fixtureToLigaMxSchedule));
   } catch {
-    return [];
+    return mergeLigaMxSchedule([]);
   }
 }
 
 export default async function LigaMXPage() {
-  const [table, espnFixtures] = await Promise.all([fetchTable(), fetchFixtures()]);
-  const fixtures = mergeLigaMxSchedule(espnFixtures);
+  const [table, fixtures] = await Promise.all([fetchTable(), fetchFixtures()]);
   return (
     <>
       <JsonLd

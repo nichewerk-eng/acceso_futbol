@@ -12,6 +12,7 @@ import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
 import { isNearKickoff } from './freshness';
 import {
   fetchFixturesByDate,
+  fetchLigaMxSeasonFixtures,
   fetchLivescores,
   ligaMxLeagueId,
   overlayLiveFixtures,
@@ -271,8 +272,13 @@ function utcKeysForMexicoDays(days: Iterable<string>): string[] {
   return [...keys];
 }
 
-/** Date-board overlay for the current jornada window — never a season include. */
-async function overlayNearDateBoards(seed: Fixture[]): Promise<Fixture[]> {
+/** Live / upcoming window — date boards, not a season include. */
+const DATE_BOARD_PAST_MS = 36 * 3600_000;
+const DATE_BOARD_FUTURE_MS = 8 * 86400_000;
+/** If the season dump has no FT rows, walk back through Jornada 1. */
+const DATE_BOARD_SEASON_PAST_MS = 45 * 86400_000;
+
+async function fetchDateBoardFixtures(seed: Fixture[], pastMs: number): Promise<Fixture[]> {
   const now = Date.now();
   const days = new Set<string>();
   const today = mexicoDayKey(new Date(now));
@@ -283,7 +289,7 @@ async function overlayNearDateBoards(seed: Fixture[]): Promise<Fixture[]> {
   for (const f of seed) {
     const t = +new Date(f.date);
     if (!Number.isFinite(t)) continue;
-    if (t < now - 36 * 3600_000 || t > now + 8 * 86400_000) continue;
+    if (t < now - pastMs || t > now + DATE_BOARD_FUTURE_MS) continue;
     days.add(mexicoDayKey(new Date(f.date)));
   }
   const boards = await Promise.all(
@@ -291,10 +297,10 @@ async function overlayNearDateBoards(seed: Fixture[]): Promise<Fixture[]> {
       fetchFixturesByDate(k, [ligaMxLeagueId()]).catch(() => [] as Fixture[])
     )
   );
-  return mergeLiveOntoStatic(boards.flat());
+  return boards.flat();
 }
 
-/** Static calendar + nearby Sportmonks date boards. Season include is not on this path. */
+/** Static calendar + season FT scores + nearby date boards / livescores. */
 export async function fetchLigaMxFixtures(): Promise<{
   fixtures: Fixture[];
   source: 'sportmonks' | 'espn' | 'static';
@@ -303,7 +309,14 @@ export async function fetchLigaMxFixtures(): Promise<{
   refreshAperturaSmMap();
   if (sportmonksEnabled()) {
     try {
-      const dated = await overlayNearDateBoards(seed);
+      const [season, near] = await Promise.all([
+        fetchLigaMxSeasonFixtures().catch(() => [] as Fixture[]),
+        fetchDateBoardFixtures(seed, DATE_BOARD_PAST_MS),
+      ]);
+      const hasFt = season.some((f) => f.state === 'post');
+      const past = hasFt ? [] : await fetchDateBoardFixtures(seed, DATE_BOARD_SEASON_PAST_MS);
+      // Later overlays win (near date boards are fresher than the season dump).
+      const dated = mergeLiveOntoStatic([...season, ...past, ...near]);
       const now = Date.now();
       const mayBeLive = dated.some(
         (f) => f.state === 'in' || isNearKickoff(f.date, now, f.state)

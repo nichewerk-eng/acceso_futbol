@@ -4,6 +4,7 @@ import {
   rememberOverlaySmIds,
 } from './aperturaSmMap';
 import { dayPairKey, scheduleAbbr } from './ligaMxAbbr';
+import type { Fixture } from './types';
 
 /** Minimal fixture shape shared by API + Liga MX UI. */
 export type LigaMxScheduleFixture = {
@@ -38,6 +39,34 @@ function jornadaPairKey(
   const n = jornadaNum(jornada);
   if (n === null) return null;
   return `${n}|${scheduleAbbr(homeAbbr)}|${scheduleAbbr(awayAbbr)}`;
+}
+
+export function fixtureToLigaMxSchedule(f: Fixture): LigaMxScheduleFixture {
+  return {
+    id: f.id,
+    date: f.date,
+    league: 'liga-mx',
+    jornada: f.jornada ?? null,
+    status: {
+      completed: f.state === 'post',
+      state: f.state,
+      description: f.statusLabel,
+      shortDetail: f.statusLabel,
+      displayClock: f.clock ?? '',
+    },
+    venue: f.venue ?? null,
+    city: f.city ?? null,
+    home: {
+      name: f.home.name,
+      abbreviation: f.home.abbreviation,
+      score: f.home.score ?? null,
+    },
+    away: {
+      name: f.away.name,
+      abbreviation: f.away.abbreviation,
+      score: f.away.score ?? null,
+    },
+  };
 }
 
 /**

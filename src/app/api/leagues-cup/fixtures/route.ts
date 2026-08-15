@@ -1,5 +1,5 @@
 import { serveSwr } from '@/lib/serveSwr';
-import { buildLeaguesCupBoard, fetchLeaguesCupLiveBoard } from '@/lib/sports';
+import { fetchLeaguesCupLiveBoard } from '@/lib/sports';
 import {
   apiTtlMsForPace,
   boardCacheHeaders,
@@ -7,7 +7,7 @@ import {
 } from '@/lib/sports/freshness';
 import type { Fixture } from '@/lib/sports/types';
 
-const CACHE_KEY = 'leagues-cup-fixtures-v11-qf-tv';
+const CACHE_KEY = 'leagues-cup-fixtures-v12-ft-scores';
 
 type Payload = { fixtures: Fixture[]; source: string };
 
@@ -17,7 +17,6 @@ export async function GET() {
     ttlMs: (p) =>
       apiTtlMsForPace(paceFromFixtures(p.fixtures.filter((f) => !f.id.startsWith('lc-')))),
     loader: () => fetchLeaguesCupLiveBoard(),
-    seed: () => ({ fixtures: buildLeaguesCupBoard([]), source: 'official' }),
     headers: (payload, { stale }) => {
       const pace = paceFromFixtures(payload.fixtures.filter((f) => !f.id.startsWith('lc-')));
       return {

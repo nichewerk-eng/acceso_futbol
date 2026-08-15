@@ -8,11 +8,10 @@ import {
 } from '@/lib/sports/freshness';
 import {
   getJornadaOverview,
-  seedJornadaOverview,
   type JornadaOverview,
 } from '@/lib/sports/jornada';
 
-const CACHE_KEY = 'jornada-overview-v11-sm-ids';
+const CACHE_KEY = 'jornada-overview-v12-ft-scores';
 
 function jornadaRows(o: JornadaOverview) {
   return [...o.live, ...o.played, ...o.upcoming];
@@ -36,7 +35,6 @@ export async function GET() {
         ? apiTtlMsForPace('idle')
         : apiTtlMsForPace(paceFromFixtures(jornadaRows(payload))),
     loader: async () => (await getJornadaOverview()) ?? { empty: true as const },
-    seed: () => seedJornadaOverview() ?? { empty: true as const },
     notFound: (d) => 'empty' in d,
     headers: (payload, { stale }) => {
       if ('empty' in payload) return undefined;

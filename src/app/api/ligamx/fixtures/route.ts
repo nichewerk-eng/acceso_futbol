@@ -5,16 +5,15 @@ import {
   boardCacheHeaders,
   paceFromFixtures,
 } from '@/lib/sports/freshness';
-import { mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
+import { fixtureToLigaMxSchedule, mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
 import { localizeCity, localizeVenue } from '@/lib/sports/localizeEs';
 import { fetchLigaMxFixtures } from '@/lib/sports/espnFallback';
 import { prefetchCurrentJornadaContexto } from '@/lib/sports/getMatch';
 import { aperturaCalendar, refreshAperturaSmMap } from '@/lib/sports/aperturaSmMap';
-import type { Fixture } from '@/lib/sports/types';
 
 // Apertura 2026: July → December 2026
 const DATE_RANGE = '20260701-20261231';
-const CACHE_KEY = 'ligamx-fixtures-v13-sm-ids';
+const CACHE_KEY = 'ligamx-fixtures-v14-ft-scores';
 
 type FixturesPayload = { fixtures: LigaMXFixture[]; source: string };
 
@@ -31,7 +30,7 @@ export async function GET() {
       try {
         const board = await fetchLigaMxFixtures();
         if (board.fixtures.length > 0) {
-          live = board.fixtures.map(fixtureToSchedule);
+          live = board.fixtures.map(fixtureToLigaMxSchedule);
         }
       } catch {
         /* fall through */
@@ -49,7 +48,6 @@ export async function GET() {
       prefetchCurrentJornadaContexto(fixtures);
       return { fixtures, source: live.length ? 'sportmonks' : 'static' };
     },
-    seed: () => ({ fixtures: aperturaCalendar(), source: 'static' }),
     headers: (payload, { stale }) => {
       const pace = paceFromFixtures(
         payload.fixtures.map((f) => ({ state: f.status.state, date: f.date }))
@@ -79,34 +77,6 @@ export interface LigaMXFixture {
   city: string | null;
   home: { name: string; abbreviation: string; score: string | null };
   away: { name: string; abbreviation: string; score: string | null };
-}
-
-function fixtureToSchedule(f: Fixture): LigaMXFixture {
-  return {
-    id: f.id,
-    date: f.date,
-    league: 'liga-mx',
-    jornada: f.jornada ?? null,
-    status: {
-      completed: f.state === 'post',
-      state: f.state,
-      description: f.statusLabel,
-      shortDetail: f.statusLabel,
-      displayClock: f.clock ?? '',
-    },
-    venue: f.venue ?? null,
-    city: f.city ?? null,
-    home: {
-      name: f.home.name,
-      abbreviation: f.home.abbreviation,
-      score: f.home.score ?? null,
-    },
-    away: {
-      name: f.away.name,
-      abbreviation: f.away.abbreviation,
-      score: f.away.score ?? null,
-    },
-  };
 }
 
 function parseFixtures(raw: { events?: EventRaw[] }): LigaMXFixture[] {

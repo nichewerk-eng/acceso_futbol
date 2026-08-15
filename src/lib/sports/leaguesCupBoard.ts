@@ -154,30 +154,37 @@ export function buildLeaguesCupBoard(smFixtures: Fixture[]): Fixture[] {
   return [...phaseOne, ...knockout].sort((a, b) => +new Date(a.date) - +new Date(b.date));
 }
 
-/** Board / UTC days that may have moved scores (livescores drop FT games). */
-export function lcActiveDateKeys(now = Date.now()): string[] {
+const LC_LIVE_AFTER_MS = 6 * 60 * 60_000;
+
+function collectLcDateKeys(now: number, pastAfterMs: number): string[] {
   const keys = new Set<string>();
-  const afterMs = 6 * 60 * 60_000;
-  for (const kick of LEAGUES_CUP_PHASE_ONE) {
-    const iso = lcLocalToIso(kick.boardDate, kick.localTime, kick.tz);
+  const add = (boardDate: string, localTime: string, tz: string) => {
+    const iso = lcLocalToIso(boardDate, localTime, tz);
     const kickAt = +new Date(iso);
-    if (!Number.isFinite(kickAt)) continue;
-    if (kickAt - now > FRESH.nearKickoffBeforeMs) continue;
-    if (now - kickAt > afterMs) continue;
-    keys.add(kick.boardDate);
+    if (!Number.isFinite(kickAt)) return;
+    if (kickAt - now > FRESH.nearKickoffBeforeMs) return;
+    if (now - kickAt > pastAfterMs) return;
+    keys.add(boardDate);
     keys.add(new Date(iso).toISOString().slice(0, 10));
+  };
+  for (const kick of LEAGUES_CUP_PHASE_ONE) {
+    add(kick.boardDate, kick.localTime, kick.tz);
   }
   for (const slot of LEAGUES_CUP_KNOCKOUT) {
     if (!slot.boardDate || !slot.localTime || !slot.tz) continue;
-    const iso = lcLocalToIso(slot.boardDate, slot.localTime, slot.tz);
-    const kickAt = +new Date(iso);
-    if (!Number.isFinite(kickAt)) continue;
-    if (kickAt - now > FRESH.nearKickoffBeforeMs) continue;
-    if (now - kickAt > afterMs) continue;
-    keys.add(slot.boardDate);
-    keys.add(new Date(iso).toISOString().slice(0, 10));
+    add(slot.boardDate, slot.localTime, slot.tz);
   }
   return [...keys];
+}
+
+/** Board / UTC days that may have moved scores (livescores drop FT games). */
+export function lcActiveDateKeys(now = Date.now()): string[] {
+  return collectLcDateKeys(now, LC_LIVE_AFTER_MS);
+}
+
+/** Every official kick already played — FT backfill when the season dump is empty. */
+function lcPlayedDateKeys(now = Date.now()): string[] {
+  return collectLcDateKeys(now, Number.POSITIVE_INFINITY);
 }
 
 /**
@@ -195,12 +202,12 @@ export async function fetchLeaguesCupLiveBoard(): Promise<{
   const raw = await fetchLeaguesCupSeasonFixtures().catch(() => [] as Fixture[]);
   const now = Date.now();
   const lcId = leaguesCupLeagueId();
+  const hasFt = raw.some((f) => f.state === 'post' && f.home.score != null);
+  const dateKeys = hasFt ? lcActiveDateKeys(now) : lcPlayedDateKeys(now);
 
   const dated = (
     await Promise.all(
-      lcActiveDateKeys(now).map((day) =>
-        fetchFixturesByDate(day, [lcId]).catch(() => [] as Fixture[])
-      )
+      dateKeys.map((day) => fetchFixturesByDate(day, [lcId]).catch(() => [] as Fixture[]))
     )
   ).flat();
   const withDated = dated.length ? overlayLiveFixtures(raw, dated) : raw;
