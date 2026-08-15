@@ -145,6 +145,8 @@ export interface LineupPlayer {
   side: 'home' | 'away';
   /** Sportmonks player headshot when available. */
   photo?: string;
+  /** Formation slot 1–11 when the provider sends it (1 = GK). */
+  slot?: number | null;
 }
 
 export interface TeamLineup {

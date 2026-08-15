@@ -22,6 +22,9 @@ import { localizeStatus } from '@/lib/sports/localizeEs';
 import { mergeMatchSnapshot } from '@/lib/sports/mergeMatchSnapshot';
 import { MatchChapterSkeleton } from '@/components/partido/MatchChapterSkeleton';
 import { MatchShare } from '@/components/partido/MatchShare';
+import { MatchXiShare } from '@/components/partido/MatchXiShare';
+import { XiPitch } from '@/components/partido/XiPitch';
+import { matchHasXi } from '@/lib/share/xiShare';
 
 type Props = { league: string; id: string; initialMatch?: MatchSnapshot | null };
 type TabId = 'contexto' | 'momentos' | 'alineacion' | 'datos' | 'radio';
@@ -1066,9 +1069,12 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
 
           {tab === 'alineacion' && (
             <section className="match-lineups">
-              <p className="af-kicker">
-                <span className="af-tele">Alineaciones</span>
-              </p>
+              <div className="match-lineups-head">
+                <p className="af-kicker">
+                  <span className="af-tele">Alineaciones</span>
+                </p>
+                {matchHasXi(match) ? <MatchXiShare match={match} league={league} /> : null}
+              </div>
               {match.referee && (
                 <p className="match-referee-inline">
                   Árbitro · <strong>{match.referee}</strong>
@@ -1081,11 +1087,18 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
                     : 'Alineaciones no disponibles.'}
                 </p>
               ) : (
-                <div className="match-lineup-grid">
-                  {(match.lineups ?? []).map((t) => (
-                    <LineupSide key={t.side} team={t} />
-                  ))}
-                </div>
+                <>
+                  <div className="xi-poster-grid">
+                    {(match.lineups ?? []).map((t) => (
+                      <XiPitch key={t.side} team={t} />
+                    ))}
+                  </div>
+                  <div className="match-lineup-grid">
+                    {(match.lineups ?? []).map((t) => (
+                      <LineupSide key={t.side} team={t} />
+                    ))}
+                  </div>
+                </>
               )}
             </section>
           )}

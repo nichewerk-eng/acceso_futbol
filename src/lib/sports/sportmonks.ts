@@ -638,6 +638,7 @@ function mapLineups(
         role,
         side,
         photo: playerPhoto(l.player?.image_path),
+        slot: l.formation_position ?? null,
       };
     });
 
