@@ -891,7 +891,7 @@ function MatchRow({
       f.dondeVer?.us
   );
 
-  const className = ['lc-match', live ? 'lc-match-live' : '', mine ? 'lc-match-mine' : '']
+  const className = ['lc-match', 'lm-kick', live ? 'lc-match-live' : '', mine ? 'lc-match-mine' : '']
     .filter(Boolean)
     .join(' ');
 
@@ -941,18 +941,6 @@ function MatchRow({
               center
             )}
           </span>
-
-          {hasTv ? (
-            <BroadcastChannels
-              className="lc-match-tv tv-inline-desk"
-              mx={f.dondeVer?.mxChannels}
-              us={f.dondeVer?.usChannels}
-              mxLabel={f.dondeVer?.mx}
-              usLabel={f.dondeVer?.us}
-              inline
-              maxMarks={8}
-            />
-          ) : null}
         </div>
 
         <span className="lc-match-away">
@@ -972,6 +960,18 @@ function MatchRow({
           <p className="lc-match-venue">
             <span>{f.venue}</span>
           </p>
+        ) : null}
+
+        {hasTv ? (
+          <BroadcastChannels
+            className="lc-match-tv tv-inline-desk"
+            mx={f.dondeVer?.mxChannels}
+            us={f.dondeVer?.usChannels}
+            mxLabel={f.dondeVer?.mx}
+            usLabel={f.dondeVer?.us}
+            inline
+            maxMarks={8}
+          />
         ) : null}
     </>
   );
