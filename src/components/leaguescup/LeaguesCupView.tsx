@@ -911,22 +911,35 @@ function MatchRow({
         </span>
 
         <div className="lc-match-mid">
-          <div className="lc-match-when">
-            <p className="lc-match-when-primary">
-              {live && <span className="hoy-live-dot mr-1.5" aria-hidden />}
-              {whenPrimary}
-              {f.state === 'pre' ? <span className="lc-match-when-hrs"> hrs</span> : null}
-            </p>
-            {mine && <span className="lc-match-lock">TU CLUB</span>}
-          </div>
+          {(f.state !== 'post' || mine) && (
+            <div className="lc-match-when">
+              {f.state !== 'post' && (
+                <p className="lc-match-when-primary">
+                  {live && <span className="hoy-live-dot mr-1.5" aria-hidden />}
+                  {whenPrimary}
+                  {f.state === 'pre' ? <span className="lc-match-when-hrs"> hrs</span> : null}
+                </p>
+              )}
+              {mine && <span className="lc-match-lock">TU CLUB</span>}
+            </div>
+          )}
 
           <span
             className={[
               'lc-match-center',
               f.state === 'pre' ? 'lc-match-center-vs' : 'lc-match-center-score',
+              f.state === 'post' ? 'lc-match-center-ft' : '',
             ].join(' ')}
           >
-            {center}
+            {f.state === 'post' ? (
+              <>
+                <span className="lc-match-score-n">{f.home.score ?? '0'}</span>
+                <span className="lc-match-ft">-FT-</span>
+                <span className="lc-match-score-n">{f.away.score ?? '0'}</span>
+              </>
+            ) : (
+              center
+            )}
           </span>
 
           {hasTv ? (

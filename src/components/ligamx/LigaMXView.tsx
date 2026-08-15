@@ -178,6 +178,7 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
   const jornadaPast = jornadaFixtures.filter((f) => f.status.state === 'post');
   const jornadaUpcoming = jornadaFixtures.filter((f) => f.status.state === 'pre');
   const upcomingByDay = groupByDay(jornadaUpcoming, userTz);
+  const pastByDay = groupByDay(jornadaPast, userTz);
   const todayKey = dayKeyInTz(new Date().toISOString(), userTz);
   const entries = table?.entries ?? [];
   const isEmpty = entries.length === 0;
@@ -476,11 +477,31 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
               )}
 
               {jornadaPast.length > 0 && (
-                <div>
-                  <p className="mb-3 af-tele text-foreground">Sellados</p>
-                  <div className="jor-mosaic">
-                    {jornadaPast.map((f) => (
-                      <MatchStamp key={f.id} f={f} tz={userTz} mine={isMine(f)} />
+                <div data-testid="ligamx-sellados">
+                  <p className="mb-4 af-tele text-foreground">Sellados</p>
+                  <div className="lc-day-stack">
+                    {pastByDay.map((group) => (
+                      <div
+                        key={group.day}
+                        className={[
+                          'lc-day',
+                          group.day === todayKey ? 'lc-day-today' : '',
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
+                      >
+                        <div className="lc-day-head">
+                          {group.day === todayKey && (
+                            <span className="lc-day-kicker">Hoy</span>
+                          )}
+                          <h4 className="lc-day-title">{group.label}</h4>
+                        </div>
+                        <ul className="lc-day-list">
+                          {group.rows.map((f) => (
+                            <KickRow key={f.id} f={f} tz={userTz} mine={isMine(f)} />
+                          ))}
+                        </ul>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -852,21 +873,34 @@ function KickRow({
         </span>
 
         <div className="lc-match-mid">
-          <div className="lc-match-when">
-            <p className="lc-match-when-primary">
-              {live && <span className="hoy-live-dot mr-1.5" aria-hidden />}
-              {when}
-              {!live && !done ? <span className="lc-match-when-hrs"> hrs</span> : null}
-            </p>
-            {mine && <span className="lc-match-lock">TU CLUB</span>}
-          </div>
+          {(!done || mine) && (
+            <div className="lc-match-when">
+              {!done && (
+                <p className="lc-match-when-primary">
+                  {live && <span className="hoy-live-dot mr-1.5" aria-hidden />}
+                  {when}
+                  {!live ? <span className="lc-match-when-hrs"> hrs</span> : null}
+                </p>
+              )}
+              {mine && <span className="lc-match-lock">TU CLUB</span>}
+            </div>
+          )}
           <span
             className={[
               'lc-match-center',
               done || live ? 'lc-match-center-score' : 'lc-match-center-vs',
+              done ? 'lc-match-center-ft' : '',
             ].join(' ')}
           >
-            {center}
+            {done ? (
+              <>
+                <span className="lc-match-score-n">{f.home.score ?? 0}</span>
+                <span className="lc-match-ft">-FT-</span>
+                <span className="lc-match-score-n">{f.away.score ?? 0}</span>
+              </>
+            ) : (
+              center
+            )}
           </span>
         </div>
 
@@ -900,77 +934,6 @@ function KickRow({
         ) : null}
       </PartidoLink>
     </li>
-  );
-}
-
-function MatchStamp({
-  f,
-  tz,
-  mine,
-}: {
-  f: LigaMXFixture;
-  tz: string;
-  mine: boolean;
-}) {
-  const live = f.status.state === 'in';
-  const done = f.status.state === 'post';
-  const hs = Number(f.home.score ?? 0);
-  const as = Number(f.away.score ?? 0);
-  const homeWin = done && hs > as;
-  const awayWin = done && as > hs;
-  const draw = done && hs === as;
-
-  return (
-    <PartidoLink
-      href={`/partido/liga-mx/${f.id}`}
-      data-testid={`ligamx-match-${f.id}`}
-      className={[
-        'jor-stamp',
-        live ? 'jor-stamp-live' : '',
-        mine ? 'jor-stamp-mine' : '',
-      ].join(' ')}
-    >
-      <div className="jor-stamp-meta">
-        {live && <span className="hoy-live-dot" aria-hidden />}
-        <span>
-          {live
-            ? f.status.displayClock || 'LIVE'
-            : done
-              ? 'FT'
-              : fmtTime(f.date, tz)}
-        </span>
-        {mine && <span className="text-signal">· LOCK</span>}
-      </div>
-      {(done || live) && (
-        <p className="jor-stamp-score">
-          <span className={homeWin ? 'is-win' : awayWin ? 'is-lose' : ''}>{f.home.score ?? 0}</span>
-          <span className="mx-1 opacity-35">:</span>
-          <span className={awayWin ? 'is-win' : homeWin ? 'is-lose' : ''}>{f.away.score ?? 0}</span>
-        </p>
-      )}
-      {!done && !live && <p className="jor-stamp-score opacity-40">VS</p>}
-      <div className="jor-stamp-teams">
-        <span
-          className={[
-            'inline-flex items-center gap-2',
-            homeWin ? 'jor-team-win' : awayWin ? 'jor-team-lose' : draw ? 'jor-team-draw' : '',
-          ].join(' ')}
-        >
-          <ClubLogo abbr={f.home.abbreviation} name={f.home.name} size="sm" />
-          <span className="club-word club-word-sm">{f.home.abbreviation}</span>
-        </span>
-        <span
-          className={[
-            'inline-flex items-center justify-end gap-2',
-            awayWin ? 'jor-team-win' : homeWin ? 'jor-team-lose' : draw ? 'jor-team-draw' : '',
-          ].join(' ')}
-        >
-          <span className="club-word club-word-sm">{f.away.abbreviation}</span>
-          <ClubLogo abbr={f.away.abbreviation} name={f.away.name} size="sm" />
-        </span>
-      </div>
-      <p className="jor-stamp-scorers">{fmtDate(f.date, tz)}</p>
-    </PartidoLink>
   );
 }
 
