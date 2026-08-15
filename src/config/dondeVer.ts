@@ -250,7 +250,7 @@ export function resolveDondeVer(
   };
 }
 
-/** Official Leagues Cup TV grid by Sportmonks fixture id (Imagen / FS1 / UniMás selects). */
+/** Official Leagues Cup TV grid by Sportmonks fixture id (Imagen / FS1 selects). */
 function leaguesCupBoardDondeVer(fixtureId: string): {
   mx: string;
   us: string;

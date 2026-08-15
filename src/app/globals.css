@@ -1394,7 +1394,7 @@ body {
   flex-direction: column;
   gap: 0;
   border: 0;
-  border-block: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
+  border-block-start: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
   background: transparent;
 }
 
@@ -1403,7 +1403,7 @@ body {
 }
 
 .lc-day-today .lc-day-list {
-  border-block-color: color-mix(in srgb, var(--signal) 28%, var(--line));
+  border-block-start-color: color-mix(in srgb, var(--signal) 28%, var(--line));
 }
 
 .lc-match-item {
@@ -1413,6 +1413,10 @@ body {
 
 .lc-match-item + .lc-match-item {
   border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+}
+
+.lc-match-item:has(.lc-match-venue) + .lc-match-item {
+  border-top: none;
 }
 
 /*
@@ -1442,15 +1446,18 @@ body {
 }
 
 .lc-match-venue {
-  grid-column: 1;
-  grid-row: 2;
-  justify-self: start;
-  align-self: start;
-  margin: 0;
-  max-width: 100%;
+  grid-column: 1 / -1;
+  grid-row: 4;
+  justify-self: stretch;
+  align-self: end;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  max-width: none;
+  margin: 0.2rem 0 0;
+  padding: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   font-family: var(--font-plex-mono), ui-monospace, monospace;
   font-size: 9px;
   font-weight: 500;
@@ -1458,6 +1465,23 @@ body {
   text-transform: uppercase;
   color: var(--muted);
   line-height: 1.2;
+  text-align: center;
+}
+
+.lc-match-venue::before,
+.lc-match-venue::after {
+  content: '';
+  flex: 1 1 1.25rem;
+  height: 1px;
+  background: color-mix(in srgb, var(--line) 70%, transparent);
+}
+
+.lc-match-venue span {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .lc-match:hover {
@@ -1597,7 +1621,7 @@ body {
   align-items: center;
   flex-wrap: nowrap;
   gap: 0.4rem;
-  margin-top: 0.1rem;
+  margin-top: 0.5rem;
 }
 
 /* Liga MX kick rows — full channel strip under the matchup, no cap */
@@ -1715,8 +1739,8 @@ body {
   .lc-match {
     grid-template-columns: minmax(0, 1fr) 4.75rem minmax(0, 1fr);
     column-gap: 0.3rem;
-    min-height: 4.15rem;
-    padding: 0.95rem 0.1rem 0.85rem;
+    min-height: 5.25rem;
+    padding: 1.35rem 0.1rem 1.2rem;
   }
 
   .lc-match-home,

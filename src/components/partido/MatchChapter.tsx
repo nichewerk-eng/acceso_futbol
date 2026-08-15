@@ -912,7 +912,7 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
                 mx={match.dondeVer?.mxChannels}
                 us={match.dondeVer?.usChannels}
                 mxLabel={match.dondeVer?.mx ?? 'Streaming / TV local'}
-                usLabel={match.dondeVer?.us ?? 'UniMás · TUDN · ViX'}
+                usLabel={match.dondeVer?.us ?? 'TUDN · ViX'}
                 surface="ink"
                 compact
               />

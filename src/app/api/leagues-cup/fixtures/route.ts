@@ -7,7 +7,7 @@ import {
 } from '@/lib/sports/freshness';
 import type { Fixture } from '@/lib/sports/types';
 
-const CACHE_KEY = 'leagues-cup-fixtures-v12-ft-scores';
+const CACHE_KEY = 'leagues-cup-fixtures-v13-no-unimas';
 
 type Payload = { fixtures: Fixture[]; source: string };
 

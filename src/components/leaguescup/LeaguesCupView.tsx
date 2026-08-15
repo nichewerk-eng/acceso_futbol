@@ -955,7 +955,11 @@ function MatchRow({
           />
         </span>
 
-        {f.venue ? <p className="lc-match-venue">{f.venue}</p> : null}
+        {f.venue ? (
+          <p className="lc-match-venue">
+            <span>{f.venue}</span>
+          </p>
+        ) : null}
     </>
   );
 
