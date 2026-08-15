@@ -4342,6 +4342,7 @@ body {
 .xi-pin:hover,
 .xi-pin:focus,
 .xi-pin:focus-visible,
+.xi-pin.is-hot,
 .xi-pin.is-on {
   z-index: 4;
   outline: none;
@@ -4361,6 +4362,7 @@ body {
 .xi-pin:hover .xi-bit,
 .xi-pin:focus .xi-bit,
 .xi-pin:focus-visible .xi-bit,
+.xi-pin.is-hot .xi-bit,
 .xi-pin.is-on .xi-bit {
   transform: translateY(-2px);
 }
@@ -4410,6 +4412,73 @@ body {
   width: 6px;
   height: 7px;
   background: #0c0c0c;
+}
+
+.xi-ball {
+  position: absolute;
+  z-index: 5;
+  width: 12px;
+  height: 12px;
+  pointer-events: none;
+  transform: translate(14px, 18px);
+  transition:
+    left var(--xi-pass-ms, 0.42s) steps(8),
+    top var(--xi-pass-ms, 0.42s) steps(8);
+}
+
+.xi-ball-fly {
+  display: block;
+  animation: xi-ball-arc var(--xi-pass-ms, 0.42s) steps(8);
+}
+
+.xi-ball-sprite {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  background: #f6f5f2;
+  border: 2px solid #0c0c0c;
+  box-shadow: 2px 2px 0 #0c0c0c;
+  image-rendering: pixelated;
+}
+
+.xi-ball-sprite i {
+  display: block;
+  width: 4px;
+  height: 4px;
+  background: #0c0c0c;
+}
+
+.xi-ball-fly .xi-ball-sprite {
+  animation: xi-ball-spin var(--xi-pass-ms, 0.42s) steps(4);
+}
+
+@keyframes xi-ball-arc {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-22px);
+  }
+}
+
+@keyframes xi-ball-spin {
+  to {
+    transform: rotate(90deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xi-ball {
+    transition: none;
+  }
+
+  .xi-ball-fly,
+  .xi-ball-fly .xi-ball-sprite {
+    animation: none;
+  }
 }
 
 .xi-pitch-select {
