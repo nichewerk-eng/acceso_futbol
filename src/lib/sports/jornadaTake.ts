@@ -382,24 +382,20 @@ export function buildJornadaTake(
 
   if (phase === 'live') {
     const lead = pickLead(jornada.live, isMine) ?? jornada.live[0];
-    const { h, a } = nums(lead);
-    const clock =
-      lead.clock === 'HT' || /descanso/i.test(lead.statusLabel || '')
-        ? 'Descanso'
-        : lead.clock || 'LIVE';
     const others = [...jornada.live, ...jornada.played, ...jornada.upcoming]
       .filter((f) => f.id !== lead.id)
       .slice(0, 3);
     const lock = isMine(lead);
+    const desk = jornadaNum ? `Jornada ${jornadaNum} Liga MX` : 'Liga MX';
     return {
       phase,
       jornadaNum,
       kicker,
       phaseLabel: 'En vivo',
-      headline: lock ? `Tu ${lockNick(lead, lockAbbr)} va ${h}-${a}` : `${pair(lead)} ${h}-${a}`,
+      headline: desk,
       dek: lock
-        ? `${clock}. No esperes el silbatazo para tener opinión.`
-        : `${clock}. Se escribe en cancha, no en la tabla.`,
+        ? `${desk}. No esperes el silbatazo para tener opinión.`
+        : `${desk}. Se escribe en cancha, no en la tabla.`,
       href: hrefFor(lead),
       beats: others.map((f) => recapBeat(f, isMine(f), lockAbbr)),
     };
@@ -457,13 +453,27 @@ function isSlateDump(p: string): boolean {
   );
 }
 
-/** On-screen desk line. One sentence: window + how many games. */
+function looksLikeMatchClock(s: string): boolean {
+  const t = s.trim();
+  if (!t) return true;
+  if (/^(LIVE|Descanso|HT|PEN|EN VIVO)$/i.test(t)) return true;
+  if (/^\d{1,3}(?:\s*\+\s*\d{1,2})?'?$/.test(t)) return true;
+  if (/\b\d{1,2}:\d{2}\b/.test(t)) return true;
+  if (/\b\d{1,3}'\b/.test(t) && t.length < 28) return true;
+  return false;
+}
+
+/** On-screen desk line. Window + how many games. Never a match clock. */
 export function jornadaTakeDeskTitle(take: JornadaTake): string {
   const print = (s: string) => s.replace(/LigaMX/gi, 'Liga MX').trim();
   const dek = print(take.dek || '');
   const first = (dek.split(/(?<=[.!?])\s+/)[0] ?? dek).replace(/[.!?]+$/, '');
-  if (first && first.length <= 80) return first;
-  return print(take.headline);
+  if (first && first.length <= 80 && !looksLikeMatchClock(first)) return first;
+  const headline = print(take.headline);
+  if (headline && !looksLikeMatchClock(headline.split(/[.!?]/)[0] ?? headline)) {
+    return headline;
+  }
+  return take.jornadaNum != null ? `Jornada ${take.jornadaNum} Liga MX` : 'Liga MX';
 }
 
 function spokenScript(take: JornadaTake): string {
@@ -544,8 +554,8 @@ export function mergeJornadaTake(local: JornadaTake, remote: JornadaTake): Jorna
 
   return {
     ...local,
-    headline: liveSafe ? local.headline : remote.headline || local.headline,
-    dek: liveSafe ? local.dek : remote.dek || local.dek,
+    headline: remote.headline || local.headline,
+    dek: remote.dek || local.dek,
     body: remote.body?.length ? remote.body : local.body,
     cites: remote.cites?.length ? remote.cites : local.cites,
     source: remote.source ?? local.source,
