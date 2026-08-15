@@ -13,7 +13,7 @@ export async function GET(_req: Request, ctx: Ctx) {
     return NextResponse.json({ error: 'club_not_found' }, { status: 404 });
   }
 
-  const key = `club-board-v1-${slug}`;
+  const key = `club-board-v2-${slug}`;
   const cached = getCache<ClubBoard>(key, TTL_MS);
   if (cached) {
     return NextResponse.json(cached, {

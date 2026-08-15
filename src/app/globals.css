@@ -1290,6 +1290,32 @@ body {
   color: var(--muted);
 }
 
+.lg-path-line {
+  margin: 0.55rem 0 0;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--foreground);
+}
+
+.lg-path-share {
+  flex-shrink: 0;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.lg-path-share:hover {
+  color: var(--foreground);
+}
+
 .lc-day-stack {
   display: flex;
   flex-direction: column;

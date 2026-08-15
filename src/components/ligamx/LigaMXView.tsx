@@ -16,9 +16,8 @@ import type { LigaMXFixture } from '@/app/api/ligamx/fixtures/route';
 import { startLivePoll } from '@/lib/client/livePoll';
 import { FRESH, paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
 import { mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
-
-/** Apertura 2026: no Play-In — top 8 go straight to Liguilla. */
-const LIGUILLA_SPOTS = 8;
+import { LIGUILLA_SPOTS, liguillaPath } from '@/lib/sports/liguillaPath';
+import { LiguillaPathShare } from '@/components/ligamx/LiguillaPathShare';
 
 /** Shared header + row shell — tracks live in `.lm-standings-grid` (globals.css). */
 const STANDINGS_GRID = 'lm-standings-grid';
@@ -566,6 +565,24 @@ function LmPartidosRail({
     );
   }, [clubName, clubAbbr, jornadaUpcoming, matchesGravity]);
 
+  const path = useMemo(() => {
+    if (!myEntry) return null;
+    return liguillaPath(
+      {
+        position: myEntry.position,
+        pts: myEntry.pts,
+        gp: myEntry.gp,
+        abbreviation: myEntry.team.abbreviation,
+      },
+      entries.map((e) => ({
+        position: e.position,
+        pts: e.pts,
+        gp: e.gp,
+        abbreviation: e.team.abbreviation,
+      }))
+    );
+  }, [myEntry, entries]);
+
   return (
     <aside className="lc-rail" data-testid="ligamx-rail">
       {myEntry && (
@@ -590,16 +607,11 @@ function LmPartidosRail({
           <p
             className={[
               'lc-rail-mine-mark',
-              myEntry.position <= LIGUILLA_SPOTS ? 'text-signal' : 'text-muted',
+              path?.zone === 'in' || path?.zone === 'edge' ? 'text-signal' : 'text-muted',
             ].join(' ')}
+            data-testid="liguilla-path-headline"
           >
-            {myEntry.position <= LIGUILLA_SPOTS ? 'Liguilla' : 'Fuera'}
-            {Number(myEntry.gd) !== 0 && (
-              <span className="text-muted">
-                {' '}
-                · Dif {Number(myEntry.gd) > 0 ? `+${myEntry.gd}` : myEntry.gd}
-              </span>
-            )}
+            {path?.headline ?? (myEntry.position <= LIGUILLA_SPOTS ? 'Liguilla' : 'Fuera')}
           </p>
           {myNext && (
             <p className="lc-rail-next">
@@ -622,12 +634,24 @@ function LmPartidosRail({
       </div>
 
       <div className="lc-rail-block" data-testid="ligamx-rail-liguilla">
-        <p className="af-tele text-foreground">Liguilla</p>
-        <ul className="lc-rail-tv-list">
-          <li>Top 8 directo a la fiesta grande</li>
-          <li>Sin Play-In en el Apertura 2026</li>
-          <li>Corte en la posición 8</li>
-        </ul>
+        <div className="flex items-start justify-between gap-3">
+          <p className="af-tele text-foreground">Camino a Liguilla</p>
+          {path && myEntry ? <LiguillaPathShare abbr={myEntry.team.abbreviation} path={path} /> : null}
+        </div>
+        {path ? (
+          <>
+            <p className="lg-path-line" data-testid="liguilla-path-detail">
+              {path.detail}
+            </p>
+            <p className="lc-rail-note">Top {LIGUILLA_SPOTS} directo · sin Play-In</p>
+          </>
+        ) : (
+          <ul className="lc-rail-tv-list">
+            <li>Top 8 directo a la fiesta grande</li>
+            <li>Sin Play-In en el Apertura 2026</li>
+            <li>Corte en la posición 8</li>
+          </ul>
+        )}
       </div>
     </aside>
   );

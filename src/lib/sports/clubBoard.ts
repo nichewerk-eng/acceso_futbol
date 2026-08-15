@@ -6,6 +6,7 @@ import { fetchLigaMxFixtures } from '@/lib/sports/espnFallback';
 import { fetchLigaMxStandings, fetchClubForm, sportmonksEnabled } from '@/lib/sports/sportmonks';
 import { fetchSeleccionSchedule } from '@/lib/sports/seleccion';
 import { espnFetch, standingsUrl, SLUG } from '@/lib/espn';
+import { liguillaPath, type LiguillaPath } from '@/lib/sports/liguillaPath';
 import type { Fixture, FormMatch } from '@/lib/sports/types';
 
 export type ClubTableRow = {
@@ -32,6 +33,7 @@ export type ClubBoard = {
   };
   accesoLine: string;
   table: ClubTableRow | null;
+  liguilla: LiguillaPath | null;
   form: FormMatch[];
   next: Fixture | null;
   live: Fixture | null;
@@ -63,8 +65,22 @@ function pinAccesoLine(club: ClubIdentity): string {
   return moment?.accesoLine || moment?.body || club.weatherLine;
 }
 
-async function loadStandingsRow(club: ClubIdentity): Promise<ClubTableRow | null> {
+async function loadStandingsForClub(
+  club: ClubIdentity
+): Promise<{ table: ClubTableRow; liguilla: LiguillaPath | null } | null> {
   if (club.league === 'seleccion') return null;
+
+  const toClub = (e: {
+    position: number;
+    pts: number;
+    gp: number;
+    team: { abbreviation: string };
+  }) => ({
+    position: e.position,
+    pts: e.pts,
+    gp: e.gp,
+    abbreviation: e.team.abbreviation,
+  });
 
   try {
     if (sportmonksEnabled()) {
@@ -76,16 +92,19 @@ async function loadStandingsRow(club: ClubIdentity): Promise<ClubTableRow | null
       );
       if (hit) {
         return {
-          position: hit.position,
-          gp: hit.gp,
-          w: hit.w,
-          d: hit.d,
-          l: hit.l,
-          gf: hit.gf,
-          ga: hit.ga,
-          gd: hit.gd,
-          pts: hit.pts,
-          season: sm.season,
+          table: {
+            position: hit.position,
+            gp: hit.gp,
+            w: hit.w,
+            d: hit.d,
+            l: hit.l,
+            gf: hit.gf,
+            ga: hit.ga,
+            gd: hit.gd,
+            pts: hit.pts,
+            season: sm.season,
+          },
+          liguilla: liguillaPath(toClub(hit), sm.entries.map(toClub)),
         };
       }
     }
@@ -104,10 +123,7 @@ async function loadStandingsRow(club: ClubIdentity): Promise<ClubTableRow | null
     const entries =
       raw.standings?.entries ?? raw.children?.[0]?.standings?.entries ?? [];
     const season = raw.season?.displayName ?? 'Apertura 2026';
-    for (const entry of entries) {
-      if (scheduleAbbr(entry.team.abbreviation) !== scheduleAbbr(club.abbreviation)) {
-        continue;
-      }
+    const mapped = entries.map((entry) => {
       const sm = Object.fromEntries(entry.stats.map((s) => [s.abbreviation, s]));
       return {
         position: Number(sm['R']?.value ?? sm['POS']?.value ?? 0),
@@ -119,7 +135,27 @@ async function loadStandingsRow(club: ClubIdentity): Promise<ClubTableRow | null
         ga: Number(sm['A']?.value ?? sm['GA']?.value ?? 0),
         gd: sm['GD']?.displayValue ?? '0',
         pts: Number(sm['P']?.value ?? sm['PTS']?.value ?? 0),
-        season,
+        abbreviation: entry.team.abbreviation,
+      };
+    });
+    const hit = mapped.find(
+      (e) => scheduleAbbr(e.abbreviation) === scheduleAbbr(club.abbreviation)
+    );
+    if (hit) {
+      return {
+        table: {
+          position: hit.position,
+          gp: hit.gp,
+          w: hit.w,
+          d: hit.d,
+          l: hit.l,
+          gf: hit.gf,
+          ga: hit.ga,
+          gd: hit.gd,
+          pts: hit.pts,
+          season,
+        },
+        liguilla: liguillaPath(hit, mapped),
       };
     }
   } catch {
@@ -147,9 +183,9 @@ export async function getClubBoard(slug: string): Promise<ClubBoard | null> {
       ? fetchClubForm(String(club.smTeamId), 5)
       : Promise.resolve([] as FormMatch[]);
 
-  const [fixturesRaw, table, form] = await Promise.all([
+  const [fixturesRaw, standing, form] = await Promise.all([
     fixturesPromise,
-    loadStandingsRow(club),
+    loadStandingsForClub(club),
     formPromise,
   ]);
 
@@ -177,7 +213,8 @@ export async function getClubBoard(slug: string): Promise<ClubBoard | null> {
       weatherLine: club.weatherLine,
     },
     accesoLine: pinAccesoLine(club),
-    table,
+    table: standing?.table ?? null,
+    liguilla: standing?.liguilla ?? null,
     form,
     next,
     live,

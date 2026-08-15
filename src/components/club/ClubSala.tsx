@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { ClubPulseWall } from '@/components/club/ClubPulseWall';
+import { LiguillaPathShare } from '@/components/ligamx/LiguillaPathShare';
 import { useGravity } from '@/contexts/GravityContext';
 import type { ClubBoard } from '@/lib/sports/clubBoard';
 import { scheduleAbbr } from '@/lib/sports/ligaMxAbbr';
@@ -175,7 +176,7 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
     }
   }, []);
 
-  const { club, next, live, table, form, recent, upcoming, accesoLine } = board;
+  const { club, next, live, table, liguilla, form, recent, upcoming, accesoLine } = board;
   const style = {
     ['--club-ink' as string]: club.palette.ink,
     ['--club-signal' as string]: club.palette.signal,
@@ -343,6 +344,38 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
           )}
         </div>
       </section>
+
+      {liguilla && (
+        <section
+          className="border-b border-line bg-bg-1 px-4 py-8 sm:px-6"
+          data-testid="club-liguilla"
+        >
+          <div className="mx-auto max-w-6xl">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <p className="af-tele text-foreground">
+                <span className="text-signal">AF</span>
+                ://LIGUILLA
+              </p>
+              <LiguillaPathShare abbr={club.abbreviation} path={liguilla} />
+            </div>
+            <p
+              className="mt-3 font-display text-2xl font-bold uppercase tracking-wide sm:text-3xl"
+              data-testid="club-liguilla-headline"
+            >
+              {liguilla.headline}
+            </p>
+            <p className="mt-2 max-w-xl font-mono text-[13px] leading-6 text-muted">
+              {liguilla.detail}
+            </p>
+            <Link
+              href="/liga-mx"
+              className="mt-4 inline-block font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-signal hover:text-foreground"
+            >
+              Ver tabla
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* Results tape — above the content pulse */}
       <section
