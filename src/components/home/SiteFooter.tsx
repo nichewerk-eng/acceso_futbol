@@ -1,10 +1,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { siteConfig } from '@/config/site';
+import { SOCIAL_CHANNELS, siteConfig } from '@/config/site';
 
 export function SiteFooter() {
   const year = new Date().getFullYear();
-  const { username, profileUrl } = siteConfig.tiktok;
 
   return (
     <footer className="af-footer" data-testid="site-footer" aria-label="Cierre Acceso Futbol">
@@ -60,16 +59,19 @@ export function SiteFooter() {
             <span className="af-footer-channel-key">Mail</span>
             <span className="af-footer-channel-val">{siteConfig.email}</span>
           </a>
-          <a
-            href={profileUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="af-footer-channel"
-            data-testid="footer-tiktok"
-          >
-            <span className="af-footer-channel-key">Megáfono</span>
-            <span className="af-footer-channel-val">@{username}</span>
-          </a>
+          {SOCIAL_CHANNELS.map((ch) => (
+            <a
+              key={ch.id}
+              href={ch.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="af-footer-channel"
+              data-testid={`footer-social-${ch.id}`}
+            >
+              <span className="af-footer-channel-key">{ch.label}</span>
+              <span className="af-footer-channel-val">{ch.handle}</span>
+            </a>
+          ))}
           <Link
             href="/mediakit"
             className="af-footer-channel"

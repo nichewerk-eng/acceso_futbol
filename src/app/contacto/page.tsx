@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { PulseNav } from '@/components/living-room/PulseNav';
 import { SiteFooter } from '@/components/home/SiteFooter';
 import { JsonLd } from '@/components/seo/JsonLd';
-import { siteConfig } from '@/config/site';
+import { SOCIAL_CHANNELS, siteConfig } from '@/config/site';
 import { absoluteUrl, breadcrumbJsonLd, organizationJsonLd } from '@/lib/seo';
 
 export const metadata: Metadata = {
@@ -73,36 +73,18 @@ export default function ContactoPage() {
               Redes
             </span>
             <ul className="mt-3 space-y-2 font-mono text-sm">
-              <li>
-                <a
-                  href={siteConfig.social.tiktok}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-signal hover:text-foreground"
-                >
-                  TikTok @{siteConfig.tiktok.username}
-                </a>
-              </li>
-              <li>
-                <a
-                  href={siteConfig.social.instagram}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-signal hover:text-foreground"
-                >
-                  Instagram @accesofutbolmx
-                </a>
-              </li>
-              <li>
-                <a
-                  href={siteConfig.social.youtube}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-signal hover:text-foreground"
-                >
-                  YouTube Acceso Futbol
-                </a>
-              </li>
+              {SOCIAL_CHANNELS.map((ch) => (
+                <li key={ch.id}>
+                  <a
+                    href={ch.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-signal hover:text-foreground"
+                  >
+                    {ch.label} {ch.handle}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
 

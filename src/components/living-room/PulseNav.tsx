@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { GravityAlertsToggle } from '@/components/living-room/GravityAlertsToggle';
-import { siteConfig } from '@/config/site';
+import { SeguirMenu } from '@/components/living-room/SeguirMenu';
 import { useGravity } from '@/contexts/GravityContext';
 
 const LINKS = [
@@ -18,7 +18,6 @@ const LINKS = [
 
 export function PulseNav() {
   const pathname = usePathname();
-  const { profileUrl, username } = siteConfig.tiktok;
   const { club, elTri, settled } = useGravity();
   const lock = [club?.abbreviation, elTri ? 'TRI' : null].filter(Boolean).join('+');
 
@@ -83,16 +82,7 @@ export function PulseNav() {
           </Link>
         )}
 
-        <a
-          href={profileUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="af-cta !px-3 !py-2"
-          data-testid="nav-tiktok"
-        >
-          <span className="hidden sm:inline">@{username}</span>
-          <span className="sm:hidden">Seguir</span>
-        </a>
+        <SeguirMenu />
       </div>
 
       <div

@@ -34,9 +34,9 @@ export const siteConfig = {
   },
   social: {
     tiktok: "https://www.tiktok.com/@accesofutbolmx",
-    instagram: "https://www.instagram.com/accesofutbolmx",
+    instagram: "https://www.instagram.com/accesofutbolmx/",
     facebook: "https://www.facebook.com/accesofutbol",
-    youtube: "https://www.youtube.com/@accesofutbolmx",
+    youtube: "https://www.youtube.com/@AccesoFutbolMx",
   },
   seoKeywords: [
     "Liga MX",
@@ -56,3 +56,24 @@ export const siteConfig = {
     "fútbol mexicano Estados Unidos",
   ],
 } as const;
+
+export const SOCIAL_CHANNELS = [
+  {
+    id: 'tiktok',
+    label: 'TikTok',
+    handle: '@accesofutbolmx',
+    href: siteConfig.social.tiktok,
+  },
+  {
+    id: 'instagram',
+    label: 'Instagram',
+    handle: '@accesofutbolmx',
+    href: siteConfig.social.instagram,
+  },
+  {
+    id: 'youtube',
+    label: 'YouTube',
+    handle: '@AccesoFutbolMx',
+    href: siteConfig.social.youtube,
+  },
+] as const;
