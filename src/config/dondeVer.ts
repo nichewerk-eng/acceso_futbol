@@ -144,7 +144,7 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
   // Jornada 4 · 15–17 ago 2026
   '2026-08-15|ATL|TOL': {
     mx: ['azteca-7', 'espn', 'disney-plus'],
-    us: ['tudn', 'univision', 'vix'],
+    us: ['tudn', 'univision'],
   },
   '2026-08-15|JUA|MTY': {
     mx: ['canal-5', 'tudn', 'vix'],
@@ -168,7 +168,7 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
   },
   '2026-08-16|CAZ|TIJ': {
     mx: ['fox-one'],
-    us: ['tudn', 'vix'],
+    us: ['tudn'],
   },
   '2026-08-17|LEO|NCX': {
     mx: ['fox', 'fox-one'],
