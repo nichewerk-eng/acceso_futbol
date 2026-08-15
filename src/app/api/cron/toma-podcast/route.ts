@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import type { TomaShowKind } from '@/lib/toma/episode';
 import { maybeGenerateTomaEpisode } from '@/lib/toma/generateEpisode';
 
 export const maxDuration = 120;
@@ -18,9 +19,16 @@ function deskDev(): boolean {
   return process.env.NODE_ENV === 'development';
 }
 
-/** Vercel Cron GET. No-ops unless today's slate is closed. `?force=1` is local only. */
+function parseKind(raw: string | null): TomaShowKind | undefined {
+  if (raw === 'antes' || raw === 'dia' || raw === 'cierre') return raw;
+  return undefined;
+}
+
+/** Vercel Cron GET. One show per tick: cierre → día → antes. `?force=1` is local only. */
 export async function GET(req: Request) {
-  const force = new URL(req.url).searchParams.get('force') === '1';
+  const url = new URL(req.url);
+  const force = url.searchParams.get('force') === '1';
+  const kind = parseKind(url.searchParams.get('kind'));
   if (force) {
     if (!deskDev()) {
       return NextResponse.json({ error: 'force_local_only' }, { status: 403 });
@@ -29,12 +37,13 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   try {
-    const { episode, skip } = await maybeGenerateTomaEpisode({ force });
+    const { episode, skip } = await maybeGenerateTomaEpisode({ force, kind });
     return NextResponse.json({
       ok: true,
       generated: Boolean(episode?.audioUrl),
       id: episode?.id ?? null,
       audioUrl: episode?.audioUrl ?? null,
+      kind: episode?.kind ?? kind ?? null,
       skip: skip ?? null,
       forced: force,
     });

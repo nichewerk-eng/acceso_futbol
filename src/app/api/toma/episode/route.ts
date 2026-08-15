@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { isMexicoDay, mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
 import { getJornadaOverview } from '@/lib/sports/jornada';
-import { getStoredEpisode } from '@/lib/toma/episode';
+import { pickPlayableEpisode } from '@/lib/toma/episode';
 
 export async function GET() {
   try {
@@ -9,15 +8,7 @@ export async function GET() {
     if (!jornada) {
       return NextResponse.json({ episode: null });
     }
-    const today = mexicoDayKey();
-    const all = [...jornada.live, ...jornada.played, ...jornada.upcoming];
-    const todayFx = all.filter((f) => isMexicoDay(f.date, today));
-    const todayOpen = todayFx.some((f) => f.state === 'pre' || f.state === 'in');
-    const episode =
-      (await getStoredEpisode(jornada.number, today)) ??
-      (todayOpen
-        ? null
-        : await getStoredEpisode(jornada.number, shiftDayKey(today, -1)));
+    const episode = await pickPlayableEpisode(jornada);
     return NextResponse.json(
       { episode },
       {

@@ -6,16 +6,20 @@ import { jornadaTakeDeskTitle } from '@/lib/sports/jornadaTake';
 import type { Fixture } from '@/lib/sports/types';
 import {
   closedDaySlate,
+  closedJornadaSlate,
   episodeBlobPath,
   episodeStoreKey,
   forceDaySlate,
   getStoredEpisode,
   inflightEpisode,
+  preJornadaSlate,
   putStoredEpisode,
   saveLocalEpisode,
+  showKindFromDayKey,
   trackInflight,
   tryEpisodeLock,
   type TomaEpisode,
+  type TomaShowKind,
 } from '@/lib/toma/episode';
 import { geminiTtsEnabled, synthesizeTwoHost, TOMA_VOICE_REV } from '@/lib/toma/geminiTts';
 import { sourceHash, writeTwoHostScript } from '@/lib/toma/writeDialogue';
@@ -92,7 +96,8 @@ async function runGenerate(
   const locked = await tryEpisodeLock(storeKey, { localOnly });
   if (!locked) return { episode: existing, skip: 'exists' };
 
-  const transcript = await writeTwoHostScript(take, closed.fixtures);
+  const kind = showKindFromDayKey(closed.dayKey);
+  const transcript = await writeTwoHostScript(take, closed.fixtures, kind);
   if (!transcript) return { episode: existing, skip: 'no_script' };
   const audio = await synthesizeTwoHost(transcript);
   if (!audio) return { episode: existing, skip: 'no_tts' };
@@ -102,6 +107,7 @@ async function runGenerate(
     id: storeKey,
     jornadaNum: jornada.number,
     dayKey: closed.dayKey,
+    kind,
     title: jornadaTakeDeskTitle(take),
     transcript,
     sourceHash: hash,
@@ -115,34 +121,59 @@ async function runGenerate(
   return { episode };
 }
 
+async function runTracked(
+  jornada: JornadaOverview,
+  slate: { dayKey: string; fixtures: Fixture[] },
+  localOnly: boolean
+): Promise<TomaGenerateResult> {
+  const storeKey = episodeStoreKey(jornada.number, slate.dayKey);
+  const pending = inflightEpisode(storeKey);
+  if (pending) return { episode: await pending };
+
+  let result: TomaGenerateResult = { episode: null };
+  await trackInflight(
+    storeKey,
+    (async () => {
+      result = await runGenerate(jornada, slate, storeKey, localOnly);
+      return result.episode;
+    })()
+  );
+  return result;
+}
+
+function forceSlate(
+  jornada: JornadaOverview,
+  kind?: TomaShowKind
+): { dayKey: string; fixtures: Fixture[] } {
+  if (kind === 'antes') return { dayKey: 'antes', fixtures: [] };
+  if (kind === 'cierre') return { dayKey: 'cierre', fixtures: jornada.played };
+  return forceDaySlate(jornada);
+}
+
 /**
- * Zero-touch: if today's jornada slate is closed and Gemini is configured,
- * write one two-host episode. No-ops when live, already stored, or unconfigured.
+ * One TTS pass per call. Priority: cierre de fecha → cierre del día → antes.
  * `force` is local `next dev` only: memory cache, never Blob/KV.
  */
 export async function maybeGenerateTomaEpisode(opts?: {
   force?: boolean;
+  kind?: TomaShowKind;
 }): Promise<TomaGenerateResult> {
   if (opts?.force && !deskDev()) return { episode: null, skip: 'force_prod' };
   if (!geminiTtsEnabled()) return { episode: null, skip: 'no_gemini' };
 
   const jornada = await getJornadaOverview().catch(() => null);
   if (!jornada) return { episode: null, skip: 'no_jornada' };
-  const closed = opts?.force ? forceDaySlate(jornada) : closedDaySlate(jornada);
-  if (!closed) return { episode: null, skip: 'not_closed' };
-
-  const storeKey = episodeStoreKey(jornada.number, closed.dayKey);
-  const pending = inflightEpisode(storeKey);
-  if (pending) return { episode: await pending };
 
   const localOnly = Boolean(opts?.force);
-  let result: TomaGenerateResult = { episode: null };
-  await trackInflight(
-    storeKey,
-    (async () => {
-      result = await runGenerate(jornada, closed, storeKey, localOnly);
-      return result.episode;
-    })()
-  );
-  return result;
+  if (opts?.force) {
+    return runTracked(jornada, forceSlate(jornada, opts.kind), localOnly);
+  }
+
+  const wrap = closedJornadaSlate(jornada);
+  if (wrap) return runTracked(jornada, wrap, false);
+  const day = closedDaySlate(jornada);
+  if (day) return runTracked(jornada, day, false);
+  const pre = preJornadaSlate(jornada);
+  if (pre) return runTracked(jornada, pre, false);
+  return { episode: null, skip: 'not_closed' };
 }

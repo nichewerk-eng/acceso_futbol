@@ -1,15 +1,21 @@
 import { mkdir, readFile, writeFile } from 'fs/promises';
 import path from 'path';
-import { isMexicoDay, mexicoDayKey } from '@/lib/radio/phases';
+import { isMexicoDay, mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
 import { setAudio } from '@/lib/radio/cache';
 import { kvGetJson, kvSetJson, kvSetNx, sharedKvEnabled } from '@/lib/sharedKv';
 import type { JornadaOverview } from '@/lib/sports/jornada';
 import type { Fixture } from '@/lib/sports/types';
 
+export type TomaShowKind = 'antes' | 'dia' | 'cierre';
+
+export const EPISODE_ANTES = 'antes';
+export const EPISODE_CIERRE = 'cierre';
+
 export type TomaEpisode = {
   id: string;
   jornadaNum: number;
   dayKey: string;
+  kind?: TomaShowKind;
   title: string;
   transcript: string;
   sourceHash: string;
@@ -84,6 +90,16 @@ export function episodeStoreKey(jornadaNum: number, dayKey: string): string {
   return `toma-ep-j${jornadaNum}-${dayKey}`;
 }
 
+export function showKindFromDayKey(dayKey: string): TomaShowKind {
+  if (dayKey === EPISODE_ANTES) return 'antes';
+  if (dayKey === EPISODE_CIERRE) return 'cierre';
+  return 'dia';
+}
+
+function jornadaRows(jornada: JornadaOverview): Fixture[] {
+  return [...jornada.live, ...jornada.played, ...jornada.upcoming];
+}
+
 export function episodeBlobPath(id: string, contentType = 'audio/wav'): string {
   const ext = contentType.includes('mpeg') ? 'mp3' : 'wav';
   return `toma/${id}.${ext}`;
@@ -117,6 +133,58 @@ export function forceDaySlate(
     dayKey: mexicoDayKey(new Date(now)),
     fixtures: jornada.played,
   };
+}
+
+/** Whole fecha still upcoming, first kick not yet. */
+export function preJornadaSlate(
+  jornada: JornadaOverview,
+  now = Date.now()
+): { dayKey: string; fixtures: Fixture[] } | null {
+  const all = jornadaRows(jornada);
+  if (all.length === 0) return null;
+  if (jornada.live.length > 0 || jornada.played.length > 0) return null;
+  if (all.some((f) => f.state === 'in' || f.state === 'post')) return null;
+  const firstKick = Math.min(...all.map((f) => +new Date(f.date)));
+  if (!Number.isFinite(firstKick) || now >= firstKick) return null;
+  return { dayKey: EPISODE_ANTES, fixtures: [] };
+}
+
+/** Every game in the fecha is FT and settled. */
+export function closedJornadaSlate(
+  jornada: JornadaOverview,
+  now = Date.now()
+): { dayKey: string; fixtures: Fixture[] } | null {
+  const all = jornadaRows(jornada);
+  if (all.length === 0 || jornada.played.length === 0) return null;
+  if (all.some((f) => f.state === 'pre' || f.state === 'in')) return null;
+  const lastKick = Math.max(...all.map((f) => +new Date(f.date)));
+  if (!Number.isFinite(lastKick) || now < lastKick + SETTLE_MS) return null;
+  return { dayKey: EPISODE_CIERRE, fixtures: jornada.played };
+}
+
+/** Desk play order: cierre → today → yesterday (if today has not started) → antes. */
+export async function pickPlayableEpisode(
+  jornada: JornadaOverview,
+  now = Date.now()
+): Promise<TomaEpisode | null> {
+  const today = mexicoDayKey(new Date(now));
+  const wrap = await getStoredEpisode(jornada.number, EPISODE_CIERRE);
+  if (wrap) return wrap;
+
+  const todayEp = await getStoredEpisode(jornada.number, today);
+  if (todayEp) return todayEp;
+
+  const todayFx = jornadaRows(jornada).filter((f) => isMexicoDay(f.date, today));
+  const todayStarted = todayFx.some((f) => f.state === 'in' || f.state === 'post');
+  if (!todayStarted) {
+    const prior = await getStoredEpisode(jornada.number, shiftDayKey(today, -1));
+    if (prior) return prior;
+  }
+
+  if (jornada.live.length === 0 && jornada.played.length === 0) {
+    return getStoredEpisode(jornada.number, EPISODE_ANTES);
+  }
+  return null;
 }
 
 export async function getStoredEpisode(
