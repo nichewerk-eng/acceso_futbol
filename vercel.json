@@ -2,7 +2,11 @@
   "crons": [
     {
       "path": "/api/cron/toma-podcast",
-      "schedule": "20 * * * *"
+      "schedule": "20 6 * * *"
+    },
+    {
+      "path": "/api/cron/toma-podcast",
+      "schedule": "20 16 * * *"
     }
   ]
 }
