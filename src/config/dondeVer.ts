@@ -151,11 +151,11 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
   },
   '2026-08-15|JUA|MTY': {
     mx: ['canal-5', 'tudn', 'vix'],
-    us: ['univision', 'vix'],
+    us: ['tudn', 'univision', 'vix'],
   },
   '2026-08-15|ATS|UANL': {
     mx: ['canal-5', 'tudn', 'vix'],
-    us: ['univision', 'vix'],
+    us: ['tudn', 'univision', 'vix'],
   },
   '2026-08-16|QRO|UNAM': {
     mx: ['vix'],
