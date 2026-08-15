@@ -3,6 +3,7 @@ import { IBM_Plex_Mono, Oswald } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { siteConfig } from "@/config/site";
 import { GravityProvider } from "@/contexts/GravityContext";
+import { GravityAlertsHost } from "@/components/living-room/GravityAlertsHost";
 import { TeamProvider } from "@/contexts/TeamContext";
 import "./globals.css";
 
@@ -78,6 +79,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-bg-1 font-display text-foreground">
         <TeamProvider>
           <GravityProvider>
+            <GravityAlertsHost />
             {children}
           </GravityProvider>
         </TeamProvider>

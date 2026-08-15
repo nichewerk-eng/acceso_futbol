@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { GravityAlertsToggle } from '@/components/living-room/GravityAlertsToggle';
 import { siteConfig } from '@/config/site';
 import { useGravity } from '@/contexts/GravityContext';
 
@@ -67,6 +68,8 @@ export function PulseNav() {
         </nav>
 
         <div className="flex-1" />
+
+        <GravityAlertsToggle />
 
         {settled && lock && (
           <Link
