@@ -4,6 +4,9 @@ export function geminiTtsEnabled(): boolean {
   return Boolean(process.env.GEMINI_API_KEY?.trim());
 }
 
+/** Bump when voices or delivery prompt change so stored episodes regenerate. */
+export const TOMA_VOICE_REV = 'v4-fenrir-enceladus';
+
 function ttsModel(): string {
   return process.env.GEMINI_TTS_MODEL?.trim() || 'gemini-2.5-flash-preview-tts';
 }
@@ -37,7 +40,15 @@ export async function synthesizeTwoHost(transcript: string): Promise<{
   const key = process.env.GEMINI_API_KEY?.trim();
   if (!key) return null;
 
-  const spoken = `TTS the following conversation between Alex and Mar. Natural Mexican Spanish, conversational podcast, not a newsreader.\n\n${transcript}`;
+  const spoken = `TTS the following conversation between Alex and Mar.
+
+Mexican Spanish from Mexico (CDMX). Liga MX TV truck, not a studio podcast. Worn, a little hoarse, raspy around the edges. Twenty years on the mic. Less diction, more street. Bite, smile, stretch a word, let the voice crack a little.
+
+Alex: lead relator, baritone, rough. Mar: Mexican too, breathy, not polished, hits the number then the question.
+
+Say "Liga MX" as "Liga eme equis". Never clean. Never bright. Never Spain. Never Argentine. Never a US podcast host.
+
+${transcript}`;
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(ttsModel())}:generateContent?key=${encodeURIComponent(key)}`;
 
   try {
@@ -58,7 +69,7 @@ export async function synthesizeTwoHost(transcript: string): Promise<{
                 },
                 {
                   speaker: 'Mar',
-                  voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } },
+                  voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Enceladus' } },
                 },
               ],
             },
@@ -66,7 +77,12 @@ export async function synthesizeTwoHost(transcript: string): Promise<{
         },
       }),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('gemini tts', res.status, await res.text().catch(() => ''));
+      }
+      return null;
+    }
     const json = (await res.json()) as GeminiResponse;
     const audio = partAudio(json.candidates?.[0]?.content?.parts?.[0]);
     if (!audio) return null;

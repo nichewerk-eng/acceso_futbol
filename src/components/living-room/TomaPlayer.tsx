@@ -105,7 +105,7 @@ export function TomaPlayer({ take }: { take: JornadaTake }) {
   useEffect(() => {
     let cancelled = false;
     const load = () => {
-      fetch('/api/toma/episode')
+      fetch('/api/toma/episode', { cache: 'no-store' })
         .then((r) => (r.ok ? r.json() : null))
         .then((d: { episode?: { audioUrl?: string } | null } | null) => {
           const url = d?.episode?.audioUrl;
@@ -224,18 +224,24 @@ export function TomaPlayer({ take }: { take: JornadaTake }) {
     audioRef.current?.pause();
     revoke();
     try {
-      const a = new Audio(url);
+      const r = await fetch(url, { cache: 'no-store' });
+      if (!r.ok) throw new Error('episode');
+      const blob = await r.blob();
+      const obj = URL.createObjectURL(blob);
+      objectUrlRef.current = obj;
+      const a = new Audio(obj);
       audioRef.current = a;
       a.onended = () => stop();
       a.onerror = () => {
-        if (playingRef.current) void playAt(0, true);
+        setBusy(false);
+        stop();
       };
       setBusy(false);
       await a.play();
       if (!playingRef.current) a.pause();
     } catch {
       setBusy(false);
-      if (playingRef.current) void playAt(0, true);
+      stop();
     }
   }
 
@@ -313,7 +319,7 @@ export function TomaPlayer({ take }: { take: JornadaTake }) {
     await playAt(idxRef.current);
   }
 
-  function toggleMaster() {
+  async function toggleMaster() {
     if (playing) {
       pausePlayback();
       return;
@@ -321,6 +327,19 @@ export function TomaPlayer({ take }: { take: JornadaTake }) {
     if (held) {
       void resumeHeld();
       return;
+    }
+    if (!episodeUrlRef.current) {
+      try {
+        const r = await fetch('/api/toma/episode', { cache: 'no-store' });
+        const d = r.ok ? await r.json() : null;
+        const url = d?.episode?.audioUrl as string | undefined;
+        if (url) {
+          setEpisodeUrl(url);
+          episodeUrlRef.current = url;
+        }
+      } catch {
+        /* cortes fallback */
+      }
     }
     void playAt(idxRef.current);
   }

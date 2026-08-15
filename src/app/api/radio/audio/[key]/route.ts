@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getAudio, getBeat } from '@/lib/radio/cache';
+import { getAudio, getBeat, setAudio } from '@/lib/radio/cache';
 import { synthesize } from '@/lib/radio/tts';
+import { loadLocalAudio } from '@/lib/toma/episode';
 
 export async function GET(
   _req: Request,
@@ -10,6 +11,13 @@ export async function GET(
   const decoded = decodeURIComponent(key);
 
   let entry = getAudio(decoded);
+  if (!entry && decoded.startsWith('toma-ep-')) {
+    const disk = await loadLocalAudio(decoded);
+    if (disk) {
+      setAudio(decoded, disk.bytes, disk.contentType);
+      entry = { bytes: disk.bytes, contentType: disk.contentType, ts: Date.now() };
+    }
+  }
   if (!entry) {
     // Same-isolate recovery: beat text may still be in memory after a cold brief.
     const beat = getBeat(decoded);
@@ -24,7 +32,10 @@ export async function GET(
   return new NextResponse(new Uint8Array(entry.bytes), {
     headers: {
       'Content-Type': entry.contentType,
-      'Cache-Control': 'public, max-age=3600',
+      'Cache-Control':
+        process.env.NODE_ENV === 'development'
+          ? 'no-store'
+          : 'public, max-age=3600',
     },
   });
 }

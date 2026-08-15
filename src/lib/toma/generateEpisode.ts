@@ -8,15 +8,33 @@ import {
   closedDaySlate,
   episodeBlobPath,
   episodeStoreKey,
+  forceDaySlate,
   getStoredEpisode,
   inflightEpisode,
   putStoredEpisode,
+  saveLocalEpisode,
   trackInflight,
   tryEpisodeLock,
   type TomaEpisode,
 } from '@/lib/toma/episode';
-import { geminiTtsEnabled, synthesizeTwoHost } from '@/lib/toma/geminiTts';
+import { geminiTtsEnabled, synthesizeTwoHost, TOMA_VOICE_REV } from '@/lib/toma/geminiTts';
 import { sourceHash, writeTwoHostScript } from '@/lib/toma/writeDialogue';
+
+export type TomaGenerateSkip =
+  | 'no_gemini'
+  | 'no_jornada'
+  | 'not_closed'
+  | 'force_prod'
+  | 'no_take'
+  | 'no_script'
+  | 'no_tts'
+  | 'no_store'
+  | 'exists';
+
+export type TomaGenerateResult = {
+  episode: TomaEpisode | null;
+  skip?: TomaGenerateSkip;
+};
 
 function blobEnabled(): boolean {
   return Boolean(
@@ -24,12 +42,17 @@ function blobEnabled(): boolean {
   );
 }
 
+function deskDev(): boolean {
+  return process.env.NODE_ENV === 'development';
+}
+
 async function storeAudio(
   id: string,
   bytes: Buffer,
-  contentType: string
+  contentType: string,
+  localOnly: boolean
 ): Promise<{ audioUrl: string; blobPath?: string } | null> {
-  if (blobEnabled()) {
+  if (!localOnly && blobEnabled()) {
     try {
       const blobPath = episodeBlobPath(id, contentType);
       await put(blobPath, bytes, {
@@ -41,36 +64,40 @@ async function storeAudio(
       });
       return {
         blobPath,
-        audioUrl: `/api/toma/audio/${encodeURIComponent(id)}`,
+        audioUrl: `/api/toma/audio/${encodeURIComponent(id)}?v=${encodeURIComponent(TOMA_VOICE_REV)}`,
       };
     } catch {
       return null;
     }
   }
   setAudio(id, bytes, contentType);
-  return { audioUrl: `/api/radio/audio/${encodeURIComponent(id)}` };
+  const q = `?v=${encodeURIComponent(TOMA_VOICE_REV)}`;
+  return { audioUrl: `/api/radio/audio/${encodeURIComponent(id)}${q}` };
 }
 
 async function runGenerate(
   jornada: JornadaOverview,
   closed: { dayKey: string; fixtures: Fixture[] },
-  storeKey: string
-): Promise<TomaEpisode | null> {
+  storeKey: string,
+  localOnly: boolean
+): Promise<TomaGenerateResult> {
   const take = await getJornadaTakePayload().catch(() => null);
-  if (!take) return null;
-  const hash = sourceHash(take, closed.fixtures);
+  if (!take) return { episode: null, skip: 'no_take' };
+  const hash = `${sourceHash(take, closed.fixtures)}-${TOMA_VOICE_REV}`;
   const existing = await getStoredEpisode(jornada.number, closed.dayKey);
-  if (existing && existing.sourceHash === hash && existing.audioUrl) return existing;
+  if (existing && existing.sourceHash === hash && existing.audioUrl) {
+    return { episode: existing, skip: 'exists' };
+  }
 
-  const locked = await tryEpisodeLock(storeKey);
-  if (!locked) return existing;
+  const locked = await tryEpisodeLock(storeKey, { localOnly });
+  if (!locked) return { episode: existing, skip: 'exists' };
 
   const transcript = await writeTwoHostScript(take, closed.fixtures);
-  if (!transcript) return existing;
+  if (!transcript) return { episode: existing, skip: 'no_script' };
   const audio = await synthesizeTwoHost(transcript);
-  if (!audio) return existing;
-  const stored = await storeAudio(storeKey, audio.bytes, audio.contentType);
-  if (!stored) return existing;
+  if (!audio) return { episode: existing, skip: 'no_tts' };
+  const stored = await storeAudio(storeKey, audio.bytes, audio.contentType, localOnly);
+  if (!stored) return { episode: existing, skip: 'no_store' };
   const episode: TomaEpisode = {
     id: storeKey,
     jornadaNum: jornada.number,
@@ -83,25 +110,39 @@ async function runGenerate(
     contentType: audio.contentType,
     generatedAt: new Date().toISOString(),
   };
-  await putStoredEpisode(episode);
-  return episode;
+  await putStoredEpisode(episode, { localOnly });
+  if (localOnly) await saveLocalEpisode(episode, audio.bytes).catch(() => {});
+  return { episode };
 }
 
 /**
  * Zero-touch: if today's jornada slate is closed and Gemini is configured,
  * write one two-host episode. No-ops when live, already stored, or unconfigured.
+ * `force` is local `next dev` only: memory cache, never Blob/KV.
  */
-export async function maybeGenerateTomaEpisode(): Promise<TomaEpisode | null> {
-  if (!geminiTtsEnabled()) return null;
+export async function maybeGenerateTomaEpisode(opts?: {
+  force?: boolean;
+}): Promise<TomaGenerateResult> {
+  if (opts?.force && !deskDev()) return { episode: null, skip: 'force_prod' };
+  if (!geminiTtsEnabled()) return { episode: null, skip: 'no_gemini' };
 
   const jornada = await getJornadaOverview().catch(() => null);
-  if (!jornada) return null;
-  const closed = closedDaySlate(jornada);
-  if (!closed) return null;
+  if (!jornada) return { episode: null, skip: 'no_jornada' };
+  const closed = opts?.force ? forceDaySlate(jornada) : closedDaySlate(jornada);
+  if (!closed) return { episode: null, skip: 'not_closed' };
 
   const storeKey = episodeStoreKey(jornada.number, closed.dayKey);
   const pending = inflightEpisode(storeKey);
-  if (pending) return pending;
+  if (pending) return { episode: await pending };
 
-  return trackInflight(storeKey, runGenerate(jornada, closed, storeKey));
+  const localOnly = Boolean(opts?.force);
+  let result: TomaGenerateResult = { episode: null };
+  await trackInflight(
+    storeKey,
+    (async () => {
+      result = await runGenerate(jornada, closed, storeKey, localOnly);
+      return result.episode;
+    })()
+  );
+  return result;
 }
