@@ -107,6 +107,9 @@ export interface Fixture {
       | 'fox-deportes'
       | 'tsn'
       | 'televisa'
+      | 'prime-video'
+      | 'telemundo'
+      | 'universo'
     >;
     usChannels?: Array<
       | 'tudn'
@@ -126,6 +129,9 @@ export interface Fixture {
       | 'fox-deportes'
       | 'tsn'
       | 'televisa'
+      | 'prime-video'
+      | 'telemundo'
+      | 'universo'
     >;
     /** True when MX/US marks come from a confirmed guide, not a guess. */
     confirmed?: boolean;

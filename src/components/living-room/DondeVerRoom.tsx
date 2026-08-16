@@ -28,7 +28,7 @@ export function DondeVerRoom({ initial = null }: { initial?: JornadaOverview | n
     );
   }
 
-  if (!data.live.length && !data.upcoming.length) {
+  if (!data.live.length && !data.upcoming.length && !data.played.length) {
     return (
       <div className="dv-guide" data-testid="section-donde-ver">
         <p className="af-tele text-foreground">
@@ -50,6 +50,7 @@ export function DondeVerRoom({ initial = null }: { initial?: JornadaOverview | n
       jornadaNum={data.number}
       live={data.live}
       upcoming={data.upcoming}
+      played={data.played}
       tz={tz}
       isMine={isMine}
     />

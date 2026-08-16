@@ -20,7 +20,10 @@ export type TvChannelId =
   | 'fox-one'
   | 'fox-deportes'
   | 'tsn'
-  | 'televisa';
+  | 'televisa'
+  | 'prime-video'
+  | 'telemundo'
+  | 'universo';
 
 export type TvChannel = {
   id: TvChannelId;
@@ -141,6 +144,24 @@ export const TV_CHANNELS: Record<TvChannelId, TvChannel> = {
     kind: 'tv',
     src: '/tv_logos/Televisa.png',
   },
+  'prime-video': {
+    id: 'prime-video',
+    label: 'Prime Video',
+    kind: 'stream',
+    src: '/tv_logos/Prime_Video.png',
+  },
+  telemundo: {
+    id: 'telemundo',
+    label: 'Telemundo',
+    kind: 'tv',
+    src: '/tv_logos/Telemundo.svg',
+  },
+  universo: {
+    id: 'universo',
+    label: 'Universo',
+    kind: 'tv',
+    src: '/tv_logos/Universo.png',
+  },
 };
 
 const UNCONFIRMED = {
@@ -209,19 +230,27 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
  * Liga MX broadcast rights are sold per HOME club, so when a club hosts we can
  * assume its channel set even before the exact per-match grid is confirmed.
  * The dated GUIDE above always wins; this is the home-club fallback. Keyed by
- * normalized (schedule) home abbr. Seeded from the Jornada 4 home slate —
- * away-team specifics get refined into GUIDE as they're confirmed.
+ * normalized (schedule) home abbr.
  */
 const CLUB_HOME_TV: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
-  UNAM: { mx: ['vix'], us: ['univision', 'vix'] },
-  AME: { mx: ['canal-5', 'tudn', 'vix', 'layvtime'], us: ['tudn', 'vix'] },
-  SAN: { mx: ['canal-5', 'tudn', 'vix'], us: ['tudn', 'vix'] },
   TIJ: { mx: ['fox-one'], us: ['tudn'] },
-  NCX: { mx: ['fox', 'fox-one'], us: ['fox-deportes'] },
-  PAC: { mx: ['fox', 'fox-one'], us: ['tudn'] },
-  ATL: { mx: ['azteca-7', 'espn', 'disney-plus'], us: ['tudn', 'univision'] },
+  UNAM: { mx: ['vix'], us: ['univision', 'vix'] },
   MTY: { mx: ['canal-5', 'tudn', 'vix'], us: ['tudn', 'univision', 'vix'] },
+  NCX: { mx: ['fox', 'fox-one'], us: ['fox-deportes'] },
+  CAZ: { mx: ['vix', 'tudn', 'canal-5'], us: ['vix', 'univision', 'tudn'] },
+  QRO: { mx: ['fox', 'fox-one'], us: ['univision', 'tudn'] },
   ATS: { mx: ['canal-5', 'tudn', 'vix'], us: ['tudn', 'univision', 'vix'] },
+  AME: { mx: ['canal-5', 'tudn', 'vix', 'layvtime'], us: ['tudn', 'vix'] },
+  ATL: { mx: ['azteca-7', 'espn', 'disney-plus'], us: ['tudn', 'univision'] },
+  PUE: { mx: ['fox', 'fox-one', 'azteca-7'], us: ['vix'] },
+  GDL: { mx: ['prime-video'], us: ['telemundo', 'universo', 'fox-deportes'] },
+  PAC: { mx: ['fox', 'fox-one'], us: ['tudn'] },
+  TOL: { mx: ['canal-5', 'tudn', 'vix'], us: ['tudn', 'vix'] },
+  LEO: { mx: ['fox', 'fox-one'], us: ['vix'] },
+  ASL: { mx: ['vix', 'espn', 'disney-plus'], us: ['vix'] },
+  UANL: { mx: ['fox', 'fox-one', 'azteca-7'], us: ['fox-deportes', 'universo'] },
+  SAN: { mx: ['canal-5', 'tudn', 'vix'], us: ['tudn', 'vix'] },
+  JUA: { mx: ['fox', 'fox-one', 'azteca-7'], us: ['fox-deportes', 'universo'] },
 };
 
 function normAbbr(abbr: string): string {

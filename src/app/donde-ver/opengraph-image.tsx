@@ -34,7 +34,7 @@ export default async function OgImage() {
   ]);
 
   const rows = overview
-    ? dondeVerGuideRows(overview.live, overview.upcoming).slice(0, 8)
+    ? dondeVerGuideRows(overview.live, overview.upcoming, overview.played).slice(0, 8)
     : [];
   const copy = dondeVerShareCopy(rows, overview?.number);
   const kicker = overview?.number

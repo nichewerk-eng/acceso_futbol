@@ -1,7 +1,18 @@
 import type { Fixture } from '@/lib/sports';
 
-export function dondeVerGuideRows(live: Fixture[], upcoming: Fixture[]): Fixture[] {
-  return [...live, ...upcoming].sort((a, b) => +new Date(a.date) - +new Date(b.date));
+export function dondeVerGuideRows(
+  live: Fixture[],
+  upcoming: Fixture[],
+  played: Fixture[] = []
+): Fixture[] {
+  const seen = new Set<string>();
+  return [...played, ...live, ...upcoming]
+    .filter((f) => {
+      if (seen.has(f.id)) return false;
+      seen.add(f.id);
+      return true;
+    })
+    .sort((a, b) => +new Date(a.date) - +new Date(b.date));
 }
 
 function lineFor(f: Fixture): string {

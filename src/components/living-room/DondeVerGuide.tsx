@@ -33,6 +33,7 @@ function GuideRow({
   tz: string;
 }) {
   const live = f.state === 'in';
+  const post = f.state === 'post';
   const d = f.dondeVer;
   const confirmed = Boolean(d?.confirmed && (d.mxChannels?.length || d.usChannels?.length));
 
@@ -49,6 +50,8 @@ function GuideRow({
               <span className="hoy-live-dot" aria-hidden />
               {f.clock === 'HT' || /descanso/i.test(f.statusLabel || '') ? 'HT' : f.clock || 'EN VIVO'}
             </>
+          ) : post ? (
+            'FT'
           ) : (
             kickWhen(f.date, tz)
           )}
@@ -61,7 +64,9 @@ function GuideRow({
           <ClubLogo abbr={f.home.abbreviation} name={f.home.name} size="sm" />
           <span className="dv-abbr">{f.home.abbreviation}</span>
         </span>
-        <span className="dv-mid">{live ? `${f.home.score ?? 0}–${f.away.score ?? 0}` : 'vs'}</span>
+        <span className="dv-mid">
+          {live || post ? `${f.home.score ?? 0}–${f.away.score ?? 0}` : 'vs'}
+        </span>
         <span className="dv-side dv-side-away">
           <span className="dv-abbr">{f.away.abbreviation}</span>
           <ClubLogo abbr={f.away.abbreviation} name={f.away.name} size="sm" />
@@ -89,16 +94,18 @@ export function DondeVerGuide({
   jornadaNum,
   live,
   upcoming,
+  played = [],
   tz,
   isMine,
 }: {
   jornadaNum?: number;
   live: Fixture[];
   upcoming: Fixture[];
+  played?: Fixture[];
   tz: string;
   isMine: (f: Fixture) => boolean;
 }) {
-  const chrono = dondeVerGuideRows(live, upcoming);
+  const chrono = dondeVerGuideRows(live, upcoming, played);
   const rows = [...chrono].sort((a, b) => {
     const aMine = isMine(a) ? 0 : 1;
     const bMine = isMine(b) ? 0 : 1;
