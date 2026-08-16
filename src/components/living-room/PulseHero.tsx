@@ -348,6 +348,7 @@ export function PulseHero({ leadStory }: Props) {
                     className={[
                       'hero-band',
                       meta.kind === 'live' ? 'hero-band-live' : '',
+                      meta.kind === 'ft' ? 'hero-band-ft' : '',
                       mine ? 'hero-band-mine' : '',
                     ].join(' ')}
                   >

@@ -442,6 +442,22 @@ body {
   box-shadow: inset 3px 0 0 var(--signal);
 }
 
+.hero-band-ft {
+  padding-bottom: 0.85rem;
+}
+
+.hero-band-ft .hero-band-home {
+  justify-self: end;
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.hero-band-ft .hero-band-away {
+  justify-self: start;
+  justify-content: flex-start;
+  text-align: left;
+}
+
 .hero-band-mine .hero-band-home,
 .hero-band-mine .hero-band-away {
   color: var(--signal);
@@ -1741,6 +1757,10 @@ body {
     column-gap: 0.55rem;
     row-gap: 0.2rem;
     padding: 0.75rem 0.9rem 0;
+  }
+
+  .hero-band-ft {
+    padding-bottom: 0.75rem;
   }
 
   .hero-band-stamp {
