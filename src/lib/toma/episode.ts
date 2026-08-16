@@ -11,6 +11,9 @@ export type TomaShowKind = 'antes' | 'dia' | 'cierre';
 export const EPISODE_ANTES = 'antes';
 export const EPISODE_CIERRE = 'cierre';
 
+/** Bump when the Toma voice or delivery changes so stored episodes regenerate. */
+export const TOMA_VOICE_REV = 'v5-eleven-narrator';
+
 export type TomaEpisode = {
   id: string;
   jornadaNum: number;

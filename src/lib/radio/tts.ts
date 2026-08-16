@@ -89,18 +89,27 @@ export function prepareForTts(text: string): string {
     .trim();
 }
 
-export async function synthesize(
-  key: string,
+/** True when ElevenLabs is usable for a style (API key + a resolvable voice id). */
+export function elevenLabsConfigured(style: RadioStyle = 'caliente'): boolean {
+  if (!process.env.ELEVENLABS_API_KEY?.trim()) return false;
+  return Boolean(
+    process.env[PERSONAS[style].voiceEnv]?.trim() ||
+      process.env.ELEVENLABS_VOICE_DEFAULT?.trim()
+  );
+}
+
+/** Raw ElevenLabs MP3 for one voice. Shared by the radio cache and Toma episodes. */
+export async function synthesizeBytes(
   text: string,
-  style: RadioStyle
-): Promise<string | undefined> {
+  style: RadioStyle = 'caliente'
+): Promise<{ bytes: Buffer; contentType: string } | null> {
   const apiKey = process.env.ELEVENLABS_API_KEY?.trim();
-  if (!apiKey) return undefined;
+  if (!apiKey) return null;
 
   const voiceId =
     process.env[PERSONAS[style].voiceEnv]?.trim() ||
     process.env.ELEVENLABS_VOICE_DEFAULT?.trim();
-  if (!voiceId) return undefined;
+  if (!voiceId) return null;
 
   const model = process.env.ELEVENLABS_MODEL ?? 'eleven_flash_v2_5';
   const spoken = prepareForTts(text);
@@ -126,11 +135,20 @@ export async function synthesize(
         }),
       }
     );
-    if (!res.ok) return undefined;
-    const buf = Buffer.from(await res.arrayBuffer());
-    setAudio(key, buf, 'audio/mpeg');
-    return `/api/radio/audio/${encodeURIComponent(key)}`;
+    if (!res.ok) return null;
+    return { bytes: Buffer.from(await res.arrayBuffer()), contentType: 'audio/mpeg' };
   } catch {
-    return undefined;
+    return null;
   }
+}
+
+export async function synthesize(
+  key: string,
+  text: string,
+  style: RadioStyle
+): Promise<string | undefined> {
+  const out = await synthesizeBytes(text, style);
+  if (!out) return undefined;
+  setAudio(key, out.bytes, out.contentType);
+  return `/api/radio/audio/${encodeURIComponent(key)}`;
 }

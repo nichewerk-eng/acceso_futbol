@@ -16,16 +16,17 @@ import {
   putStoredEpisode,
   saveLocalEpisode,
   showKindFromDayKey,
+  TOMA_VOICE_REV,
   trackInflight,
   tryEpisodeLock,
   type TomaEpisode,
   type TomaShowKind,
 } from '@/lib/toma/episode';
-import { geminiTtsEnabled, synthesizeTwoHost, TOMA_VOICE_REV } from '@/lib/toma/geminiTts';
-import { sourceHash, writeTwoHostScript } from '@/lib/toma/writeDialogue';
+import { elevenLabsConfigured, synthesizeBytes } from '@/lib/radio/tts';
+import { sourceHash, writeTomaNarration } from '@/lib/toma/writeDialogue';
 
 export type TomaGenerateSkip =
-  | 'no_gemini'
+  | 'no_voice'
   | 'no_jornada'
   | 'not_closed'
   | 'force_prod'
@@ -97,9 +98,9 @@ async function runGenerate(
   if (!locked) return { episode: existing, skip: 'exists' };
 
   const kind = showKindFromDayKey(closed.dayKey);
-  const transcript = await writeTwoHostScript(take, closed.fixtures, kind);
+  const transcript = await writeTomaNarration(take, closed.fixtures, kind);
   if (!transcript) return { episode: existing, skip: 'no_script' };
-  const audio = await synthesizeTwoHost(transcript);
+  const audio = await synthesizeBytes(transcript, 'caliente');
   if (!audio) return { episode: existing, skip: 'no_tts' };
   const stored = await storeAudio(storeKey, audio.bytes, audio.contentType, localOnly);
   if (!stored) return { episode: existing, skip: 'no_store' };
@@ -159,7 +160,7 @@ export async function maybeGenerateTomaEpisode(opts?: {
   kind?: TomaShowKind;
 }): Promise<TomaGenerateResult> {
   if (opts?.force && !deskDev()) return { episode: null, skip: 'force_prod' };
-  if (!geminiTtsEnabled()) return { episode: null, skip: 'no_gemini' };
+  if (!elevenLabsConfigured()) return { episode: null, skip: 'no_voice' };
 
   const jornada = await getJornadaOverview().catch(() => null);
   if (!jornada) return { episode: null, skip: 'no_jornada' };

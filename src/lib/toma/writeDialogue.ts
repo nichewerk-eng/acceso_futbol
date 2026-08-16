@@ -60,8 +60,8 @@ function kindRules(kind: TomaShowKind): string {
 - Luego el cuerpo (tabla / corte 8º / toma). NUNCA listes el slate partido por partido ni horarios.`;
 }
 
-/** Two-host Acceso dialogue. Google only summarizes this pack. */
-export async function writeTwoHostScript(
+/** Single-narrator Acceso monologue from one source. TTS reads this verbatim. */
+export async function writeTomaNarration(
   take: JornadaTake,
   fixtures: Fixture[],
   kind: TomaShowKind = 'dia'
@@ -69,34 +69,35 @@ export async function writeTwoHostScript(
   if (!anthropicEnabled()) return null;
   const desk = jornadaTakeDeskTitle(take);
   const raw = await anthropicChat({
-    system: `Eres editor de cabina Acceso Futbol. Escribes un PODCAST de dos voces a partir de UNA fuente. No inventas.
+    system: `Eres el narrador de cabina de Acceso Futbol. Grabas una TOMA hablada, UNA sola voz, a partir de UNA fuente. No inventas.
 
-Voces:
-- Alex: relator de cabina mexicana, popular, primera persona, color de mesa. Como un narrador de Liga MX en TV, no un podcast gringo. No imita a nadie por nombre. No grita.
-- Mar: mexicana, de mesa, pone el número, empuja la pregunta. No suena a locutora limpia.
+Voz:
+- Relator de cabina mexicana, primera persona, color de mesa. Como un narrador de Liga MX en TV, no un podcast gringo. No imita a nadie por nombre. No grita. Ni España ni Argentina.
+- Español mexicano de México. Léxico de cancha (la gente, el corte, se cae). Sin caricatura.
 
-Formato EXACTO, una línea por turno:
-Alex: ...
-Mar: ...
-
-Reglas:
-- Español mexicano de México. Acentos SÍ. Léxico de cancha (la gente, el corte, se cae). Sin acento de España ni Argentina. Sin caricatura.
-- Arranca Alex con el título de escritorio UNA vez: "${desk}".
+Formato:
+- Prosa hablada corrida, 2 a 4 párrafos cortos. UNA sola voz. PROHIBIDO diálogo, turnos, etiquetas o nombres de locutor ("Alex:", "Mar:", "Narrador:").
+- Abre UNA vez con el título de escritorio: "${desk}". Luego la toma.
 ${kindRules(kind)}
 - Liga MX se escribe "Liga MX". La voz lo dirá bien aparte.
-- PROHIBIDO relojes digitales y pares (PAC–PUE).
+- PROHIBIDO relojes digitales y pares (PAC–PUE). Di "Pachuca contra Puebla", "lunes a las nueve".
 - PROHIBIDO marcadores que no estén en la fuente.
 - Apertura 2026: Liguilla = top 8. No hay Play-In.
-- Cierre: pregunta que divide (A/B). ~4 minutos. 12–18 turnos. Sin em-dash.`,
+- Cierra con la pregunta que divide (A/B). ~3 a 4 minutos hablados. Sin em-dash.`,
     user: pack(take, fixtures, kind),
     temperature: 0.45,
-    maxTokens: 1400,
+    maxTokens: 1200,
   });
   if (!raw) return null;
-  const lines = raw
+  const text = raw
     .split('\n')
-    .map((l) => l.replace(/^\s+/, '').replace(/\s+/g, ' ').trim())
-    .filter((l) => /^(Alex|Mar)\s*:/.test(l));
-  if (lines.length < 6) return null;
-  return lines.join('\n');
+    .map((l) =>
+      l
+        .replace(/^\s*(Alex|Mar|Narrador|Voz|Host)\s*:\s*/i, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+    )
+    .filter(Boolean)
+    .join('\n');
+  return text.length >= 120 ? text : null;
 }

@@ -1,16 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { TomaShare } from '@/components/living-room/TomaShare';
-import {
-  jornadaTakeCortes,
-  jornadaTakeDeskTitle,
-  type JornadaTake,
-  type TomaCorte,
-} from '@/lib/sports/jornadaTake';
-
-const RADIO_STYLE = 'caliente';
+import { jornadaTakeDeskTitle, type JornadaTake } from '@/lib/sports/jornadaTake';
 
 export function TomaDeskSkeleton() {
   return (
@@ -39,28 +32,28 @@ export function TomaDeskSkeleton() {
   );
 }
 
+/**
+ * Plays ONLY the pre-generated single-narrator MP3 episode (one ElevenLabs call
+ * at generation, then served from Blob). If no episode exists yet, the capsule
+ * renders nothing — we never synthesize per-corte on the client, to avoid extra
+ * ElevenLabs cost. The written Toma column stays visible in the parent.
+ */
 export function TomaPlayer({ take }: { take: JornadaTake }) {
   const pathname = usePathname();
-  const cortes = useMemo(() => jornadaTakeCortes(take), [take]);
   const [episodeUrl, setEpisodeUrl] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
   const [busy, setBusy] = useState(false);
   const [held, setHeld] = useState(false);
-  const [active, setActive] = useState(0);
   const [progress, setProgress] = useState(0);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const objectUrlRef = useRef<string | null>(null);
-  const blobCache = useRef(new Map<string, Blob>());
   const playingRef = useRef(false);
-  const idxRef = useRef(0);
-  const cortesRef = useRef(cortes);
   const pathRef = useRef(pathname);
   const episodeUrlRef = useRef<string | null>(null);
   const takeKey = `${take.jornadaNum ?? 'x'}-${take.headline}-${take.body?.length ?? 0}`;
   const takeKeyRef = useRef(takeKey);
 
-  cortesRef.current = cortes;
   episodeUrlRef.current = episodeUrl;
 
   const revoke = useCallback(() => {
@@ -79,7 +72,6 @@ export function TomaPlayer({ take }: { take: JornadaTake }) {
     audioRef.current?.pause();
     audioRef.current = null;
     revoke();
-    if (typeof window !== 'undefined') window.speechSynthesis?.cancel();
   }, [revoke]);
 
   const pausePlayback = useCallback(() => {
@@ -89,16 +81,14 @@ export function TomaPlayer({ take }: { take: JornadaTake }) {
     setBusy(false);
     setHeld(Boolean(audioRef.current));
     audioRef.current?.pause();
-    if (typeof window !== 'undefined') window.speechSynthesis?.pause?.();
   }, []);
 
   useEffect(() => {
     if (takeKey !== takeKeyRef.current) {
       takeKeyRef.current = takeKey;
-      blobCache.current.clear();
-      idxRef.current = 0;
-      setActive(0);
       stop();
+      setEpisodeUrl(null);
+      episodeUrlRef.current = null;
     }
   }, [takeKey, stop]);
 
@@ -175,128 +165,40 @@ export function TomaPlayer({ take }: { take: JornadaTake }) {
     };
     a.addEventListener('timeupdate', tick);
     return () => a.removeEventListener('timeupdate', tick);
-  }, [playing, active]);
+  }, [playing]);
 
-  function speakFallback(text: string, onEnd: () => void) {
-    if (typeof window === 'undefined' || !window.speechSynthesis) {
-      onEnd();
-      return;
-    }
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'es-MX';
-    u.rate = 1.02;
-    u.onend = onEnd;
-    u.onerror = onEnd;
-    window.speechSynthesis.speak(u);
-  }
-
-  async function fetchBlob(corte: TomaCorte): Promise<Blob | null> {
-    const hit = blobCache.current.get(corte.id);
-    if (hit) return hit;
-    try {
-      const r = await fetch('/api/radio/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          key: `toma-corte-${corte.id}`,
-          text: corte.text,
-          style: RADIO_STYLE,
-        }),
-      });
-      if (!r.ok) return null;
-      const blob = await r.blob();
-      blobCache.current.set(corte.id, blob);
-      return blob;
-    } catch {
-      return null;
-    }
-  }
-
-  async function playEpisode(url: string) {
-    playingRef.current = true;
-    idxRef.current = 0;
-    setActive(0);
-    setPlaying(true);
-    setHeld(false);
-    setBusy(true);
-    setProgress(0);
-    audioRef.current?.pause();
-    revoke();
-    try {
-      const r = await fetch(url, { cache: 'no-store' });
-      if (!r.ok) throw new Error('episode');
-      const blob = await r.blob();
-      const obj = URL.createObjectURL(blob);
-      objectUrlRef.current = obj;
-      const a = new Audio(obj);
-      audioRef.current = a;
-      a.onended = () => stop();
-      a.onerror = () => {
-        setBusy(false);
-        stop();
-      };
-      setBusy(false);
-      await a.play();
-      if (!playingRef.current) a.pause();
-    } catch {
-      setBusy(false);
-      stop();
-    }
-  }
-
-  async function playAt(i: number, skipEpisode = false) {
-    const stored = skipEpisode ? null : episodeUrlRef.current;
-    if (stored && i === 0) {
-      await playEpisode(stored);
-      return;
-    }
-    const list = cortesRef.current;
-    const corte = list[i];
-    if (!corte) {
-      stop();
-      return;
-    }
-
-    playingRef.current = true;
-    idxRef.current = i;
-    setActive(i);
-    setPlaying(true);
-    setHeld(false);
-    setBusy(true);
-    setProgress(0);
-    audioRef.current?.pause();
-    revoke();
-
-    const done = () => {
-      if (!playingRef.current) return;
-      void playAt(i + 1);
-    };
-
-    const blob = await fetchBlob(corte);
-    if (!playingRef.current || idxRef.current !== i) return;
-
-    if (blob && typeof Audio !== 'undefined') {
+  const playEpisode = useCallback(
+    async (url: string) => {
+      playingRef.current = true;
+      setPlaying(true);
+      setHeld(false);
+      setBusy(true);
+      setProgress(0);
+      audioRef.current?.pause();
+      revoke();
       try {
-        const url = URL.createObjectURL(blob);
-        objectUrlRef.current = url;
-        const a = new Audio(url);
+        const r = await fetch(url, { cache: 'no-store' });
+        if (!r.ok) throw new Error('episode');
+        const blob = await r.blob();
+        const obj = URL.createObjectURL(blob);
+        objectUrlRef.current = obj;
+        const a = new Audio(obj);
         audioRef.current = a;
-        a.onended = done;
-        a.onerror = () => speakFallback(corte.text, done);
+        a.onended = () => stop();
+        a.onerror = () => {
+          setBusy(false);
+          stop();
+        };
         setBusy(false);
         await a.play();
         if (!playingRef.current) a.pause();
-        return;
       } catch {
-        /* browser voice */
+        setBusy(false);
+        stop();
       }
-    }
-
-    if (!playingRef.current) return;
-    setBusy(false);
-    speakFallback(corte.text, done);
-  }
+    },
+    [revoke, stop]
+  );
 
   async function resumeHeld() {
     const a = audioRef.current;
@@ -309,14 +211,12 @@ export function TomaPlayer({ take }: { take: JornadaTake }) {
         if (!playingRef.current) a.pause();
         return;
       } catch {
-        /* fall through */
+        /* fall through to replay */
       }
     }
-    if (typeof window !== 'undefined' && window.speechSynthesis?.paused) {
-      window.speechSynthesis.resume();
-      return;
-    }
-    await playAt(idxRef.current);
+    const url = episodeUrlRef.current;
+    if (url) await playEpisode(url);
+    else stop();
   }
 
   async function toggleMaster() {
@@ -328,26 +228,15 @@ export function TomaPlayer({ take }: { take: JornadaTake }) {
       void resumeHeld();
       return;
     }
-    if (!episodeUrlRef.current) {
-      try {
-        const r = await fetch('/api/toma/episode', { cache: 'no-store' });
-        const d = r.ok ? await r.json() : null;
-        const url = d?.episode?.audioUrl as string | undefined;
-        if (url) {
-          setEpisodeUrl(url);
-          episodeUrlRef.current = url;
-        }
-      } catch {
-        /* cortes fallback */
-      }
-    }
-    void playAt(idxRef.current);
+    const url = episodeUrlRef.current;
+    if (url) void playEpisode(url);
   }
 
   const live = playing && !busy;
   const masterLabel = playing ? (busy ? 'Armando voz…' : 'Pausa') : held ? 'Seguir' : 'Al aire';
 
-  if (cortes.length === 0 && !episodeUrl) return null;
+  // MP3 or nothing: never render (or synthesize) without the pre-generated episode.
+  if (!episodeUrl) return null;
 
   return (
     <div className="toma-senal" data-testid="toma-player" data-live={live ? '1' : '0'}>
