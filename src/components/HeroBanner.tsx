@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { teamNameEs } from '@/components/standings/teamNames';
 import type { MatchEvent } from '@/app/api/match/[league]/[id]/route';
+import { liveFetch } from '@/lib/client/liveFetch';
 import { startLivePoll } from '@/lib/client/livePoll';
 import { paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
 
@@ -174,7 +175,7 @@ export default function HeroBanner() {
   const load = useCallback(async (silent = false) => {
     if (!silent) setRefreshing(true);
     try {
-      const res = await fetch('/api/fixtures');
+      const res = await liveFetch('/api/fixtures');
       if (res.ok) {
         const d = await res.json();
         const next = d.fixtures ?? [];
@@ -205,7 +206,7 @@ export default function HeroBanner() {
 
     const fetchGoals = async () => {
       try {
-        const res = await fetch(`/api/match/mundial/${liveId}`);
+        const res = await liveFetch(`/api/match/mundial/${liveId}`);
         if (res.ok) {
           const d = await res.json();
           setGoals(parseGoals(d.plays ?? []));

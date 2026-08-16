@@ -13,6 +13,7 @@ import { ligaMxClubIdFromAbbr } from '@/config/ligaMxLogos';
 import { getCurrentJornada } from '@/fixtures/ligamx-apertura-2026';
 import type { LigaMXTable, LigaMXEntry } from '@/app/api/ligamx/standings/route';
 import type { LigaMXFixture } from '@/app/api/ligamx/fixtures/route';
+import { liveFetch } from '@/lib/client/liveFetch';
 import { startLivePoll } from '@/lib/client/livePoll';
 import { FRESH, paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
 import { mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
@@ -119,13 +120,17 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
   const refreshFixtures = useCallback(async (silent = false) => {
     if (!silent) setRefreshing(true);
     try {
-      const fr = await fetch('/api/ligamx/fixtures');
+      const fr = await liveFetch('/api/ligamx/fixtures');
       if (fr.ok) {
         const d = await fr.json();
         const next = mergeLigaMxSchedule(d.fixtures ?? []);
         setFixtures(next);
         paceRef.current = paceFromFixtures(
-          next.map((f) => ({ state: f.status.state, date: f.date }))
+          next.map((f) => ({
+            state: f.status.state,
+            date: f.date,
+            clock: f.status.displayClock,
+          }))
         );
       }
       // Standings change slowly — refresh on a separate budget.

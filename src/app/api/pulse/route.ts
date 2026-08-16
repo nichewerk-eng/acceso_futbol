@@ -7,13 +7,15 @@ import {
   paceFromFixtures,
 } from '@/lib/sports/freshness';
 
-const CACHE_KEY = 'pulse-v4-lanes';
+const CACHE_KEY = 'pulse-v5-live-fast';
 
 export async function GET() {
   return serveSwr<PulsePayload>({
     key: CACHE_KEY,
     ttlMs: (p) =>
       apiTtlMsForPace(paceFromFixtures([...p.live, ...p.upcoming, ...p.recent])),
+    staleOk: (p) =>
+      paceFromFixtures([...p.live, ...p.upcoming, ...p.recent]) !== 'live',
     loader: () => getPulse(),
     headers: (pulse, { stale }) => {
       const pace = paceFromFixtures([...pulse.live, ...pulse.upcoming, ...pulse.recent]);

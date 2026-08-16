@@ -15,6 +15,7 @@ import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { LeaguesCupMark } from '@/components/brand/LeaguesCupMark';
 import { ligaMxClubIdFromAbbr } from '@/config/ligaMxLogos';
 import { useGravity } from '@/contexts/GravityContext';
+import { liveFetch } from '@/lib/client/liveFetch';
 import { startLivePoll } from '@/lib/client/livePoll';
 import { paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
 import {
@@ -73,7 +74,7 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
   const refresh = useCallback(async (silent = false) => {
     if (!silent) setRefreshing(true);
     try {
-      const res = await fetch('/api/leagues-cup/fixtures');
+      const res = await liveFetch('/api/leagues-cup/fixtures');
       if (res.ok) {
         const d = (await res.json()) as { fixtures?: Fixture[] };
         const next = d.fixtures ?? [];

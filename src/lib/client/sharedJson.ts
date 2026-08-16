@@ -37,7 +37,7 @@ export async function sharedJsonFetch<T>(
 
   e.inflight = (async () => {
     try {
-      const res = await fetch(url);
+      const res = await fetch(url, { cache: 'no-store' });
       if (!res.ok) return (e.data as T) ?? null;
       const data = (await res.json()) as T;
       e.data = data;

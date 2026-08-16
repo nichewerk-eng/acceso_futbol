@@ -13,7 +13,7 @@ import { aperturaCalendar, refreshAperturaSmMap } from '@/lib/sports/aperturaSmM
 
 // Apertura 2026: July → December 2026
 const DATE_RANGE = '20260701-20261231';
-const CACHE_KEY = 'ligamx-fixtures-v14-ft-scores';
+const CACHE_KEY = 'ligamx-fixtures-v15-live-fast';
 
 type FixturesPayload = { fixtures: LigaMXFixture[]; source: string };
 
@@ -23,8 +23,22 @@ export async function GET() {
     key: CACHE_KEY,
     ttlMs: (p) =>
       apiTtlMsForPace(
-        paceFromFixtures(p.fixtures.map((f) => ({ state: f.status.state, date: f.date })))
+        paceFromFixtures(
+          p.fixtures.map((f) => ({
+            state: f.status.state,
+            date: f.date,
+            clock: f.status.displayClock,
+          }))
+        )
       ),
+    staleOk: (p) =>
+      paceFromFixtures(
+        p.fixtures.map((f) => ({
+          state: f.status.state,
+          date: f.date,
+          clock: f.status.displayClock,
+        }))
+      ) !== 'live',
     loader: async () => {
       let live: LigaMXFixture[] = [];
       try {
@@ -50,7 +64,11 @@ export async function GET() {
     },
     headers: (payload, { stale }) => {
       const pace = paceFromFixtures(
-        payload.fixtures.map((f) => ({ state: f.status.state, date: f.date }))
+        payload.fixtures.map((f) => ({
+          state: f.status.state,
+          date: f.date,
+          clock: f.status.displayClock,
+        }))
       );
       return {
         ...boardCacheHeaders(pace),

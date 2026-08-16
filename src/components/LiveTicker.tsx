@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { liveFetch } from '@/lib/client/liveFetch';
 import { startLivePoll } from '@/lib/client/livePoll';
 import type { FreshPace } from '@/lib/sports/freshness';
 
@@ -31,7 +32,7 @@ const flag = (a: string) => FLAG[a] ?? '🏳️';
 async function fetchLiveGames(): Promise<LiveGame[]> {
   const games: LiveGame[] = [];
   const fetchers = [
-    fetch('/api/fixtures')
+    liveFetch('/api/fixtures')
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!d?.fixtures) return;
@@ -53,7 +54,7 @@ async function fetchLiveGames(): Promise<LiveGame[]> {
         }
       })
       .catch(() => {}),
-    fetch('/api/ligamx/fixtures')
+    liveFetch('/api/ligamx/fixtures')
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!d?.fixtures) return;

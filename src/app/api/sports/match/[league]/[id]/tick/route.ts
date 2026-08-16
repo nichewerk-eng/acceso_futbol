@@ -29,6 +29,7 @@ export async function GET(
   return serveSwr<MatchSnapshot | null>({
     key: CACHE_KEY,
     ttlMs: (m) => (m ? apiTtlMsForPace(matchPace(m)) : apiTtlMsForPace('idle')),
+    staleOk: (m) => !m || matchPace(m) !== 'live',
     loader: async () => {
       const tick = await getMatchTick(league, id);
       if (!tick) return null;

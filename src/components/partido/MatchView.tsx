@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { teamNameEs } from '@/components/standings/teamNames';
 import type { MatchSummary } from '@/app/api/match/[league]/[id]/route';
+import { liveFetch } from '@/lib/client/liveFetch';
 import { startLivePoll } from '@/lib/client/livePoll';
 
 const FLAG: Record<string, string> = {
@@ -38,7 +39,7 @@ export default function MatchView({ league, id }: Props) {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/match/${league}/${id}`)
+    liveFetch(`/api/match/${league}/${id}`)
       .then((r) => r.ok ? r.json() : Promise.reject())
       .then((d) => { setData(d); setLoading(false); })
       .catch(() => { setError(true); setLoading(false); });
@@ -47,7 +48,7 @@ export default function MatchView({ league, id }: Props) {
   useEffect(() => {
     if (!data || data.header.status.state !== 'in') return;
     return startLivePoll(() => {
-      fetch(`/api/match/${league}/${id}`)
+      liveFetch(`/api/match/${league}/${id}`)
         .then((r) => (r.ok ? r.json() : null))
         .then((d) => {
           if (d) setData(d);

@@ -7,7 +7,7 @@ import {
 } from '@/lib/sports/freshness';
 import type { Fixture } from '@/lib/sports/types';
 
-const CACHE_KEY = 'leagues-cup-fixtures-v13-no-unimas';
+const CACHE_KEY = 'leagues-cup-fixtures-v14-live-fast';
 
 type Payload = { fixtures: Fixture[]; source: string };
 
@@ -16,6 +16,8 @@ export async function GET() {
     key: CACHE_KEY,
     ttlMs: (p) =>
       apiTtlMsForPace(paceFromFixtures(p.fixtures.filter((f) => !f.id.startsWith('lc-')))),
+    staleOk: (p) =>
+      paceFromFixtures(p.fixtures.filter((f) => !f.id.startsWith('lc-'))) !== 'live',
     loader: () => fetchLeaguesCupLiveBoard(),
     headers: (payload, { stale }) => {
       const pace = paceFromFixtures(payload.fixtures.filter((f) => !f.id.startsWith('lc-')));

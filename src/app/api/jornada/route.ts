@@ -11,7 +11,7 @@ import {
   type JornadaOverview,
 } from '@/lib/sports/jornada';
 
-const CACHE_KEY = 'jornada-overview-v13-live-states';
+const CACHE_KEY = 'jornada-overview-v14-live-fast';
 
 function jornadaRows(o: JornadaOverview) {
   return [...o.live, ...o.played, ...o.upcoming];
@@ -34,6 +34,8 @@ export async function GET() {
       'empty' in payload
         ? apiTtlMsForPace('idle')
         : apiTtlMsForPace(paceFromFixtures(jornadaRows(payload))),
+    staleOk: (payload) =>
+      'empty' in payload || paceFromFixtures(jornadaRows(payload)) !== 'live',
     loader: async () => (await getJornadaOverview()) ?? { empty: true as const },
     notFound: (d) => 'empty' in d,
     headers: (payload, { stale }) => {

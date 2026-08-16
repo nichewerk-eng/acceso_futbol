@@ -4,28 +4,28 @@
  */
 export const FRESH = {
   /** Browser poll while something is in-play (tick/SSE path) */
-  clientPollLiveMs: 2_500,
+  clientPollLiveMs: 1_000,
   /** Browser poll when a kickoff is soon (or just finished) */
-  clientPollNearMs: 12_000,
+  clientPollNearMs: 4_000,
   /** Browser poll on quiet boards */
   clientPollIdleMs: 35_000,
   /** Default = live (call sites that don't adapt yet) */
-  clientPollMs: 2_500,
+  clientPollMs: 1_000,
 
-  /** API coalesce while live */
-  apiTtlLiveMs: 2_500,
+  /** API coalesce while live — 2s keeps Starter Fixture/hr under the soft cap */
+  apiTtlLiveMs: 2_000,
   /** API coalesce near kickoff */
-  apiTtlNearMs: 12_000,
+  apiTtlNearMs: 4_000,
   /** API coalesce when nothing can move */
   apiTtlIdleMs: 30_000,
   /** Back-compat alias (live) */
-  apiTtlMs: 2_500,
+  apiTtlMs: 2_000,
 
-  liveTtlMs: 2_500,
-  sMaxAgeLive: 3,
-  sMaxAgeNear: 12,
+  liveTtlMs: 2_000,
+  sMaxAgeLive: 0,
+  sMaxAgeNear: 4,
   sMaxAgeIdle: 30,
-  swr: 8,
+  swr: 2,
   /** Quiet day boards — CDN can hold these; scores don't move. */
   sMaxAgeIdleBoard: 60,
   swrIdleBoard: 300,
@@ -43,7 +43,7 @@ export const FRESH = {
   espnEnrichBudgetFirstMs: 2_500,
   espnEnrichBudgetIdleMs: 2_000,
   /** Re-hydrate full livescores if sticky board is this old without updates. */
-  livescoresFullRefreshMs: 45_000,
+  livescoresFullRefreshMs: 10_000,
 
   /** Kickoff window that still warrants “near” polling */
   nearKickoffBeforeMs: 45 * 60_000,
@@ -100,12 +100,12 @@ export function apiTtlMsForPace(pace: FreshPace): number {
 }
 
 export function liveCacheHeaders(pace: FreshPace = 'live') {
-  const sMaxAge =
-    pace === 'live'
-      ? FRESH.sMaxAgeLive
-      : pace === 'near'
-        ? FRESH.sMaxAgeNear
-        : FRESH.sMaxAgeIdle;
+  if (pace === 'live') {
+    return {
+      'Cache-Control': 'private, no-store, no-cache, must-revalidate',
+    };
+  }
+  const sMaxAge = pace === 'near' ? FRESH.sMaxAgeNear : FRESH.sMaxAgeIdle;
   return {
     'Cache-Control': `public, s-maxage=${sMaxAge}, stale-while-revalidate=${FRESH.swr}`,
   };

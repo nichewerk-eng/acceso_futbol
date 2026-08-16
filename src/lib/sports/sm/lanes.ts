@@ -8,7 +8,7 @@ export const LANE = {
     timeoutMs: 3_000,
     retries: 0,
     revalidate: false as const,
-    memTtlMs: 2_500,
+    memTtlMs: 2_000,
   },
   /** Date slates / pre-match boards. */
   board: {

@@ -7,6 +7,7 @@ import { DondeVerGuide } from '@/components/living-room/DondeVerGuide';
 import { JornadaTakeBoard } from '@/components/living-room/JornadaTake';
 import { useGravity } from '@/contexts/GravityContext';
 import { isLeaguesCupWindow } from '@/config/leaguesCup2026';
+import { liveFetch } from '@/lib/client/liveFetch';
 import { startLivePoll } from '@/lib/client/livePoll';
 import { paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
 import type { Fixture } from '@/lib/sports';
@@ -106,7 +107,7 @@ export function JornadaRecap() {
     let cancelled = false;
     let pace: FreshPace = 'near';
     const load = () => {
-      fetch('/api/jornada')
+      liveFetch('/api/jornada')
         .then((r) => (r.ok ? r.json() : null))
         .then((d: JornadaOverview | null) => {
           if (!cancelled) {

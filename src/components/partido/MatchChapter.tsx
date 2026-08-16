@@ -15,6 +15,7 @@ import type {
   MatchSnapshot,
   TeamLineup,
 } from '@/lib/sports';
+import { liveFetch } from '@/lib/client/liveFetch';
 import { startLivePoll } from '@/lib/client/livePoll';
 import type { FreshPace } from '@/lib/sports/freshness';
 import { scheduleAbbr } from '@/lib/sports/ligaMxAbbr';
@@ -582,12 +583,12 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
     };
 
     const loadDetail = () =>
-      fetch(`/api/sports/match/${league}/${id}`)
+      liveFetch(`/api/sports/match/${league}/${id}`)
         .then((r) => (r.ok ? r.json() : Promise.reject()))
         .then((d: MatchSnapshot) => apply(d));
 
     const loadTick = () =>
-      fetch(`/api/sports/match/${league}/${id}/tick`)
+      liveFetch(`/api/sports/match/${league}/${id}/tick`)
         .then((r) => (r.ok ? r.json() : Promise.reject()))
         .then((d: MatchSnapshot) => apply(d));
 
