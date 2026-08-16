@@ -48,8 +48,9 @@ function Row({
       <div className="q-pick" role="group" aria-label={`${m.home.abbr} vs ${m.away.abbr}`}>
         {OUTCOMES.map((o) => {
           const on = pick === o;
-          const isWin = m.locked && result === o;
-          const isMiss = m.locked && on && result != null && result !== o;
+          const isWin = Boolean(on && result === o);
+          const isMiss = Boolean(on && result != null && result !== o);
+          const isResult = Boolean(!on && result === o);
           return (
             <button
               key={o}
@@ -61,6 +62,7 @@ function Row({
                 on ? 'q-opt-on' : '',
                 isWin ? 'q-opt-win' : '',
                 isMiss ? 'q-opt-miss' : '',
+                isResult ? 'q-opt-result' : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
@@ -100,6 +102,7 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
   }
 
   const openMatches = board.matches.filter((m) => !m.locked).length;
+  const missedFinals = board.matches.filter((m) => m.result && !draft[m.id]).length;
 
   return (
     <div className="mt-8">
@@ -118,15 +121,18 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
         <div className="q-score">
           <span className="q-score-num">{mine?.points ?? 0}</span>
           <span className="af-tele text-muted">
-            aciertos{typeof mine?.played === 'number' ? ` · ${mine.played} definidos` : ''}
+            aciertos · {mine?.played ?? 0}/{board.finals} definidos
           </span>
         </div>
       </div>
 
       <p className="mt-3 font-mono text-[11px] leading-5 text-muted">
         {completed}/{board.total} marcados
+        {missedFinals > 0
+          ? ` · ${missedFinals} ya cerrados (no suman: se cierran al arranque)`
+          : ''}
         {openMatches > 0
-          ? ` · ${openMatches} abiertos, se cierran al arranque de cada partido`
+          ? ` · ${openMatches} abiertos`
           : ' · jornada cerrada'}
       </p>
 
@@ -167,7 +173,9 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
               >
                 <span className="lead-rank">{i + 1}</span>
                 <span className="q-lead-name">{r.name}</span>
-                <span className="q-lead-meta af-tele text-muted">{r.played} def.</span>
+                <span className="q-lead-meta af-tele text-muted">
+                  {r.played}/{board.finals} def.
+                </span>
                 <span className="lead-val">{r.points}</span>
               </div>
             ))}
