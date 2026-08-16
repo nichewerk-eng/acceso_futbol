@@ -12,7 +12,7 @@ import type { Fixture, MatchState } from './types';
 import { fetchEspnLigaMxFixtures } from './espnFallback';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
 import { involvesLigaMxClub } from './ligaMxTeams';
-import { isNearKickoff } from './freshness';
+import { isNearKickoff, looksStillLive } from './freshness';
 import {
   fetchFixturesByDate,
   fetchLivescores,
@@ -174,7 +174,7 @@ async function ligaMxDateWindow(
         (f) => isMexicoDay(f.date, dayKey) || f.state === 'in'
       );
       const mayBeLive = today.some(
-        (f) => f.state === 'in' || isNearKickoff(f.date, now, f.state)
+        (f) => looksStillLive(f) || isNearKickoff(f.date, now, f.state)
       );
       const live = mayBeLive
         ? await fetchLivescores(leagues).catch(() => [] as Fixture[])

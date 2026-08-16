@@ -73,6 +73,20 @@ export function isNearKickoff(
   );
 }
 
+/** Clock / label still say the match is on, even if state was marked FT. */
+export function looksStillLive(f: {
+  state?: string;
+  clock?: string | null;
+  statusLabel?: string | null;
+}): boolean {
+  if (f.state === 'in') return true;
+  if (f.state !== 'post') return false;
+  if (/^(HT|ET|PEN)\b/i.test(f.clock ?? '')) return true;
+  if (/tiempo|descanso|\bht\b|half/i.test(f.statusLabel ?? '')) return true;
+  const m = (f.clock ?? '').match(/^(\d+)/);
+  return Boolean(m && Number(m[1]) < 90);
+}
+
 export function clientPollMsForPace(pace: FreshPace): number {
   if (pace === 'live') return FRESH.clientPollLiveMs;
   if (pace === 'near') return FRESH.clientPollNearMs;
@@ -118,12 +132,12 @@ export function standingsCacheHeaders() {
 
 /** Pace from a list of fixtures / day games. */
 export function paceFromFixtures(
-  rows: { state?: string; date?: string }[],
+  rows: { state?: string; date?: string; clock?: string | null; statusLabel?: string | null }[],
   now = Date.now()
 ): FreshPace {
   let hasNear = false;
   for (const r of rows) {
-    if (r.state === 'in') return 'live';
+    if (looksStillLive(r)) return 'live';
     if (r.date && isNearKickoff(r.date, now, r.state)) hasNear = true;
   }
   return hasNear ? 'near' : 'idle';

@@ -23,11 +23,11 @@ import type {
   TeamLineup,
 } from './types';
 
-const SEASON_CACHE_KEY = 'sm-ligamx-season-fixtures-v5-scorers';
-const LC_SEASON_CACHE_KEY = 'sm-leagues-cup-season-fixtures-v2';
-const LIVE_CACHE_KEY = 'sm-livescores-v6-lanes';
+const SEASON_CACHE_KEY = 'sm-ligamx-season-fixtures-v6-states';
+const LC_SEASON_CACHE_KEY = 'sm-leagues-cup-season-fixtures-v3-states';
+const LIVE_CACHE_KEY = 'sm-livescores-v7-states';
 /** Hot-path livescores: type_id locally; state_id via refs. */
-const LIVESCORES_INCLUDE = 'participants;scores;periods;events';
+const LIVESCORES_INCLUDE = 'participants;scores;state;periods;events';
 /** Lean in-play tick — scores/clock/events only. */
 const MATCH_TICK_INCLUDE = 'participants;scores;periods;events;events.player';
 /** Full match chapter (lineups, stats, comments). */
@@ -35,7 +35,7 @@ const MATCH_DETAIL_INCLUDE =
   'participants;scores;state;venue;round;league;periods;events.type;events.player;comments;statistics.type;lineups.type;lineups.player;referees.referee;formations';
 /** Sticky in-play board while /livescores/latest returns empty (no updates in ~10s). */
 const LIVE_STICKY_TTL_MS = 120_000;
-const DATE_CACHE_PREFIX = 'sm-fixtures-date-v3-lanes';
+const DATE_CACHE_PREFIX = 'sm-fixtures-date-v4-states';
 const SEASON_TTL_MS = LANE.catalog.memTtlMs;
 const LIVE_TTL_MS = LANE.live.memTtlMs;
 const DATE_TTL_MS = LANE.board.memTtlMs;
@@ -214,7 +214,18 @@ function stateBlob(f: SmFixture): string {
 }
 
 function mapState(raw?: string, stateId?: number | null): MatchState {
-  return matchStateFromId(stateId) ?? matchStateFromBlob(raw);
+  const fromBlob = matchStateFromBlob(raw);
+  const fromId = matchStateFromId(stateId);
+  // Name/clock blobs like "2nd Half" / "2º tiempo" win over a stale or legacy FT id.
+  if (fromBlob === 'in') return 'in';
+  if (fromId) return fromId;
+  return fromBlob;
+}
+
+function coerceInPlayState(f: SmFixture, state: MatchState): MatchState {
+  if (state === 'in') return 'in';
+  if (f.periods?.some((p) => p.ticking)) return 'in';
+  return state;
 }
 
 /** Live board stamp: 67' · 45+2' · HT · ET · PEN */
@@ -348,8 +359,7 @@ export function mapFixture(f: SmFixture): Fixture {
   const parts = f.participants ?? [];
   const homeP = parts.find((p) => participantSide(p) === 'home') ?? parts[0];
   const awayP = parts.find((p) => participantSide(p) === 'away') ?? parts[1];
-  const stateRaw = f.state?.state ?? f.state?.short_name ?? f.state?.name ?? f.state?.developer_name;
-  const state = mapState(stateRaw, f.state_id ?? f.state?.id);
+  const state = coerceInPlayState(f, mapState(stateBlob(f), f.state_id ?? f.state?.id));
 
   const homeScore = scoreFor(f.scores, 'home');
   const awayScore = scoreFor(f.scores, 'away');
@@ -739,6 +749,7 @@ export async function fetchFixturesByDate(
 ): Promise<Fixture[]> {
   const key = `${DATE_CACHE_PREFIX}-${dateYYYYMMDD}-${leagueIds.slice().sort().join(',')}`;
   return singleFlight(key, DATE_TTL_MS, async () => {
+    ensureSmRefs();
     const include = 'participants;scores;state;venue;round;league;periods';
     const data = await smFetch<{ data?: SmFixture[] }>(
       `/fixtures/date/${dateYYYYMMDD}`,
@@ -808,8 +819,8 @@ function currentGoals(scores: SmScore[] | undefined, side: 'home' | 'away'): str
 }
 
 function isFinishedState(state?: { short_name?: string; state?: string; developer_name?: string; name?: string }): boolean {
-  const s = `${state?.developer_name ?? ''} ${state?.short_name ?? ''} ${state?.state ?? ''} ${state?.name ?? ''}`.toUpperCase();
-  return s.includes('FT') || s.includes('FULL') || s.includes('FINISHED') || s.includes('AET') || s.includes('PEN');
+  const blob = `${state?.developer_name ?? ''} ${state?.short_name ?? ''} ${state?.state ?? ''} ${state?.name ?? ''}`;
+  return matchStateFromBlob(blob) === 'post';
 }
 
 function meetingFromSm(f: SmFixture): HeadToHeadMeeting | null {

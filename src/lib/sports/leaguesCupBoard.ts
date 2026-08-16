@@ -9,7 +9,7 @@ import {
 import { TV_CHANNELS, type TvChannelId } from '@/config/dondeVer';
 import { mlsLogoSrc } from '@/config/mlsLogos';
 import { ligaMxLogoSrc } from '@/config/ligaMxLogos';
-import { FRESH, isNearKickoff } from './freshness';
+import { FRESH, isNearKickoff, looksStillLive } from './freshness';
 import { scheduleAbbr } from './ligaMxAbbr';
 import {
   fetchFixturesByDate,
@@ -216,7 +216,7 @@ export async function fetchLeaguesCupLiveBoard(): Promise<{
   const board = buildLeaguesCupBoard(withDated);
   const playable = board.filter((f) => !f.id.startsWith('lc-'));
   const mayBeLive = playable.some(
-    (f) => f.state === 'in' || isNearKickoff(f.date, now, f.state)
+    (f) => looksStillLive(f) || isNearKickoff(f.date, now, f.state)
   );
   const live = mayBeLive
     ? await fetchLivescores([lcId]).catch(() => [] as Fixture[])

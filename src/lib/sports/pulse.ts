@@ -1,7 +1,7 @@
 import { attachDondeVer } from '@/config/dondeVer';
 import { editorialWeather } from '@/config/editorialWeather';
 import { isMexicoDay, mexicoDayKey } from '@/lib/radio/phases';
-import { isNearKickoff } from './freshness';
+import { isNearKickoff, looksStillLive } from './freshness';
 import type { Fixture, PulsePayload } from './types';
 import { fetchEspnLigaMxFixtures } from './espnFallback';
 import { fetchFixturesByDate, fetchLivescores, sportmonksEnabled } from './sportmonks';
@@ -33,7 +33,7 @@ export async function getPulse(): Promise<PulsePayload> {
       const dated = await fetchFixturesByDate(today);
       const now = Date.now();
       const mayBeLive = dated.some(
-        (f) => f.state === 'in' || isNearKickoff(f.date, now, f.state)
+        (f) => looksStillLive(f) || isNearKickoff(f.date, now, f.state)
       );
       const liveSm = mayBeLive
         ? await fetchLivescores().catch(() => [] as Fixture[])

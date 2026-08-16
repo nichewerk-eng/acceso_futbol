@@ -9,7 +9,7 @@ import {
 import { mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
 import { dayPairKey, scheduleAbbr } from './ligaMxAbbr';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
-import { isNearKickoff } from './freshness';
+import { isNearKickoff, looksStillLive } from './freshness';
 import {
   fetchFixturesByDate,
   fetchLigaMxSeasonFixtures,
@@ -319,7 +319,7 @@ export async function fetchLigaMxFixtures(): Promise<{
       const dated = mergeLiveOntoStatic([...season, ...past, ...near]);
       const now = Date.now();
       const mayBeLive = dated.some(
-        (f) => f.state === 'in' || isNearKickoff(f.date, now, f.state)
+        (f) => looksStillLive(f) || isNearKickoff(f.date, now, f.state)
       );
       const live = mayBeLive
         ? await fetchLivescores([ligaMxLeagueId()]).catch(() => [] as Fixture[])
