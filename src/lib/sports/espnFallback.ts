@@ -7,14 +7,16 @@ import {
   rememberOverlaySmIds,
 } from './aperturaSmMap';
 import { mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
+import { peekCache, singleFlight } from '@/lib/apiCache';
 import { dayPairKey, scheduleAbbr } from './ligaMxAbbr';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
-import { isNearKickoff, looksStillLive } from './freshness';
+import { apiTtlMsForPace, isNearKickoff, looksStillLive, paceFromFixtures } from './freshness';
 import {
   fetchFixturesByDate,
   fetchLigaMxSeasonFixtures,
   fetchLivescores,
   ligaMxLeagueId,
+  livingRoomLeagueIds,
   overlayLiveFixtures,
   sportmonksEnabled,
 } from './sportmonks';
@@ -300,11 +302,26 @@ async function fetchDateBoardFixtures(seed: Fixture[], pastMs: number): Promise<
   return boards.flat();
 }
 
-/** Static calendar + season FT scores + nearby date boards / livescores. */
-export async function fetchLigaMxFixtures(): Promise<{
-  fixtures: Fixture[];
-  source: 'sportmonks' | 'espn' | 'static';
-}> {
+type LigaMxBoard = { fixtures: Fixture[]; source: 'sportmonks' | 'espn' | 'static' };
+
+/** Canonical Liga MX board key — one merged snapshot shared across every surface (and isolates via KV). */
+const BOARD_KEY = 'liga-mx-board-v1';
+
+/**
+ * Static calendar + season FT scores + nearby date boards / livescores.
+ *
+ * This is the single source of truth for Liga MX scores: jornada, pulse, the
+ * Liga MX page, and club boards all read this one cached, KV-shared board so
+ * they can never disagree on a live score. Live rows come from the shared
+ * living-room `/livescores` sticky board (same one games-of-day overlays).
+ */
+export async function fetchLigaMxFixtures(): Promise<LigaMxBoard> {
+  const prev = peekCache<LigaMxBoard>(BOARD_KEY);
+  const pace = prev ? paceFromFixtures(prev.fixtures) : 'near';
+  return singleFlight(BOARD_KEY, apiTtlMsForPace(pace), buildLigaMxBoard);
+}
+
+async function buildLigaMxBoard(): Promise<LigaMxBoard> {
   const seed = mapStatic();
   refreshAperturaSmMap();
   if (sportmonksEnabled()) {
@@ -321,8 +338,11 @@ export async function fetchLigaMxFixtures(): Promise<{
       const mayBeLive = dated.some(
         (f) => looksStillLive(f) || isNearKickoff(f.date, now, f.state)
       );
+      // One shared livescores fetch (living-room scope); keep only Liga MX rows here.
       const live = mayBeLive
-        ? await fetchLivescores([ligaMxLeagueId()]).catch(() => [] as Fixture[])
+        ? (await fetchLivescores(livingRoomLeagueIds()).catch(() => [] as Fixture[])).filter(
+            (f) => f.league === 'liga-mx'
+          )
         : [];
       const fixtures = live.length ? overlayLiveFixtures(dated, live) : dated;
       const hasSm = fixtures.some((f) => f.provider === 'sportmonks' || /^\d+$/.test(f.id));

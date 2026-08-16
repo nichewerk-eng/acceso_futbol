@@ -4,6 +4,8 @@
  * @see docs/AF_SPORTMONKS_RATE_LIMITS.md
  */
 
+import { kvGetJson, kvSetJson, sharedKvEnabled } from '@/lib/sharedKv';
+
 export type SmPlan = 'starter' | 'growth' | 'pro' | 'enterprise';
 
 export type SmEntity =
@@ -77,17 +79,57 @@ function meter(entity: string): EntityMeter {
   return m;
 }
 
+/** Shared meter snapshot lives in KV so every isolate sees the true remaining. */
+type SharedMeter = { remaining: number; resetsIn: number };
+function meterKvKey(entity: string): string {
+  return `smrate-${entity}`;
+}
+
+const hydratingMeters = new Set<string>();
+
+/** Cold isolate: pull the last-known remaining from KV once (non-blocking). */
+function hydrateMeterFromKv(entity: string): void {
+  if (!sharedKvEnabled() || hydratingMeters.has(entity)) return;
+  hydratingMeters.add(entity);
+  void kvGetJson<SharedMeter>(meterKvKey(entity))
+    .then((row) => {
+      if (!row?.data) return;
+      const m = meter(entity);
+      if (m.updatedAt === 0) {
+        m.remaining = row.data.remaining;
+        m.resetsIn = row.data.resetsIn;
+        m.updatedAt = Date.now();
+      }
+    })
+    .finally(() => hydratingMeters.delete(entity));
+}
+
 export function noteSmRateLimit(info?: SmRateLimitInfo | null): void {
   if (!info?.requested_entity) return;
   const m = meter(info.requested_entity);
   m.remaining = info.remaining;
   m.resetsIn = info.resets_in_seconds;
   m.updatedAt = Date.now();
+  // Publish the authoritative remaining so idle isolates don't over-spend (off the response path).
+  if (sharedKvEnabled()) {
+    void kvSetJson(
+      meterKvKey(info.requested_entity),
+      { remaining: info.remaining, resetsIn: info.resets_in_seconds } satisfies SharedMeter,
+      Math.max(1_000, info.resets_in_seconds * 1_000)
+    );
+  }
   if (info.remaining < 200) {
     console.warn(
       `[sportmonks] low ${info.requested_entity}: ${info.remaining} remaining, resets in ${info.resets_in_seconds}s`
     );
   }
+}
+
+/** Last-known shared remaining for an entity (ops/health). */
+export async function getSharedRemaining(entity: SmEntity): Promise<number | null> {
+  if (!sharedKvEnabled()) return null;
+  const row = await kvGetJson<SharedMeter>(meterKvKey(entity));
+  return row?.data?.remaining ?? null;
 }
 
 /** Snapshot for ops / future /api health. */
@@ -124,6 +166,8 @@ function sleep(ms: number) {
 export async function beforeSmRequest(entity: SmEntity): Promise<void> {
   const soft = softHourlyLimit();
   const m = meter(entity);
+  // Cold isolate: seed remaining from KV once so we respect the global budget (non-blocking).
+  if (m.updatedAt === 0) hydrateMeterFromKv(entity);
   const now = Date.now();
   m.timestamps = m.timestamps.filter((t) => now - t < 3_600_000);
 

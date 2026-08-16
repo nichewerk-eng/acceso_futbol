@@ -1,10 +1,8 @@
 import { attachDondeVer } from '@/config/dondeVer';
 import { editorialWeather } from '@/config/editorialWeather';
 import { isMexicoDay, mexicoDayKey } from '@/lib/radio/phases';
-import { isNearKickoff, looksStillLive } from './freshness';
 import type { Fixture, PulsePayload } from './types';
-import { fetchEspnLigaMxFixtures } from './espnFallback';
-import { fetchFixturesByDate, fetchLivescores, sportmonksEnabled } from './sportmonks';
+import { fetchEspnLigaMxFixtures, fetchLigaMxFixtures } from './espnFallback';
 
 function partition(fixtures: Fixture[], now = new Date()): Pick<PulsePayload, 'live' | 'upcoming' | 'recent'> {
   const dayKey = mexicoDayKey(now);
@@ -24,41 +22,31 @@ function withBridge(fixtures: Fixture[]): Fixture[] {
   return fixtures.map(attachDondeVer);
 }
 
+/**
+ * Pulse reads the one canonical Liga MX board (same source as jornada/pulse/club),
+ * then partitions into live / today's upcoming / today's recent. Sourcing from the
+ * shared board is what guarantees the hero and "en vivo + sellados" agree on scores.
+ */
 export async function getPulse(): Promise<PulsePayload> {
   const weather = editorialWeather();
 
-  if (sportmonksEnabled()) {
-    try {
-      const today = new Date().toISOString().slice(0, 10);
-      const dated = await fetchFixturesByDate(today);
-      const now = Date.now();
-      const mayBeLive = dated.some(
-        (f) => looksStillLive(f) || isNearKickoff(f.date, now, f.state)
-      );
-      const liveSm = mayBeLive
-        ? await fetchLivescores().catch(() => [] as Fixture[])
-        : [];
-      const byId = new Map<string, Fixture>();
-      for (const f of [...dated, ...liveSm]) byId.set(f.id, f);
-      const fixtures = withBridge([...byId.values()]);
-      const parts = partition(fixtures);
-      return {
-        source: 'sportmonks',
-        generatedAt: new Date().toISOString(),
-        ...parts,
-        weather,
-      };
-    } catch {
-      // Sportmonks down → ESPN below
-    }
+  try {
+    const { fixtures, source } = await fetchLigaMxFixtures();
+    const ligaMx = fixtures.filter((f) => f.league === 'liga-mx');
+    return {
+      source,
+      generatedAt: new Date().toISOString(),
+      ...partition(withBridge(ligaMx)),
+      weather,
+    };
+  } catch {
+    // Board itself already falls back to ESPN/static; this is last-resort safety.
+    const { fixtures, source } = await fetchEspnLigaMxFixtures();
+    return {
+      source,
+      generatedAt: new Date().toISOString(),
+      ...partition(withBridge(fixtures)),
+      weather,
+    };
   }
-
-  const { fixtures, source } = await fetchEspnLigaMxFixtures();
-  const parts = partition(withBridge(fixtures));
-  return {
-    source,
-    generatedAt: new Date().toISOString(),
-    ...parts,
-    weather,
-  };
 }

@@ -701,7 +701,9 @@ function mapStatistics(
  * Uses `/livescores/latest` (only fixtures touched in ~last 10s) per SM rate-limit docs.
  * Empty latest → keep sticky in-play board; cold miss → one full `/livescores` hydrate.
  */
-export async function fetchLivescores(leagueIds: number[] = [ligaMxLeagueId()]): Promise<Fixture[]> {
+export async function fetchLivescores(
+  leagueIds: number[] = livingRoomLeagueIds()
+): Promise<Fixture[]> {
   const key = `${LIVE_CACHE_KEY}-${leagueIds.slice().sort().join(',')}`;
   const stickyKey = `${key}-sticky`;
   return singleFlight(key, LIVE_TTL_MS, async () => {
@@ -765,43 +767,38 @@ export async function fetchFixturesByDate(
 
 /** Full current Liga MX season (Apertura) via season include. */
 export async function fetchLigaMxSeasonFixtures(): Promise<Fixture[]> {
-  const cached = getCache<Fixture[]>(SEASON_CACHE_KEY, SEASON_TTL_MS);
-  if (cached) return cached;
-
-  const data = await smFetch<{ data?: { fixtures?: SmFixture[] } }>(
-    `/seasons/${ligaMxSeasonId()}`,
-    {
-      include:
-        'fixtures.participants;fixtures.scores;fixtures.state;fixtures.round;fixtures.venue;fixtures.events.type',
-    },
-    'catalog'
-  );
-  const fixtures = (data.data?.fixtures ?? []).map(mapFixture);
-  setCache(SEASON_CACHE_KEY, fixtures);
-  return fixtures;
+  // singleFlight → shared via Upstash KV (L2) so every isolate sees one season dump.
+  return singleFlight(SEASON_CACHE_KEY, SEASON_TTL_MS, async () => {
+    const data = await smFetch<{ data?: { fixtures?: SmFixture[] } }>(
+      `/seasons/${ligaMxSeasonId()}`,
+      {
+        include:
+          'fixtures.participants;fixtures.scores;fixtures.state;fixtures.round;fixtures.venue;fixtures.events.type',
+      },
+      'catalog'
+    );
+    return (data.data?.fixtures ?? []).map(mapFixture);
+  });
 }
 
 /** Leagues Cup season — all fixtures; callers filter to MX-involved. */
 export async function fetchLeaguesCupSeasonFixtures(): Promise<Fixture[]> {
-  const cached = getCache<Fixture[]>(LC_SEASON_CACHE_KEY, SEASON_TTL_MS);
-  if (cached) return cached;
-
-  const data = await smFetch<{ data?: { fixtures?: SmFixture[] } }>(
-    `/seasons/${leaguesCupSeasonId()}`,
-    {
-      include:
-        'fixtures.participants;fixtures.scores;fixtures.state;fixtures.round;fixtures.venue;fixtures.league',
-    },
-    'catalog'
-  );
-  const fixtures = (data.data?.fixtures ?? []).map((f) =>
-    mapFixture({
-      ...f,
-      league: f.league?.id ? f.league : { id: leaguesCupLeagueId(), name: 'Leagues Cup' },
-    })
-  );
-  setCache(LC_SEASON_CACHE_KEY, fixtures);
-  return fixtures;
+  return singleFlight(LC_SEASON_CACHE_KEY, SEASON_TTL_MS, async () => {
+    const data = await smFetch<{ data?: { fixtures?: SmFixture[] } }>(
+      `/seasons/${leaguesCupSeasonId()}`,
+      {
+        include:
+          'fixtures.participants;fixtures.scores;fixtures.state;fixtures.round;fixtures.venue;fixtures.league',
+      },
+      'catalog'
+    );
+    return (data.data?.fixtures ?? []).map((f) =>
+      mapFixture({
+        ...f,
+        league: f.league?.id ? f.league : { id: leaguesCupLeagueId(), name: 'Leagues Cup' },
+      })
+    );
+  });
 }
 
 export function findFixtureByDayPair(
@@ -1120,12 +1117,13 @@ export async function fetchLigaMxStandings(): Promise<{
   season: string;
   entries: SmStandingEntry[];
 }> {
-  const cached = getCache<{ season: string; entries: SmStandingEntry[] }>(
-    STANDINGS_CACHE_KEY,
-    STANDINGS_TTL_MS
-  );
-  if (cached) return cached;
+  return singleFlight(STANDINGS_CACHE_KEY, STANDINGS_TTL_MS, loadLigaMxStandings);
+}
 
+async function loadLigaMxStandings(): Promise<{
+  season: string;
+  entries: SmStandingEntry[];
+}> {
   const data = await smFetch<{
     data?: {
       position?: number;
@@ -1172,9 +1170,7 @@ export async function fetchLigaMxStandings(): Promise<{
     })
     .sort((a, b) => a.position - b.position);
 
-  const table = { season: 'Apertura 2026', entries };
-  setCache(STANDINGS_CACHE_KEY, table);
-  return table;
+  return { season: 'Apertura 2026', entries };
 }
 
 const LC_STANDINGS_CACHE_KEY = 'sm-leagues-cup-standings-v1';
@@ -1190,12 +1186,13 @@ export async function fetchLeaguesCupStandings(): Promise<{
   season: string;
   groups: SmLcStandingGroup[];
 }> {
-  const cached = getCache<{ season: string; groups: SmLcStandingGroup[] }>(
-    LC_STANDINGS_CACHE_KEY,
-    STANDINGS_TTL_MS
-  );
-  if (cached) return cached;
+  return singleFlight(LC_STANDINGS_CACHE_KEY, STANDINGS_TTL_MS, loadLeaguesCupStandings);
+}
 
+async function loadLeaguesCupStandings(): Promise<{
+  season: string;
+  groups: SmLcStandingGroup[];
+}> {
   const data = await smFetch<{
     data?: {
       position?: number;
@@ -1263,7 +1260,5 @@ export async function fetchLeaguesCupStandings(): Promise<{
     return rank(a.name) - rank(b.name) || a.name.localeCompare(b.name);
   });
 
-  const table = { season: 'Leagues Cup 2026', groups };
-  setCache(LC_STANDINGS_CACHE_KEY, table);
-  return table;
+  return { season: 'Leagues Cup 2026', groups };
 }

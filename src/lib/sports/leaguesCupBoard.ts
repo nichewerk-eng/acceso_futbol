@@ -16,6 +16,7 @@ import {
   fetchLeaguesCupSeasonFixtures,
   fetchLivescores,
   leaguesCupLeagueId,
+  livingRoomLeagueIds,
   overlayLiveFixtures,
   sportmonksEnabled,
 } from './sportmonks';
@@ -218,8 +219,11 @@ export async function fetchLeaguesCupLiveBoard(): Promise<{
   const mayBeLive = playable.some(
     (f) => looksStillLive(f) || isNearKickoff(f.date, now, f.state)
   );
+  // Shared living-room livescores (same sticky board as the home feeds); keep LC rows.
   const live = mayBeLive
-    ? await fetchLivescores([lcId]).catch(() => [] as Fixture[])
+    ? (await fetchLivescores(livingRoomLeagueIds()).catch(() => [] as Fixture[])).filter(
+        (f) => f.league === 'leagues-cup'
+      )
     : [];
 
   return {
