@@ -6,6 +6,7 @@ import { JsonLd } from '@/components/seo/JsonLd';
 import type { LigaMXTable } from '@/app/api/ligamx/standings/route';
 import { absoluteUrl, breadcrumbJsonLd } from '@/lib/seo';
 import { fetchLigaMxFixtures } from '@/lib/sports/espnFallback';
+import { fetchLigaMxLeaders } from '@/lib/sports/leaders';
 import { fixtureToLigaMxSchedule, mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
 
 export const metadata: Metadata = {
@@ -77,7 +78,11 @@ async function fetchFixtures() {
 }
 
 export default async function LigaMXPage() {
-  const [table, fixtures] = await Promise.all([fetchTable(), fetchFixtures()]);
+  const [table, fixtures, goleo] = await Promise.all([
+    fetchTable(),
+    fetchFixtures(),
+    fetchLigaMxLeaders().catch(() => null),
+  ]);
   return (
     <>
       <JsonLd
@@ -89,7 +94,7 @@ export default async function LigaMXPage() {
       <div className="flex min-h-screen flex-col bg-bg-1 text-foreground">
         <PulseNav />
         <main className="flex-1">
-          <LigaMXView initialTable={table} initialFixtures={fixtures} />
+          <LigaMXView initialTable={table} initialFixtures={fixtures} initialGoleo={goleo} />
         </main>
         <SiteFooter />
       </div>

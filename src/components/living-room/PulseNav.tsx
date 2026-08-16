@@ -13,7 +13,6 @@ const LINKS = [
   { href: '/#donde-ver', label: 'Dónde ver' },
   { href: '/#noticias', label: 'Cable' },
   { href: '/liga-mx', label: 'Liga MX' },
-  { href: '/goleo', label: 'Goleo' },
   { href: '/quiniela', label: 'Quiniela' },
   { href: '/leagues-cup', label: 'Leagues Cup' },
 ];

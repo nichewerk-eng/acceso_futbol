@@ -102,8 +102,8 @@ export default async function QuinielaPage() {
           <Link href="/donde-ver" className="af-cta-ghost">
             Dónde ver la jornada
           </Link>
-          <Link href="/goleo" className="af-cta-ghost">
-            Goleo Liga MX
+          <Link href="/liga-mx" className="af-cta-ghost">
+            Liga MX
           </Link>
         </div>
       </main>

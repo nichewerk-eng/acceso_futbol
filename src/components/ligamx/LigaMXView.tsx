@@ -19,6 +19,8 @@ import { FRESH, paceFromFixtures, type FreshPace } from '@/lib/sports/freshness'
 import { mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
 import { LIGUILLA_SPOTS, liguillaPath } from '@/lib/sports/liguillaPath';
 import { LiguillaPathShare } from '@/components/ligamx/LiguillaPathShare';
+import { GoleoRailCard } from '@/components/ligamx/GoleoTabla';
+import type { GoleoBoard } from '@/lib/sports/leaders';
 
 /** Shared header + row shell — tracks live in `.lm-standings-grid` (globals.css). */
 const STANDINGS_GRID = 'lm-standings-grid';
@@ -95,14 +97,20 @@ type GravityFn = (
 interface Props {
   initialTable: LigaMXTable | null;
   initialFixtures: LigaMXFixture[];
+  initialGoleo?: GoleoBoard | null;
 }
 
-export default function LigaMXView({ initialTable, initialFixtures }: Props) {
+export default function LigaMXView({
+  initialTable,
+  initialFixtures,
+  initialGoleo = null,
+}: Props) {
   const { matchesGravity, club } = useGravity();
   const baseFixtures = mergeLigaMxSchedule(initialFixtures);
 
   const [table, setTable] = useState<LigaMXTable | null>(initialTable);
   const [fixtures, setFixtures] = useState<LigaMXFixture[]>(baseFixtures);
+  const [goleo] = useState<GoleoBoard | null>(initialGoleo);
   const [tab, setTab] = useState<'tabla' | 'jornada'>('jornada');
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -191,6 +199,11 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
     matchesGravity(f.home.name, f.away.name, f.home.abbreviation, f.away.abbreviation);
 
   const openTabla = useCallback(() => setTab('tabla'), []);
+  const goleoMine = useCallback(
+    (abbr?: string) =>
+      Boolean(abbr && matchesGravity(abbr, abbr, abbr, abbr)),
+    [matchesGravity]
+  );
 
   return (
     <div data-testid="page-liga-mx" className="bg-bg-1 text-foreground">
@@ -214,7 +227,7 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
                 {table?.season ?? 'Apertura 2026'}
               </p>
               <p className="mt-3 max-w-lg text-sm leading-6 text-muted">
-                Jornada + tabla en una sola sala. Camino a Liguilla (top 8).
+                Jornada, tabla y goleo en una sola sala. Camino a Liguilla (top 8).
                 {club ? ` Tu LOCK: ${club.abbreviation}.` : ''}
               </p>
             </div>
@@ -430,12 +443,13 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
                 </div>
               </section>
 
-              <div className="lc-mobile-tabla">
+              <div className="lc-mobile-tabla space-y-6">
                 <LmClasificacionCard
                   entries={entries}
                   matchesGravity={matchesGravity}
                   onOpenTabla={openTabla}
                 />
+                <GoleoRailCard board={goleo} isMine={goleoMine} />
               </div>
 
               {jornadaLive.length > 0 && (
@@ -521,11 +535,13 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
 
             <LmPartidosRail
               entries={entries}
+              goleo={goleo}
               jornadaUpcoming={jornadaUpcoming}
               userTz={userTz}
               clubName={club?.name ?? null}
               clubAbbr={club?.abbreviation ?? null}
               matchesGravity={matchesGravity}
+              goleoMine={goleoMine}
               onOpenTabla={openTabla}
             />
           </div>
@@ -537,19 +553,23 @@ export default function LigaMXView({ initialTable, initialFixtures }: Props) {
 
 function LmPartidosRail({
   entries,
+  goleo,
   jornadaUpcoming,
   userTz,
   clubName,
   clubAbbr,
   matchesGravity,
+  goleoMine,
   onOpenTabla,
 }: {
   entries: LigaMXEntry[];
+  goleo: GoleoBoard | null;
   jornadaUpcoming: LigaMXFixture[];
   userTz: string;
   clubName: string | null;
   clubAbbr: string | null;
   matchesGravity: GravityFn;
+  goleoMine: (abbr?: string) => boolean;
   onOpenTabla: () => void;
 }) {
   const myEntry = useMemo(() => {
@@ -630,12 +650,13 @@ function LmPartidosRail({
         </div>
       )}
 
-      <div className="lc-rail-tabla-desk">
+      <div className="lc-rail-tabla-desk space-y-4">
         <LmClasificacionCard
           entries={entries}
           matchesGravity={matchesGravity}
           onOpenTabla={onOpenTabla}
         />
+        <GoleoRailCard board={goleo} isMine={goleoMine} />
       </div>
 
       <div className="lc-rail-block" data-testid="ligamx-rail-liguilla">
