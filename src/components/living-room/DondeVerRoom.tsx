@@ -3,30 +3,17 @@
 import { useEffect, useState } from 'react';
 import { DondeVerGuide } from '@/components/living-room/DondeVerGuide';
 import { useGravity } from '@/contexts/GravityContext';
+import { useJornadaOverview } from '@/lib/client/useJornadaOverview';
 import type { Fixture } from '@/lib/sports';
-import type { JornadaOverview } from '@/lib/sports/jornada';
 
 export function DondeVerRoom() {
   const { matchesGravity } = useGravity();
-  const [data, setData] = useState<JornadaOverview | null>(null);
+  const { payload: data } = useJornadaOverview();
   const [tz, setTz] = useState('America/Mexico_City');
 
   useEffect(() => {
     const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     if (zone) setTz(zone);
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/jornada')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d: JornadaOverview | null) => {
-        if (!cancelled) setData(d);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
   const isMine = (f: Fixture) =>

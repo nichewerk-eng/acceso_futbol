@@ -17,6 +17,7 @@ import {
   fetchFixturesByDate,
   fetchLivescores,
   livingRoomLeagueIds,
+  overlayLiveFixtures,
   sportmonksEnabled,
 } from './sportmonks';
 import { fetchSeleccionGamesOfDay } from './seleccion';
@@ -179,12 +180,9 @@ async function ligaMxDateWindow(
       const live = mayBeLive
         ? await fetchLivescores(leagues).catch(() => [] as Fixture[])
         : [];
-      const byId = new Map<string, Fixture>();
-      for (const f of [...dated, ...live.map(attachDondeVer)]) {
-        if (!keepLivingRoomFixture(f)) continue;
-        byId.set(f.id, f);
-      }
-      const merged = [...byId.values()];
+      const merged = overlayLiveFixtures(dated, live.map(attachDondeVer)).filter(
+        keepLivingRoomFixture
+      );
       return {
         today: merged.filter(
           (f) => isMexicoDay(f.date, dayKey) || f.state === 'in'

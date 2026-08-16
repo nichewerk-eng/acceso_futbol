@@ -7,11 +7,8 @@ import { DondeVerGuide } from '@/components/living-room/DondeVerGuide';
 import { JornadaTakeBoard } from '@/components/living-room/JornadaTake';
 import { useGravity } from '@/contexts/GravityContext';
 import { isLeaguesCupWindow } from '@/config/leaguesCup2026';
-import { liveFetch } from '@/lib/client/liveFetch';
-import { startLivePoll } from '@/lib/client/livePoll';
-import { paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
 import type { Fixture } from '@/lib/sports';
-import type { JornadaOverview } from '@/lib/sports/jornada';
+import { useJornadaOverview } from '@/lib/client/useJornadaOverview';
 import { useTomaTake } from '@/lib/client/useTomaTake';
 import { buildJornadaTake, mergeJornadaTake } from '@/lib/sports/jornadaTake';
 
@@ -94,41 +91,12 @@ function ResultStamp({ f, mine }: { f: Fixture; mine: boolean }) {
 
 export function JornadaRecap() {
   const { matchesGravity, club, elTri } = useGravity();
-  const [data, setData] = useState<JornadaOverview | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { payload: data, loading } = useJornadaOverview();
   const [userTz, setUserTz] = useState('America/Mexico_City');
 
   useEffect(() => {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     if (tz) setUserTz(tz);
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    let pace: FreshPace = 'near';
-    const load = () => {
-      liveFetch('/api/jornada')
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d: JornadaOverview | null) => {
-          if (!cancelled) {
-            if (d) {
-              pace = paceFromFixtures([...d.live, ...d.played, ...d.upcoming]);
-            } else {
-              pace = 'idle';
-            }
-            setData(d);
-            setLoading(false);
-          }
-        })
-        .catch(() => {
-          if (!cancelled) setLoading(false);
-        });
-    };
-    const stop = startLivePoll(load, { getPace: () => pace });
-    return () => {
-      cancelled = true;
-      stop();
-    };
   }, []);
 
   const lcPause =

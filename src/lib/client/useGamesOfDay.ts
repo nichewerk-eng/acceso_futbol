@@ -1,10 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { startLivePoll } from '@/lib/client/livePoll';
 import { sharedJsonFetch, subscribeSharedJson } from '@/lib/client/sharedJson';
+import {
+  ensureJornadaPoll,
+  JORNADA_FEED_KEY,
+  releaseJornadaPoll,
+} from '@/lib/client/useJornadaOverview';
 import { paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
+import { overlayLiveScores } from '@/lib/sports/overlayScores';
 import type { GamesOfDayPayload } from '@/lib/sports';
+import type { JornadaOverview } from '@/lib/sports/jornada';
 
 const KEY = 'games-of-day';
 const URL = '/api/games-of-day';
@@ -14,8 +21,17 @@ const SS_MAX_AGE_MS = 6 * 60 * 60 * 1000;
 const STATIC_RETRY_MS = 1_500;
 
 let pace: FreshPace = 'near';
+let lastJornada: JornadaOverview | null = null;
 let pollStop: (() => void) | null = null;
 let subscribers = 0;
+
+function paceFromBoard(games: GamesOfDayPayload['games'] | undefined) {
+  if (lastJornada?.live.length) return 'live' as const;
+  if (lastJornada) {
+    return paceFromFixtures([...lastJornada.live, ...lastJornada.played, ...lastJornada.upcoming]);
+  }
+  return paceFromFixtures(games ?? []);
+}
 
 function readSessionSeed(): GamesOfDayPayload | null {
   if (typeof window === 'undefined') return null;
@@ -45,7 +61,7 @@ function ensureSharedPoll() {
     () => {
       void sharedJsonFetch<GamesOfDayPayload>(KEY, URL, COALESCE_MS).then((d) => {
         if (!d || 'error' in d) return;
-        pace = paceFromFixtures(d.games ?? []);
+        pace = paceFromBoard(d.games);
       });
     },
     { getPace: () => pace }
@@ -65,8 +81,19 @@ function releaseSharedPoll() {
  * Shared games-of-day feed — one timer + one HTTP call for all living-room widgets.
  * sessionStorage paints the last slate before the network round-trip.
  */
+function overlayJornada(
+  payload: GamesOfDayPayload | null,
+  jornada: JornadaOverview | null
+): GamesOfDayPayload | null {
+  if (!payload || !jornada) return payload;
+  const live = [...jornada.live, ...jornada.played, ...jornada.upcoming];
+  if (!live.length) return payload;
+  return { ...payload, games: overlayLiveScores(payload.games, live) };
+}
+
 export function useGamesOfDay() {
   const [payload, setPayload] = useState<GamesOfDayPayload | null>(null);
+  const [jornada, setJornada] = useState<JornadaOverview | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -87,7 +114,7 @@ export function useGamesOfDay() {
 
     const seed = readSessionSeed();
     if (seed) {
-      pace = paceFromFixtures(seed.games ?? []);
+      pace = paceFromBoard(seed.games);
       setPayload(seed);
       setLoading(false);
       armStaticRetry(seed.source);
@@ -98,19 +125,29 @@ export function useGamesOfDay() {
         setLoading(false);
         return;
       }
-      pace = paceFromFixtures(d.games ?? []);
+      pace = paceFromBoard(d.games);
       setPayload(d);
       setLoading(false);
       writeSessionSeed(d);
       armStaticRetry(d.source);
     });
+    const unsubJornada = subscribeSharedJson<JornadaOverview>(JORNADA_FEED_KEY, (d) => {
+      if (!d || !('live' in d) || !('played' in d)) return;
+      lastJornada = d;
+      setJornada(d);
+      pace = d.live.length ? 'live' : paceFromFixtures([...d.live, ...d.played, ...d.upcoming]);
+    });
     ensureSharedPoll();
+    ensureJornadaPoll();
     return () => {
       unsub();
+      unsubJornada();
       releaseSharedPoll();
+      releaseJornadaPoll();
       if (staticRetry) clearTimeout(staticRetry);
     };
   }, []);
 
-  return { payload, loading };
+  const merged = useMemo(() => overlayJornada(payload, jornada), [payload, jornada]);
+  return { payload: merged, loading };
 }
