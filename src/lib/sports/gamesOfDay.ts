@@ -9,13 +9,14 @@ import {
   type RadioPhase,
 } from '@/lib/radio/phases';
 import type { Fixture, MatchState } from './types';
-import { fetchEspnLigaMxFixtures } from './espnFallback';
+import { fetchEspnLigaMxFixtures, fetchLigaMxFixtures } from './espnFallback';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
 import { involvesLigaMxClub } from './ligaMxTeams';
 import { isNearKickoff, looksStillLive } from './freshness';
 import {
   fetchFixturesByDate,
   fetchLivescores,
+  leaguesCupLeagueId,
   livingRoomLeagueIds,
   overlayLiveFixtures,
   sportmonksEnabled,
@@ -162,34 +163,40 @@ async function ligaMxDateWindow(
 
   if (sportmonksEnabled()) {
     try {
-      const leagues = livingRoomLeagueIds();
-      const boards = await Promise.all(
-        boardKeys.map((k) => fetchFixturesByDate(k, leagues))
-      );
-      const dated = boards
+      // Liga MX rows come from the one canonical board (same as jornada/pulse),
+      // so hero and "en vivo + sellados" agree on every state — not just live.
+      const board = await fetchLigaMxFixtures();
+      const liga = board.fixtures.map(attachDondeVer);
+
+      // Leagues Cup (MX-involved) still comes from date boards, overlaid with the
+      // shared livescores so LC live rows stay consistent with the LC page too.
+      const lcDated = (
+        await Promise.all(
+          boardKeys.map((k) =>
+            fetchFixturesByDate(k, [leaguesCupLeagueId()]).catch(() => [] as Fixture[])
+          )
+        )
+      )
         .flat()
+        .filter(keepLivingRoomFixture);
+      const now = Date.now();
+      const mayBeLive = [...liga, ...lcDated].some(
+        (f) => looksStillLive(f) || isNearKickoff(f.date, now, f.state)
+      );
+      const lcLive = mayBeLive
+        ? (await fetchLivescores(livingRoomLeagueIds()).catch(() => [] as Fixture[])).filter(
+            (f) => f.league === 'leagues-cup'
+          )
+        : [];
+      const lc = (lcLive.length ? overlayLiveFixtures(lcDated, lcLive) : lcDated)
         .filter(keepLivingRoomFixture)
         .map(attachDondeVer);
-      const now = Date.now();
+
+      const dated = [...liga, ...lc];
       const today = dated.filter(
         (f) => isMexicoDay(f.date, dayKey) || f.state === 'in'
       );
-      const mayBeLive = today.some(
-        (f) => looksStillLive(f) || isNearKickoff(f.date, now, f.state)
-      );
-      const live = mayBeLive
-        ? await fetchLivescores(leagues).catch(() => [] as Fixture[])
-        : [];
-      const merged = overlayLiveFixtures(dated, live.map(attachDondeVer)).filter(
-        keepLivingRoomFixture
-      );
-      return {
-        today: merged.filter(
-          (f) => isMexicoDay(f.date, dayKey) || f.state === 'in'
-        ),
-        dated: merged,
-        source: 'sportmonks',
-      };
+      return { today, dated, source: board.source };
     } catch {
       /* Sportmonks down → ESPN below */
     }
