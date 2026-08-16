@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { peekCache, peekCacheAgeMs, singleFlight } from '@/lib/apiCache';
+import { peekCache, peekCacheAgeMs, setCache, singleFlight } from '@/lib/apiCache';
+import { kvGetJson, sharedKvEnabled } from '@/lib/sharedKv';
 
 type SwrMeta = { stale: boolean; seeded: boolean };
 
@@ -46,6 +47,30 @@ export async function serveSwr<T>(opts: {
     return NextResponse.json(cached, {
       headers: opts.headers?.(cached, { stale, seeded: false }),
     });
+  }
+
+  // Cold isolate: a KV-shared payload beats a static seed. Without this, a fresh
+  // isolate flashes its seed (e.g. games-of-day "Por jugar"/no score) while peers
+  // that already warmed KV show the live board — the exact cross-surface drift.
+  if (sharedKvEnabled()) {
+    const remote = await kvGetJson<T>(opts.key);
+    if (remote != null && !opts.notFound?.(remote.data)) {
+      setCache(opts.key, remote.data);
+      const stale = Date.now() - remote.ts > ttlOf(remote.data);
+      if (stale && !allowStale(remote.data)) {
+        const data = await singleFlight(opts.key, coalesce, opts.loader);
+        if (data == null || opts.notFound?.(data)) {
+          return NextResponse.json({ error: 'not_found' }, { status: 404 });
+        }
+        return NextResponse.json(data, {
+          headers: opts.headers?.(data, { stale: false, seeded: false }),
+        });
+      }
+      if (stale) refresh();
+      return NextResponse.json(remote.data, {
+        headers: opts.headers?.(remote.data, { stale, seeded: false }),
+      });
+    }
   }
 
   if (opts.seed) {
