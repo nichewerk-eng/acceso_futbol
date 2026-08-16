@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useId, useState } from 'react';
 import { GravityAlertsToggle } from '@/components/living-room/GravityAlertsToggle';
 import { SeguirMenu } from '@/components/living-room/SeguirMenu';
 import { useGravity } from '@/contexts/GravityContext';
@@ -17,10 +18,31 @@ const LINKS = [
   { href: '/leagues-cup', label: 'Leagues Cup' },
 ];
 
+function linkActive(pathname: string, href: string) {
+  if (href === '/') return pathname === '/';
+  if (href.startsWith('/#')) return false;
+  return pathname.startsWith(href);
+}
+
 export function PulseNav() {
   const pathname = usePathname();
   const { club, elTri, settled } = useGravity();
   const lock = [club?.abbreviation, elTri ? 'TRI' : null].filter(Boolean).join('+');
+  const [open, setOpen] = useState(false);
+  const menuId = useId();
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false);
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
 
   return (
     <header
@@ -45,27 +67,19 @@ export function PulseNav() {
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex" data-testid="nav-links">
-          {LINKS.map(({ href, label }) => {
-            const active =
-              href === '/'
-                ? pathname === '/'
-                : href.startsWith('/#')
-                  ? false
-                  : pathname.startsWith(href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                data-testid={`nav-link-${label.toLowerCase()}`}
-                className={[
-                  'px-2.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] transition',
-                  active ? 'text-foreground' : 'text-muted hover:text-foreground',
-                ].join(' ')}
-              >
-                {label}
-              </Link>
-            );
-          })}
+          {LINKS.map(({ href, label }) => (
+            <Link
+              key={href}
+              href={href}
+              data-testid={`nav-link-${label.toLowerCase()}`}
+              className={[
+                'px-2.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] transition',
+                linkActive(pathname, href) ? 'text-foreground' : 'text-muted hover:text-foreground',
+              ].join(' ')}
+            >
+              {label}
+            </Link>
+          ))}
         </nav>
 
         <div className="flex-1" />
@@ -84,23 +98,49 @@ export function PulseNav() {
         )}
 
         <SeguirMenu />
+
+        <button
+          type="button"
+          className="nav-burger md:hidden"
+          aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
+          aria-expanded={open}
+          aria-controls={menuId}
+          data-testid="nav-burger"
+          onClick={() => setOpen((v) => !v)}
+        >
+          <span className={open ? 'nav-burger-x' : undefined} aria-hidden>
+            <span />
+            <span />
+            <span />
+          </span>
+        </button>
       </div>
 
-      <div
-        className="flex gap-1 overflow-x-auto border-t border-line px-4 py-2 md:hidden scrollbar-none"
-        data-testid="nav-mobile-strip"
-      >
-        {LINKS.map(({ href, label }) => (
-          <Link
-            key={href}
-            href={href}
-            data-testid={`nav-mobile-${label.toLowerCase()}`}
-            className="shrink-0 border border-line px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted"
-          >
-            {label}
-          </Link>
-        ))}
-      </div>
+      {open ? (
+        <nav
+          id={menuId}
+          className="nav-drawer md:hidden"
+          data-testid="nav-drawer"
+          aria-label="Secciones"
+        >
+          {LINKS.map(({ href, label }) => (
+            <Link
+              key={href}
+              href={href}
+              data-testid={`nav-mobile-${label.toLowerCase()}`}
+              className={[
+                'nav-drawer-link',
+                linkActive(pathname, href) ? 'nav-drawer-link-on' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              onClick={() => setOpen(false)}
+            >
+              {label}
+            </Link>
+          ))}
+        </nav>
+      ) : null}
     </header>
   );
 }
