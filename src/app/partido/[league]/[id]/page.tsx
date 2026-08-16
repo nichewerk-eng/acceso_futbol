@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { MatchChapter } from '@/components/partido/MatchChapter';
 import { JsonLd } from '@/components/seo/JsonLd';
-import { peekMatch } from '@/lib/sports';
+import { getMatch, peekMatch } from '@/lib/sports/getMatch';
 import type { MatchSnapshot } from '@/lib/sports/types';
 import {
   absoluteUrl,
@@ -16,6 +16,9 @@ import {
 interface PageParams {
   params: Promise<{ league: string; id: string }>;
 }
+
+// Server-render live match data (status + score) for crawlable HTML + SportsEvent schema.
+export const revalidate = 30;
 
 function leagueHubPath(league: string): string {
   if (league === 'leagues-cup') return '/leagues-cup';
@@ -71,7 +74,7 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
   const { league, id } = await params;
   const label = leagueLabel(league);
   const path = `/partido/${league}/${id}`;
-  const match = peekMatch(league, id);
+  const match = peekMatch(league, id) ?? (await getMatch(league, id).catch(() => null));
 
   if (match) {
     const title = matchSeoTitle(match, league);
@@ -105,7 +108,7 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
 export default async function PartidoPage({ params }: PageParams) {
   const { league, id } = await params;
   const hub = leagueHubPath(league);
-  const match = peekMatch(league, id);
+  const match = peekMatch(league, id) ?? (await getMatch(league, id).catch(() => null));
   const schemas: Record<string, unknown>[] = match
     ? [
         sportsEventJsonLd(match, league),

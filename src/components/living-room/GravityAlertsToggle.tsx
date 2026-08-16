@@ -1,20 +1,24 @@
 'use client';
 
 import { disableGravityAlerts, enableGravityAlerts } from '@/lib/client/gravityAlerts';
+import { subscribeToPush, unsubscribeFromPush } from '@/lib/client/push';
 import { useGravityAlertPref } from '@/lib/client/useGravityAlerts';
 import { useGravity } from '@/contexts/GravityContext';
 
 export function GravityAlertsToggle() {
   const on = useGravityAlertPref();
-  const { settled, club, elTri } = useGravity();
+  const { settled, club, elTri, clubId } = useGravity();
   if (!settled || !(club || elTri)) return null;
 
   async function toggle() {
     if (on) {
       disableGravityAlerts();
+      void unsubscribeFromPush();
       return;
     }
     await enableGravityAlerts();
+    // Register a real Web Push subscription too, so goals/kickoffs arrive with the tab closed.
+    void subscribeToPush({ clubId: clubId ?? null, elTri });
   }
 
   return (

@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 import { DondeVerGuide } from '@/components/living-room/DondeVerGuide';
 import { useGravity } from '@/contexts/GravityContext';
 import { useJornadaOverview } from '@/lib/client/useJornadaOverview';
+import type { JornadaOverview } from '@/lib/sports/jornada';
 import type { Fixture } from '@/lib/sports';
 
-export function DondeVerRoom() {
+export function DondeVerRoom({ initial = null }: { initial?: JornadaOverview | null }) {
   const { matchesGravity } = useGravity();
-  const { payload: data } = useJornadaOverview();
+  const { payload: data } = useJornadaOverview(initial);
   const [tz, setTz] = useState('America/Mexico_City');
 
   useEffect(() => {

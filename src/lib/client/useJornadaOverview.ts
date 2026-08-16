@@ -45,10 +45,14 @@ export function releaseJornadaPoll() {
   }
 }
 
-/** Shared jornada board — one timer + one HTTP call for hero, sellados, and Toma. */
-export function useJornadaOverview() {
-  const [payload, setPayload] = useState<JornadaOverview | null>(null);
-  const [loading, setLoading] = useState(true);
+/**
+ * Shared jornada board — one timer + one HTTP call for hero, sellados, and Toma.
+ * Pass a server-rendered `initial` overview so the first paint is crawlable HTML
+ * (SSR) and there is no "Cargando…" flash before the live poll takes over.
+ */
+export function useJornadaOverview(initial: JornadaOverview | null = null) {
+  const [payload, setPayload] = useState<JornadaOverview | null>(initial);
+  const [loading, setLoading] = useState(!initial);
 
   useEffect(() => {
     const unsub = subscribeSharedJson<JornadaOverview>(JORNADA_FEED_KEY, (d) => {

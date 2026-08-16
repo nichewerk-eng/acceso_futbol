@@ -1,0 +1,60 @@
+/** La Quiniela AF — 1 (local) / X (empate) / 2 (visita) per Liga MX jornada match. */
+
+export type Outcome = '1' | 'X' | '2';
+
+export interface QuinielaSide {
+  name: string;
+  abbr: string;
+  clubId: string | null;
+  logo?: string;
+  score: number | null;
+}
+
+export interface QuinielaMatch {
+  id: string;
+  date: string;
+  state: 'pre' | 'in' | 'post';
+  /** Kickoff reached → pick can no longer be set/changed. */
+  locked: boolean;
+  home: QuinielaSide;
+  away: QuinielaSide;
+  /** Final result (only when the match is over). */
+  result: Outcome | null;
+}
+
+export interface QuinielaBoard {
+  torneo: string;
+  jornadaKey: string;
+  jornadaNumber: number;
+  jornadaLabel: string;
+  /** Earliest still-open kickoff — the first lock. */
+  deadline: string | null;
+  matches: QuinielaMatch[];
+  finals: number;
+  total: number;
+  generatedAt: string;
+}
+
+export interface QuinielaPicks {
+  userId: string;
+  name: string;
+  picks: Record<string, Outcome>;
+  ts: number;
+}
+
+export interface LeaderRow {
+  userId: string;
+  name: string;
+  /** Correct final results. */
+  points: number;
+  /** Finals the user had a pick for. */
+  played: number;
+  /** Total picks made this jornada. */
+  picks: number;
+}
+
+export interface QuinielaLeaderboard {
+  jornadaKey: string;
+  rows: LeaderRow[];
+  entries: number;
+}

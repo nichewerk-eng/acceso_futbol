@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next';
+import { LIGA_MX_CLUBS } from '@/config/clubs';
 import { allClubIdentities } from '@/config/clubIdentity';
 import { MOMENTS } from '@/config/moments';
 import { siteConfig } from '@/config/site';
@@ -43,6 +44,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
+      url: `${siteConfig.url}/goleo`,
+      lastModified: now,
+      changeFrequency: 'daily',
+      priority: 0.8,
+    },
+    {
+      url: `${siteConfig.url}/quiniela`,
+      lastModified: now,
+      changeFrequency: 'daily',
+      priority: 0.8,
+    },
+    {
       url: `${siteConfig.url}/tabla`,
       lastModified: now,
       changeFrequency: 'daily',
@@ -74,6 +87,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: now,
       changeFrequency: 'daily',
       priority: club.id === 'el-tri' ? 0.85 : 0.7,
+    });
+  }
+
+  for (const club of LIGA_MX_CLUBS) {
+    entries.push({
+      url: `${siteConfig.url}/donde-ver/${club.id}`,
+      lastModified: now,
+      changeFrequency: 'daily',
+      priority: 0.75,
     });
   }
 

@@ -26,7 +26,7 @@ export const ritualInventory: RitualSlot[] = [
     label: 'Dónde ver',
     sponsor: undefined,
     line: 'Espacio nativo MX ↔ US · telco / streaming.',
-    href: '/mediakit',
+    href: '/donde-ver',
   },
   {
     id: 'radio-sting',

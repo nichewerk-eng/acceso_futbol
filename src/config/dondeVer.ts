@@ -205,6 +205,25 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
   },
 };
 
+/**
+ * Liga MX broadcast rights are sold per HOME club, so when a club hosts we can
+ * assume its channel set even before the exact per-match grid is confirmed.
+ * The dated GUIDE above always wins; this is the home-club fallback. Keyed by
+ * normalized (schedule) home abbr. Seeded from the Jornada 4 home slate —
+ * away-team specifics get refined into GUIDE as they're confirmed.
+ */
+const CLUB_HOME_TV: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
+  UNAM: { mx: ['vix'], us: ['univision', 'vix'] },
+  AME: { mx: ['canal-5', 'tudn', 'vix', 'layvtime'], us: ['tudn', 'vix'] },
+  SAN: { mx: ['canal-5', 'tudn', 'vix'], us: ['tudn', 'vix'] },
+  TIJ: { mx: ['fox-one'], us: ['tudn'] },
+  NCX: { mx: ['fox', 'fox-one'], us: ['fox-deportes'] },
+  PAC: { mx: ['fox', 'fox-one'], us: ['tudn'] },
+  ATL: { mx: ['azteca-7', 'espn', 'disney-plus'], us: ['tudn', 'univision'] },
+  MTY: { mx: ['canal-5', 'tudn', 'vix'], us: ['tudn', 'univision', 'vix'] },
+  ATS: { mx: ['canal-5', 'tudn', 'vix'], us: ['tudn', 'univision', 'vix'] },
+};
+
 function normAbbr(abbr: string): string {
   return scheduleAbbr(abbr);
 }
@@ -249,6 +268,20 @@ export function resolveDondeVer(
       usChannels: ['apple-tv'],
       confirmed: true,
     };
+  }
+
+  // Home-club default (Liga MX rights follow the home club).
+  if (fixture.league === 'liga-mx') {
+    const homeClub = CLUB_HOME_TV[normAbbr(fixture.home.abbreviation)];
+    if (homeClub) {
+      return {
+        mx: labelList(homeClub.mx),
+        us: labelList(homeClub.us),
+        mxChannels: homeClub.mx,
+        usChannels: homeClub.us,
+        confirmed: true,
+      };
+    }
   }
 
   return { ...UNCONFIRMED };

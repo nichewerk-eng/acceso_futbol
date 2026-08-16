@@ -76,3 +76,31 @@ export async function kvSetNx(key: string, value: string, ttlMs: number): Promis
   ]);
   return raw?.result === 'OK';
 }
+
+/**
+ * Durable hash helpers (no TTL) for small registries — e.g. push subscriptions.
+ * All no-op / return empty when KV is off so callers can fall back to memory.
+ */
+export async function kvHset(key: string, field: string, value: string): Promise<void> {
+  if (!kvConfigured()) return;
+  await kvCommand(['HSET', `af:${key}`, field, value]);
+}
+
+export async function kvHdel(key: string, field: string): Promise<void> {
+  if (!kvConfigured()) return;
+  await kvCommand(['HDEL', `af:${key}`, field]);
+}
+
+/** HGETALL flattened into a `{ field: value }` record. */
+export async function kvHgetall(key: string): Promise<Record<string, string>> {
+  if (!kvConfigured()) return {};
+  const raw = await kvCommand<{ result: unknown }>(['HGETALL', `af:${key}`]);
+  const res = raw?.result;
+  const out: Record<string, string> = {};
+  if (Array.isArray(res)) {
+    for (let i = 0; i + 1 < res.length; i += 2) out[String(res[i])] = String(res[i + 1]);
+  } else if (res && typeof res === 'object') {
+    for (const [k, v] of Object.entries(res as Record<string, unknown>)) out[k] = String(v);
+  }
+  return out;
+}

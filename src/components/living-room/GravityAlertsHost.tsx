@@ -2,10 +2,12 @@
 
 import { dismissGravityToast } from '@/lib/client/gravityAlerts';
 import { useGravityAlertWatcher, useGravityToasts } from '@/lib/client/useGravityAlerts';
+import { usePushSync } from '@/lib/client/usePushSync';
 
 /** Keeps LOCK’d kick/goal avisos alive across pages and paints in-page toasts. */
 export function GravityAlertsHost() {
   useGravityAlertWatcher();
+  usePushSync();
   const toasts = useGravityToasts();
 
   if (!toasts.length) return null;
