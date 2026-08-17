@@ -46,21 +46,24 @@ export function PulseNav() {
       className="sticky top-0 z-50 border-b border-line bg-bg-1/95 backdrop-blur-sm"
     >
       <div className="nav-pulse-bar">
-        <nav className="nav-pulse-links hidden md:flex" data-testid="nav-links">
-          {LINKS.map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              data-testid={`nav-link-${label.toLowerCase()}`}
-              className={[
-                'px-2.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] transition',
-                linkActive(pathname, href) ? 'text-foreground' : 'text-muted hover:text-foreground',
-              ].join(' ')}
-            >
-              {label}
-            </Link>
-          ))}
-        </nav>
+        <div className="nav-pulse-start">
+          <nav className="nav-pulse-links hidden md:flex" data-testid="nav-links">
+            {LINKS.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                data-testid={`nav-link-${label.toLowerCase()}`}
+                className={[
+                  'px-2.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] transition',
+                  linkActive(pathname, href) ? 'text-foreground' : 'text-muted hover:text-foreground',
+                ].join(' ')}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+          <SeguirMenu className="md:hidden" />
+        </div>
 
         <Link
           href="/"
@@ -79,7 +82,7 @@ export function PulseNav() {
         </Link>
 
         <div className="nav-pulse-tools">
-          <GravityAlertsToggle />
+          <GravityAlertsToggle className="hidden md:inline" />
 
           {settled && lock && (
             <Link
@@ -92,7 +95,7 @@ export function PulseNav() {
             </Link>
           )}
 
-          <SeguirMenu />
+          <SeguirMenu className="hidden md:block" testId="nav-seguir-desktop" />
 
           <button
             type="button"
@@ -135,6 +138,10 @@ export function PulseNav() {
               {label}
             </Link>
           ))}
+          <GravityAlertsToggle
+            className="nav-drawer-link w-full text-left"
+            testId="gravity-alerts-toggle-drawer"
+          />
         </nav>
       ) : null}
     </header>

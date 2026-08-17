@@ -287,6 +287,13 @@ body {
   }
 }
 
+.nav-pulse-start {
+  justify-self: start;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
 .nav-pulse-links {
   justify-self: start;
   align-items: center;
@@ -1959,6 +1966,11 @@ body {
   border: 1px solid var(--foreground);
   background: var(--bg-1);
   box-shadow: 4px 4px 0 #0c0c0c;
+}
+
+.nav-pulse-start .af-seguir-panel {
+  right: auto;
+  left: 0;
 }
 
 .af-seguir-link {

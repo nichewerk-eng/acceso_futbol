@@ -3,7 +3,13 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { SOCIAL_CHANNELS } from '@/config/site';
 
-export function SeguirMenu() {
+export function SeguirMenu({
+  className = '',
+  testId = 'nav-seguir',
+}: {
+  className?: string;
+  testId?: string;
+}) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
@@ -27,7 +33,7 @@ export function SeguirMenu() {
   }, [open]);
 
   return (
-    <div className="af-seguir" ref={rootRef} data-testid="nav-seguir">
+    <div className={['af-seguir', className].filter(Boolean).join(' ')} ref={rootRef} data-testid={testId}>
       <button
         type="button"
         className="af-cta !px-3 !py-2"
