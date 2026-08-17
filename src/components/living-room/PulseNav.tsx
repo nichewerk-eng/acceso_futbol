@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useId, useState } from 'react';
@@ -46,24 +45,8 @@ export function PulseNav() {
       data-testid="nav-pulse"
       className="sticky top-0 z-50 border-b border-line bg-bg-1/95 backdrop-blur-sm"
     >
-      <div className="mx-auto flex w-full max-w-6xl items-center gap-4 px-4 py-3 sm:px-6">
-        <Link
-          href="/"
-          className="shrink-0"
-          aria-label="Acceso Futbol, inicio"
-          data-testid="nav-logo"
-        >
-          <Image
-            src="/logo-dark.png"
-            alt="Acceso Futbol"
-            width={512}
-            height={331}
-            className="h-8 w-auto object-contain sm:h-9"
-            priority
-          />
-        </Link>
-
-        <nav className="hidden items-center gap-1 md:flex" data-testid="nav-links">
+      <div className="nav-pulse-bar">
+        <nav className="nav-pulse-links hidden md:flex" data-testid="nav-links">
           {LINKS.map(({ href, label }) => (
             <Link
               key={href}
@@ -79,38 +62,54 @@ export function PulseNav() {
           ))}
         </nav>
 
-        <div className="flex-1" />
-
-        <GravityAlertsToggle />
-
-        {settled && lock && (
-          <Link
-            href={club ? `/club/${club.id}` : elTri ? '/club/el-tri' : '/#gravedad'}
-            className="af-chip hidden text-signal sm:inline-flex"
-            title="Abrir sala del club"
-            data-testid="nav-gravity-lock"
-          >
-            LOCK {lock}
-          </Link>
-        )}
-
-        <SeguirMenu />
-
-        <button
-          type="button"
-          className="nav-burger md:hidden"
-          aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
-          aria-expanded={open}
-          aria-controls={menuId}
-          data-testid="nav-burger"
-          onClick={() => setOpen((v) => !v)}
+        <Link
+          href="/"
+          className="nav-pulse-mark"
+          aria-label="Acceso Futbol, inicio"
+          data-testid="nav-logo"
         >
-          <span className={open ? 'nav-burger-x' : undefined} aria-hidden>
-            <span />
-            <span />
-            <span />
-          </span>
-        </button>
+          <img
+            src="/logo-dark.png"
+            alt="Acceso Futbol"
+            width={70}
+            height={45}
+            className="nav-pulse-mark-img"
+            decoding="async"
+          />
+        </Link>
+
+        <div className="nav-pulse-tools">
+          <GravityAlertsToggle />
+
+          {settled && lock && (
+            <Link
+              href={club ? `/club/${club.id}` : elTri ? '/club/el-tri' : '/#gravedad'}
+              className="af-chip hidden text-signal sm:inline-flex"
+              title="Abrir sala del club"
+              data-testid="nav-gravity-lock"
+            >
+              LOCK {lock}
+            </Link>
+          )}
+
+          <SeguirMenu />
+
+          <button
+            type="button"
+            className="nav-burger md:hidden"
+            aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
+            aria-expanded={open}
+            aria-controls={menuId}
+            data-testid="nav-burger"
+            onClick={() => setOpen((v) => !v)}
+          >
+            <span className={open ? 'nav-burger-x' : undefined} aria-hidden>
+              <span />
+              <span />
+              <span />
+            </span>
+          </button>
+        </div>
       </div>
 
       {open ? (

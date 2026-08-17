@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { ClubLogo } from '@/components/brand/ClubLogo';
-import { HeroWordmark } from '@/components/living-room/HeroWordmark';
 import { useGravity } from '@/contexts/GravityContext';
 import { useGamesOfDay } from '@/lib/client/useGamesOfDay';
 import { competitionBandTag, leaguePath, mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
@@ -109,8 +108,6 @@ function bandMeta(
         stamp = time;
       }
     }
-  } else if (g.phase === 'preshow') {
-    stamp = 'PRE';
   }
 
   return {
@@ -123,7 +120,7 @@ function bandMeta(
 }
 
 export function PulseHero({ leadStory }: Props) {
-  const { matchesGravity, club, elTri, settled } = useGravity();
+  const { matchesGravity } = useGravity();
   const { payload, loading } = useGamesOfDay();
   const [userTz, setUserTz] = useState('America/Mexico_City');
 
@@ -151,7 +148,6 @@ export function PulseHero({ leadStory }: Props) {
   }, [payload, matchesGravity]);
 
   const liveCount = games.filter((g) => g.state === 'in').length;
-  const lock = [club?.abbreviation, elTri ? 'TRI' : null].filter(Boolean).join('+');
   const stage = games.find((g) => g.state === 'in') ?? games[0] ?? null;
   const stageTag = stage ? competitionBandTag(stage.league, stage.jornada) : null;
   const upcoming = Boolean(payload?.upcoming);
@@ -169,40 +165,16 @@ export function PulseHero({ leadStory }: Props) {
     >
       <div className="pointer-events-none absolute inset-0 af-grain opacity-25" data-testid="hero-backdrop" />
 
-      <div className="relative mx-auto max-w-6xl px-4 pt-6 sm:px-6 sm:pt-8">
-        {/* Brand masthead — Acceso owns the room */}
-        <header
-          className="hero-mast animate-pulse-in mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-line pb-5"
-          data-testid="hero-brand-block"
-        >
-          <div>
-            <p className="af-tele text-foreground" data-testid="hero-eyebrow">
-              <span className="text-signal">AF</span>
-              ://CANCHA
-              {settled && lock ? ` · LOCK ${lock}` : ' · LIGA MX · EL TRI'}
-            </p>
-            <HeroWordmark />
-            <p className="af-tele mt-2 text-muted" data-testid="hero-support">
-              {loading && !payload
-                ? 'Sincronizando jornada…'
-                : upcoming && games.length > 0
-                  ? `${headline} · ${games.length} partido${games.length === 1 ? '' : 's'} · no hay cartelera hoy`
-                  : games.length > 0
-                    ? `${headline} · ${games.length} partido${games.length === 1 ? '' : 's'}${liveCount ? ` · ${liveCount} en vivo` : ''}`
-                    : `${headline} · sin partidos en cartelera`}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2" data-testid="hero-cta-group">
-            {!settled && (
-              <a href="#gravedad" className="af-cta af-cta-ghost" data-testid="hero-cta-gravity">
-                Elegir club
-              </a>
-            )}
-            <a href="#jornada" className="af-cta" data-testid="hero-cta-hoy">
-              Jornada
-            </a>
-          </div>
-        </header>
+      <div className="relative mx-auto max-w-6xl px-4 pt-5 sm:px-6 sm:pt-6">
+        <p className="hero-ident af-tele mb-5 text-muted" data-testid="hero-support">
+          {loading && !payload
+            ? 'Sincronizando jornada…'
+            : upcoming && games.length > 0
+              ? `${headline} · ${games.length} partido${games.length === 1 ? '' : 's'} · no hay cartelera hoy`
+              : games.length > 0
+                ? `${headline} · ${games.length} partido${games.length === 1 ? '' : 's'}${liveCount ? ` · ${liveCount} en vivo` : ''}`
+                : `${headline} · sin partidos en cartelera`}
+        </p>
 
         {/* Stage: one dominant live/featured match */}
         {stage && stageMeta && (
@@ -352,10 +324,12 @@ export function PulseHero({ leadStory }: Props) {
                       mine ? 'hero-band-mine' : '',
                     ].join(' ')}
                   >
-                    <span className="af-tele hero-band-stamp">
-                      {meta.kind === 'live' && <span className="hoy-live-dot mr-2" aria-hidden />}
-                      {meta.stamp}
-                    </span>
+                    {meta.kind !== 'ft' ? (
+                      <span className="af-tele hero-band-stamp">
+                        {meta.kind === 'live' && <span className="hoy-live-dot mr-2" aria-hidden />}
+                        {meta.stamp}
+                      </span>
+                    ) : null}
                     <span className="hero-band-home inline-flex items-center gap-2">
                       <ClubLogo
                         abbr={g.home.abbreviation}
@@ -373,7 +347,15 @@ export function PulseHero({ leadStory }: Props) {
                       ].join(' ')}
                       data-testid={`hero-band-score-${g.id}`}
                     >
-                      <span className="hero-band-center-mark">{meta.center}</span>
+                      {meta.kind === 'ft' ? (
+                        <span className="hero-band-center-ft">
+                          <span className="lc-match-score-n">{g.home.score ?? 0}</span>
+                          <span className="lc-match-ft">-FT-</span>
+                          <span className="lc-match-score-n">{g.away.score ?? 0}</span>
+                        </span>
+                      ) : (
+                        <span className="hero-band-center-mark">{meta.center}</span>
+                      )}
                       {compTag ? (
                         <span className="af-tele hero-band-center-tag hidden text-signal sm:block">
                           {compTag}

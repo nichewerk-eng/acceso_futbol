@@ -61,8 +61,6 @@ export function EngagementDock() {
                 <span className="hoy-live-dot" aria-hidden />
                 LIVE
               </span>
-            ) : game.phase === 'preshow' ? (
-              <span className="text-signal">PRE</span>
             ) : (
               dockDayLabel(payload?.dayKey, upcoming, count)
             )}
