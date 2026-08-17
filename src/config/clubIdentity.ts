@@ -137,7 +137,7 @@ const WEATHER: Record<string, string> = {
   'cruz-azul': 'La Máquina sigue. La sala también.',
   tigres: 'Felinos al acecho. Acceso en la grada.',
   monterrey: 'Rayados: frío en la mesa, calor en el feed.',
-  pumas: 'CU late aquí — no en el resumen de cable.',
+  pumas: 'CU late aquí — no en el resumen de noticias.',
   toluca: 'Diablos en rojo. Sin anestesia.',
   atlas: 'Rojinegro: drama incluido en el precio.',
   santos: 'Laguna late. Nosotros traducimos.',

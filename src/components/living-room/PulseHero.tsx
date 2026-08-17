@@ -319,7 +319,7 @@ export function PulseHero({ leadStory }: Props) {
                 Leagues Cup
               </Link>
               <a href="#noticias" className="af-cta af-cta-ghost inline-flex" data-testid="hero-cta-cable">
-                Ver cable
+                Ver noticias
               </a>
             </div>
           </div>
@@ -409,13 +409,13 @@ export function PulseHero({ leadStory }: Props) {
           </div>
         )}
 
-        {/* Cable as ticker under the cancha — not a second story column */}
+        {/* News as ticker under the cancha — not a second story column */}
         {leadStory && (
           <div
             className="mt-6 flex flex-wrap items-baseline gap-x-4 gap-y-2 border-t border-line py-4"
             data-testid="hero-cable-quote"
           >
-            <p className="af-tele shrink-0 text-signal">Cable</p>
+            <p className="af-tele shrink-0 text-signal">News</p>
             <a
               href={leadStory.url}
               target="_blank"

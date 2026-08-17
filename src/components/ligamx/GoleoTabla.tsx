@@ -154,21 +154,18 @@ export function GoleoTabla({
         kicker="GOLES"
         title="Goleo"
         unit="Goles"
-        entries={board.goals.slice(0, 5)}
+        entries={board.goals}
         isMine={isMine}
       />
       <Table
         kicker="ASISTENCIAS"
         title="Asistencias"
         unit="Asist."
-        entries={board.assists.slice(0, 5)}
+        entries={board.assists}
         isMine={isMine}
       />
       <p className="font-mono text-[11px] leading-5 text-muted">
-        {board.seasonLabel} · fuente ESPN.{' '}
-        <Link href="/goleo" className="text-foreground underline-offset-2 hover:underline">
-          Página de goleo
-        </Link>
+        {board.seasonLabel} · fuente ESPN.
       </p>
     </div>
   );
@@ -177,18 +174,20 @@ export function GoleoTabla({
 export function GoleoRailCard({
   board,
   isMine,
+  onOpenGoleo,
 }: {
   board: GoleoBoard | null;
   isMine: (abbr?: string) => boolean;
+  onOpenGoleo: () => void;
 }) {
   const rows = board?.goals.slice(0, 5) ?? [];
   return (
     <div className="lc-rail-block lc-clasificacion" data-testid="ligamx-rail-goleo">
       <div className="lc-rail-block-head">
         <p className="af-tele text-foreground">Goleo</p>
-        <Link href="/goleo" className="lc-rail-link">
+        <button type="button" className="lc-rail-link" onClick={onOpenGoleo}>
           Tabla completa
-        </Link>
+        </button>
       </div>
       {rows.length === 0 ? (
         <p className="lc-rail-note">El goleo llega con la jornada.</p>

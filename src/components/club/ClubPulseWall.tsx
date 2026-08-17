@@ -61,7 +61,7 @@ export function ClubPulseWall({ clubId }: { clubId: string }) {
           Lo que late
         </h2>
         <p className="mt-2 max-w-lg font-mono text-[12px] leading-6 text-muted">
-          Cable, Reddit y el show de Acceso — una sola pared, sin tabs.
+          News, Reddit y el show de Acceso — una sola pared, sin tabs.
         </p>
 
         {loading && (
@@ -72,7 +72,7 @@ export function ClubPulseWall({ clubId }: { clubId: string }) {
 
         {!loading && items.length === 0 && (
           <p className="mt-8 max-w-md font-mono text-[13px] leading-6 text-muted">
-            El cable está callado por ahora. Vuelve en la jornada — o abre TikTok @accesofutbolmx.
+            El feed está callado por ahora. Vuelve en la jornada — o abre TikTok @accesofutbolmx.
           </p>
         )}
 

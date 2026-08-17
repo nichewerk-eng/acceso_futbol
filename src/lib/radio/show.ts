@@ -98,9 +98,9 @@ export function templateRecap(match: MatchSnapshot, style: RadioStyle): ShowSegm
         ? `Mira lo que inclinó el partido. ${moments}.${scorers ? ` En el luminoso anotaron ${scorers}.` : ''}${stats ? ` Y si miras los números: ${stats}.` : ''} Quédate con el marco, no solo con el grito del gol.`
         : `Lo que dejó huella, la neta: ${moments}.${scorers ? ` Los que marcaron: ${scorers}.` : ''}${stats ? ` Datos para la sobremesa: ${stats}.` : ''} Eso es lo que vas a discutir en el grupo del WhatsApp.`;
   } else if (stats || scorers) {
-    mid = `No nos llegó una crónica completa al cable, y está bien: no inventamos. ${scorers ? `Lo claro del luminoso: ${scorers}.` : ''} ${stats ? `Los números que sí tenemos: ${stats}.` : ''} El resultado queda ${score}, y el debate arranca ahora.`;
+    mid = `No nos llegó una crónica completa a las noticias, y está bien: no inventamos. ${scorers ? `Lo claro del luminoso: ${scorers}.` : ''} ${stats ? `Los números que sí tenemos: ${stats}.` : ''} El resultado queda ${score}, y el debate arranca ahora.`;
   } else {
-    mid = `Sin crónica detallada en el cable esta noche. No relleno vacío: el marcador es ${score}, y la toma Acceso es que el partido ya es historia y conversación.`;
+    mid = `Sin crónica detallada en las noticias esta noche. No relleno vacío: el marcador es ${score}, y la toma Acceso es que el partido ya es historia y conversación.`;
   }
 
   const close =

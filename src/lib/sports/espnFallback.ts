@@ -353,3 +353,4 @@ async function buildLigaMxBoard(): Promise<LigaMxBoard> {
   }
   return fetchEspnLigaMxFixtures();
 }
+

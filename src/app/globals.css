@@ -1039,7 +1039,7 @@ body {
   display: none;
 }
 
-/* Mobile: clasificación glance above the calendar */
+/* Mobile: clasificación glance below the jornada calendar */
 .lc-mobile-tabla {
   display: block;
   margin-bottom: 1.75rem;
@@ -2273,6 +2273,98 @@ body {
 @media (min-width: 1024px) {
   .jor-mosaic {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Home jornada tickets: score sits between the two sides */
+.jor-ticket {
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.8rem 0.95rem 0.85rem;
+  text-align: center;
+}
+
+.jor-ticket .jor-stamp-meta {
+  justify-content: center;
+  width: 100%;
+}
+
+.jor-ticket-board {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  align-items: center;
+  justify-content: center;
+  column-gap: 0.55rem;
+}
+
+.jor-ticket-side {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.jor-ticket-side.is-home {
+  justify-content: flex-end;
+}
+
+.jor-ticket-side.is-away {
+  justify-content: flex-start;
+}
+
+.jor-ticket-abbr {
+  font-family: var(--font-oswald), sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.15rem, 3vw, 1.45rem);
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.jor-ticket-score {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.2rem;
+  margin: 0;
+  min-width: 3.75rem;
+  font-family: var(--font-oswald), sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.55rem, 4.2vw, 2rem);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 0.9;
+}
+
+.jor-ticket-dash {
+  opacity: 0.35;
+  font-weight: 500;
+}
+
+.jor-ticket .is-win {
+  color: var(--signal);
+}
+
+.jor-ticket .is-lose {
+  opacity: 0.4;
+}
+
+.jor-ticket .is-draw {
+  opacity: 0.85;
+}
+
+.jor-ticket .jor-stamp-scorers {
+  margin-top: 0;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .jor-ticket .club-logo-sm {
+    width: 28px;
+    height: 28px;
   }
 }
 

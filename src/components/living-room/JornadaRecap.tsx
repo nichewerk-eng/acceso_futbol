@@ -14,12 +14,7 @@ import { buildJornadaTake, mergeJornadaTake } from '@/lib/sports/jornadaTake';
 
 function scorerLine(f: Fixture): string {
   const list = f.scorers ?? [];
-  if (list.length === 0) {
-    const hs = Number(f.home.score ?? 0);
-    const as = Number(f.away.score ?? 0);
-    if (hs === 0 && as === 0) return '0-0';
-    return '';
-  }
+  if (list.length === 0) return '';
   const parts = list.map((s) => {
     const tag = s.pen ? ' (P)' : s.og ? ' (OG)' : '';
     return `${s.name}${s.minute ? ` ${s.minute}` : ''}${tag}`;
@@ -33,58 +28,56 @@ function ResultStamp({ f, mine }: { f: Fixture; mine: boolean }) {
   const winner = f.winnerSide ?? null;
   const draw = !live && winner === null && f.state === 'post';
   const homeCls =
-    winner === 'home' ? 'jor-team-win is-win' : winner === 'away' ? 'jor-team-lose is-lose' : draw ? 'jor-team-draw' : '';
+    winner === 'home' ? 'is-win' : winner === 'away' ? 'is-lose' : draw ? 'is-draw' : '';
   const awayCls =
-    winner === 'away' ? 'jor-team-win is-win' : winner === 'home' ? 'jor-team-lose is-lose' : draw ? 'jor-team-draw' : '';
+    winner === 'away' ? 'is-win' : winner === 'home' ? 'is-lose' : draw ? 'is-draw' : '';
   const scorers = scorerLine(f);
-  const resultTag = draw ? 'X' : winner === 'home' ? '1' : winner === 'away' ? '2' : live ? 'LIVE' : 'FT';
+  const stamp = live
+    ? f.clock === 'HT' || /descanso/i.test(f.statusLabel || '')
+      ? 'HT'
+      : f.clock || 'LIVE'
+    : 'FT';
 
   return (
     <Link
       href={`/partido/liga-mx/${f.id}`}
       data-testid={`jornada-match-${f.id}`}
       className={[
-        'jor-stamp jor-rise',
+        'jor-stamp jor-ticket jor-rise',
         live ? 'jor-stamp-live' : '',
         mine ? 'jor-stamp-mine' : '',
-      ].join(' ')}
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
       <div className="jor-stamp-meta">
         {live && <span className="hoy-live-dot" aria-hidden />}
-        <span>
-          {live
-            ? f.clock === 'HT' || /descanso/i.test(f.statusLabel || '')
-              ? 'HT'
-              : f.clock || 'LIVE'
-            : 'FT'}
-        </span>
-        {!live && <span aria-hidden>· {resultTag}</span>}
-        {mine && <span className="text-signal">· LOCK</span>}
+        <span>{stamp}</span>
+        {mine ? <span className="text-signal">LOCK</span> : null}
       </div>
-      <div>
-        <p className="jor-stamp-score">
+      <div className="jor-ticket-board">
+        <span className={['jor-ticket-side is-home', homeCls].filter(Boolean).join(' ')}>
+          <ClubLogo abbr={f.home.abbreviation} name={f.home.name} size="sm" />
+          <span className="jor-ticket-abbr">{f.home.abbreviation}</span>
+        </span>
+        <p
+          className="jor-ticket-score"
+          aria-label={`${f.home.score ?? 0} a ${f.away.score ?? 0}`}
+        >
           <span className={homeCls}>{f.home.score ?? 0}</span>
-          <span className="mx-1 opacity-35">:</span>
+          <span className="jor-ticket-dash">–</span>
           <span className={awayCls}>{f.away.score ?? 0}</span>
         </p>
-        <div className="jor-stamp-teams">
-          <span className={['jor-stamp-home inline-flex items-center gap-2', homeCls].join(' ')}>
-            <ClubLogo abbr={f.home.abbreviation} name={f.home.name} size="sm" />
-            <span className="club-word club-word-sm">{f.home.abbreviation}</span>
-          </span>
-          <span className={['jor-stamp-away inline-flex items-center justify-end gap-2', awayCls].join(' ')}>
-            <span className="club-word club-word-sm">{f.away.abbreviation}</span>
-            <ClubLogo abbr={f.away.abbreviation} name={f.away.name} size="sm" />
-          </span>
-        </div>
-        {scorers ? (
-          <p className="jor-stamp-scorers" title={scorers}>
-            {scorers}
-          </p>
-        ) : (
-          <p className="jor-stamp-scorers">&nbsp;</p>
-        )}
+        <span className={['jor-ticket-side is-away', awayCls].filter(Boolean).join(' ')}>
+          <span className="jor-ticket-abbr">{f.away.abbreviation}</span>
+          <ClubLogo abbr={f.away.abbreviation} name={f.away.name} size="sm" />
+        </span>
       </div>
+      {scorers ? (
+        <p className="jor-stamp-scorers" title={scorers}>
+          {scorers}
+        </p>
+      ) : null}
     </Link>
   );
 }
@@ -135,6 +128,12 @@ export function JornadaRecap() {
       className="jor-board border-b border-line bg-bg-1 px-4 py-12 sm:px-6 sm:py-16"
     >
       <div className="mx-auto max-w-6xl">
+        {!lcPause && (take || pending) ? (
+          <div className="mb-10">
+            <JornadaTakeBoard take={take} pending={pending} />
+          </div>
+        ) : null}
+
         <div className="mb-10 grid gap-6 border-b border-line pb-8 lg:grid-cols-[auto_1fr_auto] lg:items-end lg:gap-10">
           <div>
             <p className="af-tele text-foreground">
@@ -252,10 +251,6 @@ export function JornadaRecap() {
                 </div>
               </div>
             )}
-
-            {!lcPause && (take || pending) ? (
-              <JornadaTakeBoard take={take} pending={pending} />
-            ) : null}
 
             {(live.length > 0 || upcoming.length > 0) && (
               <DondeVerGuide

@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const club = getClubIdentity(slug);
   if (!club) return { title: 'Club' };
   const title = `${club.name} · noticias, partidos y sala Acceso`;
-  const description = `${club.name} (${club.abbreviation}): partidos, dónde ver, cable y show de Acceso Futbol. ${club.weatherLine}`;
+  const description = `${club.name} (${club.abbreviation}): partidos, dónde ver, noticias y show de Acceso Futbol. ${club.weatherLine}`;
   return {
     title,
     description,
@@ -65,7 +65,7 @@ export default async function ClubPage({ params }: Props) {
           <section className="sr-only" aria-label={club.name}>
             <h1>{club.name}</h1>
             <p>
-              {club.name} ({club.abbreviation}) en Acceso Futbol — partidos, cable y cobertura
+              {club.name} ({club.abbreviation}) en Acceso Futbol — partidos, noticias y cobertura
               de Liga MX. {club.weatherLine}
             </p>
             <nav>

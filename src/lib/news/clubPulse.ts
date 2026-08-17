@@ -34,7 +34,7 @@ function storyToItem(s: Story): ClubPulseItem {
   return {
     id: s.id,
     kind: 'story',
-    stamp: 'AF://CABLE',
+    stamp: 'AF://NEWS',
     title: s.title,
     summary: s.summary,
     url: s.url,
@@ -73,7 +73,7 @@ function ytToItem(y: YoutubeClip): ClubPulseItem {
   };
 }
 
-/** Round-robin Cable / Reddit / Show so one source never owns the wall. */
+/** Round-robin News / Reddit / Show so one source never owns the wall. */
 function interleave(buckets: ClubPulseItem[][], limit: number): ClubPulseItem[] {
   const queues = buckets.map((b) => [...b]).filter((q) => q.length > 0);
   const seen = new Set<string>();
@@ -147,7 +147,7 @@ export async function getClubPulse(slug: string): Promise<ClubPulsePayload | nul
   const showLane = [...moments, ...showSeeds, ...freshYt.map(ytToItem)];
   const items = interleave([cable, freshReddit.map(redditToItem), showLane], 28);
 
-  // If filters wiped Cable, still surface Acceso weather via show lane
+  // If filters wiped News, still surface Acceso weather via show lane
   if (items.length === 0 && showLane.length > 0) {
     return {
       clubId: club.id,

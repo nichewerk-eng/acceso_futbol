@@ -338,7 +338,7 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
             </div>
           ) : (
             <p className="mt-4 max-w-lg font-mono text-[13px] leading-6 text-muted">
-              {club.weatherLine} Sin silbato en el calendario inmediato — el cable y la grada
+              {club.weatherLine} Sin silbato en el calendario inmediato — las noticias y la grada
               siguen abajo.
             </p>
           )}

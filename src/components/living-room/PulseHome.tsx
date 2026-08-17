@@ -49,7 +49,6 @@ export function PulseHome() {
         <PulseHero leadStory={leadStory} />
         {!settled && <GravityClaim />}
         {/* Cabina / Acceso Radio — hidden until scripts are ready */}
-        {settled && <GravityClaim />}
         <JornadaRecap />
         <StoriesRail />
         <ShowStrip />
@@ -67,7 +66,7 @@ export function PulseHome() {
                   ? 'Sportmonks + Selección'
                   : 'calendario'}
             {' · '}
-            CABLE · Mediotiempo / TUDN / ESPN / Marca
+            NEWS · Mediotiempo / TUDN / ESPN / Marca
           </p>
         )}
       </main>

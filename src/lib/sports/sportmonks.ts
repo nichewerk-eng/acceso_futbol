@@ -1262,3 +1262,4 @@ async function loadLeaguesCupStandings(): Promise<{
 
   return { season: 'Leagues Cup 2026', groups };
 }
+

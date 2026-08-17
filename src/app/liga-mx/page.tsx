@@ -4,26 +4,26 @@ import LigaMXView from '@/components/ligamx/LigaMXView';
 import { PulseNav } from '@/components/living-room/PulseNav';
 import { JsonLd } from '@/components/seo/JsonLd';
 import type { LigaMXTable } from '@/app/api/ligamx/standings/route';
-import { absoluteUrl, breadcrumbJsonLd } from '@/lib/seo';
+import { absoluteUrl, breadcrumbJsonLd, personItemListJsonLd } from '@/lib/seo';
 import { fetchLigaMxFixtures } from '@/lib/sports/espnFallback';
 import { fetchLigaMxLeaders } from '@/lib/sports/leaders';
 import { fixtureToLigaMxSchedule, mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
 
 export const metadata: Metadata = {
-  title: 'Liga MX Apertura 2026 · Tabla y jornada en vivo',
+  title: 'Liga MX Apertura 2026 · Jornada, tabla y goleo',
   description:
-    'Tabla de posiciones Liga MX Apertura 2026, jornada en curso, resultados y camino a Liguilla. Actualizado en tiempo real.',
+    'Jornada en vivo, tabla de posiciones y goleo de la Liga MX Apertura 2026. Resultados, Liguilla y goleadores, al día.',
   alternates: { canonical: absoluteUrl('/liga-mx') },
   openGraph: {
-    title: 'Liga MX Apertura 2026 · Tabla y jornada',
-    description: 'Posiciones, resultados y clasificación a Liguilla en tiempo real.',
+    title: 'Liga MX Apertura 2026 · Jornada, tabla y goleo',
+    description: 'Posiciones, resultados, goleo y camino a Liguilla en tiempo real.',
     url: absoluteUrl('/liga-mx'),
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Liga MX Apertura 2026 · Tabla y jornada',
-    description: 'Posiciones, resultados y clasificación a Liguilla en tiempo real.',
+    title: 'Liga MX Apertura 2026 · Jornada, tabla y goleo',
+    description: 'Posiciones, resultados, goleo y camino a Liguilla en tiempo real.',
   },
 };
 
@@ -77,24 +77,56 @@ async function fetchFixtures() {
   }
 }
 
-export default async function LigaMXPage() {
+type LigaMxTab = 'jornada' | 'tabla' | 'goleo';
+
+function parseTab(raw?: string): LigaMxTab {
+  if (raw === 'tabla' || raw === 'goleo') return raw;
+  return 'jornada';
+}
+
+export default async function LigaMXPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const params = await searchParams;
   const [table, fixtures, goleo] = await Promise.all([
     fetchTable(),
     fetchFixtures(),
     fetchLigaMxLeaders().catch(() => null),
   ]);
+  const season = goleo?.seasonLabel ?? table?.season ?? 'Apertura 2026';
   return (
     <>
       <JsonLd
-        data={breadcrumbJsonLd([
-          { name: 'Pulso', path: '/' },
-          { name: 'Liga MX', path: '/liga-mx' },
-        ])}
+        data={[
+          breadcrumbJsonLd([
+            { name: 'Pulso', path: '/' },
+            { name: 'Liga MX', path: '/liga-mx' },
+          ]),
+          ...(goleo?.goals.length
+            ? [
+                personItemListJsonLd(
+                  goleo.goals.map((g) => ({
+                    name: g.name,
+                    teamName: g.teamName,
+                    position: g.position,
+                  })),
+                  { name: `Goleo Liga MX — ${season}` }
+                ),
+              ]
+            : []),
+        ]}
       />
       <div className="flex min-h-screen flex-col bg-bg-1 text-foreground">
         <PulseNav />
         <main className="flex-1">
-          <LigaMXView initialTable={table} initialFixtures={fixtures} initialGoleo={goleo} />
+          <LigaMXView
+            initialTable={table}
+            initialFixtures={fixtures}
+            initialGoleo={goleo}
+            initialTab={parseTab(params.tab)}
+          />
         </main>
         <SiteFooter />
       </div>

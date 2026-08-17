@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { ClubLogo } from '@/components/brand/ClubLogo';
@@ -19,7 +20,7 @@ import { FRESH, paceFromFixtures, type FreshPace } from '@/lib/sports/freshness'
 import { mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
 import { LIGUILLA_SPOTS, liguillaPath } from '@/lib/sports/liguillaPath';
 import { LiguillaPathShare } from '@/components/ligamx/LiguillaPathShare';
-import { GoleoRailCard } from '@/components/ligamx/GoleoTabla';
+import { GoleoRailCard, GoleoTabla } from '@/components/ligamx/GoleoTabla';
 import type { GoleoBoard } from '@/lib/sports/leaders';
 
 /** Shared header + row shell — tracks live in `.lm-standings-grid` (globals.css). */
@@ -94,24 +95,29 @@ type GravityFn = (
   awayAbbr?: string
 ) => boolean;
 
+type LigaMxTab = 'tabla' | 'jornada' | 'goleo';
+
 interface Props {
   initialTable: LigaMXTable | null;
   initialFixtures: LigaMXFixture[];
   initialGoleo?: GoleoBoard | null;
+  initialTab?: LigaMxTab;
 }
 
 export default function LigaMXView({
   initialTable,
   initialFixtures,
   initialGoleo = null,
+  initialTab = 'jornada',
 }: Props) {
+  const router = useRouter();
   const { matchesGravity, club } = useGravity();
   const baseFixtures = mergeLigaMxSchedule(initialFixtures);
 
   const [table, setTable] = useState<LigaMXTable | null>(initialTable);
   const [fixtures, setFixtures] = useState<LigaMXFixture[]>(baseFixtures);
   const [goleo] = useState<GoleoBoard | null>(initialGoleo);
-  const [tab, setTab] = useState<'tabla' | 'jornada'>('jornada');
+  const [tab, setTab] = useState<LigaMxTab>(initialTab);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [userTz, setUserTz] = useState('America/Mexico_City');
@@ -181,7 +187,6 @@ export default function LigaMXView({
     }
   }, [contextoPrefetchKey]);
 
-  const liveFixtures = fixtures.filter((f) => f.status.state === 'in');
   const allJornadas = Array.from({ length: 17 }, (_, i) => i + 1);
   const jornadaFixtures = fixtures
     .filter((f) => f.jornada === `Jornada ${selectedJornada}`)
@@ -198,7 +203,16 @@ export default function LigaMXView({
   const isMine = (f: LigaMXFixture) =>
     matchesGravity(f.home.name, f.away.name, f.home.abbreviation, f.away.abbreviation);
 
-  const openTabla = useCallback(() => setTab('tabla'), []);
+  const selectTab = useCallback(
+    (id: LigaMxTab) => {
+      setTab(id);
+      const url = id === 'jornada' ? '/liga-mx' : `/liga-mx?tab=${id}`;
+      router.replace(url, { scroll: false });
+    },
+    [router]
+  );
+  const openTabla = useCallback(() => selectTab('tabla'), [selectTab]);
+  const openGoleo = useCallback(() => selectTab('goleo'), [selectTab]);
   const goleoMine = useCallback(
     (abbr?: string) =>
       Boolean(abbr && matchesGravity(abbr, abbr, abbr, abbr)),
@@ -253,34 +267,6 @@ export default function LigaMXView({
               </button>
             </div>
           </div>
-
-          {liveFixtures.length > 0 && (
-            <div className="mt-8 grid gap-2 sm:grid-cols-2" data-testid="ligamx-live">
-              {liveFixtures.map((f) => (
-                <PartidoLink
-                  key={f.id}
-                  href={`/partido/liga-mx/${f.id}`}
-                  className="hero-band hero-band-live"
-                >
-                  <span className="hero-band-stamp af-tele flex items-center gap-1.5">
-                    <span className="hoy-live-dot" aria-hidden />
-                    {f.status.displayClock || 'LIVE'}
-                  </span>
-                  <span className="hero-band-home inline-flex items-center gap-2">
-                    <ClubLogo abbr={f.home.abbreviation} name={f.home.name} size="sm" />
-                    {f.home.abbreviation}
-                  </span>
-                  <span className="hero-band-center">
-                    {f.home.score ?? 0}:{f.away.score ?? 0}
-                  </span>
-                  <span className="hero-band-away inline-flex items-center justify-end gap-2">
-                    {f.away.abbreviation}
-                    <ClubLogo abbr={f.away.abbreviation} name={f.away.name} size="sm" />
-                  </span>
-                </PartidoLink>
-              ))}
-            </div>
-          )}
         </div>
       </section>
 
@@ -294,7 +280,8 @@ export default function LigaMXView({
           {(
             [
               ['jornada', 'Jornada'],
-              ['tabla', 'Liga MX'],
+              ['tabla', 'Tabla'],
+              ['goleo', 'Goleo'],
             ] as const
           ).map(([id, label]) => (
             <button
@@ -303,7 +290,7 @@ export default function LigaMXView({
               role="tab"
               aria-selected={tab === id}
               data-testid={`ligamx-tab-${id}`}
-              onClick={() => setTab(id)}
+              onClick={() => selectTab(id)}
               className={[
                 'shrink-0 border px-4 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] transition',
                 tab === id
@@ -379,6 +366,12 @@ export default function LigaMXView({
           </section>
         )}
 
+        {tab === 'goleo' && (
+          <section data-testid="ligamx-goleo-tab">
+            <GoleoTabla board={goleo} isMine={goleoMine} />
+          </section>
+        )}
+
         {tab === 'jornada' && (
           <div className="lc-partidos-layout" data-testid="ligamx-jornada-layout">
             <div className="lc-partidos-main space-y-8">
@@ -442,15 +435,6 @@ export default function LigaMXView({
                   })}
                 </div>
               </section>
-
-              <div className="lc-mobile-tabla space-y-6">
-                <LmClasificacionCard
-                  entries={entries}
-                  matchesGravity={matchesGravity}
-                  onOpenTabla={openTabla}
-                />
-                <GoleoRailCard board={goleo} isMine={goleoMine} />
-              </div>
 
               {jornadaLive.length > 0 && (
                 <div>
@@ -531,6 +515,15 @@ export default function LigaMXView({
                   body="Sin partidos registrados para esta fecha."
                 />
               )}
+
+              <div className="lc-mobile-tabla space-y-6">
+                <LmClasificacionCard
+                  entries={entries}
+                  matchesGravity={matchesGravity}
+                  onOpenTabla={openTabla}
+                />
+                <GoleoRailCard board={goleo} isMine={goleoMine} onOpenGoleo={openGoleo} />
+              </div>
             </div>
 
             <LmPartidosRail
@@ -543,6 +536,7 @@ export default function LigaMXView({
               matchesGravity={matchesGravity}
               goleoMine={goleoMine}
               onOpenTabla={openTabla}
+              onOpenGoleo={openGoleo}
             />
           </div>
         )}
@@ -561,6 +555,7 @@ function LmPartidosRail({
   matchesGravity,
   goleoMine,
   onOpenTabla,
+  onOpenGoleo,
 }: {
   entries: LigaMXEntry[];
   goleo: GoleoBoard | null;
@@ -571,6 +566,7 @@ function LmPartidosRail({
   matchesGravity: GravityFn;
   goleoMine: (abbr?: string) => boolean;
   onOpenTabla: () => void;
+  onOpenGoleo: () => void;
 }) {
   const myEntry = useMemo(() => {
     if (!clubName && !clubAbbr) return null;
@@ -656,7 +652,7 @@ function LmPartidosRail({
           matchesGravity={matchesGravity}
           onOpenTabla={onOpenTabla}
         />
-        <GoleoRailCard board={goleo} isMine={goleoMine} />
+        <GoleoRailCard board={goleo} isMine={goleoMine} onOpenGoleo={onOpenGoleo} />
       </div>
 
       <div className="lc-rail-block" data-testid="ligamx-rail-liguilla">

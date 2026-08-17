@@ -1,53 +1,12 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { EL_TRI, LIGA_MX_CLUBS, useGravity } from '@/contexts/GravityContext';
 
 export function GravityClaim() {
   const router = useRouter();
-  const { settled, clubId, elTri, setClub, setElTri, skip, club, reset } = useGravity();
-
-  // Compact lock strip once settled
-  if (settled) {
-    const lock = [club?.abbreviation, elTri ? 'TRI' : null].filter(Boolean).join(' + ');
-    if (!lock) return null;
-    const salaHref = club ? `/club/${club.id}` : elTri ? '/club/el-tri' : null;
-    return (
-      <section
-        id="gravedad"
-        data-testid="section-gravity-locked"
-        className="border-b border-line bg-bg-2 px-4 py-3 sm:px-6"
-      >
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
-          <p className="af-tele text-foreground" data-testid="gravity-lock-label">
-            <span className="text-signal">LOCK</span> {lock}
-            <span className="ml-3 text-muted">El pulso se ordena alrededor de ti</span>
-          </p>
-          <div className="flex items-center gap-4">
-            {salaHref && (
-              <Link
-                href={salaHref}
-                data-testid="gravity-open-sala"
-                className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-signal transition hover:text-foreground"
-              >
-                Abrir sala
-              </Link>
-            )}
-            <button
-              type="button"
-              onClick={reset}
-              data-testid="gravity-reset"
-              className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted transition hover:text-foreground"
-            >
-              Cambiar
-            </button>
-          </div>
-        </div>
-      </section>
-    );
-  }
+  const { clubId, elTri, setClub, setElTri, skip } = useGravity();
 
   return (
     <section
@@ -69,7 +28,7 @@ export function GravityClaim() {
               ¿De quién eres?
             </h2>
             <p className="mt-2 max-w-lg font-mono text-[12px] leading-6 text-white/45">
-              Un tap. Hoy, cable y radio se alinean a tu club y a El Tri.
+              Un tap. Hoy, noticias y radio se alinean a tu club y a El Tri.
             </p>
           </div>
           <button

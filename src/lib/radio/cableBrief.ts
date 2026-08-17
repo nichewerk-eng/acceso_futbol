@@ -36,8 +36,8 @@ function briefBucket(now = Date.now()) {
 }
 
 export function cableBriefId(style: RadioStyle, now = Date.now()) {
-  // v13: drop Brazilian Santos RSS false positives; TTS on play via /api/radio/tts
-  return `cable-brief-v13-${briefBucket(now)}-${style}`;
+  // v14: CABLE → NEWS in spoken/title copy
+  return `cable-brief-v14-${briefBucket(now)}-${style}`;
 }
 
 const WIRE_SOURCES = new Set(['espn', 'espn-rss', 'mediotiempo', 'tudn', 'marca']);
@@ -299,8 +299,8 @@ export function templateCableBriefFromDossier(dossier: CableDossier): ShowSegmen
   chunks.push({
     id: 'brief-1',
     text: lead
-      ? `Cable Acceso — arriba del feed, ${lead.source}: ${lead.summary || lead.title}${lead.accesoLine ? ` — Acceso: ${lead.accesoLine}` : ''}.`
-      : 'Cable Acceso, el feed viene corto hoy.',
+      ? `News Acceso — arriba del feed, ${lead.source}: ${lead.summary || lead.title}${lead.accesoLine ? ` — Acceso: ${lead.accesoLine}` : ''}.`
+      : 'News Acceso, el feed viene corto hoy.',
   });
 
   for (let i = 0; i < list.length; i++) {
@@ -319,8 +319,8 @@ export function templateCableBriefFromDossier(dossier: CableDossier): ShowSegmen
     id: `brief-${chunks.length + 1}`,
     text:
       style === 'puente'
-        ? `Hasta aquí el cable de la pantalla — fuentes afuera si quieres más.`
-        : `Eso es el cable de la pantalla, corto y al grano.`,
+        ? `Hasta aquí las notas de la pantalla — fuentes afuera si quieres más.`
+        : `Eso es el briefing de la pantalla, corto y al grano.`,
   });
 
   return chunks;
@@ -356,7 +356,7 @@ async function generateCableBriefFromDossier(
     const raw = await anthropicChat({
       system: `${persona.system.replace(/Máximo 2 oraciones\./gi, 'Bloques hablados de overview.')}
 
-Escribes el BRIEFING DEL CABLE de Acceso Futbol: un overview hablado CORTO (~2 min 30 s, máximo ~350 palabras en total).
+Escribes el BRIEFING DE NOTICIAS de Acceso Futbol: un overview hablado CORTO (~2 min 30 s, máximo ~350 palabras en total).
 
 INPUT = DOSSIER. Lo importante es dossier.wire (orden de pantalla: slot "lead" primero, luego "list"). cancha/tabla/tempo son contexto opcional — casi nunca los uses en este corte corto.
 
@@ -383,7 +383,7 @@ RITMO PARA TTS:
 - Responde SOLO JSON: [{"id":"brief-1","text":"..."}, ...]`,
       user: JSON.stringify({
         kind: 'cable-brief-stories-on-screen',
-        goal: 'Narrar el cable en ~2:30 — lead + top lista — no un show largo.',
+        goal: 'Narrar las noticias en ~2:30 — lead + top lista — no un show largo.',
         targetDuration: '2:30',
         maxWords: 350,
         voice: voiceHint,
@@ -466,7 +466,7 @@ export async function buildCableBriefFeed(
       expiresAt: new Date(now.getTime() + CABLE_BRIEF_TTL_MS).toISOString(),
       enabled: false,
       mode: 'brief',
-      title: 'Briefing del cable',
+      title: 'Briefing de noticias',
       sources,
       storyCount: picks.length,
       jornadaLabel: jornada?.label ?? null,
@@ -496,7 +496,7 @@ export async function buildCableBriefFeed(
     expiresAt: new Date((briefBucket(now.getTime()) + 1) * CABLE_BRIEF_TTL_MS).toISOString(),
     enabled: true,
     mode: 'brief',
-    title: 'Briefing del cable',
+    title: 'Briefing de noticias',
     sources,
     storyCount: picks.length,
     jornadaLabel: jornada?.label ?? null,

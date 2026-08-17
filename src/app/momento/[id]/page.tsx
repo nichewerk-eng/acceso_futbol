@@ -199,7 +199,7 @@ export default async function MomentoPage({ params }: Props) {
             href="/#noticias"
             className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted hover:text-signal"
           >
-            Volver al cable →
+            Volver a noticias →
           </Link>
         </div>
         <div className="mt-10">

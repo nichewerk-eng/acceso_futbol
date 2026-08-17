@@ -63,7 +63,7 @@ export function StoriesRail() {
           <div>
             <p className="af-tele text-foreground">
               <span className="text-signal">AF</span>
-              ://CABLE
+              ://NEWS
             </p>
             <h2
               className="mt-2 font-display text-3xl font-bold uppercase tracking-wide text-foreground sm:text-4xl"
@@ -79,13 +79,13 @@ export function StoriesRail() {
 
         {loading && (
           <p className="af-tele py-8" data-testid="cable-loading">
-            Trayendo el cable…
+            Trayendo las noticias…
           </p>
         )}
 
         {!loading && stories.length === 0 && (
           <p className="af-tele py-8" data-testid="cable-empty">
-            Cable en silencio. Vuelve en unos minutos.
+            Sin notas por ahora. Vuelve en unos minutos.
           </p>
         )}
 
@@ -175,7 +175,7 @@ export function StoriesRail() {
         )}
 
         <p className="mt-6 af-tele">
-          Cable primero (ESPN · MT · TUDN · Marca). Acceso abajo con atribución — tocan la fuente.
+          News primero (ESPN · MT · TUDN · Marca). Acceso abajo con atribución — tocan la fuente.
         </p>
       </div>
     </section>

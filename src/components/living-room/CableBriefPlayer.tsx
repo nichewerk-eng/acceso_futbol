@@ -29,7 +29,7 @@ export function CableBriefPlayer() {
   const [playing, setPlaying] = useState(false);
   const [payload, setPayload] = useState<BriefPayload | null>(null);
   const [loading, setLoading] = useState(true);
-  const [line, setLine] = useState('Briefing del cable · ~2:30');
+  const [line, setLine] = useState('Briefing de noticias · ~2:30');
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const objectUrlRef = useRef<string | null>(null);
   const spokenRef = useRef<Set<string>>(new Set());
@@ -223,13 +223,13 @@ export function CableBriefPlayer() {
         <div className="min-w-0">
           <p className="af-tele text-foreground">
             <span className="text-signal">AF</span>
-            ://CABLE · BRIEF
+            ://NEWS · BRIEF
           </p>
           <p className="mt-1 font-display text-xl font-bold uppercase tracking-wide sm:text-2xl">
-            {payload?.title ?? 'Briefing del cable'}
+            {payload?.title ?? 'Briefing de noticias'}
           </p>
           <p className="mt-1 af-tele">
-            {loading ? 'Armando cabina…' : meta || '~2:30 · titulares del cable'}
+            {loading ? 'Armando cabina…' : meta || '~2:30 · titulares'}
           </p>
         </div>
 

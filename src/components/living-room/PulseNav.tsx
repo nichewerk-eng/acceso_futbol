@@ -10,9 +10,7 @@ import { useGravity } from '@/contexts/GravityContext';
 
 const LINKS = [
   { href: '/', label: 'Pulso' },
-  { href: '/#jornada', label: 'Jornada' },
   { href: '/donde-ver', label: 'Dónde ver' },
-  { href: '/#noticias', label: 'Cable' },
   { href: '/liga-mx', label: 'Liga MX' },
   { href: '/quiniela', label: 'Quiniela' },
   { href: '/leagues-cup', label: 'Leagues Cup' },
@@ -20,7 +18,6 @@ const LINKS = [
 
 function linkActive(pathname: string, href: string) {
   if (href === '/') return pathname === '/';
-  if (href.startsWith('/#')) return false;
   return pathname.startsWith(href);
 }
 

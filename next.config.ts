@@ -18,6 +18,9 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'cdn.sportmonks.com' },
     ],
   },
+  async redirects() {
+    return [{ source: '/goleo', destination: '/liga-mx?tab=goleo', permanent: true }];
+  },
   async headers() {
     return [
       {
