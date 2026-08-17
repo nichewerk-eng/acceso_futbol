@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from 'fs/promises';
 import path from 'path';
-import { isMexicoDay, mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
+import { isMexicoDay, mexicoDayKey } from '@/lib/radio/phases';
 import { setAudio } from '@/lib/radio/cache';
 import { kvGetJson, kvSetJson, kvSetNx, sharedKvEnabled } from '@/lib/sharedKv';
 import type { JornadaOverview } from '@/lib/sports/jornada';
@@ -165,29 +165,154 @@ export function closedJornadaSlate(
   return { dayKey: EPISODE_CIERRE, fixtures: jornada.played };
 }
 
-/** Desk play order: cierre → today → yesterday (if today has not started) → antes. */
+export type TomaEpisodeCut = {
+  id: string;
+  jornadaNum: number;
+  dayKey: string;
+  kind: TomaShowKind;
+  title: string;
+  cue: string;
+  audioUrl: string;
+  generatedAt: string;
+  label: string;
+};
+
+const WEEKDAYS_ES = [
+  'domingo',
+  'lunes',
+  'martes',
+  'miércoles',
+  'jueves',
+  'viernes',
+  'sábado',
+] as const;
+
+function mexicoWeekday(dayKey: string): (typeof WEEKDAYS_ES)[number] | null {
+  const [y, m, d] = dayKey.split('-').map(Number);
+  if (!y || !m || !d) return null;
+  return WEEKDAYS_ES[new Date(Date.UTC(y, m - 1, d, 12)).getUTCDay()] ?? null;
+}
+
+export function episodeDeskLabel(ep: Pick<TomaEpisode, 'dayKey' | 'kind'>): string {
+  const kind = ep.kind ?? showKindFromDayKey(ep.dayKey);
+  if (kind === 'antes') return 'Antes';
+  if (kind === 'cierre') return 'Cierre';
+  const [y, m, d] = ep.dayKey.split('-').map(Number);
+  if (!y || !m || !d) return ep.dayKey;
+  const dt = new Date(Date.UTC(y, m - 1, d, 18));
+  const weekday = dt
+    .toLocaleDateString('es-MX', { weekday: 'short', timeZone: 'UTC' })
+    .replace('.', '');
+  const rest = dt.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+  return `${weekday} ${rest}`;
+}
+
+/** Desk hook + what the cut actually is. Derived from kind so old files get unique titles. */
+export function episodeShowCopy(
+  ep: Pick<TomaEpisode, 'jornadaNum' | 'dayKey' | 'kind'>
+): { title: string; cue: string } {
+  const n = ep.jornadaNum;
+  const kind = ep.kind ?? showKindFromDayKey(ep.dayKey);
+  if (kind === 'antes') {
+    return {
+      title: 'La mesa está puesta',
+      cue: `Previa de la J${n}. Quién llega caliente, qué se juega. Cero marcadores.`,
+    };
+  }
+  if (kind === 'cierre') {
+    return {
+      title: 'Se apagó la fecha',
+      cue: `Crónica de toda la J${n}. Tabla, corte 8º y la toma.`,
+    };
+  }
+  const day = mexicoWeekday(ep.dayKey);
+  if (day === 'sábado') {
+    return {
+      title: 'El sábado ya cantó',
+      cue: 'Cierre del sábado. Lo sellado, la tabla y la pregunta que divide.',
+    };
+  }
+  if (day === 'domingo') {
+    return {
+      title: 'Domingo de cuentas',
+      cue: 'El domingo no perdona. Quién entra al 8 y quién se cae.',
+    };
+  }
+  if (day === 'lunes') {
+    return {
+      title: 'Coletazo del lunes',
+      cue: 'El último silbatazo de la fecha. Lo que cerró el lunes.',
+    };
+  }
+  if (day === 'viernes') {
+    return {
+      title: 'Viernes de primera sangre',
+      cue: 'Arranque de fecha. Lo que ya quedó en el marcador.',
+    };
+  }
+  return {
+    title: day ? `Lo que dejó el ${day}` : `Cierre del día · J${n}`,
+    cue: 'Marcadores sellados del día, tabla y la toma.',
+  };
+}
+
+export function toEpisodeCut(ep: TomaEpisode): TomaEpisodeCut {
+  const show = episodeShowCopy(ep);
+  return {
+    id: ep.id,
+    jornadaNum: ep.jornadaNum,
+    dayKey: ep.dayKey,
+    kind: ep.kind ?? showKindFromDayKey(ep.dayKey),
+    title: show.title,
+    cue: show.cue,
+    audioUrl: ep.audioUrl,
+    generatedAt: ep.generatedAt,
+    label: episodeDeskLabel(ep),
+  };
+}
+
+function jornadaEpisodeDayKeys(jornada: JornadaOverview, now = Date.now()): string[] {
+  const days = new Set<string>([EPISODE_ANTES, mexicoDayKey(new Date(now)), EPISODE_CIERRE]);
+  for (const f of jornadaRows(jornada)) {
+    const t = +new Date(f.date);
+    if (Number.isFinite(t)) days.add(mexicoDayKey(new Date(t)));
+  }
+  return [...days];
+}
+
+function episodeRank(dayKey: string): [number, string] {
+  if (dayKey === EPISODE_ANTES) return [0, ''];
+  if (dayKey === EPISODE_CIERRE) return [2, ''];
+  return [1, dayKey];
+}
+
+/** Every stored cut for this fecha. Next jornada replaces the set. */
+export async function listJornadaEpisodes(
+  jornada: JornadaOverview,
+  now = Date.now()
+): Promise<TomaEpisode[]> {
+  const found = await Promise.all(
+    jornadaEpisodeDayKeys(jornada, now).map((k) => getStoredEpisode(jornada.number, k))
+  );
+  const byId = new Map<string, TomaEpisode>();
+  for (const ep of found) {
+    if (ep?.audioUrl) byId.set(ep.id, ep);
+  }
+  return [...byId.values()].sort((a, b) => {
+    const [ra, ka] = episodeRank(a.dayKey);
+    const [rb, kb] = episodeRank(b.dayKey);
+    if (ra !== rb) return ra - rb;
+    return ka.localeCompare(kb);
+  });
+}
+
+/** Newest cut on this fecha (cierre, else latest day, else antes). */
 export async function pickPlayableEpisode(
   jornada: JornadaOverview,
   now = Date.now()
 ): Promise<TomaEpisode | null> {
-  const today = mexicoDayKey(new Date(now));
-  const wrap = await getStoredEpisode(jornada.number, EPISODE_CIERRE);
-  if (wrap) return wrap;
-
-  const todayEp = await getStoredEpisode(jornada.number, today);
-  if (todayEp) return todayEp;
-
-  const todayFx = jornadaRows(jornada).filter((f) => isMexicoDay(f.date, today));
-  const todayStarted = todayFx.some((f) => f.state === 'in' || f.state === 'post');
-  if (!todayStarted) {
-    const prior = await getStoredEpisode(jornada.number, shiftDayKey(today, -1));
-    if (prior) return prior;
-  }
-
-  if (jornada.live.length === 0 && jornada.played.length === 0) {
-    return getStoredEpisode(jornada.number, EPISODE_ANTES);
-  }
-  return null;
+  const list = await listJornadaEpisodes(jornada, now);
+  return list[list.length - 1] ?? null;
 }
 
 export async function getStoredEpisode(

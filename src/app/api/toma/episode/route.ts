@@ -1,16 +1,17 @@
 import { NextResponse } from 'next/server';
 import { getJornadaOverview } from '@/lib/sports/jornada';
-import { pickPlayableEpisode } from '@/lib/toma/episode';
+import { listJornadaEpisodes, toEpisodeCut } from '@/lib/toma/episode';
 
 export async function GET() {
   try {
     const jornada = await getJornadaOverview().catch(() => null);
     if (!jornada) {
-      return NextResponse.json({ episode: null });
+      return NextResponse.json({ episode: null, episodes: [] });
     }
-    const episode = await pickPlayableEpisode(jornada);
+    const stored = await listJornadaEpisodes(jornada);
+    const episodes = stored.map(toEpisodeCut);
     return NextResponse.json(
-      { episode },
+      { episode: episodes[episodes.length - 1] ?? null, episodes },
       {
         headers: {
           'Cache-Control':
@@ -21,6 +22,6 @@ export async function GET() {
       }
     );
   } catch {
-    return NextResponse.json({ episode: null });
+    return NextResponse.json({ episode: null, episodes: [] });
   }
 }

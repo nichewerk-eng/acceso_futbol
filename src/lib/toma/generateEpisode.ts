@@ -2,12 +2,12 @@ import { put } from '@vercel/blob';
 import { setAudio } from '@/lib/radio/cache';
 import { getJornadaOverview, type JornadaOverview } from '@/lib/sports/jornada';
 import { getJornadaTakePayload } from '@/lib/sports/jornadaTakeAi';
-import { jornadaTakeDeskTitle } from '@/lib/sports/jornadaTake';
 import type { Fixture } from '@/lib/sports/types';
 import {
   closedDaySlate,
   closedJornadaSlate,
   episodeBlobPath,
+  episodeShowCopy,
   episodeStoreKey,
   forceDaySlate,
   getStoredEpisode,
@@ -109,7 +109,7 @@ async function runGenerate(
     jornadaNum: jornada.number,
     dayKey: closed.dayKey,
     kind,
-    title: jornadaTakeDeskTitle(take),
+    title: episodeShowCopy({ jornadaNum: jornada.number, dayKey: closed.dayKey, kind }).title,
     transcript,
     sourceHash: hash,
     audioUrl: stored.audioUrl,

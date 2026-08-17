@@ -5,6 +5,14 @@ import { usePathname } from 'next/navigation';
 import { TomaShare } from '@/components/living-room/TomaShare';
 import { jornadaTakeDeskTitle, type JornadaTake } from '@/lib/sports/jornadaTake';
 
+type TomaCut = {
+  id: string;
+  audioUrl: string;
+  title: string;
+  label: string;
+  cue: string;
+};
+
 export function TomaDeskSkeleton() {
   return (
     <div className="toma-senal" data-testid="toma-player" data-loading="1" aria-busy="true">
@@ -37,10 +45,12 @@ export function TomaDeskSkeleton() {
  * at generation, then served from Blob). If no episode exists yet, the capsule
  * renders nothing — we never synthesize per-corte on the client, to avoid extra
  * ElevenLabs cost. The written Toma column stays visible in the parent.
+ * Every stored cut for this jornada stays on the desk until the next fecha.
  */
 export function TomaPlayer({ take }: { take: JornadaTake }) {
   const pathname = usePathname();
-  const [episodeUrl, setEpisodeUrl] = useState<string | null>(null);
+  const [cuts, setCuts] = useState<TomaCut[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
   const [busy, setBusy] = useState(false);
   const [held, setHeld] = useState(false);
@@ -50,11 +60,15 @@ export function TomaPlayer({ take }: { take: JornadaTake }) {
   const objectUrlRef = useRef<string | null>(null);
   const playingRef = useRef(false);
   const pathRef = useRef(pathname);
-  const episodeUrlRef = useRef<string | null>(null);
+  const selectedIdRef = useRef<string | null>(null);
+  const cutsRef = useRef<TomaCut[]>([]);
   const takeKey = `${take.jornadaNum ?? 'x'}-${take.headline}-${take.body?.length ?? 0}`;
   const takeKeyRef = useRef(takeKey);
 
-  episodeUrlRef.current = episodeUrl;
+  selectedIdRef.current = selectedId;
+  cutsRef.current = cuts;
+
+  const selected = cuts.find((c) => c.id === selectedId) ?? cuts[cuts.length - 1] ?? null;
 
   const revoke = useCallback(() => {
     if (objectUrlRef.current) {
@@ -87,8 +101,9 @@ export function TomaPlayer({ take }: { take: JornadaTake }) {
     if (takeKey !== takeKeyRef.current) {
       takeKeyRef.current = takeKey;
       stop();
-      setEpisodeUrl(null);
-      episodeUrlRef.current = null;
+      setCuts([]);
+      setSelectedId(null);
+      selectedIdRef.current = null;
     }
   }, [takeKey, stop]);
 
@@ -97,22 +112,50 @@ export function TomaPlayer({ take }: { take: JornadaTake }) {
     const load = () => {
       fetch('/api/toma/episode', { cache: 'no-store' })
         .then((r) => (r.ok ? r.json() : null))
-        .then((d: { episode?: { audioUrl?: string } | null } | null) => {
-          const url = d?.episode?.audioUrl;
-          if (!cancelled && url) setEpisodeUrl(url);
-        })
+        .then(
+          (
+            d: {
+              episodes?: TomaCut[];
+              episode?: TomaCut | { audioUrl?: string; id?: string } | null;
+            } | null
+          ) => {
+            const asCut = (e: {
+              id?: string;
+              audioUrl?: string;
+              title?: string;
+              label?: string;
+              cue?: string;
+            }): TomaCut | null =>
+              e.id && e.audioUrl
+                ? {
+                    id: e.id,
+                    audioUrl: e.audioUrl,
+                    title: e.title ?? 'Toma',
+                    label: e.label ?? 'Toma',
+                    cue: e.cue ?? '',
+                  }
+                : null;
+            const list = (Array.isArray(d?.episodes) ? d.episodes : [])
+              .map(asCut)
+              .filter((e): e is TomaCut => e != null);
+            const fallback = d?.episode ? asCut(d.episode) : null;
+            const next = list.length > 0 ? list : fallback ? [fallback] : [];
+            if (cancelled || next.length === 0) return;
+            setCuts(next);
+            setSelectedId((cur) =>
+              cur && next.some((c) => c.id === cur) ? cur : next[next.length - 1]!.id
+            );
+          }
+        )
         .catch(() => {});
     };
     load();
-    if (episodeUrl) return () => {
-      cancelled = true;
-    };
     const t = setInterval(load, 60_000);
     return () => {
       cancelled = true;
       clearInterval(t);
     };
-  }, [take.jornadaNum, episodeUrl]);
+  }, [take.jornadaNum]);
 
   useEffect(() => {
     if (pathname !== pathRef.current) {
@@ -200,6 +243,15 @@ export function TomaPlayer({ take }: { take: JornadaTake }) {
     [revoke, stop]
   );
 
+  const playCut = useCallback(
+    async (cut: TomaCut) => {
+      setSelectedId(cut.id);
+      selectedIdRef.current = cut.id;
+      await playEpisode(cut.audioUrl);
+    },
+    [playEpisode]
+  );
+
   async function resumeHeld() {
     const a = audioRef.current;
     playingRef.current = true;
@@ -214,8 +266,10 @@ export function TomaPlayer({ take }: { take: JornadaTake }) {
         /* fall through to replay */
       }
     }
-    const url = episodeUrlRef.current;
-    if (url) await playEpisode(url);
+    const cut =
+      cutsRef.current.find((c) => c.id === selectedIdRef.current) ??
+      cutsRef.current[cutsRef.current.length - 1];
+    if (cut) await playCut(cut);
     else stop();
   }
 
@@ -228,15 +282,27 @@ export function TomaPlayer({ take }: { take: JornadaTake }) {
       void resumeHeld();
       return;
     }
-    const url = episodeUrlRef.current;
-    if (url) void playEpisode(url);
+    if (selected) void playCut(selected);
+  }
+
+  function onCorte(cut: TomaCut) {
+    if (cut.id === selectedId && playing) {
+      pausePlayback();
+      return;
+    }
+    if (cut.id === selectedId && held) {
+      void resumeHeld();
+      return;
+    }
+    void playCut(cut);
   }
 
   const live = playing && !busy;
   const masterLabel = playing ? (busy ? 'Armando voz…' : 'Pausa') : held ? 'Seguir' : 'Al aire';
 
-  // MP3 or nothing: never render (or synthesize) without the pre-generated episode.
-  if (!episodeUrl) return null;
+  if (cuts.length === 0) return null;
+
+  const deskTitle = selected?.title?.trim() || jornadaTakeDeskTitle(take);
 
   return (
     <div className="toma-senal" data-testid="toma-player" data-live={live ? '1' : '0'}>
@@ -259,7 +325,7 @@ export function TomaPlayer({ take }: { take: JornadaTake }) {
           data-testid="toma-listen"
           aria-label={masterLabel}
           aria-pressed={playing}
-          onClick={toggleMaster}
+          onClick={() => void toggleMaster()}
         >
           <span className="toma-capsule-ring" aria-hidden />
           <span className="toma-capsule-core">
@@ -277,9 +343,11 @@ export function TomaPlayer({ take }: { take: JornadaTake }) {
         </button>
 
         <div className="toma-senal-now">
+          {selected ? <p className="toma-now-kicker">{selected.label}</p> : null}
           <p className="toma-now-line" data-testid="toma-lead">
-            {jornadaTakeDeskTitle(take)}
+            {deskTitle}
           </p>
+          {selected?.cue ? <p className="toma-corte-cue toma-now-cue">{selected.cue}</p> : null}
           {playing || held ? (
             <div className="toma-progress" aria-hidden>
               <span style={{ width: `${Math.max(2, progress * 100)}%` }} />
@@ -287,6 +355,31 @@ export function TomaPlayer({ take }: { take: JornadaTake }) {
           ) : null}
         </div>
       </div>
+
+      <ul className="toma-cortes" data-testid="toma-cortes">
+        {cuts.map((cut, i) => {
+          const on = cut.id === selected?.id;
+          const go = on && live ? 'al aire' : on && held ? 'en pausa' : 'oír';
+          return (
+            <li key={cut.id}>
+              <button
+                type="button"
+                className={on ? 'toma-corte is-on' : 'toma-corte'}
+                data-testid={`toma-corte-${cut.id}`}
+                aria-pressed={on && playing}
+                onClick={() => onCorte(cut)}
+              >
+                <span className="toma-corte-n">{String(i + 1).padStart(2, '0')}</span>
+                <span className="toma-corte-copy">
+                  <span className="toma-corte-label">{cut.title}</span>
+                  <span className="toma-corte-cue">{cut.cue || cut.label}</span>
+                </span>
+                <span className="toma-corte-go">{go}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
