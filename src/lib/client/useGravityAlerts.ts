@@ -12,21 +12,15 @@ import {
   subscribeGravityToasts,
   type GravityToast,
 } from '@/lib/client/gravityAlerts';
+import { matchAlerts, numScore, stabilizeAlertSnap, type AlertSnap } from '@/lib/push/matchAlerts';
 import { leaguePath } from '@/lib/radio/phases';
 import type { DayGame, GamesOfDayPayload } from '@/lib/sports';
 
-type Snap = { state: DayGame['state']; hs: string; as: string };
-
-function nums(s: string): number {
-  const n = Number(s);
-  return Number.isFinite(n) ? n : 0;
-}
-
-function scoreKey(g: DayGame): Snap {
+function scoreKey(g: DayGame): AlertSnap {
   return {
     state: g.state,
-    hs: String(g.home.score ?? ''),
-    as: String(g.away.score ?? ''),
+    hs: numScore(g.home.score),
+    as: numScore(g.away.score),
   };
 }
 
@@ -51,7 +45,7 @@ export function useGravityAlertWatcher() {
   const on = useGravityAlertPref();
   const { settled, matchesGravity } = useGravity();
   const [games, setGames] = useState<DayGame[]>([]);
-  const prevRef = useRef<Map<string, Snap> | null>(null);
+  const prevRef = useRef<Map<string, AlertSnap> | null>(null);
   const primedFor = useRef<string>('');
 
   useEffect(() => {
@@ -91,24 +85,20 @@ export function useGravityAlertWatcher() {
 
     for (const g of mine) {
       const prev = prevRef.current.get(g.id);
-      const next = scoreKey(g);
+      const next = stabilizeAlertSnap(prev, scoreKey(g));
       const href = `/partido/${leaguePath(g.league)}/${g.id}`;
       const pair = `${g.home.abbreviation} vs ${g.away.abbreviation}`;
-
-      if (prev && prev.state !== 'in' && next.state === 'in') {
-        notify('Arranca tu partido', pair, `af-kick-${g.id}`, href);
-      }
-      if (
-        prev &&
-        (nums(prev.hs) !== nums(next.hs) || nums(prev.as) !== nums(next.as)) &&
-        (next.state === 'in' || next.state === 'post')
-      ) {
-        notify(
-          `GOL · ${g.home.abbreviation} ${next.hs || '0'}-${next.as || '0'} ${g.away.abbreviation}`,
-          pair,
-          `af-gol-${g.id}-${next.hs}-${next.as}`,
-          href
-        );
+      for (const kind of matchAlerts(prev, next, g.date)) {
+        if (kind === 'kickoff') {
+          notify('Arranca tu partido', pair, `af-kick-${g.id}`, href);
+        } else {
+          notify(
+            `GOL · ${g.home.abbreviation} ${next.hs}-${next.as} ${g.away.abbreviation}`,
+            pair,
+            `af-gol-${g.id}-${next.hs}-${next.as}`,
+            href
+          );
+        }
       }
       prevRef.current.set(g.id, next);
     }

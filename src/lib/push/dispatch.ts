@@ -2,6 +2,7 @@ import { clubById, gravityMatches } from '@/config/clubMatch';
 import { leaguePath } from '@/lib/radio/phases';
 import { kvGetJson, kvSetJson, kvSetNx, sharedKvEnabled } from '@/lib/sharedKv';
 import { getGamesOfDay, type DayGame } from '@/lib/sports/gamesOfDay';
+import { matchAlerts, numScore, stabilizeAlertSnap, type AlertSnap } from './matchAlerts';
 import { pushConfigured, sendWebPush, type PushPayload } from './send';
 import { listSubs, removeSubById, type PushSub } from './store';
 
@@ -17,16 +18,10 @@ const STATE_TTL_MS = 6 * 60 * 60_000;
 const LOCK_KEY = 'push:dispatch-lock';
 const LOCK_MS = 55_000;
 
-type Snap = { state: DayGame['state']; hs: number; as: number };
-type StateMap = Record<string, Snap>;
+type StateMap = Record<string, AlertSnap>;
 
-function num(v: string | number | undefined | null): number {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : 0;
-}
-
-function snapOf(g: DayGame): Snap {
-  return { state: g.state, hs: num(g.home.score), as: num(g.away.score) };
+function snapOf(g: DayGame): AlertSnap {
+  return { state: g.state, hs: numScore(g.home.score), as: numScore(g.away.score) };
 }
 
 interface PushEvent {
@@ -38,28 +33,29 @@ function buildEvents(games: DayGame[], prev: StateMap): { events: PushEvent[]; n
   const next: StateMap = {};
   const events: PushEvent[] = [];
   for (const g of games) {
-    const cur = snapOf(g);
-    next[g.id] = cur;
     const before = prev[g.id];
+    const cur = stabilizeAlertSnap(before, snapOf(g));
+    next[g.id] = cur;
     if (!before) continue; // prime only — never alert on first sighting
     const url = `/partido/${leaguePath(g.league)}/${g.id}`;
     const pair = `${g.home.abbreviation} vs ${g.away.abbreviation}`;
-    if (before.state !== 'in' && cur.state === 'in') {
-      events.push({
-        game: g,
-        payload: { title: 'Arranca tu partido', body: pair, tag: `af-kick-${g.id}`, url },
-      });
-    }
-    if ((before.hs !== cur.hs || before.as !== cur.as) && (cur.state === 'in' || cur.state === 'post')) {
-      events.push({
-        game: g,
-        payload: {
-          title: `GOL · ${g.home.abbreviation} ${cur.hs}-${cur.as} ${g.away.abbreviation}`,
-          body: pair,
-          tag: `af-gol-${g.id}-${cur.hs}-${cur.as}`,
-          url,
-        },
-      });
+    for (const kind of matchAlerts(before, cur, g.date)) {
+      if (kind === 'kickoff') {
+        events.push({
+          game: g,
+          payload: { title: 'Arranca tu partido', body: pair, tag: `af-kick-${g.id}`, url },
+        });
+      } else {
+        events.push({
+          game: g,
+          payload: {
+            title: `GOL · ${g.home.abbreviation} ${cur.hs}-${cur.as} ${g.away.abbreviation}`,
+            body: pair,
+            tag: `af-gol-${g.id}-${cur.hs}-${cur.as}`,
+            url,
+          },
+        });
+      }
     }
   }
   return { events, next };
