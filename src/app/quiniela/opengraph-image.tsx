@@ -2,34 +2,33 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { ImageResponse } from 'next/og';
 import { getQuinielaBoard } from '@/lib/quiniela/service';
-import type { Outcome, QuinielaMatch } from '@/lib/quiniela/types';
+import type { QuinielaMatch } from '@/lib/quiniela/types';
 
-export const alt = 'La Quiniela Liga MX · 1 · X · 2 · Acceso Futbol';
+export const alt = 'La Quiniela Liga MX · local · empate · visita · Acceso Futbol';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 export const revalidate = 30;
 
-const OUTCOMES: readonly Outcome[] = ['1', 'X', '2'];
-
-function PickCell({ o, win }: { o: Outcome; win: boolean }) {
+function PickCell({ label, win }: { label: string; win: boolean }) {
   return (
     <div
       style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        width: 40,
+        minWidth: 48,
         height: 36,
+        padding: '0 8px',
         border: '1px solid rgba(246,245,242,0.22)',
         background: win ? '#e05a0c' : 'transparent',
         color: win ? '#0c0c0c' : 'rgba(246,245,242,0.78)',
         fontFamily: 'AF Display',
-        fontSize: 20,
+        fontSize: label.length > 3 ? 12 : 18,
         fontWeight: 700,
         letterSpacing: 1,
       }}
     >
-      {o}
+      {label}
     </div>
   );
 }
@@ -63,9 +62,9 @@ function MatchRow({ m }: { m: QuinielaMatch }) {
         {m.home.abbr}
       </div>
       <div style={{ display: 'flex', gap: 0 }}>
-        {OUTCOMES.map((o) => (
-          <PickCell key={o} o={o} win={m.result === o} />
-        ))}
+        <PickCell label={m.home.abbr} win={m.result === '1'} />
+        <PickCell label="EMP" win={m.result === 'X'} />
+        <PickCell label={m.away.abbr} win={m.result === '2'} />
       </div>
       <div
         style={{
@@ -143,7 +142,7 @@ export default async function OgImage() {
               {kicker}
             </div>
             <div style={{ display: 'flex', fontSize: 20, color: 'rgba(246,245,242,0.45)' }}>
-              1 · X · 2
+              LOCAL · EMPATE · VISITA
             </div>
           </div>
 
@@ -173,7 +172,7 @@ export default async function OgImage() {
           >
             {matches.length === 0 ? (
               <div style={{ display: 'flex', fontSize: 28, color: 'rgba(246,245,242,0.55)' }}>
-                Pronostica la jornada · 1 local · X empate · 2 visita
+                Pronostica la jornada · toca el ganador o Empate
               </div>
             ) : (
               matches.map((m) => <MatchRow key={m.id} m={m} />)

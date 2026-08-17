@@ -57,7 +57,7 @@ function ResultStamp({ f, mine }: { f: Fixture; mine: boolean }) {
       </div>
       <div className="jor-ticket-board">
         <span className={['jor-ticket-side is-home', homeCls].filter(Boolean).join(' ')}>
-          <ClubLogo abbr={f.home.abbreviation} name={f.home.name} size="sm" />
+          <ClubLogo abbr={f.home.abbreviation} name={f.home.name} size="md" />
           <span className="jor-ticket-abbr">{f.home.abbreviation}</span>
         </span>
         <p
@@ -70,7 +70,7 @@ function ResultStamp({ f, mine }: { f: Fixture; mine: boolean }) {
         </p>
         <span className={['jor-ticket-side is-away', awayCls].filter(Boolean).join(' ')}>
           <span className="jor-ticket-abbr">{f.away.abbreviation}</span>
-          <ClubLogo abbr={f.away.abbreviation} name={f.away.name} size="sm" />
+          <ClubLogo abbr={f.away.abbreviation} name={f.away.name} size="md" />
         </span>
       </div>
       {scorers ? (
@@ -236,22 +236,6 @@ export function JornadaRecap() {
           </p>
         ) : (
           <div className="space-y-12" data-testid="jornada-columns">
-            {doneBlock.length > 0 && (
-              <div data-testid="jornada-played">
-                <div className="mb-4 flex items-baseline justify-between gap-3">
-                  <h3 className="font-display text-2xl font-bold uppercase tracking-wide">
-                    {live.length > 0 ? 'En vivo + sellados' : 'Sellados'}
-                  </h3>
-                  <p className="af-tele">{doneBlock.length}</p>
-                </div>
-                <div className="jor-mosaic">
-                  {doneBlock.map((f) => (
-                    <ResultStamp key={f.id} f={f} mine={isMine(f)} />
-                  ))}
-                </div>
-              </div>
-            )}
-
             {(live.length > 0 || upcoming.length > 0) && (
               <DondeVerGuide
                 jornadaNum={jornadaNum}
@@ -260,6 +244,22 @@ export function JornadaRecap() {
                 tz={userTz}
                 isMine={isMine}
               />
+            )}
+
+            {played.length > 0 && (
+              <div data-testid="jornada-played">
+                <div className="mb-4 flex items-baseline justify-between gap-3">
+                  <h3 className="font-display text-2xl font-bold uppercase tracking-wide">
+                    Sellados
+                  </h3>
+                  <p className="af-tele">{played.length}</p>
+                </div>
+                <div className="jor-mosaic">
+                  {played.map((f) => (
+                    <ResultStamp key={f.id} f={f} mine={isMine(f)} />
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         )}

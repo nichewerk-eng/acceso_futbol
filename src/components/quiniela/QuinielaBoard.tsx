@@ -1,11 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { useQuiniela } from '@/lib/client/useQuiniela';
 import type { Outcome, QuinielaBoard as Board, QuinielaMatch } from '@/lib/quiniela/types';
-
-const OUTCOMES: readonly Outcome[] = ['1', 'X', '2'];
 
 function kickoffLabel(iso: string): string {
   try {
@@ -28,6 +25,21 @@ function metaLine(m: QuinielaMatch): string {
   return kickoffLabel(m.date);
 }
 
+function optClass(on: boolean, result: Outcome | null, o: Outcome): string {
+  const isWin = Boolean(on && result === o);
+  const isMiss = Boolean(on && result != null && result !== o);
+  const isResult = Boolean(!on && result === o);
+  return [
+    'q-opt',
+    on ? 'q-opt-on' : '',
+    isWin ? 'q-opt-win' : '',
+    isMiss ? 'q-opt-miss' : '',
+    isResult ? 'q-opt-result' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
+
 function Row({
   m,
   pick,
@@ -40,46 +52,53 @@ function Row({
   const result = m.result;
   return (
     <li className={['q-row', m.locked ? 'q-row-locked' : ''].filter(Boolean).join(' ')}>
-      <div className="q-team q-team-home">
-        <span className="q-abbr">{m.home.abbr}</span>
-        <ClubLogo abbr={m.home.abbr} clubId={m.home.clubId} name={m.home.name} logoUrl={m.home.logo} size="sm" />
-      </div>
-
-      <div className="q-pick" role="group" aria-label={`${m.home.abbr} vs ${m.away.abbr}`}>
-        {OUTCOMES.map((o) => {
-          const on = pick === o;
-          const isWin = Boolean(on && result === o);
-          const isMiss = Boolean(on && result != null && result !== o);
-          const isResult = Boolean(!on && result === o);
-          return (
-            <button
-              key={o}
-              type="button"
-              disabled={m.locked}
-              onClick={() => onPick(m.id, o)}
-              className={[
-                'q-opt',
-                on ? 'q-opt-on' : '',
-                isWin ? 'q-opt-win' : '',
-                isMiss ? 'q-opt-miss' : '',
-                isResult ? 'q-opt-result' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              aria-pressed={on}
-            >
-              {o}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="q-team q-team-away">
-        <ClubLogo abbr={m.away.abbr} clubId={m.away.clubId} name={m.away.name} logoUrl={m.away.logo} size="sm" />
-        <span className="q-abbr">{m.away.abbr}</span>
-      </div>
-
       <p className="q-meta">{metaLine(m)}</p>
+      <div className="q-pick" role="group" aria-label={`${m.home.name} contra ${m.away.name}`}>
+        <button
+          type="button"
+          disabled={m.locked}
+          onClick={() => onPick(m.id, '1')}
+          className={`${optClass(pick === '1', result, '1')} q-opt-side`}
+          aria-pressed={pick === '1'}
+          aria-label={`Gana ${m.home.name}`}
+        >
+          <ClubLogo
+            abbr={m.home.abbr}
+            clubId={m.home.clubId}
+            name={m.home.name}
+            logoUrl={m.home.logo}
+            size="sm"
+          />
+          <span className="q-abbr">{m.home.abbr}</span>
+        </button>
+        <button
+          type="button"
+          disabled={m.locked}
+          onClick={() => onPick(m.id, 'X')}
+          className={`${optClass(pick === 'X', result, 'X')} q-opt-draw`}
+          aria-pressed={pick === 'X'}
+          aria-label="Empate"
+        >
+          Empate
+        </button>
+        <button
+          type="button"
+          disabled={m.locked}
+          onClick={() => onPick(m.id, '2')}
+          className={`${optClass(pick === '2', result, '2')} q-opt-side`}
+          aria-pressed={pick === '2'}
+          aria-label={`Gana ${m.away.name}`}
+        >
+          <ClubLogo
+            abbr={m.away.abbr}
+            clubId={m.away.clubId}
+            name={m.away.name}
+            logoUrl={m.away.logo}
+            size="sm"
+          />
+          <span className="q-abbr">{m.away.abbr}</span>
+        </button>
+      </div>
     </li>
   );
 }
@@ -87,11 +106,6 @@ function Row({
 export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
   const q = useQuiniela(initial);
   const { board, leaderboard, mine, draft, name, setName, setPick, save, saving, dirtyCount } = q;
-
-  const completed = useMemo(
-    () => (board ? board.matches.filter((m) => draft[m.id]).length : 0),
-    [board, draft]
-  );
 
   if (!board) {
     return (
@@ -101,14 +115,11 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
     );
   }
 
-  const openMatches = board.matches.filter((m) => !m.locked).length;
-  const missedFinals = board.matches.filter((m) => m.result && !draft[m.id]).length;
-
   return (
     <div className="mt-8">
       <div className="q-headline">
         <label className="q-name">
-          <span className="af-tele text-muted">Tu alias</span>
+          <span className="af-tele text-muted">Tu nombre en la tabla</span>
           <input
             type="text"
             value={name}
@@ -119,24 +130,19 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
           />
         </label>
         <div className="q-score">
-          <span className="q-score-num">{mine?.points ?? 0}</span>
-          <span className="af-tele text-muted">
-            aciertos · {mine?.played ?? 0}/{board.finals} definidos
+          <span className="q-score-num">
+            {mine?.points ?? 0}
+            <span className="q-score-of">/{board.total}</span>
+          </span>
+          <span className="q-score-label">
+            {mine?.points ?? 0} {(mine?.points ?? 0) === 1 ? 'acierto' : 'aciertos'}
+            {' · '}
+            de {board.finals} {board.finals === 1 ? 'partido terminado' : 'partidos terminados'}
           </span>
         </div>
       </div>
 
-      <p className="mt-3 font-mono text-[11px] leading-5 text-muted">
-        {completed}/{board.total} marcados
-        {missedFinals > 0
-          ? ` · ${missedFinals} ya cerrados (no suman: se cierran al arranque)`
-          : ''}
-        {openMatches > 0
-          ? ` · ${openMatches} abiertos`
-          : ' · jornada cerrada'}
-      </p>
-
-      <ol className="q-list mt-4">
+      <ol className="q-list">
         {board.matches.map((m) => (
           <Row key={m.id} m={m} pick={draft[m.id]} onPick={setPick} />
         ))}
@@ -162,7 +168,7 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
           ://TABLA
         </p>
         <h2 className="mt-2 font-display text-2xl font-bold uppercase tracking-wide">
-          Quinieleros
+          Quién va ganando
         </h2>
         {leaderboard && leaderboard.rows.length ? (
           <div className="lead-board mt-3">
@@ -173,8 +179,10 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
               >
                 <span className="lead-rank">{i + 1}</span>
                 <span className="q-lead-name">{r.name}</span>
-                <span className="q-lead-meta af-tele text-muted">
-                  {r.played}/{board.finals} def.
+                <span className="q-lead-meta">
+                  {board.finals === 0
+                    ? 'en juego'
+                    : `${r.played} de ${board.finals} terminados`}
                 </span>
                 <span className="lead-val">{r.points}</span>
               </div>

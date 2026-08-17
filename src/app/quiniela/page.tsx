@@ -9,9 +9,9 @@ import { absoluteUrl, breadcrumbJsonLd, faqPageJsonLd, webPageJsonLd } from '@/l
 
 export const revalidate = 30;
 
-const TITLE = 'La Quiniela Liga MX · pronósticos 1-X-2';
+const TITLE = 'La Quiniela Liga MX · elige al ganador o empate';
 const DESCRIPTION =
-  'Llena tu quiniela de la Liga MX jornada por jornada: marca 1, X o 2 en cada partido, suma aciertos y compite en la tabla de quinieleros. Gratis y sin registro.';
+  'Llena tu quiniela de la Liga MX jornada por jornada: toca el equipo que gana o Empate en cada partido, suma aciertos y compite en la tabla de quinieleros. Gratis y sin registro.';
 
 export async function generateMetadata(): Promise<Metadata> {
   const board = await getQuinielaBoard().catch(() => null);
@@ -33,19 +33,19 @@ export async function generateMetadata(): Promise<Metadata> {
 
 const FAQ = [
   {
-    question: '¿Cómo se juega la quiniela de la Liga MX?',
+    question: '¿Cómo se juega?',
     answer:
-      'Marca el resultado de cada partido de la jornada: 1 si gana el local, X si empatan y 2 si gana el visitante. Sumas un punto por cada acierto cuando el partido termina.',
+      'Toca el escudo del equipo que crees que gana, o Empate. Cuando el partido termina, si tu elección coincide con el marcador sumas un punto.',
   },
   {
-    question: '¿Hasta cuándo puedo cambiar mis pronósticos?',
+    question: '¿Hasta cuándo puedo cambiar?',
     answer:
-      'Cada partido se cierra al momento del silbatazo inicial. Puedes ajustar tus picks de los partidos que aún no arrancan; los que ya empezaron quedan bloqueados.',
+      'Hasta el silbatazo inicial de ese partido. Los que ya empezaron o ya acabaron quedan bloqueados. Si no elegiste a tiempo, ese partido no cuenta para ti.',
   },
   {
-    question: '¿Necesito registrarme para jugar la quiniela?',
+    question: '¿Necesito una cuenta?',
     answer:
-      'No. La quiniela de Acceso Fútbol es gratis y anónima: eliges un alias y tus pronósticos se guardan en tu dispositivo para competir en la tabla de quinieleros.',
+      'No. Pon un nombre para la tabla y listo. Tus elecciones se guardan en este teléfono o computadora.',
   },
 ];
 
@@ -79,9 +79,15 @@ export default async function QuinielaPage() {
         <h1 className="mt-2 font-display text-3xl font-bold uppercase tracking-wide sm:text-4xl">
           La Quiniela
         </h1>
-        <p className="mt-3 max-w-2xl font-mono text-[12px] leading-6 text-muted">
-          Pronostica cada partido de la jornada — 1 local, X empate, 2 visita. Suma aciertos y sube
-          en la tabla de quinieleros. Gratis, sin registro; cada partido se cierra al arranque.
+        {board ? (
+          <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
+            {board.jornadaLabel}
+          </p>
+        ) : null}
+        <p className="mt-4 max-w-xl text-sm leading-6 text-muted">
+          En cada partido toca el equipo que crees que gana, o Empate. Si atinas, sumas un punto.
+          Elige y guarda <em>antes</em> de que arranque el partido: después ya no se puede cambiar.
+          Gratis, sin cuenta.
         </p>
 
         <QuinielaBoard initial={board} />
