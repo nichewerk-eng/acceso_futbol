@@ -1,3 +1,5 @@
+'use client';
+
 import { TV_CHANNELS, type TvChannelId } from '@/config/dondeVer';
 
 type Props = {
@@ -31,30 +33,46 @@ function ChannelMark({
   if (!ch) return null;
   const invert = ch.onDark && surface === 'paper';
   const src = surface === 'ink' && ch.srcInk ? ch.srcInk : ch.src;
+  const className = ['tv-channel', compact ? 'tv-channel-compact' : '']
+    .filter(Boolean)
+    .join(' ');
+  const mark = src ? (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={ch.label}
+        className={['tv-channel-logo', invert ? 'tv-channel-logo-invert' : '']
+          .filter(Boolean)
+          .join(' ')}
+        loading="lazy"
+        decoding="async"
+      />
+      <span className="sr-only">{ch.label}</span>
+    </>
+  ) : (
+    <span className="tv-channel-text">{ch.label}</span>
+  );
+
+  if (ch.href) {
+    return (
+      <a
+        href={ch.href}
+        className={className}
+        data-channel={id}
+        title={ch.label}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {mark}
+      </a>
+    );
+  }
 
   return (
-    <span
-      className={['tv-channel', compact ? 'tv-channel-compact' : ''].filter(Boolean).join(' ')}
-      data-channel={id}
-      title={ch.label}
-    >
-      {src ? (
-        <>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={src}
-            alt={ch.label}
-            className={['tv-channel-logo', invert ? 'tv-channel-logo-invert' : '']
-              .filter(Boolean)
-              .join(' ')}
-            loading="lazy"
-            decoding="async"
-          />
-          <span className="sr-only">{ch.label}</span>
-        </>
-      ) : (
-        <span className="tv-channel-text">{ch.label}</span>
-      )}
+    <span className={className} data-channel={id} title={ch.label}>
+      {mark}
     </span>
   );
 }

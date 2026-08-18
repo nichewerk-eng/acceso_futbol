@@ -23,7 +23,9 @@ export type TvChannelId =
   | 'televisa'
   | 'prime-video'
   | 'telemundo'
-  | 'universo';
+  | 'universo'
+  | 'tubi'
+  | 'youtube';
 
 export type TvChannel = {
   id: TvChannelId;
@@ -36,6 +38,8 @@ export type TvChannel = {
   srcInk?: string;
   /** White/light mark — invert on paper backgrounds */
   onDark?: boolean;
+  /** Official watch page when the mark should be tappable */
+  href?: string;
 };
 
 export const TV_CHANNELS: Record<TvChannelId, TvChannel> = {
@@ -162,6 +166,19 @@ export const TV_CHANNELS: Record<TvChannelId, TvChannel> = {
     kind: 'tv',
     src: '/tv_logos/Universo.png',
   },
+  tubi: {
+    id: 'tubi',
+    label: 'Tubi',
+    kind: 'stream',
+    src: '/tv_logos/Tubi.svg',
+  },
+  youtube: {
+    id: 'youtube',
+    label: 'YouTube Femenil',
+    kind: 'stream',
+    src: '/tv_logos/YouTube.png',
+    href: 'https://www.youtube.com/@ligabbvamxfemenil',
+  },
 };
 
 const UNCONFIRMED = {
@@ -253,6 +270,33 @@ const CLUB_HOME_TV: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
   JUA: { mx: ['fox', 'fox-one', 'azteca-7'], us: ['fox-deportes', 'universo'] },
 };
 
+/** Liga MX Femenil MX rights follow the home club. No US grid yet. */
+const TUBI: TvChannelId[] = ['tubi'];
+const TELE_YT: TvChannelId[] = ['televisa', 'youtube'];
+const ESPN_YT: TvChannelId[] = ['espn', 'youtube'];
+const YT_ONLY: TvChannelId[] = ['youtube'];
+
+const FEMENIL_CLUB_HOME_TV: Record<string, TvChannelId[]> = {
+  AME: TELE_YT,
+  ATL: YT_ONLY,
+  ATS: TUBI,
+  ASL: ESPN_YT,
+  TIJ: TUBI,
+  CAZ: TELE_YT,
+  JUA: TUBI,
+  QRO: TUBI,
+  GDL: TUBI,
+  LEO: TUBI,
+  NCX: TUBI,
+  PAC: TUBI,
+  PUE: YT_ONLY,
+  MTY: TELE_YT,
+  SAN: TUBI,
+  UANL: TUBI,
+  TOL: TELE_YT,
+  UNAM: TELE_YT,
+};
+
 function normAbbr(abbr: string): string {
   return scheduleAbbr(abbr);
 }
@@ -278,6 +322,16 @@ export function resolveDondeVer(
   confirmed: boolean;
 } {
   if (fixture.league === 'liga-mx-femenil') {
+    const mx = FEMENIL_CLUB_HOME_TV[normAbbr(fixture.home.abbreviation)];
+    if (mx?.length) {
+      return {
+        mx: labelList(mx),
+        us: '',
+        mxChannels: mx,
+        usChannels: [],
+        confirmed: true,
+      };
+    }
     return { ...UNCONFIRMED };
   }
   const known = GUIDE[pairKey(fixture.date, fixture.home.abbreviation, fixture.away.abbreviation)];

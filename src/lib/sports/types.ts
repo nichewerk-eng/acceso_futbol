@@ -110,6 +110,8 @@ export interface Fixture {
       | 'prime-video'
       | 'telemundo'
       | 'universo'
+      | 'tubi'
+      | 'youtube'
     >;
     usChannels?: Array<
       | 'tudn'
@@ -132,6 +134,8 @@ export interface Fixture {
       | 'prime-video'
       | 'telemundo'
       | 'universo'
+      | 'tubi'
+      | 'youtube'
     >;
     /** True when MX/US marks come from a confirmed guide, not a guess. */
     confirmed?: boolean;

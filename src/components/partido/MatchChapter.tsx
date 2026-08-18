@@ -930,12 +930,18 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
 
           <div className="match-hero-actions">
             <div className="match-donde">
-              <p className="af-tele">Dónde ver · MX ↔ US</p>
+              <p className="af-tele">
+                {league === 'liga-mx-femenil' ? 'Dónde ver · MX' : 'Dónde ver · MX ↔ US'}
+              </p>
               <BroadcastChannels
                 mx={match.dondeVer?.mxChannels}
                 us={match.dondeVer?.usChannels}
                 mxLabel={match.dondeVer?.mx ?? 'Streaming / TV local'}
-                usLabel={match.dondeVer?.us ?? 'TUDN · ViX'}
+                usLabel={
+                  league === 'liga-mx-femenil'
+                    ? match.dondeVer?.us || undefined
+                    : match.dondeVer?.us ?? 'TUDN · ViX'
+                }
                 surface="ink"
                 compact
               />
