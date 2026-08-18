@@ -574,7 +574,11 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
       const next = pendingCtx
         ? { ...d, form: pendingCtx.form, headToHead: pendingCtx.headToHead }
         : d;
-      setMatch((prev) => mergeMatchSnapshot(prev, next));
+      setMatch((prev) => {
+        const merged = mergeMatchSnapshot(prev, next);
+        pace = merged.state === 'in' ? 'live' : merged.state === 'pre' ? 'near' : 'idle';
+        return merged;
+      });
       setError(false);
       setTab((prev) => {
         if (prev) return prev;

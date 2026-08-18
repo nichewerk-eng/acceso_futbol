@@ -9,7 +9,7 @@ import { attachDondeVer } from '@/config/dondeVer';
 import { smTeamIdFromAbbr } from './ligaMxTeams';
 import { mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
 import { enrichMatchWithEspnCommentary } from './espnCommentary';
-import { FRESH } from './freshness';
+import { FRESH, isNearKickoff, looksStillLive } from './freshness';
 import { applyLeaguesCupOfficial } from './leaguesCupBoard';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
 import {
@@ -38,7 +38,7 @@ export function sportsMatchCacheKey(league: string, id: string) {
 }
 
 export function sportsMatchTickCacheKey(league: string, id: string) {
-  return `sports-match-tick-v1-${league}-${id}`;
+  return `sports-match-tick-v2-${league}-${id}`;
 }
 
 export function sportsMatchContextoCacheKey(league: string, id: string) {
@@ -396,13 +396,18 @@ async function getMatchTickUncached(
       (await fixtureFromDateBoards(fixtureId)) ??
       (fixtureId !== id ? await fixtureFromDateBoards(id) : null);
 
-    // Pre-match: the date board (already warmed by the hero) is enough — skip a hanging fixture GET.
-    let sm =
-      dated && dated.state !== 'in'
-        ? dated
-        : (await fetchMatchTick(fixtureId)) ??
-          (fixtureId !== id ? await fetchMatchTick(id) : null) ??
-          dated;
+    // Date boards are a long-TTL schedule dump — they often stay `pre` after
+    // kickoff. Only skip the fixture GET for a match that cannot be live yet.
+    const datedIsQuietPre =
+      dated?.state === 'pre' &&
+      !isNearKickoff(dated.date, Date.now(), dated.state) &&
+      !looksStillLive(dated);
+
+    let sm = datedIsQuietPre
+      ? dated
+      : (await fetchMatchTick(fixtureId)) ??
+        (fixtureId !== id ? await fetchMatchTick(id) : null) ??
+        dated;
     if (!sm) return null;
 
     if (key === 'leagues-cup') {

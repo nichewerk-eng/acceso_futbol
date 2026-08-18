@@ -17,6 +17,9 @@ export function mergeMatchSnapshot(
   next: MatchSnapshot
 ): MatchSnapshot {
   if (!prev || prev.id !== next.id) return next;
+  // Stale date-board ticks arrive as `pre` while the match is already live.
+  // Never demote — that flashes the capítulo empty every poll.
+  if (prev.state === 'in' && next.state === 'pre') return prev;
 
   return {
     ...next,
