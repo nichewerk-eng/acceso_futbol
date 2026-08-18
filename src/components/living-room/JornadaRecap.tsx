@@ -104,11 +104,12 @@ export function JornadaRecap() {
   const played = data?.played ?? [];
   const live = data?.live ?? [];
   const upcoming = data?.upcoming ?? [];
-  const doneBlock = [...live, ...played];
-  const total = doneBlock.length + upcoming.length || 9;
-  const doneCount = doneBlock.length;
+  const filledCount = live.length + played.length;
+  const total = filledCount + upcoming.length || 9;
+  const doneCount = played.length;
   const jornadaNum = data?.number;
-  const fechaCerrada = !loading && Boolean(data) && upcoming.length === 0 && doneCount > 0;
+  const fechaCerrada =
+    !loading && Boolean(data) && live.length === 0 && upcoming.length === 0 && played.length > 0;
 
   const isMine = (f: Fixture) =>
     matchesGravity(f.home.name, f.away.name, f.home.abbreviation, f.away.abbreviation);
@@ -161,9 +162,13 @@ export function JornadaRecap() {
               <p className="af-tele" data-testid="jornada-stats">
                 {loading && !data
                   ? 'SYNC…'
-                  : upcoming.length > 0
-                    ? `${doneCount} jugados · ${upcoming.length} quedan`
-                    : `${doneCount} jugados`}
+                  : [
+                      `${doneCount} jugados`,
+                      live.length ? `${live.length} en vivo` : '',
+                      upcoming.length ? `${upcoming.length} quedan` : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
               </p>
             </div>
             <div
@@ -177,9 +182,9 @@ export function JornadaRecap() {
                 const cls =
                   i < liveIdx
                     ? 'is-live'
-                    : i < doneCount
+                    : i < filledCount
                       ? 'is-done'
-                      : i === doneCount
+                      : i === filledCount
                         ? 'is-next'
                         : '';
                 return <span key={i} className={['jor-track-cell', cls].filter(Boolean).join(' ')} />;

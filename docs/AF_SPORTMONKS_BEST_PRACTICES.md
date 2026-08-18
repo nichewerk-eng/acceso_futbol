@@ -90,7 +90,7 @@ Sportmonks recommends caching entities that **rarely change**:
 | Date fixtures | `participants;scores;state;venue;round;league;periods` | Same for `state` |
 | Season fixtures | Nested `fixtures.*` + `events.type` | Heavy; OK behind **5 min** cache; don’t poll as live |
 | Match tick | scores/state/periods/events (+ player) | **Shipped** — live poll path |
-| Match detail | Rich include (lineups, stats, comments…) | First paint / pre; skip form/H2H when live |
+| Match detail | Rich include (lineups, stats, comments…) | First paint / pre; form/H2H via own 30 min cache |
 
 **Shared cache:** set `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` so `singleFlight` writes L2 (`src/lib/sharedKv.ts`).
 

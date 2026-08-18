@@ -39,11 +39,11 @@ export function sportsMatchCacheKey(league: string, id: string) {
 }
 
 export function sportsMatchTickCacheKey(league: string, id: string) {
-  return `sports-match-tick-v2-${league}-${id}`;
+  return `sports-match-tick-v3-ht-clock-${league}-${id}`;
 }
 
 export function sportsMatchContextoCacheKey(league: string, id: string) {
-  return `sports-match-contexto-v1-${league}-${id}`;
+  return `sports-match-contexto-v2-${league}-${id}`;
 }
 
 export type MatchContexto = {
@@ -473,15 +473,11 @@ async function getMatchContextoUncached(
     const homeId = indexed ? smTeamIdFromAbbr(indexed.home.abbreviation) : null;
     const awayId = indexed ? smTeamIdFromAbbr(indexed.away.abbreviation) : null;
     if (indexed && homeId && awayId) {
-      const live =
-        peekMatch(league, indexed.id)?.state === 'in' ||
-        peekMatch(league, id)?.state === 'in';
       return fetchMatchContexto(
         homeId,
         awayId,
         indexed.home.abbreviation,
-        indexed.away.abbreviation,
-        live
+        indexed.away.abbreviation
       );
     }
   }
@@ -498,8 +494,7 @@ async function getMatchContextoUncached(
     snap.home.id,
     snap.away.id,
     snap.home.abbreviation,
-    snap.away.abbreviation,
-    snap.state === 'in'
+    snap.away.abbreviation
   );
 }
 
@@ -511,10 +506,14 @@ export function prefetchCurrentJornadaContexto(
   const n = getCurrentJornada(fixtures);
   const rows = fixtures.filter((f) => {
     const j = Number(f.jornada?.match(/(\d+)/)?.[1]);
-    return j === n && f.status.state !== 'in';
+    return j === n;
+  });
+  const ordered = [...rows].sort((a, b) => {
+    const rank = (s: string) => (s === 'in' ? 0 : s === 'pre' ? 1 : 2);
+    return rank(a.status.state) - rank(b.status.state);
   });
   void Promise.allSettled(
-    rows.slice(0, 9).map((f) => getMatchContextoUncached('liga-mx', f.id))
+    ordered.slice(0, 9).map((f) => getMatchContextoUncached('liga-mx', f.id))
   );
 }
 

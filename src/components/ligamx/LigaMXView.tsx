@@ -187,7 +187,7 @@ export default function LigaMXView({
   const contextoPrefetchKey = useMemo(() => {
     const n = getCurrentJornada(fixtures);
     return fixtures
-      .filter((f) => f.jornada === `Jornada ${n}` && f.status.state !== 'in')
+      .filter((f) => f.jornada === `Jornada ${n}` && f.status.state !== 'post')
       .map((f) => f.id)
       .join(',');
   }, [fixtures]);

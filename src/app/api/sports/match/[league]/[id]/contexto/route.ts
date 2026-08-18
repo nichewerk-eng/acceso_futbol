@@ -22,7 +22,9 @@ export async function GET(
     ttlMs: TTL_MS,
     coalesceMs: TTL_MS,
     loader: () => getMatchContexto(league, id),
-    notFound: (d) => d == null,
+    notFound: (d) =>
+      d == null ||
+      (!d.headToHead?.meetings?.length && !d.form.home.length && !d.form.away.length),
     headers: (_d, { stale }) => ({
       'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600',
       'X-AF-Stale': stale ? '1' : '0',

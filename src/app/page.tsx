@@ -9,6 +9,7 @@ import {
   sportsEventItemListJsonLd,
   websiteJsonLd,
 } from '@/lib/seo';
+import { liveStampLabel } from '@/lib/sports/liveStamp';
 import { getJornadaOverview, type JornadaOverview } from '@/lib/sports/jornada';
 import type { Fixture } from '@/lib/sports/types';
 
@@ -43,7 +44,7 @@ function crawlLine(f: Fixture): string {
       : 'vs';
   const status =
     f.state === 'in'
-      ? `En vivo${f.clock ? ` ${f.clock}` : ''}`
+      ? liveStampLabel(f)
       : f.state === 'post'
         ? 'Final'
         : kickoffLabelMx(f.date);

@@ -90,7 +90,7 @@ Orphan / unused poll surfaces: `/api/pulse` (no client), `LiveTicker` (not mount
 | Call | Skipped when |
 |------|----------------|
 | Sportmonks livescores | Quiet day on **games-of-day / pulse / leagues-cup** (no `in` + not near kickoff) |
-| Form + H2H | Match `state === 'in'` (warm cache only; no new SM calls) |
+| Form + H2H | Cold cache only (30 min coalesce; live no longer skips) |
 | ESPN crónica wait | Live enrich budget 550ms → serve cached Spanish lines |
 | Radio Anthropic/TTS | Beat already in process cache |
 | Client polls | Tab `visibilityState === 'hidden'` |

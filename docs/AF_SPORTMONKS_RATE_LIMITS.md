@@ -71,7 +71,7 @@ Naive sum without coalesce **over Starter**. Fits because:
 1. Quiet hours → livescores **gated off** (near-kickoff only).
 2. Date + match + livescores **singleFlight** + optional **Upstash KV** across isolates.
 3. Match chapter uses **tick** while live (lean include); detail for lineups/contexto.
-4. Form/H2H **skipped** while `state === 'in'` (warm cache only).
+4. Form/H2H **coalesced 30 min** (Team + one Fixture H2H); still fetched on a cold cache during live so Contexto is not empty.
 5. Board routes coalesce at **live floor (2.5s)**; idle still short-circuits via pace peek.
 
 **Match-night rule of thumb (Starter, 1 region, warm + KV):**

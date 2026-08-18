@@ -32,17 +32,17 @@ import type {
 const SEASON_CACHE_KEY = 'sm-ligamx-season-fixtures-v6-states';
 const FEM_SEASON_CACHE_KEY = 'sm-ligamx-femenil-season-fixtures-v1-states';
 const LC_SEASON_CACHE_KEY = 'sm-leagues-cup-season-fixtures-v3-states';
-const LIVE_CACHE_KEY = 'sm-livescores-v7-states';
+const LIVE_CACHE_KEY = 'sm-livescores-v8-ht-clock';
 /** Hot-path livescores: type_id locally; state_id via refs. */
 const LIVESCORES_INCLUDE = 'participants;scores;state;periods;events';
-/** Lean in-play tick — scores/clock/events only. */
-const MATCH_TICK_INCLUDE = 'participants;scores;periods;events;events.player';
+/** Lean in-play tick — state so true HT stamps Descanso; periods win while the clock still ticks. */
+const MATCH_TICK_INCLUDE = 'participants;scores;state;periods;events;events.player';
 /** Full match chapter (lineups, stats, comments). */
 const MATCH_DETAIL_INCLUDE =
   'participants;scores;state;venue;round;league;periods;events.type;events.player;comments;statistics.type;lineups.type;lineups.player;referees.referee;formations';
 /** Sticky in-play board while /livescores/latest returns empty (no updates in ~10s). */
 const LIVE_STICKY_TTL_MS = 120_000;
-const DATE_CACHE_PREFIX = 'sm-fixtures-date-v4-states';
+const DATE_CACHE_PREFIX = 'sm-fixtures-date-v5-ht-clock';
 const SEASON_TTL_MS = LANE.catalog.memTtlMs;
 const LIVE_TTL_MS = LANE.live.memTtlMs;
 const DATE_TTL_MS = LANE.board.memTtlMs;
@@ -247,30 +247,39 @@ function coerceInPlayState(f: SmFixture, state: MatchState): MatchState {
   return state;
 }
 
+function periodClock(p: SmPeriod): string | undefined {
+  if (p.minutes == null || !Number.isFinite(p.minutes)) return undefined;
+  const mins = Math.max(0, Math.floor(p.minutes));
+  const from = p.counts_from ?? 0;
+  const length = p.period_length ?? 45;
+  const regulationEnd = from + length;
+  if (mins > regulationEnd) return `${regulationEnd}+${mins - regulationEnd}'`;
+  const desc = (p.description ?? '').toLowerCase();
+  if (desc.includes('extra') || desc.includes('et')) return `ET ${mins}'`;
+  return `${mins}'`;
+}
+
 /** Live board stamp: 67' · 45+2' · HT · ET · PEN */
 function clockFromFixture(f: SmFixture, state: MatchState): string | undefined {
   const blob = stateBlob(f);
-  if (/\bHT\b|HALF[\s_-]?TIME|DESCANSO/.test(blob)) return 'HT';
+  const periods = f.periods ?? [];
+  const tickingPeriod = periods.find((p) => p.ticking);
+
+  // SM often labels 1st-half added time as HT while the period is still ticking.
+  // The match chapter used to omit `state` and looked live; the board froze on HT.
+  if (tickingPeriod) {
+    const liveClock = periodClock(tickingPeriod);
+    if (liveClock) return liveClock;
+  } else if (/\bHT\b|HALF[\s_-]?TIME|DESCANSO/.test(blob)) {
+    return 'HT';
+  }
+
   if (/\bPEN|PENALT/.test(blob) && state === 'in') return 'PEN';
 
-  const periods = f.periods ?? [];
-  const ticking =
-    periods.find((p) => p.ticking) ??
-    [...periods].sort((a, b) => (b.sort_order ?? 0) - (a.sort_order ?? 0))[0];
-
-  if (ticking?.minutes != null && Number.isFinite(ticking.minutes)) {
-    const mins = Math.max(0, Math.floor(ticking.minutes));
-    const from = ticking.counts_from ?? 0;
-    const length = ticking.period_length ?? 45;
-    const regulationEnd = from + length;
-    if (mins > regulationEnd) {
-      return `${regulationEnd}+${mins - regulationEnd}'`;
-    }
-    const desc = (ticking.description ?? '').toLowerCase();
-    if (desc.includes('extra') || desc.includes('et')) {
-      return `ET ${mins}'`;
-    }
-    return `${mins}'`;
+  const latestPeriod = [...periods].sort((a, b) => (b.sort_order ?? 0) - (a.sort_order ?? 0))[0];
+  if (latestPeriod) {
+    const fromPeriod = periodClock(latestPeriod);
+    if (fromPeriod) return fromPeriod;
   }
 
   if (/\bET\b|EXTRA|AET/.test(blob) && state === 'in') return 'ET';
@@ -285,7 +294,21 @@ function clockFromFixture(f: SmFixture, state: MatchState): string | undefined {
       : `${lastEvent.minute}'`;
   }
 
-  return state === 'in' ? undefined : undefined;
+  return undefined;
+}
+
+/** Don't stamp Descanso while a period clock is still running. */
+function statusLabelFor(f: SmFixture, state: MatchState): string {
+  const ticking = f.periods?.find((p) => p.ticking);
+  if (ticking) {
+    const desc = ticking.description?.trim();
+    if (desc) return localizeStatus(desc, 'in');
+    return localizeStatus(null, 'in');
+  }
+  return localizeStatus(
+    f.state?.name ?? f.state?.short_name ?? f.state?.developer_name ?? null,
+    state
+  );
 }
 
 /** Overlay fresh livescores onto a season/schedule board by fixture id. */
@@ -427,10 +450,7 @@ export function mapFixture(f: SmFixture): Fixture {
     date,
     jornada,
     state,
-    statusLabel: localizeStatus(
-      f.state?.name ?? f.state?.short_name ?? f.state?.developer_name ?? null,
-      state
-    ),
+    statusLabel: statusLabelFor(f, state),
     clock,
     venue: localizeVenue(f.venue?.name),
     city: localizeCity(f.venue?.city_name),
@@ -1024,7 +1044,7 @@ export async function fetchMatchSnapshot(fixtureId: string): Promise<MatchSnapsh
 
 /** Lean live tick — scores/clock/events only (no lineups/form/H2H). */
 export async function fetchMatchTick(fixtureId: string): Promise<MatchSnapshot | null> {
-  const cacheKey = `sm-match-tick-v2-lanes-${fixtureId}`;
+  const cacheKey = `sm-match-tick-v3-ht-clock-${fixtureId}`;
   return singleFlight(cacheKey, LANE.live.memTtlMs, () => loadMatchTick(fixtureId));
 }
 
@@ -1060,29 +1080,14 @@ async function loadContexto(
   homeId: string,
   awayId: string,
   homeAbbr: string,
-  awayAbbr: string,
-  live: boolean
+  awayAbbr: string
 ): Promise<{
   form: { home: FormMatch[]; away: FormMatch[] };
   headToHead: HeadToHeadSummary | null;
 }> {
-  const formKeyH = `sm-team-form-v1-${homeId}`;
-  const formKeyA = `sm-team-form-v1-${awayId}`;
   const h2hKey = `sm-h2h-v1-${[homeId, awayId].sort().join('-')}`;
-
-  // Live: reuse warm Contexto only — never spend Fixture/Team calls mid-match.
-  if (live) {
-    const homeForm = getCache<FormMatch[]>(formKeyH, FORM_TTL_MS) ?? [];
-    const awayForm = getCache<FormMatch[]>(formKeyA, FORM_TTL_MS) ?? [];
-    const h2hRaw = getCache<HeadToHeadSummary | null>(h2hKey, H2H_TTL_MS) ?? null;
-    return {
-      form: { home: homeForm, away: awayForm },
-      headToHead: h2hRaw
-        ? recountH2hForPair(h2hRaw, homeAbbr, awayAbbr)
-        : null,
-    };
-  }
-
+  // Form is Team (own bucket); H2H is one Fixture call, coalesced 30 min.
+  // Skipping this while live left Contexto empty on cold isolates.
   const [homeForm, awayForm, h2hRaw] = await Promise.all([
     fetchClubForm(homeId, 5),
     fetchClubForm(awayId, 5),
@@ -1098,10 +1103,9 @@ export async function fetchMatchContexto(
   homeId: string,
   awayId: string,
   homeAbbr: string,
-  awayAbbr: string,
-  live: boolean
+  awayAbbr: string
 ) {
-  return loadContexto(homeId, awayId, homeAbbr, awayAbbr, live);
+  return loadContexto(homeId, awayId, homeAbbr, awayAbbr);
 }
 
 async function loadMatchSnapshot(fixtureId: string): Promise<MatchSnapshot | null> {

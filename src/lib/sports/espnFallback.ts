@@ -305,7 +305,7 @@ async function fetchDateBoardFixtures(seed: Fixture[], pastMs: number): Promise<
 type LigaMxBoard = { fixtures: Fixture[]; source: 'sportmonks' | 'espn' | 'static' };
 
 /** Canonical Liga MX board key — one merged snapshot shared across every surface (and isolates via KV). */
-const BOARD_KEY = 'liga-mx-board-v1';
+const BOARD_KEY = 'liga-mx-board-v2-ht-clock';
 
 /**
  * Static calendar + season FT scores + nearby date boards / livescores.
