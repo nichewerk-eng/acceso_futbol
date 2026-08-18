@@ -26,6 +26,12 @@ export default function manifest(): MetadataRoute.Manifest {
       { name: 'Pulso', short_name: 'Pulso', url: '/', description: 'Sala de estar Acceso' },
       { name: 'Liga MX', short_name: 'Liga MX', url: '/liga-mx', description: 'Tabla y jornada Liga MX' },
       {
+        name: 'Liga MX Femenil',
+        short_name: 'Femenil',
+        url: '/liga-mx-femenil',
+        description: 'Tabla y jornada Liga MX Femenil',
+      },
+      {
         name: 'Leagues Cup',
         short_name: 'Cup',
         url: '/leagues-cup',

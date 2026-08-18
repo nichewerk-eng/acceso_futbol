@@ -20,6 +20,7 @@ import {
   fetchMatchTick,
   findFixtureByDayPair,
   ligaMxLeagueId,
+  ligaMxFemenilLeagueId,
   livingRoomLeagueIds,
   sportmonksEnabled,
 } from './sportmonks';
@@ -30,7 +31,7 @@ import type {
   MatchSnapshot,
 } from './types';
 
-type LeagueKey = 'liga-mx' | 'mundial' | 'seleccion' | 'leagues-cup';
+type LeagueKey = 'liga-mx' | 'liga-mx-femenil' | 'mundial' | 'seleccion' | 'leagues-cup';
 
 /** Shared with `/api/sports/match` + radio so both surfaces coalesce. */
 export function sportsMatchCacheKey(league: string, id: string) {
@@ -64,6 +65,7 @@ function espnSlug(league: LeagueKey) {
 
 function normalizeLeague(league: string): LeagueKey {
   if (league === 'liga-mx') return 'liga-mx';
+  if (league === 'liga-mx-femenil') return 'liga-mx-femenil';
   if (league === 'seleccion') return 'seleccion';
   if (league === 'leagues-cup') return 'leagues-cup';
   return 'mundial';
@@ -330,8 +332,11 @@ async function fromEspn(league: LeagueKey, id: string): Promise<MatchSnapshot | 
 async function getMatchUncached(league: string, id: string): Promise<MatchSnapshot | null> {
   const key = normalizeLeague(league);
 
-  // Liga MX / Leagues Cup: Sportmonks while the token is present.
-  if ((key === 'liga-mx' || key === 'leagues-cup') && sportmonksEnabled()) {
+  // Liga MX / Femenil / Leagues Cup: Sportmonks while the token is present.
+  if (
+    (key === 'liga-mx' || key === 'liga-mx-femenil' || key === 'leagues-cup') &&
+    sportmonksEnabled()
+  ) {
     try {
       let fixtureId = id;
       if (key === 'liga-mx' && (looksLikeEspnEventId(id) || id.startsWith('static-'))) {
@@ -372,7 +377,7 @@ async function getMatchUncached(league: string, id: string): Promise<MatchSnapsh
     }
   }
 
-  if (key === 'leagues-cup') return null;
+  if (key === 'leagues-cup' || key === 'liga-mx-femenil') return null;
   return fromEspn(key, id);
 }
 
@@ -381,7 +386,10 @@ async function getMatchTickUncached(
   id: string
 ): Promise<MatchSnapshot | null> {
   const key = normalizeLeague(league);
-  if ((key !== 'liga-mx' && key !== 'leagues-cup') || !sportmonksEnabled()) {
+  if (
+    (key !== 'liga-mx' && key !== 'liga-mx-femenil' && key !== 'leagues-cup') ||
+    !sportmonksEnabled()
+  ) {
     return getMatchUncached(league, id);
   }
 
@@ -392,9 +400,11 @@ async function getMatchTickUncached(
       if (resolved) fixtureId = resolved;
     }
 
+    const dateLeagueIds =
+      key === 'liga-mx-femenil' ? [ligaMxFemenilLeagueId()] : livingRoomLeagueIds();
     const dated =
-      (await fixtureFromDateBoards(fixtureId)) ??
-      (fixtureId !== id ? await fixtureFromDateBoards(id) : null);
+      (await fixtureFromDateBoards(fixtureId, dateLeagueIds)) ??
+      (fixtureId !== id ? await fixtureFromDateBoards(id, dateLeagueIds) : null);
 
     // Date boards are a long-TTL schedule dump — they often stay `pre` after
     // kickoff. Only skip the fixture GET for a match that cannot be live yet.
@@ -435,12 +445,15 @@ export const getMatch = cache(getMatchUncached);
 /** Lean live tick (scores/clock/events). */
 export const getMatchTick = cache(getMatchTickUncached);
 
-async function fixtureFromDateBoards(id: string): Promise<MatchSnapshot | null> {
+async function fixtureFromDateBoards(
+  id: string,
+  leagueIds: number[] = livingRoomLeagueIds()
+): Promise<MatchSnapshot | null> {
   const dayKey = mexicoDayKey();
   const keys = [dayKey, shiftDayKey(dayKey, 1), shiftDayKey(dayKey, 2)];
   try {
     const boards = await Promise.all(
-      keys.map((k) => fetchFixturesByDate(k, livingRoomLeagueIds()))
+      keys.map((k) => fetchFixturesByDate(k, leagueIds))
     );
     const hit = boards.flat().find((f) => f.id === id);
     if (!hit) return null;
@@ -454,25 +467,30 @@ async function getMatchContextoUncached(
   league: string,
   id: string
 ): Promise<MatchContexto | null> {
-  const indexed = findAperturaFixture(id);
-  const homeId = indexed ? smTeamIdFromAbbr(indexed.home.abbreviation) : null;
-  const awayId = indexed ? smTeamIdFromAbbr(indexed.away.abbreviation) : null;
-  if (indexed && homeId && awayId) {
-    const live =
-      peekMatch(league, indexed.id)?.state === 'in' ||
-      peekMatch(league, id)?.state === 'in';
-    return fetchMatchContexto(
-      homeId,
-      awayId,
-      indexed.home.abbreviation,
-      indexed.away.abbreviation,
-      live
-    );
+  const key = normalizeLeague(league);
+  if (key !== 'liga-mx-femenil') {
+    const indexed = findAperturaFixture(id);
+    const homeId = indexed ? smTeamIdFromAbbr(indexed.home.abbreviation) : null;
+    const awayId = indexed ? smTeamIdFromAbbr(indexed.away.abbreviation) : null;
+    if (indexed && homeId && awayId) {
+      const live =
+        peekMatch(league, indexed.id)?.state === 'in' ||
+        peekMatch(league, id)?.state === 'in';
+      return fetchMatchContexto(
+        homeId,
+        awayId,
+        indexed.home.abbreviation,
+        indexed.away.abbreviation,
+        live
+      );
+    }
   }
 
+  const dateLeagueIds =
+    key === 'liga-mx-femenil' ? [ligaMxFemenilLeagueId()] : livingRoomLeagueIds();
   const snap =
     peekMatch(league, id) ??
-    (await fixtureFromDateBoards(id)) ??
+    (await fixtureFromDateBoards(id, dateLeagueIds)) ??
     (await getMatchTickUncached(league, id));
   if (!snap) return null;
   if (snap.home.id === 'home' || snap.away.id === 'away') return null;

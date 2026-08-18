@@ -31,15 +31,19 @@ export {
   fetchClubForm,
   ligaMxLeagueId,
   ligaMxSeasonId,
+  ligaMxFemenilLeagueId,
+  ligaMxFemenilSeasonId,
   leaguesCupLeagueId,
   leaguesCupSeasonId,
   livingRoomLeagueIds,
   fetchLigaMxSeasonFixtures,
+  fetchLigaMxFemenilSeasonFixtures,
   fetchLeaguesCupSeasonFixtures,
   fetchFixturesByDate,
   fetchLivescores,
   overlayLiveFixtures,
   fetchLigaMxStandings,
+  fetchLigaMxFemenilStandings,
   fetchLeaguesCupStandings,
 } from './sportmonks';
 export { getClubBoard } from './clubBoard';
@@ -61,4 +65,8 @@ export {
 export type { LcStandingEntry, LcStandingsPayload } from './leaguesCupStandings';
 export { involvesLigaMxClub, isLigaMxSmTeamId } from './ligaMxTeams';
 export { fetchLigaMxFixtures } from './espnFallback';
+export {
+  fetchLigaMxFemenilFixtures,
+  fetchLigaMxFemenilLeaders,
+} from './ligaMxFemenilBoard';
 export { getSmRateSnapshot, sportmonksPlan, softHourlyLimit } from './smRateLimit';

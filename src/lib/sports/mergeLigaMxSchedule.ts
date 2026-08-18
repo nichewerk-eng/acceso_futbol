@@ -10,7 +10,7 @@ import type { Fixture } from './types';
 export type LigaMxScheduleFixture = {
   id: string;
   date: string;
-  league: 'liga-mx';
+  league: 'liga-mx' | 'liga-mx-femenil';
   jornada: string | null;
   status: {
     completed: boolean;
@@ -45,7 +45,7 @@ export function fixtureToLigaMxSchedule(f: Fixture): LigaMxScheduleFixture {
   return {
     id: f.id,
     date: f.date,
-    league: 'liga-mx',
+    league: f.league === 'liga-mx-femenil' ? 'liga-mx-femenil' : 'liga-mx',
     jornada: f.jornada ?? null,
     status: {
       completed: f.state === 'post',

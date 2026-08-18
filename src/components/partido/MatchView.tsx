@@ -57,8 +57,18 @@ export default function MatchView({ league, id }: Props) {
     });
   }, [data, league, id]);
 
-  const backHref = league === 'liga-mx' ? '/liga-mx' : '/tabla';
-  const backLabel = league === 'liga-mx' ? 'Liga MX' : 'Mundial 2026';
+  const backHref =
+    league === 'liga-mx-femenil'
+      ? '/liga-mx-femenil'
+      : league === 'liga-mx'
+        ? '/liga-mx'
+        : '/tabla';
+  const backLabel =
+    league === 'liga-mx-femenil'
+      ? 'Liga MX Femenil'
+      : league === 'liga-mx'
+        ? 'Liga MX'
+        : 'Mundial 2026';
 
   if (loading) return (
     <div className="flex min-h-screen items-center justify-center bg-[#f0f6f6] dark:bg-bg-1">

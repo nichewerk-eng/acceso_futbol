@@ -22,7 +22,7 @@ export async function GET(
   { params }: { params: Promise<{ league: string; id: string }> }
 ) {
   const { league, id } = await params;
-  if (!['liga-mx', 'mundial', 'seleccion', 'leagues-cup'].includes(league)) {
+  if (!['liga-mx', 'liga-mx-femenil', 'mundial', 'seleccion', 'leagues-cup'].includes(league)) {
     return NextResponse.json({ error: 'invalid_league' }, { status: 400 });
   }
 

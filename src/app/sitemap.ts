@@ -6,6 +6,7 @@ import { siteConfig } from '@/config/site';
 import {
   fetchLeaguesCupSeasonFixtures,
   fetchLigaMxSeasonFixtures,
+  fetchLigaMxFemenilSeasonFixtures,
   involvesLigaMxClub,
   sportmonksEnabled,
 } from '@/lib/sports';
@@ -24,6 +25,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: now,
       changeFrequency: 'hourly',
       priority: 0.95,
+    },
+    {
+      url: `${siteConfig.url}/liga-mx-femenil`,
+      lastModified: now,
+      changeFrequency: 'hourly',
+      priority: 0.9,
     },
     {
       url: `${siteConfig.url}/toma`,
@@ -105,14 +112,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   if (!sportmonksEnabled()) return entries;
 
   try {
-    const [liga, cup] = await Promise.all([
+    const [liga, femenil, cup] = await Promise.all([
       fetchLigaMxSeasonFixtures().catch(() => []),
+      fetchLigaMxFemenilSeasonFixtures().catch(() => []),
       fetchLeaguesCupSeasonFixtures().catch(() => []),
     ]);
 
     const seen = new Set<string>();
     for (const f of liga) {
       const url = `${siteConfig.url}/partido/liga-mx/${f.id}`;
+      if (seen.has(url)) continue;
+      seen.add(url);
+      entries.push({
+        url,
+        lastModified: new Date(f.date),
+        changeFrequency: f.state === 'in' ? 'always' : 'daily',
+        priority: f.state === 'in' ? 0.95 : f.state === 'pre' ? 0.8 : 0.55,
+      });
+    }
+    for (const f of femenil) {
+      const url = `${siteConfig.url}/partido/liga-mx-femenil/${f.id}`;
       if (seen.has(url)) continue;
       seen.add(url);
       entries.push({

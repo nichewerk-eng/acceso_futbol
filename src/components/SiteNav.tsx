@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 const NAV_LINKS = [
   { href: '/', label: 'Pulso' },
   { href: '/liga-mx', label: 'Liga MX' },
+  { href: '/liga-mx-femenil', label: 'Femenil' },
   { href: '/leagues-cup', label: 'Leagues Cup' },
 ];
 

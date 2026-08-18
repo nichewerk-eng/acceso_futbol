@@ -1,6 +1,12 @@
 import { getCache, peekCacheAgeMs, setCache, singleFlight } from '@/lib/apiCache';
 import { FRESH } from './freshness';
 import { dayPairKey, scheduleAbbr } from './ligaMxAbbr';
+import {
+  femenilTeamAbbr,
+  femenilTeamName,
+  splitFemenilStandings,
+  type FemenilStandingGroup,
+} from './ligaMxFemenil';
 import { localizeComment } from './localizeComment';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
 import { smFetch } from './sm/client';
@@ -24,6 +30,7 @@ import type {
 } from './types';
 
 const SEASON_CACHE_KEY = 'sm-ligamx-season-fixtures-v6-states';
+const FEM_SEASON_CACHE_KEY = 'sm-ligamx-femenil-season-fixtures-v1-states';
 const LC_SEASON_CACHE_KEY = 'sm-leagues-cup-season-fixtures-v3-states';
 const LIVE_CACHE_KEY = 'sm-livescores-v7-states';
 /** Hot-path livescores: type_id locally; state_id via refs. */
@@ -40,6 +47,7 @@ const SEASON_TTL_MS = LANE.catalog.memTtlMs;
 const LIVE_TTL_MS = LANE.live.memTtlMs;
 const DATE_TTL_MS = LANE.board.memTtlMs;
 const STANDINGS_CACHE_KEY = 'sm-ligamx-standings-v1';
+const FEM_STANDINGS_CACHE_KEY = 'sm-ligamx-femenil-standings-v2-groups';
 const STANDINGS_TTL_MS = FRESH.standingsTtlMs;
 const FORM_TTL_MS = 30 * 60_000;
 const H2H_TTL_MS = 30 * 60_000;
@@ -52,6 +60,16 @@ export function ligaMxLeagueId(): number {
 /** Apertura 2026 / season 2026-2027. */
 export function ligaMxSeasonId(): number {
   return 28009;
+}
+
+/** Sportmonks Liga MX Femenil (Liga Mx Women). */
+export function ligaMxFemenilLeagueId(): number {
+  return 1579;
+}
+
+/** Liga MX Femenil Apertura 2026 / season 2026-2027. */
+export function ligaMxFemenilSeasonId(): number {
+  return 28036;
 }
 
 /** Sportmonks Leagues Cup league id (MLS × Liga MX). */
@@ -71,6 +89,7 @@ export function livingRoomLeagueIds(): number[] {
 
 function mapLeagueId(leagueId?: number | null): Fixture['league'] {
   if (leagueId === leaguesCupLeagueId()) return 'leagues-cup';
+  if (leagueId === ligaMxFemenilLeagueId()) return 'liga-mx-femenil';
   if (leagueId === ligaMxLeagueId()) return 'liga-mx';
   return 'liga-mx';
 }
@@ -370,9 +389,23 @@ export function mapFixture(f: SmFixture): Fixture {
   const rawHome = (homeP?.short_code ?? 'LOC').toUpperCase();
   const rawAway = (awayP?.short_code ?? 'VIS').toUpperCase();
   const homeAbbr =
-    league === 'leagues-cup' && rawHome === 'CHI' ? 'CHI' : scheduleAbbr(rawHome);
+    league === 'liga-mx-femenil'
+      ? femenilTeamAbbr(homeP?.short_code, homeP?.name)
+      : league === 'leagues-cup' && rawHome === 'CHI'
+        ? 'CHI'
+        : scheduleAbbr(rawHome);
   const awayAbbr =
-    league === 'leagues-cup' && rawAway === 'CHI' ? 'CHI' : scheduleAbbr(rawAway);
+    league === 'liga-mx-femenil'
+      ? femenilTeamAbbr(awayP?.short_code, awayP?.name)
+      : league === 'leagues-cup' && rawAway === 'CHI'
+        ? 'CHI'
+        : scheduleAbbr(rawAway);
+  const homeName =
+    league === 'liga-mx-femenil' ? femenilTeamName(homeP?.name ?? 'Local') : (homeP?.name ?? 'Local');
+  const awayName =
+    league === 'liga-mx-femenil'
+      ? femenilTeamName(awayP?.name ?? 'Visitante')
+      : (awayP?.name ?? 'Visitante');
   const date = f.starting_at ? `${f.starting_at.replace(' ', 'T')}Z` : new Date().toISOString();
   const clock = clockFromFixture(f, state);
 
@@ -405,16 +438,16 @@ export function mapFixture(f: SmFixture): Fixture {
     scorers: scorers.length ? scorers : undefined,
     home: {
       id: homeId,
-      name: homeP?.name ?? 'Local',
+      name: homeName,
       abbreviation: homeAbbr,
-      logo: homeP?.image_path,
+      logo: playerPhoto(homeP?.image_path),
       score: state === 'pre' ? null : homeScore,
     },
     away: {
       id: awayId,
-      name: awayP?.name ?? 'Visitante',
+      name: awayName,
       abbreviation: awayAbbr,
-      logo: awayP?.image_path,
+      logo: playerPhoto(awayP?.image_path),
       score: state === 'pre' ? null : awayScore,
     },
   };
@@ -778,6 +811,28 @@ export async function fetchLigaMxSeasonFixtures(): Promise<Fixture[]> {
       'catalog'
     );
     return (data.data?.fixtures ?? []).map(mapFixture);
+  });
+}
+
+/** Full current Liga MX Femenil season via season include. */
+export async function fetchLigaMxFemenilSeasonFixtures(): Promise<Fixture[]> {
+  return singleFlight(FEM_SEASON_CACHE_KEY, SEASON_TTL_MS, async () => {
+    const data = await smFetch<{ data?: { fixtures?: SmFixture[] } }>(
+      `/seasons/${ligaMxFemenilSeasonId()}`,
+      {
+        include:
+          'fixtures.participants;fixtures.scores;fixtures.state;fixtures.round;fixtures.venue;fixtures.league;fixtures.events.type',
+      },
+      'catalog'
+    );
+    return (data.data?.fixtures ?? []).map((f) =>
+      mapFixture({
+        ...f,
+        league: f.league?.id
+          ? f.league
+          : { id: ligaMxFemenilLeagueId(), name: 'Liga MX Femenil' },
+      })
+    );
   });
 }
 
@@ -1171,6 +1226,74 @@ async function loadLigaMxStandings(): Promise<{
     .sort((a, b) => a.position - b.position);
 
   return { season: 'Apertura 2026', entries };
+}
+
+export async function fetchLigaMxFemenilStandings(): Promise<{
+  season: string;
+  entries: SmStandingEntry[];
+  groups: FemenilStandingGroup<SmStandingEntry>[];
+}> {
+  return singleFlight(FEM_STANDINGS_CACHE_KEY, STANDINGS_TTL_MS, loadLigaMxFemenilStandings);
+}
+
+async function loadLigaMxFemenilStandings(): Promise<{
+  season: string;
+  entries: SmStandingEntry[];
+  groups: FemenilStandingGroup<SmStandingEntry>[];
+}> {
+  const data = await smFetch<{
+    data?: {
+      position?: number;
+      points?: number;
+      participant?: {
+        id?: number;
+        name?: string;
+        short_code?: string;
+        image_path?: string;
+      };
+      details?: { value?: number; type?: { developer_name?: string; code?: string } }[];
+    }[];
+  }>(`/standings/seasons/${ligaMxFemenilSeasonId()}`, {
+    include: 'participant;details.type',
+  }, 'catalog');
+
+  const entries: SmStandingEntry[] = (data.data ?? [])
+    .map((row) => {
+      const gp = detailValue(row.details, ['OVERALL_MATCHES']);
+      const w = detailValue(row.details, ['OVERALL_WINS']);
+      const d = detailValue(row.details, ['OVERALL_DRAWS']);
+      const l = detailValue(row.details, ['OVERALL_LOST']);
+      const gf = detailValue(row.details, ['OVERALL_SCORED']);
+      const ga = detailValue(row.details, ['OVERALL_CONCEDED']);
+      const gd = detailValue(row.details, ['OVERALL_GOAL_DIFFERENCE']);
+      const pts = detailValue(row.details, ['TOTAL_POINTS']) || Number(row.points ?? 0);
+      const rawName = row.participant?.name ?? '';
+      return {
+        position: Number(row.position ?? 0),
+        team: {
+          id: String(row.participant?.id ?? ''),
+          name: femenilTeamName(rawName),
+          abbreviation: femenilTeamAbbr(row.participant?.short_code, rawName),
+          logo: playerPhoto(row.participant?.image_path),
+        },
+        gp,
+        w,
+        d,
+        l,
+        gf,
+        ga,
+        gd: String(gd),
+        pts,
+      };
+    })
+    .sort((a, b) => a.position - b.position);
+
+  const groups = splitFemenilStandings(entries);
+  return {
+    season: 'Apertura 2026',
+    entries: groups.flatMap((g) => g.entries),
+    groups,
+  };
 }
 
 const LC_STANDINGS_CACHE_KEY = 'sm-leagues-cup-standings-v1';

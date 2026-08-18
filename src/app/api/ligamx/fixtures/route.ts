@@ -82,7 +82,7 @@ export async function GET() {
 export interface LigaMXFixture {
   id: string;
   date: string;
-  league: 'liga-mx';
+  league: 'liga-mx' | 'liga-mx-femenil';
   jornada: string | null;
   status: {
     completed: boolean;

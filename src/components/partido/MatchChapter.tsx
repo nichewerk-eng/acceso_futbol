@@ -6,6 +6,7 @@ import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { LeaguesCupMark } from '@/components/brand/LeaguesCupMark';
 import { LigaMxMark } from '@/components/brand/LigaMxMark';
+import { LigaMxFemenilMark } from '@/components/brand/LigaMxFemenilMark';
 import { PulseNav } from '@/components/living-room/PulseNav';
 import type { LigaMXEntry, LigaMXTable } from '@/app/api/ligamx/standings/route';
 import type {
@@ -367,10 +368,12 @@ function MatchTabla({
   entries,
   homeAbbr,
   awayAbbr,
+  hubPath,
 }: {
   entries: LigaMXEntry[];
   homeAbbr: string;
   awayAbbr: string;
+  hubPath: string;
 }) {
   const home = scheduleAbbr(homeAbbr);
   const away = scheduleAbbr(awayAbbr);
@@ -379,7 +382,7 @@ function MatchTabla({
     <aside className="match-tabla" aria-label="Tabla Liga MX">
       <div className="match-tabla-head">
         <p className="af-tele match-contexto-label">Tabla</p>
-        <Link href="/liga-mx" className="match-tabla-link">
+        <Link href={hubPath} className="match-tabla-link">
           Completa →
         </Link>
       </div>
@@ -676,12 +679,14 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
   }, [league, id]);
 
   useEffect(() => {
-    if (league !== 'liga-mx') {
+    if (league !== 'liga-mx' && league !== 'liga-mx-femenil') {
       setTabla(null);
       return;
     }
     let cancelled = false;
-    fetch('/api/ligamx/standings')
+    const standingsApi =
+      league === 'liga-mx-femenil' ? '/api/ligamx-femenil/standings' : '/api/ligamx/standings';
+    fetch(standingsApi)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((d: LigaMXTable) => {
         if (!cancelled && Array.isArray(d.entries)) setTabla(d.entries);
@@ -697,17 +702,21 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
   const back =
     league === 'leagues-cup'
       ? '/leagues-cup'
-      : league === 'liga-mx' || league === 'seleccion'
-        ? '/#jornada'
-        : '/';
+      : league === 'liga-mx-femenil'
+        ? '/liga-mx-femenil'
+        : league === 'liga-mx' || league === 'seleccion'
+          ? '/#jornada'
+          : '/';
   const backLabel =
     league === 'seleccion'
       ? 'El Tri'
       : league === 'leagues-cup'
         ? 'Leagues Cup'
-        : league === 'liga-mx'
-          ? 'Liga MX'
-          : 'Pulso';
+        : league === 'liga-mx-femenil'
+          ? 'Liga MX Femenil'
+          : league === 'liga-mx'
+            ? 'Liga MX'
+            : 'Pulso';
 
   const tabs = useMemo(() => {
     if (!match) return [] as { id: TabId; label: string }[];
@@ -779,6 +788,9 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
               {league === 'liga-mx' ? (
                 <LigaMxMark size="sm" className="match-hero-lm-mark" />
               ) : null}
+              {league === 'liga-mx-femenil' ? (
+                <LigaMxFemenilMark size="md" className="match-hero-lm-femenil-mark" />
+              ) : null}
               <p className="af-tele match-hero-path">
                 AF://CAPÍTULO
                 {match.jornada ? ` · ${match.jornada}` : ''}
@@ -793,11 +805,13 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
               : ''}
             {league === 'leagues-cup'
               ? ' · Leagues Cup'
-              : league === 'liga-mx'
-                ? ' · Liga MX'
-                : league === 'seleccion'
-                  ? ' · El Tri'
-                  : ''}
+              : league === 'liga-mx-femenil'
+                ? ' · Liga MX Femenil'
+                : league === 'liga-mx'
+                  ? ' · Liga MX'
+                  : league === 'seleccion'
+                    ? ' · El Tri'
+                    : ''}
           </h1>
           <p className="match-chapter-kicker" aria-hidden>
             {chapterKicker(match)}
@@ -1007,6 +1021,7 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
                   entries={tabla}
                   homeAbbr={match.home.abbreviation}
                   awayAbbr={match.away.abbreviation}
+                  hubPath={back.startsWith('/liga-mx') ? back : '/liga-mx'}
                 />
               )}
             </div>

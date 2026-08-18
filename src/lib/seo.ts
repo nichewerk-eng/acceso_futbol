@@ -12,6 +12,8 @@ export function leagueLabel(league: string): string {
   switch (league) {
     case 'liga-mx':
       return 'Liga MX';
+    case 'liga-mx-femenil':
+      return 'Liga MX Femenil';
     case 'seleccion':
       return 'El Tri';
     case 'leagues-cup':
@@ -43,6 +45,7 @@ export function organizationJsonLd() {
     areaServed: ['MX', 'US'],
     knowsAbout: [
       'Liga MX',
+      'Liga MX Femenil',
       'Leagues Cup',
       'Selección Mexicana',
       'FIFA World Cup 2026',

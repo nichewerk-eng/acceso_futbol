@@ -133,9 +133,11 @@ function Table({
 export function GoleoTabla({
   board,
   isMine,
+  sourceNote = 'fuente ESPN.',
 }: {
   board: GoleoBoard | null;
   isMine: (abbr?: string) => boolean;
+  sourceNote?: string;
 }) {
   if (!board || (!board.goals.length && !board.assists.length)) {
     return (
@@ -165,7 +167,7 @@ export function GoleoTabla({
         isMine={isMine}
       />
       <p className="font-mono text-[11px] leading-5 text-muted">
-        {board.seasonLabel} · fuente ESPN.
+        {board.seasonLabel} · {sourceNote}
       </p>
     </div>
   );

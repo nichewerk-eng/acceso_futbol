@@ -47,6 +47,7 @@ export interface LigaMXEntry {
 export interface LigaMXTable {
   season: string;
   entries: LigaMXEntry[];
+  groups?: { id: string; name: string; entries: LigaMXEntry[] }[];
   source?: 'sportmonks' | 'espn';
   stale?: boolean;
 }

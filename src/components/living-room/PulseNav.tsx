@@ -11,13 +11,14 @@ const LINKS = [
   { href: '/', label: 'Pulso' },
   { href: '/donde-ver', label: 'Dónde ver' },
   { href: '/liga-mx', label: 'Liga MX' },
+  { href: '/liga-mx-femenil', label: 'Femenil' },
   { href: '/quiniela', label: 'Quiniela' },
   { href: '/leagues-cup', label: 'Leagues Cup' },
 ];
 
 function linkActive(pathname: string, href: string) {
   if (href === '/') return pathname === '/';
-  return pathname.startsWith(href);
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export function PulseNav() {

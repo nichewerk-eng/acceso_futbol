@@ -657,6 +657,11 @@ body {
   height: auto;
 }
 
+.lm-femenil-hero-mark {
+  width: clamp(8.5rem, 28vw, 13rem);
+  height: auto;
+}
+
 .match-hero-meta-end {
   display: flex;
   flex-direction: column;
@@ -673,6 +678,12 @@ body {
 
 .match-hero-lm-mark {
   width: 2rem;
+  height: auto;
+  opacity: 0.95;
+}
+
+.match-hero-lm-femenil-mark {
+  width: 3.25rem;
   height: auto;
   opacity: 0.95;
 }

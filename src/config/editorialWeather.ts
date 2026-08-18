@@ -27,8 +27,8 @@ const ROTATION: EditorialWeather[] = [
     tag: 'Femenil',
     headline: 'Liga MX Femenil también es Acceso.',
     body: 'Mismos estándares de urgencia y narrativa. El juego mexicano completo, no solo la tabla de los 18.',
-    ctaLabel: 'Ver momentos',
-    ctaHref: '/#toma',
+    ctaLabel: 'Ver Femenil',
+    ctaHref: '/liga-mx-femenil',
   },
 ];
 

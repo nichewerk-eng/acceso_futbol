@@ -277,6 +277,9 @@ export function resolveDondeVer(
   usChannels: TvChannelId[];
   confirmed: boolean;
 } {
+  if (fixture.league === 'liga-mx-femenil') {
+    return { ...UNCONFIRMED };
+  }
   const known = GUIDE[pairKey(fixture.date, fixture.home.abbreviation, fixture.away.abbreviation)];
   if (known) {
     return {

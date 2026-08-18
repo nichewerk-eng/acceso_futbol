@@ -22,6 +22,7 @@ export const revalidate = 30;
 
 function leagueHubPath(league: string): string {
   if (league === 'leagues-cup') return '/leagues-cup';
+  if (league === 'liga-mx-femenil') return '/liga-mx-femenil';
   if (league === 'liga-mx') return '/liga-mx';
   return '/';
 }
