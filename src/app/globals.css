@@ -7036,8 +7036,9 @@ a.lead-team:hover {
 @media (min-width: 900px) {
   .once-grid {
     grid-template-columns: minmax(0, 1fr) 14.5rem;
+    max-width: 64rem;
     align-items: start;
-    gap: 1.25rem;
+    gap: 1.5rem;
   }
 }
 
