@@ -9,7 +9,7 @@ export function HeroSection() {
   return (
     <section className="relative overflow-hidden border-b border-white/10">
       <div className="pointer-events-none absolute inset-0 broadcast-glow" />
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent_0%,rgba(3,15,16,0.4)_60%,#030f10_100%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent_0%,rgba(30,34,61,0.4)_60%,#1e223d_100%)]" />
 
       <div className="relative mx-auto grid w-full max-w-6xl gap-12 px-6 py-16 sm:py-24 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-center lg:gap-8">
         <div className="flex flex-col gap-10">
@@ -50,7 +50,7 @@ export function HeroSection() {
             />
             <a
               href="#tiktok"
-              className="inline-flex items-center justify-center rounded-sm border border-white/20 px-8 py-4 font-display text-sm font-semibold uppercase tracking-[0.15em] text-white transition hover:border-brand-teal hover:text-brand-teal"
+              className="inline-flex items-center justify-center rounded-sm border border-brand-orange px-8 py-4 font-display text-sm font-semibold uppercase tracking-[0.15em] text-brand-orange transition hover:bg-brand-orange hover:text-white"
             >
               Ver contenido
             </a>

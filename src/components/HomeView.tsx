@@ -49,9 +49,9 @@ export default function HomeView({ fixtures }: Props) {
   const rival   = game ? (mexHome ? game.away : game.home) : null;
 
   return (
-    <div className="min-h-screen bg-gray-900 dark:bg-[#080d12] font-display">
+    <div className="min-h-screen bg-brand-blue font-display">
       {/* Ambient glow */}
-      <div className="pointer-events-none fixed inset-0" style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(26,122,120,0.25) 0%, transparent 60%)' }} />
+      <div className="pointer-events-none fixed inset-0" style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(3,83,82,0.25) 0%, transparent 60%)' }} />
 
       <div className="relative flex min-h-[calc(100vh-60px)] flex-col items-center justify-center px-4 py-16 text-center sm:py-24">
 
@@ -142,11 +142,11 @@ export default function HomeView({ fixtures }: Props) {
         {/* CTAs */}
         <div className="flex flex-wrap justify-center gap-3">
           <Link href="/liga-mx"
-            className="rounded-xl bg-brand-orange px-6 py-3 text-sm font-bold text-white shadow-[0_0_24px_rgba(240,120,32,0.35)] transition hover:bg-brand-orange/90">
+            className="rounded-xl bg-brand-orange px-6 py-3 text-sm font-bold text-white shadow-[0_0_24px_rgba(245,79,27,0.35)] transition hover:bg-brand-orange/90">
             Liga MX
           </Link>
           <Link href="/"
-            className="rounded-xl border border-white/10 bg-white/5 px-6 py-3 text-sm font-bold text-white/70 transition hover:bg-white/10 hover:text-white">
+            className="rounded-xl border border-brand-orange px-6 py-3 text-sm font-bold text-brand-orange transition hover:bg-brand-orange hover:text-white">
             Pulso
           </Link>
         </div>

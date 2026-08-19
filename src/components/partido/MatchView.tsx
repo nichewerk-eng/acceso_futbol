@@ -71,7 +71,7 @@ export default function MatchView({ league, id }: Props) {
         : 'Mundial 2026';
 
   if (loading) return (
-    <div className="flex min-h-screen items-center justify-center bg-[#f0f6f6] dark:bg-bg-1">
+    <div className="flex min-h-screen items-center justify-center bg-bg-1 dark:bg-bg-1">
       <div className="text-center">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-orange border-t-transparent mx-auto" />
         <p className="mt-3 text-xs text-gray-400 dark:text-white/30">Cargando partido…</p>
@@ -80,7 +80,7 @@ export default function MatchView({ league, id }: Props) {
   );
 
   if (error || !data) return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#f0f6f6] dark:bg-bg-1">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-bg-1 dark:bg-bg-1">
       <p className="text-sm text-gray-500 dark:text-white/40">No se pudo cargar la información del partido.</p>
       <Link href={backHref} className="text-sm text-brand-orange hover:underline">← Volver a {backLabel}</Link>
     </div>
@@ -91,11 +91,11 @@ export default function MatchView({ league, id }: Props) {
   const isDone = header.status.state === 'post';
 
   return (
-    <div className="min-h-screen bg-[#f0f6f6] dark:bg-bg-1 font-display text-gray-900 dark:text-white">
+    <div className="min-h-screen bg-bg-1 dark:bg-bg-1 font-display text-brand-blue dark:text-white">
 
       {/* ── Match hero ── */}
-      <div className="relative overflow-hidden bg-gray-900 dark:bg-[#080d12] px-4 pt-6 pb-8">
-        <div className="pointer-events-none absolute inset-0 opacity-20" style={{ background: 'radial-gradient(ellipse 60% 80% at 50% -20%, #f07820 0%, transparent 70%)' }} />
+      <div className="relative overflow-hidden bg-brand-blue px-4 pt-6 pb-8">
+        <div className="pointer-events-none absolute inset-0 opacity-20" style={{ background: 'radial-gradient(ellipse 60% 80% at 50% -20%, #f54f1b 0%, transparent 70%)' }} />
 
         {/* Back link */}
         <div className="relative mx-auto max-w-5xl mb-6">
@@ -165,7 +165,7 @@ export default function MatchView({ league, id }: Props) {
           {(['resumen', 'estadisticas', 'alineaciones', 'eventos'] as const).map((t) => (
             <button key={t} onClick={() => setTab(t)}
               className={['shrink-0 rounded-lg px-4 py-1.5 text-xs font-bold tracking-wide transition-all',
-                tab === t ? 'bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-400 dark:text-white/40 hover:text-gray-700 dark:hover:text-white/70'].join(' ')}>
+                tab === t ? 'bg-brand-orange text-white shadow-sm' : 'text-gray-400 dark:text-white/40 hover:text-brand-orange'].join(' ')}>
               {t === 'resumen' ? 'Resumen' : t === 'estadisticas' ? 'Estadísticas' : t === 'alineaciones' ? 'Alineaciones' : 'Eventos'}
             </button>
           ))}
@@ -186,7 +186,7 @@ export default function MatchView({ league, id }: Props) {
                       {p.period}P {p.clock}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-gray-900 dark:text-white">{p.type}</p>
+                      <p className="text-xs font-semibold text-brand-blue dark:text-white">{p.type}</p>
                       <p className="text-xs text-gray-400 dark:text-white/40 mt-0.5 line-clamp-2">{p.text}</p>
                     </div>
                     {p.teamAbbr && <span className="shrink-0 text-sm">{flag(p.teamAbbr)}</span>}
@@ -204,9 +204,9 @@ export default function MatchView({ league, id }: Props) {
               <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.03]">
                 {/* Header */}
                 <div className="grid grid-cols-3 border-b border-gray-100 dark:border-white/[0.04] px-5 py-3">
-                  <span className="text-xs font-bold text-gray-900 dark:text-white">{teamNameEs(header.home.name)}</span>
+                  <span className="text-xs font-bold text-brand-blue dark:text-white">{teamNameEs(header.home.name)}</span>
                   <span className="text-center text-[10px] text-gray-400 dark:text-white/30 uppercase tracking-wider">Estadística</span>
-                  <span className="text-right text-xs font-bold text-gray-900 dark:text-white">{teamNameEs(header.away.name)}</span>
+                  <span className="text-right text-xs font-bold text-brand-blue dark:text-white">{teamNameEs(header.away.name)}</span>
                 </div>
                 {stats.map((s, i) => {
                   const hv = Number(s.home) || 0;

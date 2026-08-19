@@ -21,7 +21,7 @@ export function TikTokFollowButton({
       href={profileUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className={`inline-flex items-center justify-center gap-3 rounded-sm bg-brand-orange font-display font-bold uppercase text-white shadow-[0_0_32px_rgba(240,120,32,0.35)] transition hover:bg-brand-orange-dark hover:shadow-[0_0_40px_rgba(240,120,32,0.5)] ${sizeClasses} ${className}`}
+      className={`inline-flex items-center justify-center gap-3 rounded-sm bg-brand-orange font-display font-bold uppercase text-white shadow-[0_0_32px_rgba(245,79,27,0.35)] transition hover:bg-brand-orange-dark hover:shadow-[0_0_40px_rgba(245,79,27,0.5)] ${sizeClasses} ${className}`}
     >
       <TikTokIcon />
       Seguir @{username}

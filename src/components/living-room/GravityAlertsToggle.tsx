@@ -34,7 +34,7 @@ export function GravityAlertsToggle({
       data-testid={testId}
       className={[
         'font-mono text-[10px] font-semibold uppercase tracking-[0.16em] transition',
-        on ? 'text-signal' : 'text-muted hover:text-foreground',
+        on ? 'text-signal' : 'text-signal/70 hover:text-signal',
         className,
       ]
         .filter(Boolean)

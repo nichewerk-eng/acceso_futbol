@@ -165,7 +165,7 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
   const dark = theme === 'dark';
 
   return (
-    <div className={`${dark ? 'dark' : ''} min-h-screen font-display transition-colors duration-300 bg-[#f0f6f6] dark:bg-bg-1 text-gray-900 dark:text-white`}>
+    <div className={`${dark ? 'dark' : ''} min-h-screen font-display transition-colors duration-300 bg-bg-1 dark:bg-bg-1 text-brand-blue dark:text-white`}>
 
       {/* ── STICKY NAVBAR ─────────────────────────────────────────────────────── */}
       <nav className="sticky top-0 z-50 border-b border-gray-200/80 dark:border-white/[0.06] bg-white/95 dark:bg-bg-1/95 backdrop-blur-md">
@@ -192,14 +192,14 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
               href="https://www.tiktok.com/@accesofutbolmx"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:flex items-center gap-1.5 rounded-lg bg-brand-orange px-3 py-1.5 text-xs font-bold text-white shadow-[0_0_16px_rgba(240,120,32,0.3)] hover:bg-brand-orange/90 transition"
+              className="hidden sm:flex items-center gap-1.5 rounded-lg bg-brand-orange px-3 py-1.5 text-xs font-bold text-white shadow-[0_0_16px_rgba(245,79,27,0.3)] hover:bg-brand-orange/90 transition"
             >
               <TikTokIcon />
               Seguir
             </a>
             <button
               onClick={toggleTheme}
-              className="flex h-8 w-8 items-center justify-center rounded-xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-white/5 transition hover:border-brand-orange/50"
+            className="flex h-8 w-8 items-center justify-center rounded-xl border border-brand-orange/50 bg-white dark:bg-white/5 text-brand-orange transition hover:bg-brand-orange hover:text-white"
               aria-label={dark ? 'Modo claro' : 'Modo oscuro'}
             >
               {dark ? <SunIcon /> : <MoonIcon />}
@@ -208,7 +208,7 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
         </div>
 
         {/* Brand gradient rule */}
-        <div className="h-px" style={{ background: 'linear-gradient(to right, rgba(240,120,32,0.5), rgba(255,255,255,0.04), rgba(26,122,120,0.5))' }} />
+        <div className="h-px" style={{ background: 'linear-gradient(to right, rgba(245,79,27,0.5), rgba(255,255,255,0.04), rgba(3,83,82,0.5))' }} />
       </nav>
 
       {/* ── SHARED HERO BANNER ────────────────────────────────────────────────── */}
@@ -259,11 +259,11 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
                         'relative rounded-lg px-2.5 sm:px-3.5 py-1.5 text-sm font-semibold tracking-wider transition-all duration-200',
                         active
                           ? 'bg-brand-orange text-white shadow-lg'
-                          : 'text-gray-500 dark:text-white/50 hover:text-gray-900 dark:hover:text-white hover:bg-white dark:hover:bg-white/10',
+                          : 'text-gray-500 dark:text-white/50 hover:text-brand-blue dark:hover:text-white hover:bg-white dark:hover:bg-white/10',
                       ].join(' ')}
                     >
                       {active && (
-                        <span className="absolute inset-0 rounded-lg opacity-30 blur-md" style={{ background: '#f07820' }} />
+                        <span className="absolute inset-0 rounded-lg opacity-30 blur-md" style={{ background: '#f54f1b' }} />
                       )}
                       <span className="relative">
                         <span className="sm:hidden">{letter}</span>
@@ -312,19 +312,19 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
                         </div>
                       ) : (
                         <button onClick={() => photoInputRef.current?.click()} title="Subir foto de fondo"
-                          className="flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-white/[0.08] px-2.5 py-1.5 text-xs text-gray-500 dark:text-white/50 transition hover:border-brand-teal/50 hover:text-brand-teal">
+                          className="flex items-center gap-1.5 rounded-lg border border-brand-orange/50 px-2.5 py-1.5 text-xs text-brand-orange transition hover:bg-brand-orange hover:text-white">
                           <CameraIcon />
                           <span className="hidden sm:inline">Subir foto</span>
                         </button>
                       )}
                       <button onClick={handleDownload} disabled={downloading}
                         title={bgPhotoUrl ? 'Descargar imagen con foto' : 'Descargar imagen TikTok 4K'}
-                        className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs transition disabled:opacity-40 disabled:cursor-not-allowed ${bgPhotoUrl ? 'border-brand-orange/50 text-brand-orange hover:bg-orange-50 dark:hover:bg-orange-950/20' : 'border-gray-200 dark:border-white/[0.08] text-gray-500 dark:text-white/50 hover:border-brand-orange/50 hover:text-brand-orange'}`}>
+                        className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs transition disabled:opacity-40 disabled:cursor-not-allowed ${bgPhotoUrl ? 'border-brand-orange bg-brand-orange text-white hover:bg-brand-orange-dark' : 'border-brand-orange/50 text-brand-orange hover:bg-brand-orange hover:text-white'}`}>
                         <DownloadIcon spinning={downloading} />
                         <span className="hidden sm:inline">{downloading ? 'Generando…' : bgPhotoUrl ? 'Con foto' : 'Imagen 4K'}</span>
                       </button>
                       <button onClick={handleShare}
-                        className="flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-white/[0.08] px-2.5 py-1.5 text-xs text-gray-500 dark:text-white/50 transition hover:border-brand-orange/50 hover:text-brand-orange">
+                        className="flex items-center gap-1.5 rounded-lg border border-brand-orange/50 px-2.5 py-1.5 text-xs text-brand-orange transition hover:bg-brand-orange hover:text-white">
                         <ShareIcon />
                         <span className="hidden sm:inline">{copied ? 'Copiado ✓' : 'Compartir'}</span>
                       </button>
@@ -365,7 +365,7 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
                         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
                           <span className="text-base sm:text-lg leading-none" aria-hidden>{flag(entry.team.abbreviation)}</span>
                           <span className={['truncate text-xs sm:text-sm font-semibold',
-                            isFirst ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-white/80'].join(' ')}>
+                            isFirst ? 'text-brand-blue dark:text-white' : 'text-gray-700 dark:text-white/80'].join(' ')}>
                             {teamNameEs(entry.team.name)}
                           </span>
                           {isTop2 && (
@@ -389,7 +389,7 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
                         </span>
                         <div className="flex items-center justify-center">
                           <span className={['flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg text-xs sm:text-sm font-bold',
-                            isFirst ? 'bg-brand-orange text-white shadow-[0_0_12px_rgba(240,120,32,0.4)]'
+                            isFirst ? 'bg-brand-orange text-white shadow-[0_0_12px_rgba(245,79,27,0.4)]'
                               : isTop2 ? 'bg-brand-teal/20 dark:bg-brand-teal/30 text-brand-teal'
                               : entry.pts > 0 ? 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white/70'
                               : 'text-gray-300 dark:text-white/25'].join(' ')}>
@@ -454,7 +454,7 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
           <div>
             <div className="mb-6 flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-bold tracking-wide text-gray-900 dark:text-white flex items-center gap-2">
+                <h2 className="text-lg font-bold tracking-wide text-brand-blue dark:text-white flex items-center gap-2">
                   Fase de Eliminación
                   {koRounds.some(r => r.live.length > 0) && (
                     <span className="flex items-center gap-1.5 rounded-full bg-red-500/10 border border-red-500/25 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-400">
@@ -513,7 +513,7 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
         {view === 'cuadro' && (
           <div>
             <div className="mb-6">
-              <h2 className="text-lg font-bold tracking-wide text-gray-900 dark:text-white">Cuadro de Dieciseisavos</h2>
+              <h2 className="text-lg font-bold tracking-wide text-brand-blue dark:text-white">Cuadro de Dieciseisavos</h2>
               <p className="text-xs text-gray-400 dark:text-white/30 mt-1">Clasificación proyectada según posiciones actuales · Reglas oficiales FIFA Anexo C</p>
             </div>
             <BracketView groups={groups} userTz={userTz} fixtures={fixtures} />
@@ -656,7 +656,7 @@ function ResultCard({ fixture: f, tz }: { fixture: Fixture; tz: string }) {
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 flex-1 items-center gap-1.5">
           <span className="text-base">{flag(f.home.abbreviation)}</span>
-          <span className={['truncate text-sm font-semibold', homeWin ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-white/50'].join(' ')}>{teamNameEs(f.home.name)}</span>
+          <span className={['truncate text-sm font-semibold', homeWin ? 'text-brand-blue dark:text-white' : 'text-gray-400 dark:text-white/50'].join(' ')}>{teamNameEs(f.home.name)}</span>
         </div>
         <div className="shrink-0 text-center">
           <span className="text-lg font-bold tracking-wider text-brand-orange">
@@ -669,7 +669,7 @@ function ResultCard({ fixture: f, tz }: { fixture: Fixture; tz: string }) {
         </div>
         <div className="flex min-w-0 flex-1 flex-row-reverse items-center gap-1.5">
           <span className="text-base">{flag(f.away.abbreviation)}</span>
-          <span className={['truncate text-sm font-semibold text-right', awayWin ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-white/50'].join(' ')}>{teamNameEs(f.away.name)}</span>
+          <span className={['truncate text-sm font-semibold text-right', awayWin ? 'text-brand-blue dark:text-white' : 'text-gray-400 dark:text-white/50'].join(' ')}>{teamNameEs(f.away.name)}</span>
         </div>
       </div>
       {f.city && <p className="mt-1 text-center text-[10px] text-gray-400 dark:text-white/20">{f.city}</p>}
@@ -708,16 +708,16 @@ function LiveFixtureCard({ fixture: f, tz }: { fixture: Fixture; tz: string }) {
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <span className="text-xl">{flag(f.home.abbreviation)}</span>
-          <span className="truncate font-bold text-gray-900 dark:text-white">{teamNameEs(f.home.name)}</span>
+          <span className="truncate font-bold text-brand-blue dark:text-white">{teamNameEs(f.home.name)}</span>
         </div>
         <div className="shrink-0 text-center">
-          <span className="text-2xl font-bold text-gray-900 dark:text-white">
+          <span className="text-2xl font-bold text-brand-blue dark:text-white">
             {f.home.score ?? 0}<span className="mx-2 text-gray-300 dark:text-white/30">–</span>{f.away.score ?? 0}
           </span>
         </div>
         <div className="flex min-w-0 flex-1 flex-row-reverse items-center gap-2">
           <span className="text-xl">{flag(f.away.abbreviation)}</span>
-          <span className="truncate text-right font-bold text-gray-900 dark:text-white">{teamNameEs(f.away.name)}</span>
+          <span className="truncate text-right font-bold text-brand-blue dark:text-white">{teamNameEs(f.away.name)}</span>
         </div>
       </div>
     </div>

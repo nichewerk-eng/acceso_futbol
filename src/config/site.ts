@@ -1,8 +1,9 @@
 export const brandColors = {
-  orange: "#e05a0c",
-  orangeDark: "#c44c0a",
-  teal: "#5c6368",
-  blue: "#1e4fa0",
+  orange: "#f54f1b",
+  orangeDark: "#d64517",
+  blue: "#1e223d",
+  teal: "#035352",
+  yellow: "#f3e8bc",
   bg1: "#f6f5f2",
   bg2: "#ffffff",
   bg3: "#eceae5",

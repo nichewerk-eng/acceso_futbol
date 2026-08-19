@@ -23,6 +23,7 @@ import { LIGUILLA_SPOTS, liguillaPath } from '@/lib/sports/liguillaPath';
 import { FEMENIL_LIGUILLA_SPOTS } from '@/lib/sports/ligaMxFemenil';
 import { LiguillaPathShare } from '@/components/ligamx/LiguillaPathShare';
 import { GoleoRailCard, GoleoTabla } from '@/components/ligamx/GoleoTabla';
+import { OnceRoom } from '@/components/living-room/OnceRoom';
 import type { GoleoBoard } from '@/lib/sports/leaders';
 
 /** Shared header + row shell — tracks live in `.lm-standings-grid` (globals.css). */
@@ -98,7 +99,7 @@ type GravityFn = (
   awayAbbr?: string
 ) => boolean;
 
-type LigaMxTab = 'tabla' | 'jornada' | 'goleo';
+type LigaMxTab = 'tabla' | 'jornada' | 'goleo' | 'once';
 export type LigaMxBoardLeague = 'liga-mx' | 'liga-mx-femenil';
 
 interface Props {
@@ -280,7 +281,9 @@ export default function LigaMXView({
                 {table?.season ?? 'Apertura 2026'}
               </p>
               <p className="mt-3 max-w-lg text-sm leading-6 text-muted">
-                Jornada, tabla y goleo en una sola sala. Camino a Liguilla (top 8).
+                {league === 'liga-mx-femenil'
+                  ? 'Jornada, tabla y goleo en una sola sala. Camino a Liguilla (top 8).'
+                  : 'Jornada, tabla, goleo y once de la fecha. Camino a Liguilla (top 8).'}
                 {club ? ` Tu LOCK: ${club.abbreviation}.` : ''}
               </p>
             </div>
@@ -317,11 +320,18 @@ export default function LigaMXView({
           role="tablist"
         >
           {(
-            [
-              ['jornada', 'Jornada'],
-              ['tabla', 'Tabla'],
-              ['goleo', 'Goleo'],
-            ] as const
+            league === 'liga-mx-femenil'
+              ? ([
+                  ['jornada', 'Jornada'],
+                  ['tabla', 'Tabla'],
+                  ['goleo', 'Goleo'],
+                ] as const)
+              : ([
+                  ['jornada', 'Jornada'],
+                  ['tabla', 'Tabla'],
+                  ['goleo', 'Goleo'],
+                  ['once', 'Once'],
+                ] as const)
           ).map(([id, label]) => (
             <button
               key={id}
@@ -333,8 +343,8 @@ export default function LigaMXView({
               className={[
                 'shrink-0 border px-4 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] transition',
                 tab === id
-                  ? 'border-foreground bg-foreground text-bg-1'
-                  : 'border-line text-muted hover:border-foreground hover:text-foreground',
+                  ? 'border-signal bg-signal text-on-signal'
+                  : 'border-line text-muted hover:border-signal hover:text-signal',
               ].join(' ')}
             >
               {label}
@@ -415,6 +425,15 @@ export default function LigaMXView({
           </section>
         )}
 
+        {tab === 'once' && league === 'liga-mx' && (
+          <section
+            data-testid="ligamx-once-tab"
+            className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12"
+          >
+            <OnceRoom />
+          </section>
+        )}
+
         {tab === 'jornada' && (
           <div className="lc-partidos-layout" data-testid="ligamx-jornada-layout">
             <div className="lc-partidos-main space-y-8">
@@ -461,12 +480,12 @@ export default function LigaMXView({
                         className={[
                           'relative shrink-0 border px-3 py-2 font-mono text-[10px] font-semibold tracking-[0.14em] transition',
                           active
-                            ? 'border-foreground bg-foreground text-bg-1'
+                            ? 'border-signal bg-signal text-on-signal'
                             : hasLive
                               ? 'border-signal text-signal'
                               : hasPast
                                 ? 'border-line text-muted'
-                                : 'border-line text-muted/70 hover:border-foreground hover:text-foreground',
+                                : 'border-line text-muted/70 hover:border-signal hover:text-signal',
                         ].join(' ')}
                       >
                         J{j}

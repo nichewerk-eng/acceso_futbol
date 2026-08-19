@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { SiteFooter } from '@/components/home/SiteFooter';
+import { DondeVerAir } from '@/components/living-room/DondeVerAir';
 import { DondeVerTeamsNav } from '@/components/living-room/DondeVerTeamsNav';
 import { PulseNav } from '@/components/living-room/PulseNav';
 import { JsonLd } from '@/components/seo/JsonLd';
@@ -112,14 +112,11 @@ function MatchRow({ f }: { f: Fixture }) {
       </div>
 
       {confirmed ? (
-        <BroadcastChannels
-          className="dv-channels"
+        <DondeVerAir
           mx={f.dondeVer?.mxChannels}
           us={f.dondeVer?.usChannels}
           mxLabel={f.dondeVer?.mx}
           usLabel={f.dondeVer?.us}
-          surface="paper"
-          compact
         />
       ) : (
         <p className="dv-pending">Por confirmar · MX ↔ US</p>
@@ -307,7 +304,7 @@ export default async function DondeVerTeamPage({ params }: PageParams) {
           </Link>
         </div>
 
-        <DondeVerTeamsNav activeSlug={club.id} />
+        <DondeVerTeamsNav activeSlug={club.id} className="mt-8" />
       </main>
       <SiteFooter />
     </div>

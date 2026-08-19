@@ -35,7 +35,7 @@ export function GravityClaim() {
             type="button"
             onClick={skip}
             data-testid="gravity-skip"
-            className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40 transition hover:text-[#f6f5f2]"
+            className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-signal transition hover:text-[#f6f5f2]"
           >
             Ahora no
           </button>
@@ -74,7 +74,7 @@ export function GravityClaim() {
             'mt-4 inline-flex items-center gap-2.5 border px-4 py-3 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] transition',
             elTri
               ? 'border-signal bg-signal text-on-signal'
-              : 'border-white/20 text-[#f6f5f2] hover:border-[#f6f5f2]',
+              : 'border-signal/40 text-[#f6f5f2] hover:border-signal hover:text-signal',
           ].join(' ')}
           aria-pressed={elTri}
         >

@@ -57,7 +57,7 @@ export default function SiteNav() {
                   'rounded-lg px-3 py-1.5 text-xs font-bold tracking-wide transition-all',
                   active
                     ? 'bg-brand-orange/10 text-brand-orange'
-                    : 'text-gray-500 dark:text-white/50 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/[0.06]',
+                    : 'text-gray-500 dark:text-white/50 hover:text-brand-blue dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/[0.06]',
                 ].join(' ')}
               >
                 {label}
@@ -80,7 +80,7 @@ export default function SiteNav() {
           </a>
           <button
             onClick={toggleTheme}
-            className="flex h-8 w-8 items-center justify-center rounded-xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-white/5 transition hover:border-brand-orange/50"
+            className="flex h-8 w-8 items-center justify-center rounded-xl border border-brand-orange/50 bg-white dark:bg-white/5 text-brand-orange transition hover:bg-brand-orange hover:text-white"
             aria-label="Cambiar tema"
           >
             {dark ? <SunIcon /> : <MoonIcon />}
@@ -88,7 +88,7 @@ export default function SiteNav() {
           {/* Mobile menu button */}
           <button
             onClick={() => setMobileOpen((o) => !o)}
-            className="sm:hidden flex h-8 w-8 items-center justify-center rounded-xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-white/5"
+            className="sm:hidden flex h-8 w-8 items-center justify-center rounded-xl border border-brand-orange/50 bg-white dark:bg-white/5 text-brand-orange"
             aria-label="Menú"
           >
             <MenuIcon open={mobileOpen} />
@@ -128,7 +128,7 @@ export default function SiteNav() {
       )}
 
       {/* Brand gradient rule */}
-      <div className="h-px" style={{ background: 'linear-gradient(to right, rgba(240,120,32,0.5), rgba(255,255,255,0.04), rgba(26,122,120,0.5))' }} />
+      <div className="h-px" style={{ background: 'linear-gradient(to right, rgba(245,79,27,0.5), rgba(255,255,255,0.04), rgba(3,83,82,0.5))' }} />
     </nav>
   );
 }

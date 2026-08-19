@@ -32,7 +32,7 @@ export default async function OgImage() {
           width: '100%',
           height: '100%',
           display: 'flex',
-          background: '#0c0c0c',
+          background: '#1e223d',
           color: '#f6f5f2',
           fontFamily: 'AF Body',
         }}
@@ -55,7 +55,7 @@ export default async function OgImage() {
               alignItems: 'center',
             }}
           >
-            <div style={{ display: 'flex', fontSize: 20, letterSpacing: 4, color: '#e05a0c' }}>
+            <div style={{ display: 'flex', fontSize: 20, letterSpacing: 4, color: '#f54f1b' }}>
               {kicker}
             </div>
             <div style={{ display: 'flex', fontSize: 16, color: 'rgba(246,245,242,0.45)' }}>

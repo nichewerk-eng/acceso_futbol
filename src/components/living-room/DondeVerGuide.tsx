@@ -1,20 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { ClubLogo } from '@/components/brand/ClubLogo';
+import { DondeVerAir } from '@/components/living-room/DondeVerAir';
 import { DondeVerShare } from '@/components/living-room/DondeVerShare';
 import { RitualSlot } from '@/components/ritual/RitualSlot';
-import { dondeVerGuideRows } from '@/lib/share/dondeVerShare';
+import { groupDondeVerByDay, dondeVerGuideRows } from '@/lib/share/dondeVerShare';
 import type { Fixture } from '@/lib/sports';
 
-function kickWhen(iso: string, tz: string) {
+function kickClock(iso: string, tz: string) {
   try {
     return new Date(iso).toLocaleString('es-MX', {
       timeZone: tz,
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
       hour: 'numeric',
       minute: '2-digit',
     });
@@ -44,7 +41,7 @@ function GuideRow({
       className={['dv-row', mine ? 'dv-row-mine' : '', live ? 'dv-row-live' : ''].join(' ')}
     >
       <div className="dv-row-meta">
-        <p className="dv-kick">
+        <p className={live ? 'dv-kick is-live' : post ? 'dv-kick is-ft' : 'dv-kick'}>
           {live ? (
             <>
               <span className="hoy-live-dot" aria-hidden />
@@ -53,10 +50,10 @@ function GuideRow({
           ) : post ? (
             'FT'
           ) : (
-            kickWhen(f.date, tz)
+            kickClock(f.date, tz)
           )}
         </p>
-        {mine ? <span className="af-tele !text-signal">LOCK</span> : null}
+        {mine ? <span className="dv-lock">LOCK</span> : null}
       </div>
 
       <div className="dv-pair">
@@ -74,19 +71,48 @@ function GuideRow({
       </div>
 
       {confirmed ? (
-        <BroadcastChannels
-          className="dv-channels"
+        <DondeVerAir
           mx={d?.mxChannels}
           us={d?.usChannels}
           mxLabel={d?.mx}
           usLabel={d?.us}
-          surface="paper"
-          compact
         />
       ) : (
         <p className="dv-pending">Por confirmar · MX ↔ US</p>
       )}
     </Link>
+  );
+}
+
+function DayBlock({
+  label,
+  rows,
+  tz,
+  isMine,
+  live = false,
+}: {
+  label: string;
+  rows: Fixture[];
+  tz: string;
+  isMine: (f: Fixture) => boolean;
+  live?: boolean;
+}) {
+  if (!rows.length) return null;
+  return (
+    <section className={live ? 'dv-day is-live' : 'dv-day'}>
+      <p className="dv-day-label">{label}</p>
+      <div className="dv-cols" aria-hidden>
+        <span>Hora</span>
+        <span>Partido</span>
+        <span>México</span>
+        <span>Estados Unidos</span>
+      </div>
+      <div className="dv-list">
+        {rows.map((f) => (
+          <GuideRow key={f.id} f={f} mine={isMine(f)} tz={tz} />
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -97,6 +123,8 @@ export function DondeVerGuide({
   played = [],
   tz,
   isMine,
+  asPage = false,
+  showRitual = true,
 }: {
   jornadaNum?: number;
   live: Fixture[];
@@ -104,47 +132,50 @@ export function DondeVerGuide({
   played?: Fixture[];
   tz: string;
   isMine: (f: Fixture) => boolean;
+  asPage?: boolean;
+  showRitual?: boolean;
 }) {
   const chrono = dondeVerGuideRows(live, upcoming, played);
-  const rows = [...chrono].sort((a, b) => {
-    const aMine = isMine(a) ? 0 : 1;
-    const bMine = isMine(b) ? 0 : 1;
-    if (aMine !== bMine) return aMine - bMine;
-    return +new Date(a.date) - +new Date(b.date);
-  });
+  const grouped = groupDondeVerByDay(chrono, tz);
+  const Title = asPage ? 'h1' : 'h3';
 
-  if (rows.length === 0) return null;
+  if (chrono.length === 0) return null;
 
   return (
-    <div id="donde-ver" data-testid="section-donde-ver" className="dv-guide">
+    <div
+      id="donde-ver"
+      data-testid="section-donde-ver"
+      className={asPage ? 'dv-guide dv-guide-page' : 'dv-guide'}
+    >
       <div className="dv-guide-head">
         <div>
           <p className="af-tele text-foreground">
             <span className="text-signal">AF</span>
             ://DONDE-VER
           </p>
-          <h3 className="mt-2 font-display text-2xl font-bold uppercase tracking-wide sm:text-3xl">
+          <Title className="mt-2 font-display text-2xl font-bold uppercase tracking-wide sm:text-3xl">
             Dónde ver{jornadaNum ? ` · Jornada ${jornadaNum}` : ''}
-          </h3>
-          <p className="mt-2 max-w-lg font-mono text-[12px] leading-6 text-muted">
-            MX y US por separado. Horarios en tu zona.
+          </Title>
+          <p className="mt-2 max-w-xl font-mono text-[12px] leading-6 text-muted">
+            Cada partido con su canal en México y en Estados Unidos. Horario en tu zona.
           </p>
         </div>
         <div className="dv-guide-actions">
-          <p className="af-tele">{rows.length} en la guía</p>
+          <p className="af-tele">{chrono.length} partidos</p>
           <DondeVerShare fixtures={chrono} jornadaNum={jornadaNum} />
         </div>
       </div>
 
-      <div className="dv-list">
-        {rows.map((f) => (
-          <GuideRow key={f.id} f={f} mine={isMine(f)} tz={tz} />
-        ))}
-      </div>
+      <DayBlock label="En vivo" rows={grouped.live} tz={tz} isMine={isMine} live />
+      {grouped.days.map((d) => (
+        <DayBlock key={d.key} label={d.label} rows={d.rows} tz={tz} isMine={isMine} />
+      ))}
 
-      <div className="dv-ritual">
-        <RitualSlot placement="donde-ver" compact />
-      </div>
+      {showRitual ? (
+        <div className="dv-ritual">
+          <RitualSlot placement="donde-ver" compact />
+        </div>
+      ) : null}
     </div>
   );
 }

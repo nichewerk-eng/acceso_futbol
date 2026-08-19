@@ -119,7 +119,7 @@ function GameCard({ f, tz }: { f: BannerFixture; tz: string }) {
         ) : isDone ? (
           <span className="rounded bg-white/[0.08] px-2 py-0.5 text-xs font-bold text-white/40">{hasPens ? 'FT-Pens' : 'FT'}</span>
         ) : (
-          <span className="rounded bg-[#1a7a78]/20 px-2 py-0.5 text-xs font-bold text-[#1a7a78]">{fmtTime(f.date, tz)}</span>
+          <span className="rounded bg-brand-teal/20 px-2 py-0.5 text-xs font-bold text-brand-teal">{fmtTime(f.date, tz)}</span>
         )}
         <span className="text-[11px] text-white/20">{new Date(f.date).toLocaleDateString('es-MX', { timeZone: tz, day: 'numeric', month: 'short' })}</span>
       </div>
@@ -240,8 +240,8 @@ export default function HeroBanner() {
   }
 
   return (
-    <div className="relative overflow-hidden bg-gray-900 dark:bg-[#080d12]">
-      <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse 80% 70% at 50% -5%, rgba(26,122,120,0.32) 0%, transparent 60%)' }} />
+    <div className="relative overflow-hidden bg-brand-blue">
+      <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse 80% 70% at 50% -5%, rgba(3,83,82,0.32) 0%, transparent 60%)' }} />
 
       <div className="relative mx-auto max-w-5xl px-4 pt-6 pb-5 sm:px-6">
 
@@ -367,7 +367,7 @@ export default function HeroBanner() {
             <div className="flex items-center gap-2 text-[10px] text-white/20">
               <span>{lastUp.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: userTz })} {tzLabel(userTz)}</span>
               <button onClick={() => load(false)} disabled={refreshing}
-                className="text-white/30 hover:text-white/60 transition disabled:opacity-40">
+                className="text-brand-orange hover:text-brand-orange-dark transition disabled:opacity-40">
                 {refreshing ? '…' : '↻'}
               </button>
             </div>

@@ -28,7 +28,7 @@ export function BrandLogo({
         alt={`${siteConfig.name} logo`}
         width={image}
         height={image}
-        className={`${imageClass} object-contain drop-shadow-[0_4px_24px_rgba(240,120,32,0.25)]`}
+        className={`${imageClass} object-contain drop-shadow-[0_4px_24px_rgba(245,79,27,0.25)]`}
         priority={size !== "sm"}
       />
       {showName && (

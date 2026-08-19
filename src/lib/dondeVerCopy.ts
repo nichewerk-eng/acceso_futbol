@@ -101,12 +101,12 @@ export function jornadaDondeVerFaq(overview: JornadaOverview | null): FaqItem[] 
   for (const f of fixtures) {
     const d = f.dondeVer;
     if (!d?.confirmed) continue;
-    for (const id of d.mxChannels ?? []) {
+    for (const id of [...new Set(d.mxChannels ?? [])]) {
       const ch = TV_CHANNELS[id];
       if (ch) mxSet.push(ch.label);
       if (id === 'canal-5' || id === 'azteca-7') freeToAir = true;
     }
-    for (const id of d.usChannels ?? []) {
+    for (const id of [...new Set(d.usChannels ?? [])]) {
       const ch = TV_CHANNELS[id];
       if (ch) usSet.push(ch.label);
     }

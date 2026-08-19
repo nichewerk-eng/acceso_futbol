@@ -4,9 +4,9 @@ import type { Fixture, Group } from './types';
 import { teamNameEs } from './teamNames';
 
 // ── Constants ────────────────────────────────────────────────────────────────
-const ORANGE  = '#f07820';
-const TEAL    = '#1a7a78';
-const BG      = '#030f10';
+const ORANGE  = '#f54f1b';
+const TEAL    = '#035352';
+const BG      = '#1e223d';
 const WHITE   = '#ffffff';
 const W       = 1080;
 const H       = 1920;
@@ -128,21 +128,21 @@ export async function downloadGroupImage(
 
   // ── 2. Top radial glow ─────────────────────────────────────────────────────
   const topGlow = ctx.createRadialGradient(W / 2, -60, 0, W / 2, -60, 560);
-  topGlow.addColorStop(0, 'rgba(240,120,32,0.45)');
-  topGlow.addColorStop(1, 'rgba(240,120,32,0)');
+  topGlow.addColorStop(0, 'rgba(245,79,27,0.45)');
+  topGlow.addColorStop(1, 'rgba(245,79,27,0)');
   ctx.fillStyle = topGlow;
   ctx.fillRect(0, 0, W, 560);
 
   // ── 3. Left / right edge glow strips ──────────────────────────────────────
   const lStrip = ctx.createLinearGradient(0, 0, 50, 0);
-  lStrip.addColorStop(0, 'rgba(240,120,32,0.18)');
-  lStrip.addColorStop(1, 'rgba(240,120,32,0)');
+  lStrip.addColorStop(0, 'rgba(245,79,27,0.18)');
+  lStrip.addColorStop(1, 'rgba(245,79,27,0)');
   ctx.fillStyle = lStrip;
   ctx.fillRect(0, 0, 50, H);
 
   const rStrip = ctx.createLinearGradient(W, 0, W - 50, 0);
-  rStrip.addColorStop(0, 'rgba(26,122,120,0.18)');
-  rStrip.addColorStop(1, 'rgba(26,122,120,0)');
+  rStrip.addColorStop(0, 'rgba(3,83,82,0.18)');
+  rStrip.addColorStop(1, 'rgba(3,83,82,0)');
   ctx.fillStyle = rStrip;
   ctx.fillRect(W - 50, 0, 50, H);
 
@@ -180,9 +180,9 @@ export async function downloadGroupImage(
 
   // ── 8. Header separator bar ────────────────────────────────────────────────
   const sepBar = ctx.createLinearGradient(PAD_L, 0, W - PAD_R, 0);
-  sepBar.addColorStop(0,    'rgba(240,120,32,0.9)');
+  sepBar.addColorStop(0,    'rgba(245,79,27,0.9)');
   sepBar.addColorStop(0.45, 'rgba(255,255,255,0.12)');
-  sepBar.addColorStop(1,    'rgba(26,122,120,0.9)');
+  sepBar.addColorStop(1,    'rgba(3,83,82,0.9)');
   ctx.fillStyle = sepBar;
   ctx.fillRect(PAD_L, TOP_PAD + 466, TABLE_W, 2);
 
@@ -225,9 +225,9 @@ export async function downloadGroupImage(
 
     // Row tinted background
     if (isFirst) {
-      fillRoundRect(ctx, PAD_L, ry, TABLE_W, ROW_H, 0, 'rgba(240,120,32,0.07)');
+      fillRoundRect(ctx, PAD_L, ry, TABLE_W, ROW_H, 0, 'rgba(245,79,27,0.07)');
     } else if (isTop2) {
-      fillRoundRect(ctx, PAD_L, ry, TABLE_W, ROW_H, 0, 'rgba(26,122,120,0.05)');
+      fillRoundRect(ctx, PAD_L, ry, TABLE_W, ROW_H, 0, 'rgba(3,83,82,0.05)');
     }
 
     // Left qualification accent bar
@@ -239,9 +239,9 @@ export async function downloadGroupImage(
     ctx.beginPath();
     ctx.arc(COL.pos, cy, R, 0, Math.PI * 2);
     ctx.fillStyle = isFirst
-      ? 'rgba(240,120,32,0.22)'
+      ? 'rgba(245,79,27,0.22)'
       : isTop2
-      ? 'rgba(26,122,120,0.18)'
+      ? 'rgba(3,83,82,0.18)'
       : 'rgba(255,255,255,0.06)';
     ctx.fill();
 
@@ -293,14 +293,14 @@ export async function downloadGroupImage(
 
     if (isFirst) {
       // Glowing orange badge for leader
-      ctx.shadowColor = 'rgba(240,120,32,0.55)';
+      ctx.shadowColor = 'rgba(245,79,27,0.55)';
       ctx.shadowBlur = 18;
       fillRoundRect(ctx, bx, by, BW, BH, 10, ORANGE);
       ctx.shadowBlur = 0;
       ctx.shadowColor = 'transparent';
       ctx.fillStyle = WHITE;
     } else if (isTop2) {
-      fillRoundRect(ctx, bx, by, BW, BH, 10, 'rgba(26,122,120,0.55)');
+      fillRoundRect(ctx, bx, by, BW, BH, 10, 'rgba(3,83,82,0.55)');
       ctx.fillStyle = TEAL;
     } else {
       fillRoundRect(ctx, bx, by, BW, BH, 10, 'rgba(255,255,255,0.08)');
@@ -349,9 +349,9 @@ export async function downloadGroupImage(
   // ── 12. Section divider ────────────────────────────────────────────────────
   const SEC_DIVIDER_Y = LEG_Y + 44;
   const divGrad = ctx.createLinearGradient(PAD_L, 0, W - PAD_R, 0);
-  divGrad.addColorStop(0,   'rgba(240,120,32,0.6)');
+  divGrad.addColorStop(0,   'rgba(245,79,27,0.6)');
   divGrad.addColorStop(0.5, 'rgba(255,255,255,0.08)');
-  divGrad.addColorStop(1,   'rgba(26,122,120,0.6)');
+  divGrad.addColorStop(1,   'rgba(3,83,82,0.6)');
   ctx.fillStyle = divGrad;
   ctx.fillRect(PAD_L, SEC_DIVIDER_Y, TABLE_W, 1.5);
 
@@ -436,7 +436,7 @@ export async function downloadGroupImage(
         homeWin ? WHITE : 'rgba(255,255,255,0.45)', homeWin);
 
       // Score — smaller font leaves more room for names
-      ctx.shadowColor = 'rgba(240,120,32,0.38)';
+      ctx.shadowColor = 'rgba(245,79,27,0.38)';
       ctx.shadowBlur = 10;
       ctx.fillStyle = ORANGE;
       ctx.font = 'bold 28px Oswald, "Arial Narrow", Arial, sans-serif';
@@ -455,12 +455,12 @@ export async function downloadGroupImage(
       const timeStr = new Date(f.date).toLocaleTimeString('es-MX', {
         hour: '2-digit', minute: '2-digit', hour12: true, timeZone: tz,
       });
-      fillRoundRect(ctx, PAD_L + 10, cursorY + 7, 124, 50, 6, 'rgba(26,122,120,0.20)');
+      fillRoundRect(ctx, PAD_L + 10, cursorY + 7, 124, 50, 6, 'rgba(3,83,82,0.20)');
       ctx.fillStyle = TEAL;
       ctx.font = 'bold 16px Oswald, "Arial Narrow", Arial, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(dateStr, PAD_L + 72, cursorY + 27);
-      ctx.fillStyle = 'rgba(26,122,120,0.80)';
+      ctx.fillStyle = 'rgba(3,83,82,0.80)';
       ctx.font = '13px Oswald, "Arial Narrow", Arial, sans-serif';
       ctx.fillText(timeStr, PAD_L + 72, cursorY + 45);
 
@@ -495,9 +495,9 @@ export async function downloadGroupImage(
   const FOOTER_TOP = Math.max(cursorY + 60, H - 220);
 
   const footerSep = ctx.createLinearGradient(PAD_L, 0, W - PAD_R, 0);
-  footerSep.addColorStop(0,   'rgba(240,120,32,0.5)');
+  footerSep.addColorStop(0,   'rgba(245,79,27,0.5)');
   footerSep.addColorStop(0.5, 'rgba(255,255,255,0.08)');
-  footerSep.addColorStop(1,   'rgba(26,122,120,0.5)');
+  footerSep.addColorStop(1,   'rgba(3,83,82,0.5)');
   ctx.fillStyle = footerSep;
   ctx.fillRect(PAD_L, FOOTER_TOP, TABLE_W, 1.5);
 
@@ -599,16 +599,16 @@ export async function downloadGroupImageWithPhoto(
 
   // Gradient: transparent → full dark (bottom 55% of photo area)
   const grad = ctx.createLinearGradient(0, PHOTO_H * 0.35, 0, PHOTO_H + 10);
-  grad.addColorStop(0,    'rgba(3,15,16,0)');
-  grad.addColorStop(0.55, 'rgba(3,15,16,0.72)');
-  grad.addColorStop(1,    'rgba(3,15,16,1)');
+  grad.addColorStop(0,    'rgba(30,34,61,0)');
+  grad.addColorStop(0.55, 'rgba(30,34,61,0.72)');
+  grad.addColorStop(1,    'rgba(30,34,61,1)');
   ctx.fillStyle = grad;
   ctx.fillRect(0, PHOTO_H * 0.35, W, PHOTO_H - PHOTO_H * 0.35 + 10);
 
   // Side vignette (helps text readability on bright photos)
   const vigL = ctx.createLinearGradient(0, 0, 160, 0);
-  vigL.addColorStop(0, 'rgba(3,15,16,0.55)');
-  vigL.addColorStop(1, 'rgba(3,15,16,0)');
+  vigL.addColorStop(0, 'rgba(30,34,61,0.55)');
+  vigL.addColorStop(1, 'rgba(30,34,61,0)');
   ctx.fillStyle = vigL;
   ctx.fillRect(0, 0, 160, PHOTO_H);
 

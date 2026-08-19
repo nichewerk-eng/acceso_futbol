@@ -21,7 +21,7 @@ export function GravityAlertsHost() {
         <article
           key={t.id}
           data-testid="gravity-alert-toast"
-          className="pointer-events-auto border border-signal bg-[#0c0c0c] px-4 py-3 shadow-[0_12px_40px_rgba(0,0,0,0.45)]"
+          className="pointer-events-auto border border-signal bg-[#1e223d] px-4 py-3 shadow-[0_12px_40px_rgba(0,0,0,0.45)]"
         >
           <p className="af-tele text-signal">AVISO</p>
           <p className="mt-1 font-display text-lg font-bold uppercase tracking-wide text-[#f6f5f2]">
@@ -40,7 +40,7 @@ export function GravityAlertsHost() {
             <button
               type="button"
               onClick={() => dismissGravityToast(t.id)}
-              className="ml-auto font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40 hover:text-[#f6f5f2]"
+              className="ml-auto font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-signal hover:text-[#f6f5f2]"
             >
               Cerrar
             </button>

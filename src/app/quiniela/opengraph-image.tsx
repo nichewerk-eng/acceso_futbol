@@ -20,8 +20,8 @@ function PickCell({ label, win }: { label: string; win: boolean }) {
         height: 36,
         padding: '0 8px',
         border: '1px solid rgba(246,245,242,0.22)',
-        background: win ? '#e05a0c' : 'transparent',
-        color: win ? '#0c0c0c' : 'rgba(246,245,242,0.78)',
+        background: win ? '#f54f1b' : 'transparent',
+        color: win ? '#1e223d' : 'rgba(246,245,242,0.78)',
         fontFamily: 'AF Display',
         fontSize: label.length > 3 ? 12 : 18,
         fontWeight: 700,
@@ -115,7 +115,7 @@ export default async function OgImage() {
           width: '100%',
           height: '100%',
           display: 'flex',
-          background: '#0c0c0c',
+          background: '#1e223d',
           color: '#f6f5f2',
           fontFamily: 'AF Body',
         }}
@@ -138,7 +138,7 @@ export default async function OgImage() {
               width: '100%',
             }}
           >
-            <div style={{ display: 'flex', fontSize: 22, letterSpacing: 4, color: '#e05a0c' }}>
+            <div style={{ display: 'flex', fontSize: 22, letterSpacing: 4, color: '#f54f1b' }}>
               {kicker}
             </div>
             <div style={{ display: 'flex', fontSize: 20, color: 'rgba(246,245,242,0.45)' }}>
@@ -180,7 +180,7 @@ export default async function OgImage() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: 14 }}>
-            <div style={{ display: 'flex', width: '100%', height: 6, background: '#e05a0c' }} />
+            <div style={{ display: 'flex', width: '100%', height: 6, background: '#f54f1b' }} />
             <div
               style={{
                 display: 'flex',

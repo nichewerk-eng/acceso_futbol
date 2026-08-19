@@ -49,7 +49,7 @@ export default function Home() {
             <nav className="flex items-center gap-2">
               <Link
                 href="/liga-mx"
-                className="flex items-center gap-2 rounded-lg border border-white/[0.08] px-3 py-2 text-xs font-bold tracking-wider uppercase text-white/60 transition hover:border-brand-orange/40 hover:bg-white/[0.04] hover:text-brand-orange"
+                className="flex items-center gap-2 rounded-lg border border-brand-orange px-3 py-2 text-xs font-bold tracking-wider uppercase text-brand-orange transition hover:bg-brand-orange hover:text-white"
               >
                 <StandingsIcon />
                 <span className="hidden sm:inline">Liga MX</span>
@@ -60,7 +60,7 @@ export default function Home() {
                 href={profileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 rounded-lg bg-brand-orange px-3 sm:px-4 py-2 text-xs font-bold tracking-wider uppercase text-white shadow-[0_0_20px_rgba(240,120,32,0.3)] transition hover:bg-brand-orange-dark hover:shadow-[0_0_28px_rgba(240,120,32,0.45)]"
+                className="flex items-center gap-2 rounded-lg bg-brand-orange px-3 sm:px-4 py-2 text-xs font-bold tracking-wider uppercase text-white shadow-[0_0_20px_rgba(245,79,27,0.3)] transition hover:bg-brand-orange-dark hover:shadow-[0_0_28px_rgba(245,79,27,0.45)]"
               >
                 <TikTokIcon />
                 <span className="hidden sm:inline">Seguir</span>
@@ -73,7 +73,7 @@ export default function Home() {
           {/* Brand-gradient bottom rule */}
           <div
             className="h-px"
-            style={{ background: 'linear-gradient(to right, rgba(240,120,32,0.6), rgba(255,255,255,0.05), rgba(26,122,120,0.6))' }}
+            style={{ background: 'linear-gradient(to right, rgba(245,79,27,0.6), rgba(255,255,255,0.05), rgba(3,83,82,0.6))' }}
           />
         </header>
 

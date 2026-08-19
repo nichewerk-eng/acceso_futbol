@@ -87,7 +87,7 @@ function isGold(hex: string): boolean {
 
 function onShirt(shirt: string, ink: string, signal: string, onInk: string): string {
   const light = hexLum(shirt) > 0.55;
-  if (light) return hexLum(ink) < 0.45 ? ink : '#0c0c0c';
+  if (light) return hexLum(ink) < 0.45 ? ink : '#1e223d';
   if (Math.abs(hexLum(signal) - hexLum(shirt)) > 0.28) return signal;
   return onInk;
 }
@@ -96,7 +96,7 @@ function onShirt(shirt: string, ink: string, signal: string, onInk: string): str
 export function xiKit(abbr: string, position?: string | null): XiKit {
   const club = clubIdentityFromAbbr(abbr);
   if (!club) {
-    return { shirt: '#f6f5f2', number: '#0c0c0c', shorts: '#0c0c0c' };
+    return { shirt: '#f6f5f2', number: '#1e223d', shorts: '#1e223d' };
   }
   const { ink, signal, onInk } = club.palette;
   const goldOnBlack = hexLum(ink) < 0.08 && isGold(signal);

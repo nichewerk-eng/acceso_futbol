@@ -10,20 +10,20 @@ import { fetchLigaMxLeaders } from '@/lib/sports/leaders';
 import { fixtureToLigaMxSchedule, mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
 
 export const metadata: Metadata = {
-  title: 'Liga MX Apertura 2026 · Jornada, tabla y goleo',
+  title: 'Liga MX Apertura 2026 · Jornada, tabla, goleo y once',
   description:
-    'Jornada en vivo, tabla de posiciones y goleo de la Liga MX Apertura 2026. Resultados, Liguilla y goleadores, al día.',
+    'Jornada en vivo, tabla de posiciones, goleo y once de la fecha de la Liga MX Apertura 2026.',
   alternates: { canonical: absoluteUrl('/liga-mx') },
   openGraph: {
-    title: 'Liga MX Apertura 2026 · Jornada, tabla y goleo',
-    description: 'Posiciones, resultados, goleo y camino a Liguilla en tiempo real.',
+    title: 'Liga MX Apertura 2026 · Jornada, tabla, goleo y once',
+    description: 'Posiciones, resultados, goleo, once de la fecha y camino a Liguilla.',
     url: absoluteUrl('/liga-mx'),
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Liga MX Apertura 2026 · Jornada, tabla y goleo',
-    description: 'Posiciones, resultados, goleo y camino a Liguilla en tiempo real.',
+    title: 'Liga MX Apertura 2026 · Jornada, tabla, goleo y once',
+    description: 'Posiciones, resultados, goleo, once de la fecha y camino a Liguilla.',
   },
 };
 
@@ -77,10 +77,10 @@ async function fetchFixtures() {
   }
 }
 
-type LigaMxTab = 'jornada' | 'tabla' | 'goleo';
+type LigaMxTab = 'jornada' | 'tabla' | 'goleo' | 'once';
 
 function parseTab(raw?: string): LigaMxTab {
-  if (raw === 'tabla' || raw === 'goleo') return raw;
+  if (raw === 'tabla' || raw === 'goleo' || raw === 'once') return raw;
   return 'jornada';
 }
 

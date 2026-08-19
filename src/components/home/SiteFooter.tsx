@@ -43,6 +43,11 @@ export function SiteFooter() {
                 </Link>
               </li>
               <li>
+                <Link href="/once" data-testid="footer-once">
+                  Once de la jornada
+                </Link>
+              </li>
+              <li>
                 <Link href="/leagues-cup" data-testid="footer-leagues-cup">
                   Leagues Cup
                 </Link>

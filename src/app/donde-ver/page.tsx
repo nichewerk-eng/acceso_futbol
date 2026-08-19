@@ -52,44 +52,32 @@ export default async function DondeVerPage() {
         ]}
       />
       <PulseNav />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6 sm:py-14">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-12">
         <DondeVerRoom initial={initial} />
 
-        <section className="mt-8 border border-line bg-bg-2 p-5 sm:p-6" aria-label="Sobre la guía">
-          <p className="af-tele text-foreground">
-            <span className="text-signal">AF</span>
-            ://GUIA
-          </p>
-          <p className="mt-3 max-w-2xl font-mono text-[12px] leading-6 text-muted">
-            Los derechos de la Liga MX están repartidos entre TUDN, ViX, Canal 5, Azteca 7,
-            ESPN, Disney+, FOX y FOX One en México, y TUDN, Univision, ViX y Fox Deportes en
-            Estados Unidos. Acceso Futbol reúne cada partido con su canal en las dos regiones y
-            el horario en tu zona, para que sepas dónde ver a tu equipo sin buscar en veinte
-            lugares.
-          </p>
-        </section>
+        <div className="dv-page-lower">
+          <DondeVerTeamsNav />
 
-        <DondeVerTeamsNav />
-
-        {faq.length ? (
-          <section className="mt-8" aria-label="Preguntas frecuentes">
-            <p className="af-tele text-foreground">
-              <span className="text-signal">AF</span>
-              ://FAQ
-            </p>
-            <h2 className="mt-2 font-display text-xl font-bold uppercase tracking-wide">
-              Preguntas frecuentes
-            </h2>
-            <dl className="mt-4 space-y-4">
-              {faq.map((item) => (
-                <div key={item.question} className="border-b border-line pb-4">
-                  <dt className="font-display text-base font-semibold">{item.question}</dt>
-                  <dd className="mt-1.5 max-w-2xl text-sm leading-6 text-muted">{item.answer}</dd>
-                </div>
-              ))}
-            </dl>
-          </section>
-        ) : null}
+          {faq.length ? (
+            <section className="dv-faq" aria-label="Preguntas frecuentes">
+              <p className="af-tele text-foreground">
+                <span className="text-signal">AF</span>
+                ://FAQ
+              </p>
+              <h2 className="mt-2 font-display text-xl font-bold uppercase tracking-wide">
+                Preguntas frecuentes
+              </h2>
+              <dl className="dv-faq-list">
+                {faq.map((item) => (
+                  <div key={item.question} className="dv-faq-item">
+                    <dt>{item.question}</dt>
+                    <dd>{item.answer}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          ) : null}
+        </div>
       </main>
       <SiteFooter />
     </div>

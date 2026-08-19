@@ -233,8 +233,8 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
               className={[
                 'shrink-0 border px-4 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] transition',
                 tab === id
-                  ? 'border-foreground bg-foreground text-bg-1'
-                  : 'border-line text-muted hover:border-foreground hover:text-foreground',
+                  ? 'border-signal bg-signal text-on-signal'
+                  : 'border-line text-muted hover:border-signal hover:text-signal',
               ].join(' ')}
             >
               {label}

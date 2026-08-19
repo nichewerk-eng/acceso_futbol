@@ -385,7 +385,7 @@ function TeamSlot({
 
   const nameColor =
     certainty === 'confirmed'
-      ? 'text-gray-900 dark:text-white'
+      ? 'text-brand-blue dark:text-white'
       : certainty === 'projected'
         ? 'text-gray-700 dark:text-white/80'
         : 'text-gray-400 dark:text-white/40';
@@ -550,7 +550,7 @@ function BestThirdsTable({ groups }: { groups: Group[] }) {
                         className={[
                           'truncate text-xs font-semibold',
                           isIn
-                            ? 'text-gray-900 dark:text-white'
+                            ? 'text-brand-blue dark:text-white'
                             : 'text-gray-400 dark:text-white/40',
                         ].join(' ')}
                       >
@@ -573,7 +573,7 @@ function BestThirdsTable({ groups }: { groups: Group[] }) {
                       className={[
                         'text-center text-xs font-bold tabular-nums',
                         isIn
-                          ? 'text-gray-900 dark:text-white'
+                          ? 'text-brand-blue dark:text-white'
                           : 'text-gray-400 dark:text-white/30',
                       ].join(' ')}
                     >
@@ -712,7 +712,7 @@ export default function BracketView({ groups, userTz, fixtures = [] }: Props) {
                     isLive
                       ? 'border-red-500/30 bg-red-500/[0.03] shadow-[0_0_24px_rgba(239,68,68,0.08)]'
                       : mexInvolved
-                        ? 'border-brand-orange/30 bg-brand-orange/[0.04] shadow-[0_0_20px_rgba(240,120,32,0.08)]'
+                        ? 'border-brand-orange/30 bg-brand-orange/[0.04] shadow-[0_0_20px_rgba(245,79,27,0.08)]'
                         : isDone
                           ? 'border-gray-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.02]'
                           : 'border-gray-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] shadow-sm dark:shadow-none',
@@ -720,7 +720,7 @@ export default function BracketView({ groups, userTz, fixtures = [] }: Props) {
                 >
                   {mexInvolved && !isLive && (
                     <div className="pointer-events-none absolute inset-0 opacity-10"
-                      style={{ background: 'radial-gradient(ellipse 80% 60% at 50% -20%, #f07820, transparent)' }} />
+                      style={{ background: 'radial-gradient(ellipse 80% 60% at 50% -20%, #f54f1b, transparent)' }} />
                   )}
 
                   {/* ── Card header: status badge + city ── */}
@@ -737,7 +737,7 @@ export default function BracketView({ groups, userTz, fixtures = [] }: Props) {
                         <span className={['rounded px-2 py-0.5 text-[10px] font-bold',
                           mexInvolved
                             ? 'bg-brand-orange/15 text-brand-orange'
-                            : 'bg-[#1a7a78]/10 text-[#1a7a78] dark:text-[#4db8b5]'].join(' ')}>
+                            : 'bg-[#035352]/10 text-[#035352] dark:text-[#035352]'].join(' ')}>
                           {new Date(match.date).toLocaleTimeString('es-MX', { timeZone: userTz, hour: '2-digit', minute: '2-digit', hour12: true })}
                         </span>
                       )}
@@ -751,7 +751,7 @@ export default function BracketView({ groups, userTz, fixtures = [] }: Props) {
                     <div className={['flex flex-1 flex-col items-start gap-1', awayWin ? 'opacity-50' : ''].join(' ')}>
                       <span className="text-2xl leading-none">{home.team ? flag(home.team.team.abbreviation) : '🏳️'}</span>
                       <span className={['text-xs font-bold leading-tight',
-                        home.certainty === 'confirmed' ? 'text-gray-900 dark:text-white'
+                        home.certainty === 'confirmed' ? 'text-brand-blue dark:text-white'
                           : home.certainty === 'projected' ? 'text-gray-600 dark:text-white/70'
                           : 'text-gray-400 dark:text-white/30'].join(' ')}>
                         {home.team ? teamNameEs(home.team.team.name) : home.label}
@@ -762,7 +762,7 @@ export default function BracketView({ groups, userTz, fixtures = [] }: Props) {
                     <div className="shrink-0 text-center px-1">
                       {(isLive || isDone) && homeScore !== null ? (
                         <div className={['text-2xl font-bold tabular-nums leading-none',
-                          isLive ? 'text-red-400' : 'text-gray-900 dark:text-white'].join(' ')}>
+                          isLive ? 'text-red-400' : 'text-brand-blue dark:text-white'].join(' ')}>
                           {homeScore}<span className="mx-1 text-gray-300 dark:text-white/20">–</span>{awayScore}
                           {hasPens && (
                             <div className="mt-0.5 text-[10px] font-semibold text-gray-400 dark:text-white/40 tracking-wide">
@@ -779,7 +779,7 @@ export default function BracketView({ groups, userTz, fixtures = [] }: Props) {
                     <div className={['flex flex-1 flex-col items-end gap-1', homeWin ? 'opacity-50' : ''].join(' ')}>
                       <span className="text-2xl leading-none">{away.team ? flag(away.team.team.abbreviation) : '🏳️'}</span>
                       <span className={['text-xs font-bold leading-tight text-right',
-                        away.certainty === 'confirmed' ? 'text-gray-900 dark:text-white'
+                        away.certainty === 'confirmed' ? 'text-brand-blue dark:text-white'
                           : away.certainty === 'projected' ? 'text-gray-600 dark:text-white/70'
                           : 'text-gray-400 dark:text-white/30'].join(' ')}>
                         {away.team ? teamNameEs(away.team.team.name) : away.label}

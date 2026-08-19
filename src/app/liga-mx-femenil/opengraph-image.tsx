@@ -16,12 +16,12 @@ export default function OgImage() {
           flexDirection: 'column',
           justifyContent: 'space-between',
           padding: 64,
-          background: 'linear-gradient(145deg, #f6f5f2 0%, #e8e4dc 100%)',
-          color: '#111',
+          background: 'linear-gradient(145deg, #f6f5f2 0%, #eceae5 100%)',
+          color: '#1e223d',
           fontFamily: 'ui-sans-serif, system-ui, sans-serif',
         }}
       >
-        <div style={{ display: 'flex', fontSize: 28, letterSpacing: 6, fontWeight: 700, color: '#e05a0c' }}>
+        <div style={{ display: 'flex', fontSize: 28, letterSpacing: 6, fontWeight: 700, color: '#f54f1b' }}>
           AF://LIGA MX FEMENIL
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

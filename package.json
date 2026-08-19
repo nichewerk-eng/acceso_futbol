@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:acceso": "npx tsx --test src/lib/sports/accesoIndex.test.ts",
     "process-logo": "node scripts/process-logo.mjs"
   },
   "dependencies": {

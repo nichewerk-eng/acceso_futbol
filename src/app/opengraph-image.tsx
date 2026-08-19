@@ -24,7 +24,7 @@ export default async function OgImage() {
           display: 'flex',
           position: 'relative',
           background: '#f6f5f2',
-          color: '#111',
+          color: '#1e223d',
           fontFamily: 'AF Body',
           fontWeight: 400,
         }}
@@ -35,7 +35,7 @@ export default async function OgImage() {
             inset: 0,
             display: 'flex',
             background:
-              'radial-gradient(ellipse 80% 70% at 15% 20%, rgba(224,90,12,0.18) 0%, transparent 55%), radial-gradient(ellipse 60% 50% at 90% 85%, rgba(224,90,12,0.10) 0%, transparent 50%), linear-gradient(145deg, #f6f5f2 0%, #eceae5 55%, #e4dfd6 100%)',
+              'radial-gradient(ellipse 80% 70% at 15% 20%, rgba(245,79,27,0.18) 0%, transparent 55%), radial-gradient(ellipse 60% 50% at 90% 85%, rgba(245,79,27,0.10) 0%, transparent 50%), linear-gradient(145deg, #f6f5f2 0%, #eceae5 55%, #eceae5 100%)',
           }}
         />
 
@@ -65,7 +65,7 @@ export default async function OgImage() {
                 fontSize: 22,
                 letterSpacing: 5,
                 fontWeight: 400,
-                color: '#e05a0c',
+                color: '#f54f1b',
               }}
             >
               AF://PULSO
@@ -144,7 +144,7 @@ export default async function OgImage() {
                   fontFamily: 'AF Body',
                   fontWeight: 400,
                   fontSize: 24,
-                  color: '#e05a0c',
+                  color: '#f54f1b',
                   lineHeight: 1.25,
                 }}
               >
@@ -158,7 +158,7 @@ export default async function OgImage() {
               display: 'flex',
               width: '100%',
               height: 6,
-              background: '#e05a0c',
+              background: '#f54f1b',
             }}
           />
         </div>

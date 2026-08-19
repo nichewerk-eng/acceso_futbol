@@ -54,7 +54,7 @@ function OgPitch({ team }: { team: TeamLineup }) {
           height: 454,
           backgroundColor: '#17662a',
           backgroundImage: 'repeating-linear-gradient(to bottom, #1f7a34 0 28px, #17662a 28px 56px)',
-          border: '4px solid #0c0c0c',
+          border: '4px solid #1e223d',
         }}
       >
         <div
@@ -103,7 +103,7 @@ function OgPitch({ team }: { team: TeamLineup }) {
                   alt=""
                   style={{
                     objectFit: 'cover',
-                    border: '2px solid #0c0c0c',
+                    border: '2px solid #1e223d',
                     background: '#e0b089',
                   }}
                 />
@@ -113,7 +113,7 @@ function OgPitch({ team }: { team: TeamLineup }) {
                     display: 'flex',
                     width: 24,
                     height: 24,
-                    border: '2px solid #0c0c0c',
+                    border: '2px solid #1e223d',
                     background: '#e0b089',
                   }}
                 />
@@ -127,7 +127,7 @@ function OgPitch({ team }: { team: TeamLineup }) {
                   height: 18,
                   marginTop: -2,
                   background: kit.shirt,
-                  border: '2px solid #0c0c0c',
+                  border: '2px solid #1e223d',
                   color: kit.number,
                   fontSize: 11,
                   fontWeight: 700,
@@ -184,7 +184,7 @@ export default async function OgImage({ params }: Props) {
           width: '100%',
           height: '100%',
           display: 'flex',
-          background: '#0c0c0c',
+          background: '#1e223d',
           color: '#f6f5f2',
           fontFamily: 'AF Body',
         }}
@@ -207,7 +207,7 @@ export default async function OgImage({ params }: Props) {
               alignItems: 'center',
             }}
           >
-            <div style={{ display: 'flex', fontSize: 18, letterSpacing: 4, color: '#e05a0c' }}>
+            <div style={{ display: 'flex', fontSize: 18, letterSpacing: 4, color: '#f54f1b' }}>
               AF://XI · {pair}
             </div>
             <div style={{ display: 'flex', fontSize: 16, color: 'rgba(246,245,242,0.45)' }}>

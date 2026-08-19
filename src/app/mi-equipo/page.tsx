@@ -21,10 +21,10 @@ export default function MiEquipoPage() {
   return (
     <>
       <SiteNav />
-      <div className="min-h-screen bg-[#f0f6f6] dark:bg-bg-1 font-display text-gray-900 dark:text-white">
+      <div className="min-h-screen bg-bg-1 dark:bg-bg-1 font-display text-brand-blue dark:text-white">
 
         {/* Header */}
-        <div className="bg-gray-900 dark:bg-[#080d12] px-4 py-8">
+        <div className="bg-brand-blue px-4 py-8">
           <div className="mx-auto max-w-5xl">
             <h1 className="text-2xl font-bold text-white">Mi Equipo</h1>
             <p className="mt-1 text-sm text-white/40">Sigue tus equipos favoritos de Liga MX</p>
@@ -48,7 +48,7 @@ export default function MiEquipoPage() {
                     <span className="mb-1.5 flex justify-center">
                       <ClubLogo clubId={team.id} abbr={team.abbreviation} name={team.name} size="lg" />
                     </span>
-                    <p className="text-xs font-semibold text-gray-900 dark:text-white">{teamNameEs(team.name)}</p>
+                    <p className="text-xs font-semibold text-brand-blue dark:text-white">{teamNameEs(team.name)}</p>
                     <p className="text-[10px] text-gray-400 dark:text-white/30 mt-0.5">Liga MX</p>
                     <Link
                       href="/liga-mx"
@@ -88,7 +88,7 @@ export default function MiEquipoPage() {
                     <span className="mb-1.5 flex">
                       <ClubLogo clubId={team.id} abbr={team.abbreviation} name={team.name} size="md" />
                     </span>
-                    <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">{teamNameEs(team.name)}</p>
+                    <p className="text-xs font-semibold text-brand-blue dark:text-white truncate">{teamNameEs(team.name)}</p>
                     <p className="text-[10px] mt-1 font-semibold transition">
                       {fav ? <span className="text-brand-orange">Siguiendo ✓</span> : <span className="text-gray-400 dark:text-white/30 group-hover:text-brand-orange">+ Seguir</span>}
                     </p>

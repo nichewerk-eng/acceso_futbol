@@ -5,6 +5,7 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { DondeVerGuide } from '@/components/living-room/DondeVerGuide';
 import { JornadaTakeBoard } from '@/components/living-room/JornadaTake';
+import { OnceRoom } from '@/components/living-room/OnceRoom';
 import { useGravity } from '@/contexts/GravityContext';
 import { isLeaguesCupWindow } from '@/config/leaguesCup2026';
 import type { Fixture } from '@/lib/sports';
@@ -266,6 +267,8 @@ export function JornadaRecap() {
                 </div>
               </div>
             )}
+
+            {!lcPause ? <OnceRoom compact /> : null}
           </div>
         )}
       </div>

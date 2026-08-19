@@ -105,10 +105,10 @@ export default async function QuinielaPage() {
         </section>
 
         <div className="mt-10 flex flex-wrap gap-2">
-          <Link href="/donde-ver" className="af-cta-ghost">
+          <Link href="/donde-ver" className="af-cta af-cta-ghost">
             Dónde ver la jornada
           </Link>
-          <Link href="/liga-mx" className="af-cta-ghost">
+          <Link href="/liga-mx" className="af-cta af-cta-ghost">
             Liga MX
           </Link>
         </div>

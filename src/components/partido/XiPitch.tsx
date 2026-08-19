@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ClubLogo } from '@/components/brand/ClubLogo';
+import { passDuration, XiBall } from '@/components/partido/XiBall';
 import { xiConfirmed, xiKit, xiPins, type XiPin } from '@/lib/share/xiShare';
 import type { LineupPlayer, TeamLineup } from '@/lib/sports/types';
 
@@ -55,38 +56,12 @@ function BitSprite({ player }: { player: LineupPlayer }) {
   );
 }
 
-function PixelBall({ pin, passMs, passKey }: { pin: XiPin; passMs: number; passKey: number }) {
-  return (
-    <span
-      className="xi-ball"
-      aria-hidden
-      style={{
-        left: `${pin.x}%`,
-        top: `${pin.y}%`,
-        ['--xi-pass-ms' as string]: `${passMs}ms`,
-      }}
-    >
-      <span key={passKey} className={passKey > 0 ? 'xi-ball-fly' : undefined}>
-        <span className="xi-ball-sprite">
-          <i />
-        </span>
-      </span>
-    </span>
-  );
-}
-
 function playerLabel(player: LineupPlayer): string {
   return player.jersey != null ? `${player.jersey} · ${player.name}` : player.name;
 }
 
 function starterGkId(pins: XiPin[]): string | null {
   return pins.find((p) => p.player.position === 'GK')?.player.id ?? pins[0]?.player.id ?? null;
-}
-
-function passDuration(from: XiPin | undefined, to: XiPin): number {
-  if (!from) return 0;
-  const d = Math.hypot(from.x - to.x, from.y - to.y);
-  return Math.round(280 + d * 5);
 }
 
 export function XiPitch({ team }: { team: TeamLineup }) {
@@ -153,7 +128,7 @@ export function XiPitch({ team }: { team: TeamLineup }) {
             </button>
           );
         })}
-        {ballPin ? <PixelBall pin={ballPin} passMs={passMs} passKey={passKey} /> : null}
+        {ballPin ? <XiBall pin={ballPin} passMs={passMs} passKey={passKey} /> : null}
       </div>
       <p className={shown ? 'xi-pitch-select is-on' : 'xi-pitch-select'}>
         {hover

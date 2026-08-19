@@ -90,7 +90,7 @@ function RegionRow({
   surface: 'paper' | 'ink';
   compact?: boolean;
 }) {
-  const list = channels?.filter((id) => TV_CHANNELS[id]) ?? [];
+  const list = [...new Set((channels ?? []).filter((id) => TV_CHANNELS[id]))];
   if (list.length === 0 && !fallback) return null;
 
   return (

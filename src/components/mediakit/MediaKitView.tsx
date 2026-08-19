@@ -12,7 +12,7 @@ export default function MediaKitView() {
   }
 
   return (
-    <div className="min-h-screen bg-white font-display text-gray-900">
+    <div className="min-h-screen bg-white font-display text-brand-blue">
       <TopBar onDownload={handleDownload} />
 
       <main className="mx-auto w-full max-w-6xl px-5 py-10 sm:px-8 sm:py-12 print:max-w-none print:px-10 print:py-6">
@@ -103,7 +103,7 @@ function StatBlock({
     <div className="min-w-0">
       <p
         className={`truncate font-display font-bold leading-none tracking-tight ${sizeClass} ${
-          accent ? "text-brand-orange" : "text-gray-900"
+          accent ? "text-brand-orange" : "text-brand-blue"
         }`}
       >
         {value}
@@ -243,7 +243,7 @@ function HeroBand({ onDownload }: { onDownload: () => void }) {
           </Reveal>
 
           <Reveal delay={180} className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
-            <span className="font-semibold text-gray-900">{mediaKit.window.label}</span>
+            <span className="font-semibold text-brand-blue">{mediaKit.window.label}</span>
             <span className="hidden sm:inline text-gray-300">/</span>
             <span className="max-w-2xl leading-relaxed">{mediaKit.window.note}</span>
           </Reveal>
@@ -353,7 +353,7 @@ function PlatformsGrid() {
                   <PlatformIcon id={p.id} />
                 </span>
                 <div>
-                  <p className="text-sm font-bold uppercase tracking-wide text-gray-900">{p.name}</p>
+                  <p className="text-sm font-bold uppercase tracking-wide text-brand-blue">{p.name}</p>
                   <p className="text-[11px] text-gray-400">{p.handle}</p>
                 </div>
               </div>
@@ -365,7 +365,7 @@ function PlatformsGrid() {
             </div>
 
             <div className="mt-4 flex items-end gap-1.5">
-              <p className="font-display text-2xl font-bold text-gray-900 sm:text-3xl">
+              <p className="font-display text-2xl font-bold text-brand-blue sm:text-3xl">
                 {p.approxMetric && "~"}
                 {formatNumber(p.metricValue)}
               </p>
@@ -376,18 +376,18 @@ function PlatformsGrid() {
 
             {p.reachValue && (
               <p className="mt-1 text-xs text-gray-500">
-                <strong className="text-gray-900">{formatNumber(p.reachValue)}</strong> {p.reachLabel}
+                <strong className="text-brand-blue">{formatNumber(p.reachValue)}</strong> {p.reachLabel}
               </p>
             )}
 
             <div className="mt-3 flex flex-col gap-1 border-t border-gray-200 pt-3 text-xs">
               <span className="text-gray-600">
-                <strong className="text-gray-900">{formatNumber(p.followers)}</strong> {p.followersLabel}
+                <strong className="text-brand-blue">{formatNumber(p.followers)}</strong> {p.followersLabel}
                 <span className="text-gray-400"> · +{formatNumber(p.growth)} {p.growthLabel}</span>
               </span>
               {p.secondaryMetric && (
                 <span className="text-gray-600">
-                  <strong className="text-gray-900">{p.secondaryMetric.value}</strong> {p.secondaryMetric.label}
+                  <strong className="text-brand-blue">{p.secondaryMetric.value}</strong> {p.secondaryMetric.label}
                 </span>
               )}
             </div>
@@ -429,19 +429,19 @@ function AudienceGeoRow() {
             </thead>
             <tbody>
               <tr className="border-b border-gray-100">
-                <td className="px-3 py-2.5 font-bold text-gray-900">Facebook</td>
+                <td className="px-3 py-2.5 font-bold text-brand-blue">Facebook</td>
                 <td className="px-3 py-2.5 text-gray-700">{d.facebook.men}%</td>
                 <td className="px-3 py-2.5 text-gray-700">{d.facebook.age35Plus}%</td>
                 <td className="px-3 py-2.5 text-gray-700">México {d.facebook.mexico}%</td>
               </tr>
               <tr className="border-b border-gray-100">
-                <td className="px-3 py-2.5 font-bold text-gray-900">TikTok</td>
+                <td className="px-3 py-2.5 font-bold text-brand-blue">TikTok</td>
                 <td className="px-3 py-2.5 text-gray-700">{d.tiktok.men}%</td>
                 <td className="px-3 py-2.5 text-gray-700">{d.tiktok.age35Plus}%</td>
                 <td className="px-3 py-2.5 text-gray-700">EE. UU. {d.tiktok.unitedStates}%</td>
               </tr>
               <tr>
-                <td className="px-3 py-2.5 font-bold text-gray-900">Instagram</td>
+                <td className="px-3 py-2.5 font-bold text-brand-blue">Instagram</td>
                 <td className="px-3 py-2.5 text-gray-400">25 a 54 años</td>
                 <td className="px-3 py-2.5 text-gray-700">{d.instagram.age25to54}%</td>
                 <td className="px-3 py-2.5 text-gray-700">{d.instagram.splitNote}</td>
@@ -461,7 +461,7 @@ function AudienceGeoRow() {
                   <VerticalIcon index={i} />
                 </span>
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wide text-gray-900">{v.name}</p>
+                  <p className="text-xs font-bold uppercase tracking-wide text-brand-blue">{v.name}</p>
                   <p className="mt-0.5 text-[11px] leading-snug text-gray-500">{v.rationale}</p>
                 </div>
               </div>
@@ -526,7 +526,7 @@ function RankedMetroList({
             >
               {String(i + 1).padStart(2, "0")}
             </span>
-            <span className={`text-xs ${i === 0 ? "font-bold text-gray-900" : "text-gray-600"}`}>{item}</span>
+            <span className={`text-xs ${i === 0 ? "font-bold text-brand-blue" : "text-gray-600"}`}>{item}</span>
           </div>
         ))}
       </div>
@@ -561,11 +561,11 @@ function ContentProofRow() {
         <Reveal delay={c.formats.length * 50 + 40} className="mt-4 flex flex-wrap gap-3">
           <div className="border border-gray-200 bg-white px-3.5 py-2.5">
             <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Cadencia</p>
-            <p className="mt-0.5 text-xs font-semibold text-gray-900 sm:text-sm">{c.cadence}</p>
+            <p className="mt-0.5 text-xs font-semibold text-brand-blue sm:text-sm">{c.cadence}</p>
           </div>
           <div className="border border-gray-200 bg-white px-3.5 py-2.5">
             <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Formato</p>
-            <p className="mt-0.5 text-xs font-semibold text-gray-900 sm:text-sm">{c.formatNote}</p>
+            <p className="mt-0.5 text-xs font-semibold text-brand-blue sm:text-sm">{c.formatNote}</p>
           </div>
         </Reveal>
       </div>
@@ -584,7 +584,7 @@ function ContentProofRow() {
                   {p.tag}
                 </span>
               )}
-              <p className="font-display text-xl font-bold text-gray-900 sm:text-2xl">{p.value}</p>
+              <p className="font-display text-xl font-bold text-brand-blue sm:text-2xl">{p.value}</p>
               <p className="mt-1 text-[11px] font-bold uppercase tracking-wide text-gray-700">{p.label}</p>
               <p className="mt-0.5 text-[11px] leading-snug text-gray-500">{p.detail}</p>
             </Reveal>
@@ -604,7 +604,7 @@ function CaseStudy() {
   return (
     <div className="border border-gray-200 bg-white p-4 print:break-inside-avoid">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="font-display text-sm font-bold uppercase tracking-tight text-gray-900">
+        <h3 className="font-display text-sm font-bold uppercase tracking-tight text-brand-blue">
           {caseStudy.title}
         </h3>
         <span className="border border-brand-orange/50 bg-brand-orange/5 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-brand-orange">
@@ -622,7 +622,7 @@ function CaseStudy() {
         </div>
         <div>
           <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-brand-orange">Resultado</p>
-          <p className="mt-1 text-[11px] font-semibold leading-snug text-gray-900">{caseStudy.result}</p>
+          <p className="mt-1 text-[11px] font-semibold leading-snug text-brand-blue">{caseStudy.result}</p>
         </div>
       </div>
     </div>
@@ -661,7 +661,7 @@ function RateCardSection({ onDownload }: { onDownload: () => void }) {
                       <RateIcon index={i} />
                     </span>
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-wide text-gray-900 sm:text-sm">{pkg.name}</p>
+                      <p className="text-xs font-bold uppercase tracking-wide text-brand-blue sm:text-sm">{pkg.name}</p>
                       <p className="mt-0.5 text-[11px] leading-snug text-gray-500 sm:hidden">{pkg.includes}</p>
                     </div>
                   </div>
@@ -716,7 +716,7 @@ function Footer() {
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-orange">Contacto</p>
           <a
             href={`mailto:${contact.email}`}
-            className="mt-1 block text-xl font-bold text-gray-900 transition hover:text-brand-orange sm:text-2xl"
+            className="mt-1 block text-xl font-bold text-brand-blue transition hover:text-brand-orange sm:text-2xl"
           >
             {contact.email}
           </a>

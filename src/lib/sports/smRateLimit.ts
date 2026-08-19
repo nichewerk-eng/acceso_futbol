@@ -61,6 +61,7 @@ export function softHourlyLimit(plan = sportmonksPlan()): number {
 /** Map request path → Sportmonks entity bucket. */
 export function entityForPath(path: string): SmEntity {
   if (path.startsWith('/livescores') || path.startsWith('/fixtures')) return 'Fixture';
+  if (path.startsWith('/rounds')) return 'Unknown'; // Round entity, not the live Fixture meter
   if (path.startsWith('/seasons')) return 'Season';
   if (path.startsWith('/teams')) return 'Team';
   if (path.startsWith('/standings')) return 'Standing';

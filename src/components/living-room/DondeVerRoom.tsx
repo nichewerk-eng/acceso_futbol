@@ -53,6 +53,8 @@ export function DondeVerRoom({ initial = null }: { initial?: JornadaOverview | n
       played={data.played}
       tz={tz}
       isMine={isMine}
+      asPage
+      showRitual={false}
     />
   );
 }

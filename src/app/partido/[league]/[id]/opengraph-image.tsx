@@ -73,7 +73,7 @@ export default async function OgImage({ params }: Props) {
           width: '100%',
           height: '100%',
           display: 'flex',
-          background: '#0c0c0c',
+          background: '#1e223d',
           color: '#f6f5f2',
           fontFamily: 'AF Body',
         }}
@@ -102,7 +102,7 @@ export default async function OgImage({ params }: Props) {
                 fontSize: 22,
                 letterSpacing: 4,
                 fontWeight: 400,
-                color: '#e05a0c',
+                color: '#f54f1b',
               }}
             >
               {kicker}
@@ -210,7 +210,7 @@ export default async function OgImage({ params }: Props) {
               gap: 14,
             }}
           >
-            <div style={{ display: 'flex', width: '100%', height: 6, background: '#e05a0c' }} />
+            <div style={{ display: 'flex', width: '100%', height: 6, background: '#f54f1b' }} />
             <div
               style={{
                 display: 'flex',

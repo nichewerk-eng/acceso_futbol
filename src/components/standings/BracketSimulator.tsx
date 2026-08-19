@@ -188,14 +188,14 @@ function MatchCard({
         disabled={isTbd || locked}
         className={[
           'flex flex-1 w-full items-center gap-2 px-3 py-1 text-left transition-all duration-150',
-          'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal/50',
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50',
           isTbd || locked
             ? 'cursor-default'
             : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-white/[0.04]',
           isWinner && locked
             ? 'bg-gray-100 dark:bg-white/[0.06]'
             : isWinner
-              ? 'bg-brand-teal/10 dark:bg-brand-teal/15'
+              ? 'bg-brand-orange/10 dark:bg-brand-orange/15'
               : '',
           isLoser
             ? 'opacity-30'
@@ -215,7 +215,7 @@ function MatchCard({
             : isWinner && locked
               ? 'text-gray-700 dark:text-white/70 font-bold'
               : isWinner
-                ? 'text-brand-teal dark:text-brand-teal font-bold'
+                ? 'text-brand-orange dark:text-brand-orange font-bold'
                 : 'text-gray-700 dark:text-white/80',
         ].join(' ')}>
           {isTbd ? '—' : team.name}
@@ -234,7 +234,7 @@ function MatchCard({
           <span className="text-[11px] font-bold tabular-nums text-red-500 dark:text-red-400 shrink-0">{score}</span>
         )}
         {isWinner && !locked && !isLive && (
-          <svg className="h-3 w-3 text-brand-teal shrink-0" viewBox="0 0 12 12" fill="currentColor">
+          <svg className="h-3 w-3 text-brand-orange shrink-0" viewBox="0 0 12 12" fill="currentColor">
             <path d="M10 3L5 8.5 2 5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
           </svg>
         )}
@@ -288,7 +288,7 @@ function ChampionBanner({ team }: { team: BTeam }) {
       <div className="text-[10px] font-bold tracking-[0.2em] uppercase text-yellow-500 dark:text-yellow-400 mb-1">
         Campeón del Mundo
       </div>
-      <div className="text-2xl font-black text-gray-900 dark:text-white">
+      <div className="text-2xl font-black text-brand-blue dark:text-white">
         {team.name}
       </div>
     </div>
@@ -486,7 +486,7 @@ export default function BracketSimulator({ fixtures = [] }: { fixtures?: Fixture
             unoptimized
           />
           <div>
-            <h2 className="text-sm font-bold text-gray-900 dark:text-white tracking-wide">
+            <h2 className="text-sm font-bold text-brand-blue dark:text-white tracking-wide">
               Simulador de Bracket
             </h2>
             <p className="text-xs text-gray-400 dark:text-white/40 mt-0.5">
@@ -500,7 +500,7 @@ export default function BracketSimulator({ fixtures = [] }: { fixtures?: Fixture
         {filledCount > lockedCount && (
           <button
             onClick={handleReset}
-            className="rounded-lg border border-gray-200 dark:border-white/10 px-3 py-1.5 text-xs font-semibold text-gray-500 dark:text-white/40 hover:text-gray-800 dark:hover:text-white/80 hover:border-gray-300 dark:hover:border-white/20 transition-colors"
+            className="rounded-lg border border-brand-orange px-3 py-1.5 text-xs font-semibold text-brand-orange hover:bg-brand-orange hover:text-white transition-colors"
           >
             Reiniciar
           </button>

@@ -51,10 +51,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
-      url: `${siteConfig.url}/quiniela`,
+      url: `${siteConfig.url}/once`,
       lastModified: now,
       changeFrequency: 'daily',
-      priority: 0.8,
+      priority: 0.82,
     },
     {
       url: `${siteConfig.url}/tabla`,
