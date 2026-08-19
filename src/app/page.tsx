@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PulseHome } from '@/components/living-room/PulseHome';
 import { JsonLd } from '@/components/seo/JsonLd';
+import { LIGA_MX_CLUBS } from '@/config/clubs';
 import { siteConfig } from '@/config/site';
 import { fixtureChannelLabels, kickoffLabelMx } from '@/lib/dondeVerCopy';
 import {
@@ -100,11 +101,26 @@ export default async function RootPage() {
         <p>{siteConfig.description}</p>
         <nav aria-label="Secciones principales">
           <Link href="/liga-mx">Liga MX — resultados, jornada y tabla</Link>
+          <Link href="/liga-mx-femenil">Liga MX Femenil</Link>
           <Link href="/donde-ver">Dónde ver la Liga MX hoy</Link>
+          <Link href="/quiniela">Quiniela Liga MX</Link>
           <Link href="/leagues-cup">Leagues Cup — fixtures y standings</Link>
+          <Link href="/once">Once de la jornada</Link>
           <Link href="/tabla">Tabla de posiciones Liga MX</Link>
+          <Link href="/toma">Toma — el show del día</Link>
           <Link href="/nosotros">Quiénes somos</Link>
           <Link href="/contacto">Contacto</Link>
+        </nav>
+        <nav aria-label="Clubes Liga MX">
+          <ul>
+            {LIGA_MX_CLUBS.map((club) => (
+              <li key={club.id}>
+                <Link href={`/club/${club.id}`}>{club.name}</Link>
+                {' — '}
+                <Link href={`/donde-ver/${club.id}`}>Dónde ver {club.name}</Link>
+              </li>
+            ))}
+          </ul>
         </nav>
         {jornada ? <HomeJornadaCrawl jornada={jornada} /> : null}
       </section>

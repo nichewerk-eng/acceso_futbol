@@ -25,6 +25,8 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+const googleVerification = process.env.GOOGLE_SITE_VERIFICATION;
+
 export const metadata: Metadata = {
   title: {
     default: "Acceso Futbol | Liga MX, Leagues Cup y El Tri",
@@ -38,6 +40,7 @@ export const metadata: Metadata = {
   creator: siteConfig.name,
   publisher: siteConfig.legalName,
   category: "sports",
+  ...(googleVerification ? { verification: { google: googleVerification } } : {}),
   robots: {
     index: true,
     follow: true,

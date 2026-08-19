@@ -1,6 +1,10 @@
 # Acceso Futbol — SEO / indexation plan
 
-Canonical host: **https://www.accesofutbol.com** (matches Vercel primary). Apex `accesofutbol.com` should 307 → www at the Vercel domain layer — do **not** add app-level redirects the other way (that creates a loop).
+Canonical host: **https://www.accesofutbol.com** (matches Vercel primary). Apex `accesofutbol.com` must **308 Permanent Redirect** → www at the Vercel domain layer — do **not** add app-level redirects the other way (that creates a loop).
+
+Vercel’s default apex redirect is **307 Temporary**. Change it: Vercel → Project → Settings → Domains → Edit `accesofutbol.com` → status **308 Permanent Redirect**. A 307 is why GSC lists `https://accesofutbol.com/` under **Page with redirect** and may not pass ranking to www.
+
+That GSC row will **stay** after the 308 — Google correctly refuses to index a URL that only redirects. The indexed homepage is `https://www.accesofutbol.com/`. Do not click “Done fixing?” expecting the apex URL to become indexed.
 
 ## Phase 0 — GSC (ops, not code)
 
@@ -8,10 +12,11 @@ Do in [Google Search Console](https://search.google.com/search-console) on the *
 
 1. Prefer Domain property `accesofutbol.com`, or URL-prefix www (the live host).
 2. Submit sitemap: `https://www.accesofutbol.com/sitemap.xml`.
-3. URL Inspection on www URLs: `/`, `/liga-mx`, `/leagues-cup`, one `/club/*`, one `/momento/*`, one `/partido/*`.
+3. URL Inspection on **www** URLs (never the apex): `/`, `/liga-mx`, `/donde-ver`, `/quiniela`, `/leagues-cup`, one `/club/*`, one `/donde-ver/*`, one `/momento/*`, one `/partido/*`.
 4. Request indexing if “URL is unknown to Google” after deploy.
 5. Monitor Coverage / Page indexing for soft-404 or duplicate `/inicio`.
 6. Ignore “not on Google” for brand-new paths until after Request indexing + a few days.
+7. Ignore **Page with redirect** for `https://accesofutbol.com/` — that is the apex→www canonicalization working.
 
 ## Phase 1 — Technical (shipped in code)
 
@@ -56,7 +61,7 @@ Do in [Google Search Console](https://search.google.com/search-console) on the *
 ## Quick verify after deploy
 
 ```bash
-curl -sI https://accesofutbol.com/ | grep -i location   # expect → www
-curl -sI https://www.accesofutbol.com/liga-mx | head -1  # expect 200
+curl -sI https://accesofutbol.com/ | grep -iE 'HTTP/|location'   # expect 308 → www
+curl -sI https://www.accesofutbol.com/liga-mx | head -1          # expect 200
 curl -s https://www.accesofutbol.com/sitemap.xml | head
 ```

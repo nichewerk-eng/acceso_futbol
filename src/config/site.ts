@@ -17,7 +17,7 @@ export const siteConfig = {
   taglineEn: "Mexican soccer media. Unfiltered. On your feed.",
   description:
     "Acceso Futbol: noticias, resultados, horarios, tabla, análisis y contenido de Liga MX, Selección Mexicana y Leagues Cup para aficionados en México y Estados Unidos.",
-  /** Primary host on Vercel is www (apex 307s → www). Keep canonicals aligned. */
+  /** Primary host on Vercel is www. Apex must 308 → www (not 307). Keep canonicals aligned. */
   url: "https://www.accesofutbol.com",
   email: "hello@accesofutbol.com",
   founded: 2026,

@@ -68,7 +68,12 @@ export function websiteJsonLd() {
     url: siteConfig.url,
     description: siteConfig.description,
     inLanguage: 'es-MX',
-    publisher: { '@type': 'Organization', name: siteConfig.name, url: siteConfig.url },
+    publisher: {
+      '@type': 'NewsMediaOrganization',
+      name: siteConfig.name,
+      url: siteConfig.url,
+      logo: absoluteUrl('/logo.png'),
+    },
   };
 }
 

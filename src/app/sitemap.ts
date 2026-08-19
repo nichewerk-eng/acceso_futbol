@@ -3,6 +3,7 @@ import { LIGA_MX_CLUBS } from '@/config/clubs';
 import { allClubIdentities } from '@/config/clubIdentity';
 import { MOMENTS } from '@/config/moments';
 import { siteConfig } from '@/config/site';
+import { seedLigaMxFixtures } from '@/lib/sports/espnFallback';
 import {
   fetchLeaguesCupSeasonFixtures,
   fetchLigaMxSeasonFixtures,
@@ -10,6 +11,19 @@ import {
   involvesLigaMxClub,
   sportmonksEnabled,
 } from '@/lib/sports';
+import type { Fixture } from '@/lib/sports/types';
+
+function partidoEntry(
+  league: string,
+  f: Pick<Fixture, 'id' | 'date' | 'state'>
+): MetadataRoute.Sitemap[number] {
+  return {
+    url: `${siteConfig.url}/partido/${league}/${f.id}`,
+    lastModified: new Date(f.date),
+    changeFrequency: f.state === 'in' ? 'always' : 'daily',
+    priority: f.state === 'in' ? 0.95 : f.state === 'pre' ? 0.8 : 0.55,
+  };
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
@@ -43,6 +57,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: now,
       changeFrequency: 'hourly',
       priority: 0.92,
+    },
+    {
+      url: `${siteConfig.url}/quiniela`,
+      lastModified: now,
+      changeFrequency: 'hourly',
+      priority: 0.88,
     },
     {
       url: `${siteConfig.url}/leagues-cup`,
@@ -109,6 +129,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   }
 
+  const seen = new Set<string>();
+  const pushPartido = (league: string, f: Pick<Fixture, 'id' | 'date' | 'state'>) => {
+    const url = `${siteConfig.url}/partido/${league}/${f.id}`;
+    if (seen.has(url)) return;
+    seen.add(url);
+    entries.push(partidoEntry(league, f));
+  };
+
+  // Apertura calendar is always in the sitemap so Google can discover match URLs
+  // even when Sportmonks is down or unset on a cold isolate.
+  for (const f of seedLigaMxFixtures()) pushPartido('liga-mx', f);
+
   if (!sportmonksEnabled()) return entries;
 
   try {
@@ -118,43 +150,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       fetchLeaguesCupSeasonFixtures().catch(() => []),
     ]);
 
-    const seen = new Set<string>();
-    for (const f of liga) {
-      const url = `${siteConfig.url}/partido/liga-mx/${f.id}`;
-      if (seen.has(url)) continue;
-      seen.add(url);
-      entries.push({
-        url,
-        lastModified: new Date(f.date),
-        changeFrequency: f.state === 'in' ? 'always' : 'daily',
-        priority: f.state === 'in' ? 0.95 : f.state === 'pre' ? 0.8 : 0.55,
-      });
-    }
-    for (const f of femenil) {
-      const url = `${siteConfig.url}/partido/liga-mx-femenil/${f.id}`;
-      if (seen.has(url)) continue;
-      seen.add(url);
-      entries.push({
-        url,
-        lastModified: new Date(f.date),
-        changeFrequency: f.state === 'in' ? 'always' : 'daily',
-        priority: f.state === 'in' ? 0.95 : f.state === 'pre' ? 0.8 : 0.55,
-      });
-    }
+    for (const f of liga) pushPartido('liga-mx', f);
+    for (const f of femenil) pushPartido('liga-mx-femenil', f);
     for (const f of cup) {
       if (!involvesLigaMxClub(f.home, f.away)) continue;
-      const url = `${siteConfig.url}/partido/leagues-cup/${f.id}`;
-      if (seen.has(url)) continue;
-      seen.add(url);
-      entries.push({
-        url,
-        lastModified: new Date(f.date),
-        changeFrequency: f.state === 'in' ? 'always' : 'daily',
-        priority: f.state === 'in' ? 0.95 : f.state === 'pre' ? 0.85 : 0.55,
-      });
+      pushPartido('leagues-cup', f);
     }
   } catch {
-    /* static routes only */
+    /* static routes + Apertura calendar already listed */
   }
 
   return entries;
