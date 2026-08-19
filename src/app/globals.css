@@ -7167,6 +7167,55 @@ a.lead-team:hover {
   white-space: nowrap;
 }
 
+@media (max-width: 639px) {
+  .once-pitch {
+    padding: 0.4rem 0.35rem 0.5rem;
+  }
+
+  .once-pitch .xi-bit {
+    width: 42px;
+  }
+
+  .once-pitch .xi-bit-face {
+    width: 28px;
+    height: 28px;
+  }
+
+  .once-pitch .xi-bit-torso {
+    width: 34px;
+    height: 20px;
+    font-size: 10px;
+  }
+
+  .once-pitch .xi-bit-shorts {
+    width: 34px;
+    height: 8px;
+  }
+
+  .once-pin {
+    width: 4.2rem;
+  }
+
+  .once-pin-label {
+    gap: 0.12rem;
+    max-width: 4.1rem;
+  }
+
+  .once-pin-crest,
+  .once-pin .club-logo-xs {
+    width: 13px;
+    height: 13px;
+  }
+
+  .once-pin-name {
+    font-size: 9px;
+  }
+
+  .once-pitch .xi-ball {
+    transform: translate(14px, 24px);
+  }
+}
+
 .once-tip {
   margin-top: 0.55rem;
   min-height: 2.4rem;
