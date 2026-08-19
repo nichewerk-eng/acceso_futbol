@@ -264,7 +264,21 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
     mx: ['fox', 'fox-one', 'azteca-7'],
     us: ['fox-deportes', 'universo'],
   },
+  // QRO–TOL is FOX One only in MX (no linear FOX). Date + jornada keys
+  // cover Sportmonks kickoff shuffle so the home-club FOX default never wins.
+  '2026-08-21|QRO|TOL': {
+    mx: ['fox-one'],
+    us: ['tudn'],
+  },
   '2026-08-22|QRO|TOL': {
+    mx: ['fox-one'],
+    us: ['tudn'],
+  },
+  '2026-08-23|QRO|TOL': {
+    mx: ['fox-one'],
+    us: ['tudn'],
+  },
+  'j5|QRO|TOL': {
     mx: ['fox-one'],
     us: ['tudn'],
   },
@@ -352,10 +366,22 @@ function normAbbr(abbr: string): string {
   return scheduleAbbr(abbr);
 }
 
+function sortedPair(homeAbbr: string, awayAbbr: string): string {
+  return [normAbbr(homeAbbr), normAbbr(awayAbbr)].sort().join('|');
+}
+
 function pairKey(dateIso: string, homeAbbr: string, awayAbbr: string): string {
   const day = mexicoDayKey(new Date(dateIso));
-  const pair = [normAbbr(homeAbbr), normAbbr(awayAbbr)].sort().join('|');
-  return `${day}|${pair}`;
+  return `${day}|${sortedPair(homeAbbr, awayAbbr)}`;
+}
+
+function jornadaGuideKey(
+  jornada: string | null | undefined,
+  homeAbbr: string,
+  awayAbbr: string
+): string | null {
+  const n = String(jornada ?? '').match(/(\d+)/)?.[1];
+  return n ? `j${n}|${sortedPair(homeAbbr, awayAbbr)}` : null;
 }
 
 function labelList(ids: TvChannelId[]): string {
@@ -364,7 +390,7 @@ function labelList(ids: TvChannelId[]): string {
 
 /** Resolve MX/US channels for a fixture (known guide → unconfirmed). */
 export function resolveDondeVer(
-  fixture: Pick<Fixture, 'date' | 'home' | 'away' | 'venue' | 'city' | 'league'>
+  fixture: Pick<Fixture, 'date' | 'home' | 'away' | 'venue' | 'city' | 'league' | 'jornada'>
 ): {
   mx: string;
   us: string;
@@ -385,7 +411,13 @@ export function resolveDondeVer(
     }
     return { ...UNCONFIRMED };
   }
-  const known = GUIDE[pairKey(fixture.date, fixture.home.abbreviation, fixture.away.abbreviation)];
+  const dateKey = pairKey(fixture.date, fixture.home.abbreviation, fixture.away.abbreviation);
+  const jornadaKey = jornadaGuideKey(
+    fixture.jornada,
+    fixture.home.abbreviation,
+    fixture.away.abbreviation
+  );
+  const known = GUIDE[dateKey] ?? (jornadaKey ? GUIDE[jornadaKey] : undefined);
   if (known) {
     return {
       mx: labelList(known.mx),

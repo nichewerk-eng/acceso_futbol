@@ -1061,6 +1061,7 @@ function KickRow({
   const tv = resolveDondeVer({
     date: f.date,
     league,
+    jornada: f.jornada,
     venue: f.venue,
     city: f.city,
     home: {
