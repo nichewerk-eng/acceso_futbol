@@ -11,7 +11,6 @@ const LINKS = [
   { href: '/', label: 'Pulso' },
   { href: '/donde-ver', label: 'Dónde ver' },
   { href: '/liga-mx', label: 'Liga MX' },
-  { href: '/once', label: 'Once' },
   { href: '/liga-mx-femenil', label: 'Femenil' },
   { href: '/quiniela', label: 'Quiniela' },
   { href: '/leagues-cup', label: 'Leagues Cup' },

@@ -330,7 +330,7 @@ body {
     display: flex;
     justify-content: space-between;
     max-width: none;
-    padding-inline: 0.75rem 1.25rem;
+    padding-inline: 1.75rem 1.5rem;
   }
 
   .nav-pulse-start {
