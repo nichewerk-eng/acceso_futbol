@@ -241,6 +241,57 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
     mx: ['fox', 'fox-one'],
     us: ['tudn'],
   },
+
+  // Jornada 5 · 21–23 ago 2026
+  // Sportmonks moved León/Tigres to viernes and Puebla to sábado; keep both days.
+  '2026-08-21|LEO|MTY': {
+    mx: ['fox-one'],
+    us: ['tudn'],
+  },
+  '2026-08-22|LEO|MTY': {
+    mx: ['fox-one'],
+    us: ['tudn'],
+  },
+  '2026-08-21|ATL|UANL': {
+    mx: ['azteca-7', 'fox', 'fox-one'],
+    us: ['fox-deportes', 'universo'],
+  },
+  '2026-08-22|ATL|UANL': {
+    mx: ['azteca-7', 'fox', 'fox-one'],
+    us: ['fox-deportes', 'universo'],
+  },
+  '2026-08-21|AME|JUA': {
+    mx: ['fox', 'fox-one', 'azteca-7'],
+    us: ['fox-deportes', 'universo'],
+  },
+  '2026-08-22|QRO|TOL': {
+    mx: ['fox-one'],
+    us: ['tudn'],
+  },
+  '2026-08-22|GDL|TIJ': {
+    mx: ['prime-video'],
+    us: ['telemundo', 'universo'],
+  },
+  '2026-08-21|PUE|SAN': {
+    mx: ['azteca-7', 'espn', 'disney-plus'],
+    us: ['vix'],
+  },
+  '2026-08-22|PUE|SAN': {
+    mx: ['azteca-7', 'espn', 'disney-plus'],
+    us: ['vix'],
+  },
+  '2026-08-22|ATS|CAZ': {
+    mx: ['canal-5', 'tudn', 'vix', 'layvtime'],
+    us: ['univision', 'tudn'],
+  },
+  '2026-08-23|ASL|PAC': {
+    mx: ['espn', 'disney-plus'],
+    us: ['vix'],
+  },
+  '2026-08-23|NCX|UNAM': {
+    mx: ['canal-5', 'tudn', 'vix'],
+    us: ['tudn'],
+  },
 };
 
 /**
