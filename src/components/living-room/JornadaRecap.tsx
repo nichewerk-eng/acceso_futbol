@@ -268,7 +268,7 @@ export function JornadaRecap() {
               </div>
             )}
 
-            {!lcPause ? <OnceRoom compact /> : null}
+            {!lcPause ? <OnceRoom /> : null}
           </div>
         )}
       </div>

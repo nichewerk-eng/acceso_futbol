@@ -6990,12 +6990,8 @@ a.lead-team:hover {
   gap: 1.5rem;
 }
 
-.once-grid.is-compact .once-pitch {
-  margin: 0 auto;
-}
-
 @media (min-width: 900px) {
-  .once-grid:not(.is-compact) {
+  .once-grid {
     grid-template-columns: minmax(0, 1fr) 14.5rem;
     align-items: start;
     gap: 1.25rem;
@@ -7234,8 +7230,15 @@ a.lead-team:hover {
 }
 
 .once-rank {
+  display: none;
   border: 1px solid var(--line);
   background: var(--bg-2);
+}
+
+@media (min-width: 900px) {
+  .once-rank {
+    display: block;
+  }
 }
 
 .once-rank-head {

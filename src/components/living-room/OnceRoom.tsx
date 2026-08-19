@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { OncePitch } from '@/components/living-room/OncePitch';
 import { useGravity } from '@/contexts/GravityContext';
@@ -51,18 +50,16 @@ function RankRow({
 }
 
 export function OnceRoom({
-  compact = false,
   asPage = false,
   initial = null,
 }: {
-  compact?: boolean;
   asPage?: boolean;
   initial?: TotwBoard | null;
 }) {
   const { matchesGravity } = useGravity();
   const [picked, setPicked] = useState<number | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const { payload, loading } = useTotw(compact ? null : picked, compact ? null : initial);
+  const { payload, loading } = useTotw(picked, initial);
   const Title = asPage ? 'h1' : 'h3';
 
   const isMineAbbr = (abbr: string) => matchesGravity(abbr, abbr, abbr, abbr);
@@ -78,7 +75,6 @@ export function OnceRoom({
   }, [payload?.jornada]);
 
   if (!loading && !payload) return null;
-  if (compact && !loading && !payload?.published) return null;
 
   const published = payload?.publishedJornadas ?? [];
   const pending = payload?.pendingJornada ?? null;
@@ -89,7 +85,7 @@ export function OnceRoom({
     <section
       id="once"
       data-testid={asPage ? 'page-once' : 'section-once'}
-      className={compact ? 'once-room' : 'once-room once-room-full'}
+      className="once-room once-room-full"
     >
       <div className="once-room-head">
         <div>
@@ -105,48 +101,40 @@ export function OnceRoom({
             jugador: pasa el balón y sale el porqué de ese partido.
           </p>
         </div>
-        {compact ? (
-          <Link href="/once" className="af-cta af-cta-ghost !py-2" data-testid="once-archivo">
-            Archivo
-          </Link>
-        ) : (
           <p className="af-tele">
             {payload?.formation ? `${payload.formation} · ` : ''}
             acceso
           </p>
-        )}
       </div>
 
-      {!compact && (
-        <div className="once-picker" data-testid="once-picker">
-          {jornadas.map((n) => {
-            const on = published.includes(n);
-            const wait = pending === n;
-            const active = jornada === n;
-            return (
-              <button
-                key={n}
-                type="button"
-                disabled={!on && !wait}
-                data-testid={`once-jornada-${n}`}
-                onClick={() => {
-                  setPicked(n);
-                  setSelectedId(null);
-                }}
-                className={[
-                  'once-picker-btn',
-                  active ? 'is-on' : '',
-                  wait && !on ? 'is-wait' : '',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-              >
-                J{n}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      <div className="once-picker" data-testid="once-picker">
+        {jornadas.map((n) => {
+          const on = published.includes(n);
+          const wait = pending === n;
+          const active = jornada === n;
+          return (
+            <button
+              key={n}
+              type="button"
+              disabled={!on && !wait}
+              data-testid={`once-jornada-${n}`}
+              onClick={() => {
+                setPicked(n);
+                setSelectedId(null);
+              }}
+              className={[
+                'once-picker-btn',
+                active ? 'is-on' : '',
+                wait && !on ? 'is-wait' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              J{n}
+            </button>
+          );
+        })}
+      </div>
 
       {loading && !payload ? (
         <p className="af-tele py-8" data-testid="once-loading">
@@ -164,7 +152,7 @@ export function OnceRoom({
           </p>
         </div>
       ) : payload?.players.length ? (
-        <div className={compact ? 'once-grid is-compact' : 'once-grid'}>
+        <div className="once-grid">
           <OncePitch
             players={payload.players}
             formation={payload.formation ?? '4-3-3'}
@@ -174,26 +162,24 @@ export function OnceRoom({
             onSelect={setSelectedId}
           />
 
-          {!compact ? (
-            <div className="once-rank" data-testid="once-ranking">
-              <div className="once-rank-head">
-                <p className="af-tele text-foreground">
-                  <span className="text-signal">AF</span>
-                  ://MEJORES
-                </p>
-                <p className="af-tele">acceso</p>
-              </div>
-              {payload.ranking.map((p) => (
-                <RankRow
-                  key={p.id}
-                  p={p}
-                  mine={isMineAbbr(p.teamAbbr)}
-                  on={selectedId === p.id}
-                  onSelect={() => setSelectedId(p.id)}
-                />
-              ))}
+          <div className="once-rank" data-testid="once-ranking">
+            <div className="once-rank-head">
+              <p className="af-tele text-foreground">
+                <span className="text-signal">AF</span>
+                ://MEJORES
+              </p>
+              <p className="af-tele">acceso</p>
             </div>
-          ) : null}
+            {payload.ranking.map((p) => (
+              <RankRow
+                key={p.id}
+                p={p}
+                mine={isMineAbbr(p.teamAbbr)}
+                on={selectedId === p.id}
+                onSelect={() => setSelectedId(p.id)}
+              />
+            ))}
+          </div>
         </div>
       ) : null}
     </section>
