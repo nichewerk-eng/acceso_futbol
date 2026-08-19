@@ -20,6 +20,7 @@ export function overlayLiveScores<T extends Fixture>(base: T[], live: Fixture[])
       ...f,
       id: l.id,
       provider: l.provider,
+      date: l.date || f.date,
       state: l.state,
       statusLabel: l.statusLabel,
       clock: l.clock ?? f.clock,

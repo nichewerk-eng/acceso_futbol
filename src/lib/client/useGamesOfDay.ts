@@ -9,14 +9,14 @@ import {
   releaseJornadaPoll,
 } from '@/lib/client/useJornadaOverview';
 import { paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
-import { overlayLiveScores } from '@/lib/sports/overlayScores';
+import { mergeJornadaIntoHeroSlate } from '@/lib/sports/heroSlate';
 import type { GamesOfDayPayload } from '@/lib/sports';
 import type { JornadaOverview } from '@/lib/sports/jornada';
 
 const KEY = 'games-of-day';
 const URL = '/api/games-of-day';
 const COALESCE_MS = 800;
-const SS_KEY = 'af-games-of-day-v9';
+const SS_KEY = 'af-games-of-day-v10';
 const SS_MAX_AGE_MS = 6 * 60 * 60 * 1000;
 const STATIC_RETRY_MS = 1_500;
 
@@ -78,19 +78,10 @@ function releaseSharedPoll() {
 }
 
 /**
- * Shared games-of-day feed — one timer + one HTTP call for all living-room widgets.
- * sessionStorage paints the last slate before the network round-trip.
+ * Shared games-of-day feed — one timer + one HTTP call for living-room widgets.
+ * Liga MX rows are taken from the jornada board so the hero cannot stick on a
+ * static-calendar seed (2 Friday games) while Dónde ver already has the live 3.
  */
-function overlayJornada(
-  payload: GamesOfDayPayload | null,
-  jornada: JornadaOverview | null
-): GamesOfDayPayload | null {
-  if (!payload || !jornada) return payload;
-  const live = [...jornada.live, ...jornada.played, ...jornada.upcoming];
-  if (!live.length) return payload;
-  return { ...payload, games: overlayLiveScores(payload.games, live) };
-}
-
 export function useGamesOfDay() {
   const [payload, setPayload] = useState<GamesOfDayPayload | null>(null);
   const [jornada, setJornada] = useState<JornadaOverview | null>(null);
@@ -128,7 +119,7 @@ export function useGamesOfDay() {
       pace = paceFromBoard(d.games);
       setPayload(d);
       setLoading(false);
-      writeSessionSeed(d);
+      if (d.source !== 'static') writeSessionSeed(d);
       armStaticRetry(d.source);
     });
     const unsubJornada = subscribeSharedJson<JornadaOverview>(JORNADA_FEED_KEY, (d) => {
@@ -148,6 +139,9 @@ export function useGamesOfDay() {
     };
   }, []);
 
-  const merged = useMemo(() => overlayJornada(payload, jornada), [payload, jornada]);
+  const merged = useMemo(
+    () => mergeJornadaIntoHeroSlate(payload, jornada),
+    [payload, jornada]
+  );
   return { payload: merged, loading };
 }

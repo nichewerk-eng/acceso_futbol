@@ -215,38 +215,42 @@ export function PulseHero({ leadStory }: Props) {
             <div className="hero-stage-grid">
               <div className="hero-stage-side hero-stage-home">
                 <div className="hero-stage-pair">
-                  <ClubLogo
-                    abbr={stage.home.abbreviation}
-                    clubId={stage.home.id}
-                    name={stage.home.name}
-                    logoUrl={stage.home.logo}
-                    size="lg"
-                    className="hero-stage-crest"
-                  />
+                  <div className="hero-stage-crest-col">
+                    <ClubLogo
+                      abbr={stage.home.abbreviation}
+                      clubId={stage.home.id}
+                      name={stage.home.name}
+                      logoUrl={stage.home.logo}
+                      size="lg"
+                      className="hero-stage-crest"
+                    />
+                    <p className="hero-stage-name">{stage.home.name}</p>
+                  </div>
                   <p className="hero-stage-abbr group-hover:text-signal">
                     {stage.home.abbreviation}
                   </p>
                 </div>
-                <p className="hero-stage-name">{stage.home.name}</p>
               </div>
               <div className="hero-stage-score" data-testid="hero-stage-score">
                 {stageMeta.center}
               </div>
               <div className="hero-stage-side hero-stage-away">
                 <div className="hero-stage-pair">
-                  <ClubLogo
-                    abbr={stage.away.abbreviation}
-                    clubId={stage.away.id}
-                    name={stage.away.name}
-                    logoUrl={stage.away.logo}
-                    size="lg"
-                    className="hero-stage-crest"
-                  />
+                  <div className="hero-stage-crest-col">
+                    <ClubLogo
+                      abbr={stage.away.abbreviation}
+                      clubId={stage.away.id}
+                      name={stage.away.name}
+                      logoUrl={stage.away.logo}
+                      size="lg"
+                      className="hero-stage-crest"
+                    />
+                    <p className="hero-stage-name">{stage.away.name}</p>
+                  </div>
                   <p className="hero-stage-abbr group-hover:text-signal">
                     {stage.away.abbreviation}
                   </p>
                 </div>
-                <p className="hero-stage-name">{stage.away.name}</p>
               </div>
             </div>
 
