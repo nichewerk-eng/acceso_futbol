@@ -49,21 +49,6 @@ export function PulseNav() {
     >
       <div className="nav-pulse-bar">
         <div className="nav-pulse-start">
-          <nav className="nav-pulse-links hidden md:flex" data-testid="nav-links">
-            {LINKS.map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                data-testid={`nav-link-${label.toLowerCase()}`}
-                className={[
-                  'px-2.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] transition',
-                  linkActive(pathname, href) ? 'text-foreground' : 'text-muted hover:text-foreground',
-                ].join(' ')}
-              >
-                {label}
-              </Link>
-            ))}
-          </nav>
           <SeguirMenu className="md:hidden" />
         </div>
 
@@ -84,6 +69,22 @@ export function PulseNav() {
         </Link>
 
         <div className="nav-pulse-tools">
+          <nav className="nav-pulse-links hidden md:flex" data-testid="nav-links">
+            {LINKS.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                data-testid={`nav-link-${label.toLowerCase()}`}
+                className={[
+                  'px-2.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] transition',
+                  linkActive(pathname, href) ? 'text-foreground' : 'text-muted hover:text-foreground',
+                ].join(' ')}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+
           <GravityAlertsToggle className="hidden md:inline" />
 
           {settled && lock && (

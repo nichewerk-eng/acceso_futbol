@@ -210,12 +210,11 @@ export default async function DondeVerTeamPage({ params }: PageParams) {
               {next.venue ? ` · ${next.venue}` : ''}
             </p>
             <div className="mt-4 flex justify-center">
-              <BroadcastChannels
+              <DondeVerAir
                 mx={next.dondeVer?.mxChannels}
                 us={next.dondeVer?.usChannels}
                 mxLabel={next.dondeVer?.mx}
                 usLabel={next.dondeVer?.us}
-                surface="paper"
               />
             </div>
             <div className="mt-5 flex justify-center">
