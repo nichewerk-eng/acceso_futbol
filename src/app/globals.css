@@ -4599,7 +4599,8 @@ a.lead-team:hover {
   [data-channel='imagen-tv'],
   [data-channel='televisa'],
   [data-channel='tubi'],
-  [data-channel='youtube']
+  [data-channel='youtube'],
+  [data-channel='estrella-tv']
 ) {
   height: 0.8rem;
 }
@@ -4652,7 +4653,8 @@ a.lead-team:hover {
     [data-channel='imagen-tv'],
     [data-channel='televisa'],
     [data-channel='tubi'],
-    [data-channel='youtube']
+    [data-channel='youtube'],
+    [data-channel='estrella-tv']
   ),
   .hero-stage-tv .tv-channel:is(
     [data-channel='azteca-7'],
@@ -4664,7 +4666,8 @@ a.lead-team:hover {
     [data-channel='imagen-tv'],
     [data-channel='televisa'],
     [data-channel='tubi'],
-    [data-channel='youtube']
+    [data-channel='youtube'],
+    [data-channel='estrella-tv']
   ) {
     height: 0.55rem;
   }

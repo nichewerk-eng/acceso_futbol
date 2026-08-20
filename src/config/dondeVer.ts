@@ -171,6 +171,7 @@ export const TV_CHANNELS: Record<TvChannelId, TvChannel> = {
     id: 'estrella-tv',
     label: 'Estrella TV',
     kind: 'tv',
+    src: '/tv_logos/Estrella_TV.svg',
   },
   tubi: {
     id: 'tubi',
