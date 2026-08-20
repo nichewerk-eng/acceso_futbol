@@ -9,6 +9,12 @@ import { ClubsNav } from '@/components/club/ClubsNav';
 import { LiguillaPathShare } from '@/components/ligamx/LiguillaPathShare';
 import { useGravity } from '@/contexts/GravityContext';
 import type { ClubBoard } from '@/lib/sports/clubBoard';
+import {
+  APERTURA_MATCHDAYS,
+  liguillaCalendarLine,
+  liguillaMarginLine,
+  liguillaRuleLine,
+} from '@/lib/sports/liguillaPath';
 import { scheduleAbbr } from '@/lib/sports/ligaMxAbbr';
 import type { Fixture } from '@/lib/sports/types';
 
@@ -354,20 +360,59 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
               </p>
               <LiguillaPathShare abbr={club.abbreviation} path={liguilla} />
             </div>
-            <p
+            <h2
               className="mt-3 font-display text-2xl font-bold uppercase tracking-wide sm:text-3xl"
               data-testid="club-liguilla-headline"
             >
               {liguilla.headline}
-            </p>
+            </h2>
             <p className="mt-2 max-w-xl font-mono text-[13px] leading-6 text-muted">
-              {liguilla.detail}
+              {liguillaRuleLine(liguilla)}
             </p>
+
+            <dl className="club-liguilla-facts" data-testid="club-liguilla-facts">
+              {table && (
+                <>
+                  <div>
+                    <dt>Posición</dt>
+                    <dd>
+                      {table.position}º
+                      <span className="club-liguilla-sub">de 18</span>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Puntos</dt>
+                    <dd>
+                      {table.pts}
+                      <span className="club-liguilla-sub">
+                        {table.w}G · {table.d}E · {table.l}P
+                      </span>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Jugados</dt>
+                    <dd>
+                      {table.gp}
+                      <span className="club-liguilla-sub">de {APERTURA_MATCHDAYS}</span>
+                    </dd>
+                  </div>
+                </>
+              )}
+              <div className="club-liguilla-span">
+                <dt>{liguilla.marginSide === 'behind' ? 'Atraso' : 'Margen'}</dt>
+                <dd className="club-liguilla-margin">{liguillaMarginLine(liguilla)}</dd>
+              </div>
+              <div className="club-liguilla-span">
+                <dt>Calendario</dt>
+                <dd className="club-liguilla-margin">{liguillaCalendarLine(liguilla)}</dd>
+              </div>
+            </dl>
+
             <Link
-              href="/liga-mx"
-              className="mt-4 inline-block font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-signal hover:text-foreground"
+              href="/liga-mx?tab=tabla"
+              className="mt-5 inline-block font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-signal hover:text-foreground"
             >
-              Ver tabla
+              Ver tabla completa
             </Link>
           </div>
         </section>
