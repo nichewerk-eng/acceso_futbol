@@ -1,9 +1,12 @@
+import { ClubLogo } from '@/components/brand/ClubLogo';
+import { getClubIdentity } from '@/config/clubIdentity';
 import { nationalTitlesFor } from '@/config/clubTitles';
 
 export function ClubTrophyCase({ clubId }: { clubId: string }) {
   const cabinet = nationalTitlesFor(clubId);
   if (!cabinet) return null;
 
+  const club = getClubIdentity(clubId);
   const countLine = cabinet.total === 1 ? '1 título' : `${cabinet.total} títulos`;
 
   return (
@@ -17,6 +20,9 @@ export function ClubTrophyCase({ clubId }: { clubId: string }) {
         <div className="club-vitrina-frame">
           <div className="club-vitrina-plate">
             <span className="club-vitrina-plate-name">Nacionales</span>
+            <span className="club-vitrina-plate-crest">
+              <ClubLogo clubId={clubId} name={club?.name} size="sm" />
+            </span>
             <span className="club-vitrina-plate-count">{countLine}</span>
           </div>
 

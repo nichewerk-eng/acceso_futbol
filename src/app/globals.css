@@ -7295,35 +7295,49 @@ a.lead-team:hover {
 }
 
 .club-vitrina-plate {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.2rem 0.75rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.45rem 0.6rem;
   margin: 0.1rem 0.1rem 0.4rem;
-  padding: 0.4rem 0.7rem 0.42rem;
+  padding: 0.35rem 0.65rem;
   border: 1px solid color-mix(in srgb, var(--signal) 55%, transparent);
   background: color-mix(in srgb, var(--bg-1) 8%, transparent);
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--brand-yellow) 18%, transparent);
 }
 
 .club-vitrina-plate-name {
+  justify-self: start;
   font-family: var(--font-oswald), sans-serif;
   font-weight: 700;
-  font-size: 1rem;
-  letter-spacing: 0.12em;
+  font-size: 0.95rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--brand-yellow);
 }
 
+.club-vitrina-plate-crest {
+  display: flex;
+  width: 2rem;
+  height: 2rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.club-vitrina-plate-crest .club-logo-sm {
+  width: 26px;
+  height: 26px;
+}
+
 .club-vitrina-plate-count {
-  flex-shrink: 0;
+  justify-self: end;
   font-family: var(--font-plex-mono), ui-monospace, monospace;
   font-size: 9px;
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: color-mix(in srgb, var(--bg-1) 72%, transparent);
+  text-align: right;
 }
 
 .club-vitrina-glass {
@@ -7584,7 +7598,17 @@ a.lead-team:hover {
 
   .club-vitrina-plate-name {
     font-size: 1.15rem;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.16em;
+  }
+
+  .club-vitrina-plate-crest {
+    width: 2.35rem;
+    height: 2.35rem;
+  }
+
+  .club-vitrina-plate-crest .club-logo-sm {
+    width: 32px;
+    height: 32px;
   }
 
   .club-vitrina-bay-label {
