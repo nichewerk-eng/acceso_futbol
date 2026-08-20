@@ -110,6 +110,7 @@ export interface Fixture {
       | 'prime-video'
       | 'telemundo'
       | 'universo'
+      | 'estrella-tv'
       | 'tubi'
       | 'youtube'
     >;
@@ -134,6 +135,7 @@ export interface Fixture {
       | 'prime-video'
       | 'telemundo'
       | 'universo'
+      | 'estrella-tv'
       | 'tubi'
       | 'youtube'
     >;

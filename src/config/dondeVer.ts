@@ -24,6 +24,7 @@ export type TvChannelId =
   | 'prime-video'
   | 'telemundo'
   | 'universo'
+  | 'estrella-tv'
   | 'tubi'
   | 'youtube';
 
@@ -166,6 +167,11 @@ export const TV_CHANNELS: Record<TvChannelId, TvChannel> = {
     kind: 'tv',
     src: '/tv_logos/Universo.png',
   },
+  'estrella-tv': {
+    id: 'estrella-tv',
+    label: 'Estrella TV',
+    kind: 'tv',
+  },
   tubi: {
     id: 'tubi',
     label: 'Tubi',
@@ -245,44 +251,63 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
   // Jornada 5 · 21–23 ago 2026
   // Sportmonks moved León/Tigres to viernes and Puebla to sábado; keep both days.
   '2026-08-21|LEO|MTY': {
-    mx: ['fox-one'],
+    mx: ['fox', 'fox-one', 'azteca-7'],
     us: ['tudn'],
   },
   '2026-08-22|LEO|MTY': {
-    mx: ['fox-one'],
+    mx: ['fox', 'fox-one', 'azteca-7'],
+    us: ['tudn'],
+  },
+  'j5|LEO|MTY': {
+    mx: ['fox', 'fox-one', 'azteca-7'],
     us: ['tudn'],
   },
   '2026-08-21|ATL|UANL': {
-    mx: ['azteca-7', 'fox', 'fox-one'],
-    us: ['fox-deportes', 'universo'],
+    mx: ['fox', 'fox-one'],
+    us: ['fox-deportes', 'universo', 'estrella-tv'],
   },
   '2026-08-22|ATL|UANL': {
-    mx: ['azteca-7', 'fox', 'fox-one'],
-    us: ['fox-deportes', 'universo'],
+    mx: ['fox', 'fox-one'],
+    us: ['fox-deportes', 'universo', 'estrella-tv'],
+  },
+  'j5|ATL|UANL': {
+    mx: ['fox', 'fox-one'],
+    us: ['fox-deportes', 'universo', 'estrella-tv'],
   },
   '2026-08-21|AME|JUA': {
     mx: ['fox', 'fox-one', 'azteca-7'],
-    us: ['fox-deportes', 'universo'],
+    us: ['fox-deportes', 'universo', 'estrella-tv'],
   },
-  // QRO–TOL is FOX One only in MX (no linear FOX). Date + jornada keys
-  // cover Sportmonks kickoff shuffle so the home-club FOX default never wins.
+  '2026-08-22|AME|JUA': {
+    mx: ['fox', 'fox-one', 'azteca-7'],
+    us: ['fox-deportes', 'universo', 'estrella-tv'],
+  },
+  'j5|AME|JUA': {
+    mx: ['fox', 'fox-one', 'azteca-7'],
+    us: ['fox-deportes', 'universo', 'estrella-tv'],
+  },
+  // QRO–TOL: FOX + FOX One MX, TUDN US. Date + jornada keys cover kickoff shuffle.
   '2026-08-21|QRO|TOL': {
-    mx: ['fox-one'],
+    mx: ['fox', 'fox-one'],
     us: ['tudn'],
   },
   '2026-08-22|QRO|TOL': {
-    mx: ['fox-one'],
+    mx: ['fox', 'fox-one'],
     us: ['tudn'],
   },
   '2026-08-23|QRO|TOL': {
-    mx: ['fox-one'],
+    mx: ['fox', 'fox-one'],
     us: ['tudn'],
   },
   'j5|QRO|TOL': {
-    mx: ['fox-one'],
+    mx: ['fox', 'fox-one'],
     us: ['tudn'],
   },
   '2026-08-22|GDL|TIJ': {
+    mx: ['prime-video'],
+    us: ['telemundo', 'universo'],
+  },
+  'j5|GDL|TIJ': {
     mx: ['prime-video'],
     us: ['telemundo', 'universo'],
   },
@@ -291,6 +316,10 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
     us: ['vix'],
   },
   '2026-08-22|PUE|SAN': {
+    mx: ['azteca-7', 'espn', 'disney-plus'],
+    us: ['vix'],
+  },
+  'j5|PUE|SAN': {
     mx: ['azteca-7', 'espn', 'disney-plus'],
     us: ['vix'],
   },
