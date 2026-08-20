@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { LIGA_MX_CLUBS } from '@/config/clubs';
 import { SOCIAL_CHANNELS, siteConfig } from '@/config/site';
 
 export function SiteFooter() {
@@ -40,6 +41,11 @@ export function SiteFooter() {
               <li>
                 <Link href="/liga-mx" data-testid="footer-liga-mx">
                   Liga MX
+                </Link>
+              </li>
+              <li>
+                <Link href="/club" data-testid="footer-clubes">
+                  Clubes
                 </Link>
               </li>
               <li>
@@ -88,6 +94,19 @@ export function SiteFooter() {
                   >
                     {ch.label} {ch.handle}
                   </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          <nav className="af-footer-col af-footer-clubs" aria-label="Clubes">
+            <p className="af-tele">Clubes</p>
+            <ul className="af-footer-club-list">
+              {LIGA_MX_CLUBS.map((c) => (
+                <li key={c.id}>
+                  <Link href={`/club/${c.id}`} data-testid={`footer-club-${c.id}`}>
+                    {c.abbreviation}
+                  </Link>
                 </li>
               ))}
             </ul>

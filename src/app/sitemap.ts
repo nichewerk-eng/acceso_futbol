@@ -41,6 +41,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.95,
     },
     {
+      url: `${siteConfig.url}/club`,
+      lastModified: now,
+      changeFrequency: 'daily',
+      priority: 0.82,
+    },
+    {
       url: `${siteConfig.url}/liga-mx-femenil`,
       lastModified: now,
       changeFrequency: 'hourly',

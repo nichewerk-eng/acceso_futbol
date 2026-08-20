@@ -11,6 +11,7 @@ import { PartidoLink } from '@/components/partido/PartidoLink';
 import { useGravity } from '@/contexts/GravityContext';
 import { teamNameEs } from '@/components/standings/teamNames';
 import { resolveDondeVer } from '@/config/dondeVer';
+import { clubIdentityFromAbbr } from '@/config/clubIdentity';
 import { ligaMxClubIdFromAbbr } from '@/config/ligaMxLogos';
 import { getCurrentJornada } from '@/fixtures/ligamx-apertura-2026';
 import type { LigaMXTable, LigaMXEntry } from '@/app/api/ligamx/standings/route';
@@ -286,6 +287,15 @@ export default function LigaMXView({
                   : 'Jornada, tabla, goleo y once de la fecha. Camino a Liguilla (top 8).'}
                 {club ? ` Tu LOCK: ${club.abbreviation}.` : ''}
               </p>
+              {league === 'liga-mx' && (
+                <Link
+                  href="/club"
+                  className="mt-4 inline-block font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-signal hover:text-foreground"
+                  data-testid="ligamx-clubes-link"
+                >
+                  Salas de cada club →
+                </Link>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <p className="af-tele" data-testid="ligamx-updated" suppressHydrationWarning>
@@ -675,10 +685,10 @@ function LmPartidosRail({
     );
   }, [myEntry, entries, grouped]);
 
-  return (
-    <aside className="lc-rail" data-testid="ligamx-rail">
-      {myEntry && (
-        <div className="lc-rail-block lc-rail-mine" data-testid="ligamx-rail-mine">
+  const clubSlug = myEntry ? clubIdentityFromAbbr(myEntry.team.abbreviation)?.id : null;
+  const mineClass = 'lc-rail-block lc-rail-mine';
+  const mineInner = myEntry ? (
+    <>
           <p className="af-tele text-signal">Tu club</p>
           <div className="lc-rail-mine-row">
             <ClubLogo
@@ -716,7 +726,26 @@ function LmPartidosRail({
               </span>
             </p>
           )}
-        </div>
+    </>
+  ) : null;
+
+  return (
+    <aside className="lc-rail" data-testid="ligamx-rail">
+      {myEntry && mineInner && (
+        clubSlug ? (
+          <Link
+            href={`/club/${clubSlug}`}
+            className={mineClass}
+            data-testid="ligamx-rail-mine"
+            title={`Sala de ${myEntry.team.name}`}
+          >
+            {mineInner}
+          </Link>
+        ) : (
+          <div className={mineClass} data-testid="ligamx-rail-mine">
+            {mineInner}
+          </div>
+        )
       )}
 
       <div className="lc-rail-tabla-desk space-y-4">

@@ -51,10 +51,10 @@ export default function MiEquipoPage() {
                     <p className="text-xs font-semibold text-brand-blue dark:text-white">{teamNameEs(team.name)}</p>
                     <p className="text-[10px] text-gray-400 dark:text-white/30 mt-0.5">Liga MX</p>
                     <Link
-                      href="/liga-mx"
+                      href={`/club/${team.id}`}
                       className="mt-2 block text-[10px] font-bold text-brand-orange hover:underline"
                     >
-                      Ver partidos →
+                      Sala del club →
                     </Link>
                   </div>
                 ))}

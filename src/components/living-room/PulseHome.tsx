@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import type { Story } from '@/lib/news/types';
 import { useGamesOfDay } from '@/lib/client/useGamesOfDay';
 import { useGravity } from '@/contexts/GravityContext';
+import { ClubsNav } from '@/components/club/ClubsNav';
 import { SiteFooter } from '@/components/home/SiteFooter';
 import { EngagementDock } from './EngagementDock';
 import { GravityClaim } from './GravityClaim';
@@ -16,7 +17,7 @@ import { StoriesRail } from './StoriesRail';
 export function PulseHome() {
   const [leadStory, setLeadStory] = useState<Story | null>(null);
   const { payload } = useGamesOfDay();
-  const { settled } = useGravity();
+  const { settled, club } = useGravity();
   const source = payload?.source;
 
   useEffect(() => {
@@ -48,6 +49,16 @@ export function PulseHome() {
       <main className="flex-1" data-testid="pulse-main">
         <PulseHero leadStory={leadStory} />
         {!settled && <GravityClaim />}
+        {settled && (
+          <div className="border-b border-line px-4 py-10 sm:px-6">
+            <div className="mx-auto max-w-6xl">
+              <ClubsNav
+                activeSlug={club?.id}
+                dek="Entra a la sala — partidos, pulso y cobertura de tu club."
+              />
+            </div>
+          </div>
+        )}
         {/* Cabina / Acceso Radio — hidden until scripts are ready */}
         <JornadaRecap />
         <StoriesRail />

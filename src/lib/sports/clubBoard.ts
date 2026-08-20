@@ -1,6 +1,5 @@
 import { attachDondeVer } from '@/config/dondeVer';
 import { getClubIdentity, type ClubIdentity } from '@/config/clubIdentity';
-import { MOMENTS } from '@/config/moments';
 import { scheduleAbbr } from '@/lib/sports/ligaMxAbbr';
 import { fetchLigaMxFixtures } from '@/lib/sports/espnFallback';
 import { fetchLigaMxStandings, fetchClubForm, sportmonksEnabled } from '@/lib/sports/sportmonks';
@@ -56,13 +55,6 @@ function isClubSide(f: Fixture, club: ClubIdentity): boolean {
     if (f.home.id === sid || f.away.id === sid) return true;
   }
   return false;
-}
-
-function pinAccesoLine(club: ClubIdentity): string {
-  const moment = MOMENTS.find(
-    (m) => m.clubIds?.includes(club.id) && (m.accesoLine || m.body)
-  );
-  return moment?.accesoLine || moment?.body || club.weatherLine;
 }
 
 async function loadStandingsForClub(
@@ -212,7 +204,7 @@ export async function getClubBoard(slug: string): Promise<ClubBoard | null> {
       palette: club.palette,
       weatherLine: club.weatherLine,
     },
-    accesoLine: pinAccesoLine(club),
+    accesoLine: club.weatherLine,
     table: standing?.table ?? null,
     liguilla: standing?.liguilla ?? null,
     form,

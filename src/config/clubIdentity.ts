@@ -17,7 +17,7 @@ export type ClubIdentity = GravityClub & {
   /** Story / social match needles (lowercase-friendly) */
   matchHints: RegExp;
   palette: ClubPalette;
-  /** Acceso line when no Moment is pinned */
+  /** Club motto / identity line for the sala — proud, not editorial. */
   weatherLine: string;
 };
 
@@ -132,25 +132,25 @@ const HINTS: Record<string, RegExp> = {
 };
 
 const WEATHER: Record<string, string> = {
-  america: 'Las Águilas no piden permiso. Aquí vive su noche.',
-  chivas: 'El Rebaño no se explica. Se siente.',
-  'cruz-azul': 'La Máquina sigue. La sala también.',
-  tigres: 'Felinos al acecho. Acceso en la grada.',
-  monterrey: 'Rayados: frío en la mesa, calor en el feed.',
-  pumas: 'CU late aquí — no en el resumen de noticias.',
-  toluca: 'Diablos en rojo. Sin anestesia.',
-  atlas: 'Rojinegro: drama incluido en el precio.',
-  santos: 'Laguna late. Nosotros traducimos.',
-  leon: 'La Fiera no pide contexto. Lo impone.',
-  pachuca: 'Tuzos: cantera, ritmo, urgencia.',
-  tijuana: 'Xolos en la frontera — el puente es el producto.',
-  necaxa: 'Rayos. Cortos, eléctricos, sin filtro.',
-  puebla: 'La Franja pide volumen. Se lo damos.',
-  queretaro: 'Gallos: pelea cada jornada como final.',
-  'san-luis': 'Atlético: subir o sufrir. Aquí se cuenta.',
-  juarez: 'Bravos en la línea. MX ↔ US sin subtítulos.',
-  atlante: 'Potros de vuelta. Memoria y hambre.',
-  'el-tri': 'El Tri no es un club. Es el país en la cancha.',
+  america: 'Las Águilas. El más grande.',
+  chivas: 'El Rebaño Sagrado. El más mexicano.',
+  'cruz-azul': 'La Máquina Celeste.',
+  tigres: 'Los Felinos. Orgullo de Nuevo León.',
+  monterrey: 'Rayados. El orgullo de la ciudad.',
+  pumas: 'Por mi raza hablará el espíritu.',
+  toluca: 'Diablos Rojos.',
+  atlas: 'Rojinegros. La Academia.',
+  santos: 'Guerreros de la Laguna.',
+  leon: 'La Fiera. Esmeralda del Bajío.',
+  pachuca: 'Tuzos. Cuna del fútbol mexicano.',
+  tijuana: 'Xolos. La frontera es casa.',
+  necaxa: 'Los Rayos. El equipo de la afición.',
+  puebla: 'La Franja.',
+  queretaro: 'Gallos Blancos.',
+  'san-luis': 'Atlético. El corazón de San Luis.',
+  juarez: 'Bravos de Juárez.',
+  atlante: 'Potros de Hierro.',
+  'el-tri': 'El Tri. Un país, una camiseta.',
 };
 
 function build(club: GravityClub): ClubIdentity {
@@ -180,6 +180,12 @@ export function allClubIdentities(): ClubIdentity[] {
 export function getClubIdentity(slug: string | null | undefined): ClubIdentity | null {
   if (!slug) return null;
   return BY_ID.get(slug.trim().toLowerCase()) ?? null;
+}
+
+/** `/club/{id}` for a Liga MX / El Tri abbreviation, or null if we have no sala. */
+export function clubHrefFromAbbr(abbr: string | null | undefined): string | null {
+  const club = clubIdentityFromAbbr(abbr);
+  return club ? `/club/${club.id}` : null;
 }
 
 export function clubIdentityFromAbbr(abbr: string | null | undefined): ClubIdentity | null {

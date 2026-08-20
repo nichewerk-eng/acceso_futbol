@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { ClubLogo } from '@/components/brand/ClubLogo';
+import { ClubLink } from '@/components/club/ClubLink';
 import { LeaguesCupMark } from '@/components/brand/LeaguesCupMark';
 import { LigaMxMark } from '@/components/brand/LigaMxMark';
 import { LigaMxFemenilMark } from '@/components/brand/LigaMxFemenilMark';
@@ -819,22 +820,24 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
 
           <div className="match-scoreboard">
             <div className="match-side">
-              <div className="match-side-mark">
-                <ClubLogo
-                  abbr={match.home.abbreviation}
-                  clubId={match.home.id}
-                  name={match.home.name}
-                  logoUrl={match.home.logo}
-                  size="xl"
-                  className="match-crest"
-                />
-                <p className="match-abbr" title={match.home.name}>
-                  {match.home.abbreviation}
+              <ClubLink abbr={match.home.abbreviation} className="match-club-link" title={match.home.name}>
+                <div className="match-side-mark">
+                  <ClubLogo
+                    abbr={match.home.abbreviation}
+                    clubId={match.home.id}
+                    name={match.home.name}
+                    logoUrl={match.home.logo}
+                    size="xl"
+                    className="match-crest"
+                  />
+                  <p className="match-abbr" title={match.home.name}>
+                    {match.home.abbreviation}
+                  </p>
+                </div>
+                <p className="match-club" title={match.home.name}>
+                  {match.home.name}
                 </p>
-              </div>
-              <p className="match-club" title={match.home.name}>
-                {match.home.name}
-              </p>
+              </ClubLink>
               {!pre && homeLines.length > 0 && (
                 <ul className="match-scorers">
                   {homeLines.map((s) => (
@@ -870,22 +873,24 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
             </div>
 
             <div className="match-side match-side-away">
-              <div className="match-side-mark">
-                <ClubLogo
-                  abbr={match.away.abbreviation}
-                  clubId={match.away.id}
-                  name={match.away.name}
-                  logoUrl={match.away.logo}
-                  size="xl"
-                  className="match-crest"
-                />
-                <p className="match-abbr" title={match.away.name}>
-                  {match.away.abbreviation}
+              <ClubLink abbr={match.away.abbreviation} className="match-club-link" title={match.away.name}>
+                <div className="match-side-mark">
+                  <ClubLogo
+                    abbr={match.away.abbreviation}
+                    clubId={match.away.id}
+                    name={match.away.name}
+                    logoUrl={match.away.logo}
+                    size="xl"
+                    className="match-crest"
+                  />
+                  <p className="match-abbr" title={match.away.name}>
+                    {match.away.abbreviation}
+                  </p>
+                </div>
+                <p className="match-club" title={match.away.name}>
+                  {match.away.name}
                 </p>
-              </div>
-              <p className="match-club" title={match.away.name}>
-                {match.away.name}
-              </p>
+              </ClubLink>
               {!pre && awayLines.length > 0 && (
                 <ul className="match-scorers">
                   {awayLines.map((s) => (

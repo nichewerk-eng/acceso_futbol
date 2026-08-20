@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { EL_TRI, LIGA_MX_CLUBS, useGravity } from '@/contexts/GravityContext';
 
@@ -31,14 +32,23 @@ export function GravityClaim() {
               Un tap. Hoy, noticias y radio se alinean a tu club y a El Tri.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={skip}
-            data-testid="gravity-skip"
-            className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-signal transition hover:text-[#f6f5f2]"
-          >
-            Ahora no
-          </button>
+          <div className="flex flex-wrap items-center gap-4">
+            <button
+              type="button"
+              onClick={skip}
+              data-testid="gravity-skip"
+              className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-signal transition hover:text-[#f6f5f2]"
+            >
+              Ahora no
+            </button>
+            <Link
+              href="/club"
+              data-testid="gravity-clubes"
+              className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-white/45 transition hover:text-[#f6f5f2]"
+            >
+              Ver salas →
+            </Link>
+          </div>
         </div>
 
         <div className="af-club-pad" data-testid="gravity-club-pad">

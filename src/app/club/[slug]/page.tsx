@@ -55,6 +55,7 @@ export default async function ClubPage({ params }: Props) {
           sportsTeamJsonLd(club),
           breadcrumbJsonLd([
             { name: 'Pulso', path: '/' },
+            { name: 'Clubes', path: '/club' },
             { name: club.name, path: `/club/${club.id}` },
           ]),
         ]}
@@ -70,6 +71,7 @@ export default async function ClubPage({ params }: Props) {
             </p>
             <nav>
               <Link href="/liga-mx">Liga MX</Link>
+              <Link href="/club">Clubes</Link>
               <Link href="/tabla">Tabla</Link>
               <Link href="/">Pulso</Link>
             </nav>

@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { ClubPulseWall } from '@/components/club/ClubPulseWall';
+import { ClubsNav } from '@/components/club/ClubsNav';
 import { LiguillaPathShare } from '@/components/ligamx/LiguillaPathShare';
 import { useGravity } from '@/contexts/GravityContext';
 import type { ClubBoard } from '@/lib/sports/clubBoard';
@@ -196,13 +197,13 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
       {/* Hero — one composition */}
       <section className="club-hero" data-testid="club-hero">
         <div className="club-hero-scan" aria-hidden />
-        <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
-          <p className="af-tele club-tele animate-pulse-in">
+        <div className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-14">
+          <p className="af-tele club-tele club-hero-path animate-pulse-in">
             <span className="text-[var(--club-signal)]">AF</span>
             ://CLUB/{club.abbreviation}
           </p>
 
-          <div className="mt-6 flex flex-wrap items-end gap-5 sm:gap-8">
+          <div className="club-hero-id">
             <div className="club-crest-wrap animate-pulse-in">
               <ClubLogo
                 clubId={club.id}
@@ -212,62 +213,58 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
                 className="club-crest"
               />
             </div>
-            <div className="min-w-0 flex-1 animate-pulse-in-delay">
-              <h1
-                className="font-display text-4xl font-bold uppercase leading-[0.95] tracking-wide sm:text-6xl md:text-7xl"
-                data-testid="club-name"
-              >
+            <div className="club-hero-copy animate-pulse-in-delay">
+              <h1 className="club-hero-name" data-testid="club-name">
                 {club.name}
               </h1>
-              <p
-                className="mt-4 max-w-xl font-mono text-[13px] leading-6 text-[color:color-mix(in_srgb,var(--club-on-ink)_70%,transparent)]"
-                data-testid="club-acceso-line"
-              >
+              <p className="club-acceso-line" data-testid="club-acceso-line">
                 {accesoLine}
               </p>
             </div>
-          </div>
-
-          <div className="mt-8 flex flex-wrap items-center gap-3 animate-pulse-in-delay-2">
             {table && (
-              <p className="af-tele club-tele" data-testid="club-table-chip">
-                #{table.position} · {table.pts} PTS · {table.gp} PJ
-                {form.length > 0 && (
-                  <span className="ml-3 tracking-[0.2em]">
-                    {form.map((m) => m.result).join('')}
+              <Link
+                href="/liga-mx?tab=tabla"
+                className="club-tabla animate-pulse-in-delay"
+                data-testid="club-table-chip"
+                title="Ver tabla Liga MX"
+              >
+                <span className="club-tabla-pos">{table.position}º</span>
+                <span className="club-tabla-copy">
+                  <span className="club-tabla-kicker">Tabla</span>
+                  <span className="club-tabla-line">
+                    {table.pts} pts · {table.gp} PJ
                   </span>
-                )}
-              </p>
+                </span>
+              </Link>
             )}
-            {!table && form.length > 0 && (
-              <p className="af-tele club-tele">
-                FORMA {form.map((m) => m.result).join('')}
-              </p>
-            )}
-
-            {(!settled || clubId !== club.id) && club.id !== 'el-tri' && (
-              <button
-                type="button"
-                onClick={claimClub}
-                className="club-claim-btn"
-                data-testid="club-claim"
-              >
-                Este es mi club
-              </button>
-            )}
-            {club.id === 'el-tri' && (
-              <button
-                type="button"
-                onClick={claimClub}
-                className="club-claim-btn"
-                data-testid="club-claim-tri"
-              >
-                Lock El Tri
-              </button>
-            )}
-            {isMine && clubId === club.id && (
-              <span className="af-tele text-[var(--club-signal)]">LOCK ACTIVO</span>
-            )}
+            <div className="club-hero-tools animate-pulse-in-delay-2">
+              {!table && form.length > 0 && (
+                <p className="af-tele club-tele">FORMA {form.map((m) => m.result).join('')}</p>
+              )}
+              {(!settled || clubId !== club.id) && club.id !== 'el-tri' && (
+                <button
+                  type="button"
+                  onClick={claimClub}
+                  className="club-claim-btn"
+                  data-testid="club-claim"
+                >
+                  Este es mi club
+                </button>
+              )}
+              {club.id === 'el-tri' && (
+                <button
+                  type="button"
+                  onClick={claimClub}
+                  className="club-claim-btn"
+                  data-testid="club-claim-tri"
+                >
+                  Lock El Tri
+                </button>
+              )}
+              {isMine && clubId === club.id && (
+                <span className="af-tele text-[var(--club-signal)]">LOCK</span>
+              )}
+            </div>
           </div>
         </div>
       </section>
@@ -292,7 +289,7 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
                   )}
                   {next.jornada ? ` · ${next.jornada}` : ''}
                 </p>
-                <div className="mt-3 flex flex-wrap items-center gap-3">
+                <div className="club-next-pair mt-3">
                   <ClubLogo
                     abbr={next.home.abbreviation}
                     name={next.home.name}
@@ -338,8 +335,7 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
             </div>
           ) : (
             <p className="mt-4 max-w-lg font-mono text-[13px] leading-6 text-muted">
-              {club.weatherLine} Sin silbato en el calendario inmediato — las noticias y la grada
-              siguen abajo.
+              Sin silbato en el calendario inmediato — las noticias y la grada siguen abajo.
             </p>
           )}
         </div>
@@ -441,6 +437,16 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
       </section>
 
       <ClubPulseWall clubId={club.id} />
+
+      <div className="border-t border-line bg-bg-1 px-4 py-10 sm:px-6">
+        <div className="mx-auto max-w-6xl">
+          <ClubsNav
+            activeSlug={club.id}
+            title="Otras salas"
+            dek="Cambia de club — cada sala tiene su jornada, pulso y cobertura."
+          />
+        </div>
+      </div>
     </div>
   );
 }
