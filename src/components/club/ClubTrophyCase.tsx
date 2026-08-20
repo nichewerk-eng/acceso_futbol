@@ -39,15 +39,20 @@ export function ClubTrophyCase({ clubId }: { clubId: string }) {
                 >
                   <p className="club-vitrina-bay-label">
                     <span>{shelf.title}</span>
-                    <span aria-hidden>×{shelf.wins.length}</span>
+                    <span className="club-vitrina-n">×{shelf.wins.length}</span>
                   </p>
                   <div className="club-vitrina-stage">
                     <ul className="club-vitrina-row">
                       {shelf.wins.map((win) => (
-                        <li key={win.name} className="club-vitrina-cup" title={win.name}>
+                        <li
+                          key={win.name}
+                          className="club-vitrina-cup"
+                          title={win.name}
+                          aria-label={win.name}
+                        >
                           <img
                             src={shelf.logo}
-                            alt={win.name}
+                            alt=""
                             width={72}
                             height={96}
                             loading="lazy"
