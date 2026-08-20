@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { ClubPulseWall } from '@/components/club/ClubPulseWall';
+import { ClubTrophyCase } from '@/components/club/ClubTrophyCase';
 import { ClubsNav } from '@/components/club/ClubsNav';
 import { LiguillaPathShare } from '@/components/ligamx/LiguillaPathShare';
 import { useGravity } from '@/contexts/GravityContext';
@@ -417,6 +418,8 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
           </div>
         </section>
       )}
+
+      <ClubTrophyCase clubId={club.id} />
 
       {/* Results tape — above the content pulse */}
       <section
