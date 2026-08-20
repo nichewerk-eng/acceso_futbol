@@ -329,7 +329,11 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
     us: ['univision', 'tudn'],
   },
   '2026-08-23|ASL|PAC': {
-    mx: ['espn', 'disney-plus'],
+    mx: ['vix', 'espn', 'disney-plus'],
+    us: ['vix'],
+  },
+  'j5|ASL|PAC': {
+    mx: ['vix', 'espn', 'disney-plus'],
     us: ['vix'],
   },
   '2026-08-23|NCX|UNAM': {
