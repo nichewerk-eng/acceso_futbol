@@ -22,7 +22,7 @@ export type ClubIdentity = GravityClub & {
 };
 
 const PALETTE: Record<string, ClubPalette> = {
-  america: { ink: '#0c0c0c', signal: '#f0c419', onInk: '#f6f5f2' },
+  america: { ink: '#002f6c', signal: '#f0c419', onInk: '#f6f5f2' },
   chivas: { ink: '#6e0b1a', signal: '#f6f5f2', onInk: '#f6f5f2' },
   'cruz-azul': { ink: '#0a2a6b', signal: '#e8f0ff', onInk: '#f6f5f2' },
   tigres: { ink: '#0c0c0c', signal: '#f0a800', onInk: '#f6f5f2' },
