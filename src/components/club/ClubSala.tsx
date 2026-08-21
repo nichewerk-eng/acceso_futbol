@@ -273,6 +273,8 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
               )}
             </div>
           </div>
+
+          <ClubTrophyCase clubId={club.id} embedded />
         </div>
       </section>
 
@@ -418,8 +420,6 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
           </div>
         </section>
       )}
-
-      <ClubTrophyCase clubId={club.id} />
 
       {/* Results tape — above the content pulse */}
       <section

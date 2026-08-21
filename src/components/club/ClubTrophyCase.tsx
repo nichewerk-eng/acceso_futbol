@@ -2,7 +2,13 @@ import { ClubLogo } from '@/components/brand/ClubLogo';
 import { getClubIdentity } from '@/config/clubIdentity';
 import { nationalTitlesFor } from '@/config/clubTitles';
 
-export function ClubTrophyCase({ clubId }: { clubId: string }) {
+export function ClubTrophyCase({
+  clubId,
+  embedded = false,
+}: {
+  clubId: string;
+  embedded?: boolean;
+}) {
   const cabinet = nationalTitlesFor(clubId);
   if (!cabinet) return null;
 
@@ -10,12 +16,17 @@ export function ClubTrophyCase({ clubId }: { clubId: string }) {
   const countLine = cabinet.total === 1 ? '1 título' : `${cabinet.total} títulos`;
 
   return (
-    <section className="club-vitrina" data-testid="club-vitrina">
-      <div className="mx-auto max-w-6xl px-4 py-7 sm:px-6 sm:py-8">
-        <p className="af-tele club-vitrina-tele">
-          <span className="text-signal">AF</span>
-          ://VITRINA
-        </p>
+    <section
+      className={['club-vitrina', embedded ? 'is-embed' : ''].join(' ')}
+      data-testid="club-vitrina"
+    >
+      <div className="club-vitrina-inner">
+        {!embedded && (
+          <p className="af-tele club-vitrina-tele">
+            <span className="text-signal">AF</span>
+            ://VITRINA
+          </p>
+        )}
 
         <div className="club-vitrina-frame">
           <div className="club-vitrina-plate">
@@ -82,7 +93,7 @@ export function ClubTrophyCase({ clubId }: { clubId: string }) {
           </div>
         </div>
 
-        <p className="club-vitrina-dek">Era profesional · FMF</p>
+        {!embedded && <p className="club-vitrina-dek">Era profesional · FMF</p>}
       </div>
     </section>
   );
