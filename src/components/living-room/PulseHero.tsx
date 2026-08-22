@@ -132,6 +132,10 @@ export function PulseHero({ leadStory }: Props) {
   const games = useMemo(() => {
     const list = payload?.games ?? [];
     return [...list].sort((a, b) => {
+      const live = (g: DayGame) => (g.state === 'in' || g.phase === 'live' ? 0 : 1);
+      const la = live(a);
+      const lb = live(b);
+      if (la !== lb) return la - lb;
       const ag = matchesGravity(a.home.name, a.away.name, a.home.abbreviation, a.away.abbreviation)
         ? 0
         : 1;
@@ -139,8 +143,6 @@ export function PulseHero({ leadStory }: Props) {
         ? 0
         : 1;
       if (ag !== bg) return ag - bg;
-      if (a.state === 'in' && b.state !== 'in') return -1;
-      if (b.state === 'in' && a.state !== 'in') return 1;
       if (a.state === 'post' && b.state === 'pre') return -1;
       if (b.state === 'post' && a.state === 'pre') return 1;
       return +new Date(a.date) - +new Date(b.date);
