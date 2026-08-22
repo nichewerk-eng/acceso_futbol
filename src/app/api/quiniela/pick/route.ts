@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { trackServer } from '@/lib/analytics/trackServer';
 import { getLeaderboard, sanitizeUserId, scoreUser, submitPicks } from '@/lib/quiniela/service';
 
 export const dynamic = 'force-dynamic';
@@ -31,6 +32,10 @@ export async function POST(req: Request) {
 
   const leaderboard = await getLeaderboard(res.board);
   const s = scoreUser(res.board, res.picks ?? {});
+  void trackServer('Quiniela save', {
+    jornada: res.board.jornadaNumber,
+    picks: s.count,
+  });
   return NextResponse.json(
     {
       ok: true,

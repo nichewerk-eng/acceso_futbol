@@ -2,6 +2,7 @@
 
 import { EL_TRI, LIGA_MX_CLUBS, type GravityClub } from '@/config/clubs';
 import { gravityMatches } from '@/config/clubMatch';
+import { trackClient } from '@/lib/analytics/trackClient';
 import {
   createContext,
   useCallback,
@@ -87,13 +88,22 @@ export function GravityProvider({ children }: { children: ReactNode }) {
   );
 
   const setClub = useCallback(
-    (clubId: string | null) => patch({ clubId, settled: true }),
+    (clubId: string | null) => {
+      if (clubId) trackClient('Lock', { club: clubId });
+      patch({ clubId, settled: true });
+    },
     [patch]
   );
 
-  const setElTri = useCallback((on: boolean) => patch({ elTri: on, settled: true }), [patch]);
+  const setElTri = useCallback((on: boolean) => {
+    if (on) trackClient('Lock El Tri');
+    patch({ elTri: on, settled: true });
+  }, [patch]);
   const settle = useCallback(() => patch({ settled: true }), [patch]);
-  const skip = useCallback(() => patch({ settled: true }), [patch]);
+  const skip = useCallback(() => {
+    trackClient('Skip claim');
+    patch({ settled: true });
+  }, [patch]);
   const reset = useCallback(() => {
     persist(DEFAULT);
     setState(DEFAULT);

@@ -4,6 +4,7 @@ import { disableGravityAlerts, enableGravityAlerts } from '@/lib/client/gravityA
 import { subscribeToPush, unsubscribeFromPush } from '@/lib/client/push';
 import { useGravityAlertPref } from '@/lib/client/useGravityAlerts';
 import { useGravity } from '@/contexts/GravityContext';
+import { trackClient } from '@/lib/analytics/trackClient';
 
 export function GravityAlertsToggle({
   className = '',
@@ -23,6 +24,7 @@ export function GravityAlertsToggle({
       return;
     }
     await enableGravityAlerts();
+    trackClient('Avisos on', { club: clubId ?? (elTri ? 'el-tri' : 'none') });
     // Register a real Web Push subscription too, so goals/kickoffs arrive with the tab closed.
     void subscribeToPush({ clubId: clubId ?? null, elTri });
   }

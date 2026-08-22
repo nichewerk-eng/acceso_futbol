@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, Oswald } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { CityPulse } from "@/components/analytics/CityPulse";
 import { siteConfig } from "@/config/site";
 import { GravityProvider } from "@/contexts/GravityContext";
 import { GravityAlertsHost } from "@/components/living-room/GravityAlertsHost";
@@ -87,6 +88,7 @@ export default function RootLayout({
           </GravityProvider>
         </TeamProvider>
         <Analytics />
+        <CityPulse />
       </body>
     </html>
   );
