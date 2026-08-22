@@ -1,6 +1,7 @@
 import { anthropicChat, anthropicEnabled } from '@/lib/ai/anthropic';
 import type { Story } from '@/lib/news/types';
 import { pickCableDisplayStories } from '@/lib/radio/cableBrief';
+import { NEWS_OUTRO, withSpokenOutro } from '@/lib/radio/signOff';
 import type { NewsBriefSlot } from '@/lib/radio/voiceSchedule';
 import { briefDeskTitle } from '@/lib/radio/voiceSchedule';
 
@@ -76,12 +77,14 @@ Formato:
 - Liga MX se escribe "Liga MX".
 - PROHIBIDO relojes digitales. PROHIBIDO inventar hechos fuera de las notas.
 - PROHIBIDO "oye bienvenido", arrancamos, gracias por escucharnos.
-- Cierra en una frase. Sin em-dash.`,
+- Última frase, SIEMPRE exactamente: "${NEWS_OUTRO}"
+- Sin em-dash.`,
     user: packStories(stories, desk, slot),
     temperature: 0.45,
     maxTokens: 900,
   });
   if (!raw) return null;
   const text = cleanNarration(raw);
-  return text.length >= 120 ? text : null;
+  if (text.length < 120) return null;
+  return withSpokenOutro(text, NEWS_OUTRO);
 }

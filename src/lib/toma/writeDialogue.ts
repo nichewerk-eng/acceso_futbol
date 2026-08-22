@@ -1,4 +1,5 @@
 import { anthropicChat, anthropicEnabled } from '@/lib/ai/anthropic';
+import { TOMA_OUTRO, withSpokenOutro } from '@/lib/radio/signOff';
 import {
   jornadaTakeColumnBody,
   jornadaTakeDeskTitle,
@@ -83,7 +84,8 @@ ${kindRules(kind)}
 - PROHIBIDO relojes digitales y pares (PAC–PUE). Di "Pachuca contra Puebla", "lunes a las nueve".
 - PROHIBIDO marcadores que no estén en la fuente.
 - Apertura 2026: Liguilla = top 8. No hay Play-In.
-- Cierra con la pregunta que divide (A/B). ~3 a 4 minutos hablados. Sin em-dash.`,
+- Cierra con la pregunta que divide (A/B). Última frase, SIEMPRE exactamente: "${TOMA_OUTRO}"
+- ~3 a 4 minutos hablados. Sin em-dash.`,
     user: pack(take, fixtures, kind),
     temperature: 0.45,
     maxTokens: 1200,
@@ -99,5 +101,6 @@ ${kindRules(kind)}
     )
     .filter(Boolean)
     .join('\n');
-  return text.length >= 120 ? text : null;
+  if (text.length < 120) return null;
+  return withSpokenOutro(text, TOMA_OUTRO);
 }

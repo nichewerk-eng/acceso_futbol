@@ -13,7 +13,7 @@ export const EPISODE_ANTES = 'antes';
 export const EPISODE_CIERRE = 'cierre';
 
 /** Bump when the Toma voice or delivery changes so stored episodes regenerate. */
-export const TOMA_VOICE_REV = 'v5-eleven-narrator';
+export const TOMA_VOICE_REV = 'v6-signoff';
 
 export type TomaEpisode = {
   id: string;

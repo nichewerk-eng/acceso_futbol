@@ -93,7 +93,7 @@ export async function maybeGenerateNewsBrief(opts?: {
         result = { episode: null, skip: 'no_stories' };
         return null;
       }
-      const hash = storiesSourceHash(stories);
+      const hash = `${storiesSourceHash(stories)}-v2-signoff`;
       const existing = await getStoredBrief(ref.dayKey, ref.slot);
       if (existing?.audioUrl && existing.sourceHash === hash) {
         result = { episode: existing, skip: 'exists' };
