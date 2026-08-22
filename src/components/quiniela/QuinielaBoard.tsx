@@ -270,9 +270,14 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
                 <span className="q-lead-meta">
                   {board.finals === 0
                     ? 'en juego'
-                    : `${r.played} de ${board.finals} terminados`}
+                    : `${board.finals} de ${board.total} sellados`}
                 </span>
-                <span className="lead-val">{r.points}</span>
+                <span className="lead-val">
+                  {r.points}
+                  <span className="lead-val-unit">
+                    {r.points === 1 ? ' acierto' : ' aciertos'}
+                  </span>
+                </span>
               </div>
             ))}
           </div>

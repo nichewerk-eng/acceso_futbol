@@ -4295,6 +4295,16 @@ a.lead-team:hover {
   text-align: right;
 }
 
+.lead-val-unit {
+  margin-left: 0.2rem;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
 /* ── La Quiniela ── */
 .q-headline {
   display: flex;
