@@ -38,7 +38,7 @@ Last reviewed: 2026-08-07 (live tick/SSE + optional Upstash KV + 2.5s live coale
 | Stories API | **120 s** (note: `FRESH.storiesTtlMs` is 60s but unused) |
 | Cable brief | **2 h** bucket |
 | Radio client poll | Forced **idle (35 s)** |
-| Radio event delay | `RADIO_DELAY_MS` default **30 s** |
+| Radio event delay | **none** (no live cabina) |
 
 ---
 

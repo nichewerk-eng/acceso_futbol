@@ -21,7 +21,7 @@ export function RadioTeaser() {
           Acceso en tu oído.
         </h2>
         <p className="mt-4 max-w-md text-[15px] leading-7 text-muted">
-          Pre-show 15 min antes. Cabina en vivo con ~30s de retraso. Recap podcast al final.
+          Pre-show 15 min antes. Recap podcast al final.
           Entra desde Hoy o desde la ficha del partido.
         </p>
         <Link href="/#hoy" className="af-cta mt-7" data-testid="radio-cta-hoy">

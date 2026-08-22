@@ -17,7 +17,6 @@ const RADIO_STYLE = 'caliente';
 export function RadioCompanion({ league, matchId }: { league: string; matchId: string }) {
   const [playing, setPlaying] = useState(false);
   const [beats, setBeats] = useState<Beat[]>([]);
-  const [delaySec, setDelaySec] = useState(30);
   const [enabled, setEnabled] = useState(true);
   const [line, setLine] = useState('Pulsa play para entrar a la cabina.');
   const [mode, setMode] = useState<'live' | 'preshow' | 'recap' | 'off'>('live');
@@ -46,7 +45,6 @@ export function RadioCompanion({ league, matchId }: { league: string; matchId: s
         .then((d) => {
           if (cancelled || !d) return;
           setBeats(d.beats ?? []);
-          setDelaySec(d.delaySec ?? 30);
           setEnabled(d.enabled !== false);
           if (d.mode === 'preshow' || d.mode === 'recap' || d.mode === 'live' || d.mode === 'off') {
             setMode(d.mode);
@@ -177,7 +175,7 @@ export function RadioCompanion({ league, matchId }: { league: string; matchId: s
               ? 'Podcast previo · arranca ~15 min antes'
               : mode === 'recap'
                 ? 'Podcast postpartido · crónica + datos'
-                : `Cabina Acceso · ~${delaySec}s de retraso`}
+                : 'Cabina Acceso'}
             {!enabled ? ' · pausado' : ''}
           </p>
         </div>
@@ -197,7 +195,7 @@ export function RadioCompanion({ league, matchId }: { league: string; matchId: s
           {line}
         </p>
         <p className="mt-2 af-tele">
-          {beats.length} segmentos · ~30s de retraso a propósito. No es TV en vivo.
+          {beats.length} segmentos. No es TV en vivo.
         </p>
       </div>
 

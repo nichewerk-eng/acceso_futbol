@@ -20,7 +20,7 @@ function kickLabel(iso: string, tz: string) {
 }
 
 function cabinaLine(g: DayGame, tz: string) {
-  if (g.phase === 'live') return { action: 'AF Radio en vivo', ready: true, note: '~30s de retraso' };
+  if (g.phase === 'live') return { action: 'AF Radio', ready: true, note: 'En el capítulo' };
   if (g.phase === 'preshow') return { action: 'Pre-show', ready: true, note: 'Podcast previo' };
   if (g.phase === 'recap') return { action: 'Recap podcast', ready: true, note: 'Postpartido' };
   if (g.state === 'pre') {
@@ -87,7 +87,7 @@ export function GamesOfDayBanner() {
               Escucha el partido
             </h2>
             <p className="mt-2 max-w-lg font-mono text-[12px] leading-6 text-[var(--hoy-dim)]">
-              Pre-show 15 min antes. Cabina en vivo con ~30s de retraso. Recap al final.
+              Pre-show 15 min antes. Recap al final.
               Los marcadores viven arriba en la cancha.
             </p>
           </div>

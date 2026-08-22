@@ -13,7 +13,8 @@ import { generateScript } from './script';
 import { buildPreshowSegments, buildRecapSegments } from './show';
 import { radioEnabled } from './tts';
 
-const DELAY_MS = Number(process.env.RADIO_DELAY_MS ?? 30_000);
+/** No hold-back: there is no live cabina to stay behind the TV. */
+const DELAY_MS = 0;
 const seen = new Map<string, number>(); // eventKey -> firstSeen
 
 function eventSignalId(match: MatchSnapshot, kind: string, rawId: string) {

@@ -64,8 +64,8 @@ export function templatePreshow(match: MatchSnapshot, style: RadioStyle): ShowSe
 
   const close =
     style === 'puente'
-      ? `Cuando arranque, Acceso Radio entra con ~30 segundos de retraso a propósito.`
-      : `En breve, silbato inicial. Acceso Radio te acompaña con retraso de cabina. No te vayas.`;
+      ? `Cuando arranque, Acceso Radio entra desde el capítulo.`
+      : `En breve, silbato inicial. Acceso Radio te acompaña en la ficha. No te vayas.`;
 
   return [
     { id: 'preshow-1', text: open },
