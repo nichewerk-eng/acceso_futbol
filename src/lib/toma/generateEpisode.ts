@@ -101,6 +101,7 @@ async function runGenerate(
   const kind = showKindFromDayKey(closed.dayKey);
   const transcript = await writeTomaNarration(take, closed.fixtures, kind);
   if (!transcript) return { episode: existing, skip: 'no_script' };
+  console.log('toma-tts', { id: storeKey, chars: transcript.length });
   const audio = await synthesizeBytes(transcript, 'caliente');
   if (!audio) return { episode: existing, skip: 'no_tts' };
   const stored = await storeAudio(storeKey, audio.bytes, audio.contentType, localOnly);

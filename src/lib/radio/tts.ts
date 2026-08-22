@@ -135,9 +135,14 @@ export async function synthesizeBytes(
         }),
       }
     );
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const detail = (await res.text().catch(() => '')).slice(0, 240);
+      console.error('elevenlabs_tts', res.status, detail);
+      return null;
+    }
     return { bytes: Buffer.from(await res.arrayBuffer()), contentType: 'audio/mpeg' };
-  } catch {
+  } catch (err) {
+    console.error('elevenlabs_tts', err instanceof Error ? err.message : 'fetch');
     return null;
   }
 }
