@@ -260,7 +260,7 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
         </h2>
         {board.finals > 0 ? (
           <p className="q-lead-progress">
-            {board.finals}/{board.total}
+            {board.finals}/{board.total} cerrados
           </p>
         ) : null}
         {leaderboard && leaderboard.rows.length ? (
