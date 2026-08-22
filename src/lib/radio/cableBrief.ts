@@ -33,6 +33,8 @@ export type CableBriefPayload = {
   audioUrl?: string | null;
   recordedAt?: string | null;
   slot?: 'am' | 'pm' | null;
+  shareText?: string | null;
+  briefId?: string | null;
 };
 
 function briefBucket(now = Date.now()) {

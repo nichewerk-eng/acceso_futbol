@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import { mexicoDayKey } from '@/lib/radio/phases';
 import { setAudio } from '@/lib/radio/cache';
+import { clipShareText, parseTomaEpisodeId } from '@/lib/share/recordingShare';
 import { kvGetJson, kvSetJson, kvSetNx, sharedKvEnabled } from '@/lib/sharedKv';
 import type { JornadaOverview } from '@/lib/sports/jornada';
 import type { Fixture } from '@/lib/sports/types';
@@ -206,6 +207,7 @@ export type TomaEpisodeCut = {
   audioUrl: string;
   generatedAt: string;
   label: string;
+  shareText: string;
 };
 
 const WEEKDAYS_ES = [
@@ -299,6 +301,7 @@ export function toEpisodeCut(ep: TomaEpisode): TomaEpisodeCut {
     audioUrl: ep.audioUrl,
     generatedAt: ep.generatedAt,
     label: episodeDeskLabel(ep),
+    shareText: clipShareText(ep.transcript) || show.cue,
   };
 }
 
@@ -362,6 +365,12 @@ export async function getStoredEpisode(
     return loadLocalEpisode(key);
   }
   return null;
+}
+
+export async function getStoredEpisodeById(id: string): Promise<TomaEpisode | null> {
+  const parsed = parseTomaEpisodeId(id);
+  if (!parsed) return null;
+  return getStoredEpisode(parsed.jornadaNum, parsed.dayKey);
 }
 
 export async function putStoredEpisode(

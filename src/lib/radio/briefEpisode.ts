@@ -1,5 +1,6 @@
 import { shiftDayKey } from '@/lib/radio/phases';
 import { briefStoreKey, playableBriefSlot, type NewsBriefSlot } from '@/lib/radio/voiceSchedule';
+import { parseNewsBriefId } from '@/lib/share/recordingShare';
 import { kvGetJson, kvSetJson, kvSetNx, sharedKvEnabled } from '@/lib/sharedKv';
 
 export type NewsBriefEpisode = {
@@ -52,6 +53,12 @@ export async function getPlayableBrief(now = Date.now()): Promise<NewsBriefEpiso
   if (hit) return hit;
   if (cur.slot === 'am') return getStoredBrief(shiftDayKey(cur.dayKey, -1), 'pm');
   return getStoredBrief(cur.dayKey, 'am');
+}
+
+export async function getStoredBriefById(id: string): Promise<NewsBriefEpisode | null> {
+  const parsed = parseNewsBriefId(id);
+  if (!parsed) return null;
+  return getStoredBrief(parsed.dayKey, parsed.slot);
 }
 
 export async function putStoredBrief(ep: NewsBriefEpisode): Promise<void> {
