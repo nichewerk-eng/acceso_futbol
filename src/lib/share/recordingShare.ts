@@ -30,10 +30,28 @@ export function newsSharePath(id: string): string {
   return `/news/${encodeURIComponent(id)}`;
 }
 
-export function recordingFileName(channel: 'toma' | 'news', id: string): string {
+export function recordingFileName(
+  channel: 'toma' | 'news',
+  id: string,
+  contentType = 'audio/mpeg'
+): string {
   const safe = id.replace(/[^a-zA-Z0-9._-]/g, '-');
   const prefix = channel === 'toma' ? 'AF-TOMA' : 'AF-NEWS';
-  return `${prefix}-${safe}.mp3`;
+  const ext = contentType.includes('wav') ? 'wav' : 'mp3';
+  return `${prefix}-${safe}.${ext}`;
+}
+
+export function recordingAudioHeaders(opts: {
+  contentType: string;
+  fileName: string;
+  download: boolean;
+}): HeadersInit {
+  return {
+    'Content-Type': opts.contentType,
+    'Cache-Control': 'public, max-age=3600',
+    'X-Content-Type-Options': 'nosniff',
+    'Content-Disposition': `${opts.download ? 'attachment' : 'inline'}; filename="${opts.fileName}"`,
+  };
 }
 
 export function tomaShareCopy(ep: {

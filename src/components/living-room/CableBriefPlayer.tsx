@@ -1,6 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { RecordingShare } from '@/components/living-room/RecordingShare';
+import { briefStoreKey, playableBriefSlot } from '@/lib/radio/voiceSchedule';
+import {
+  newsShareCopy,
+  newsSharePath,
+  recordingFileName,
+} from '@/lib/share/recordingShare';
 
 type Beat = {
   id: string;
@@ -21,6 +28,8 @@ type BriefPayload = {
   audioUrl?: string | null;
   recordedAt?: string | null;
   slot?: 'am' | 'pm' | null;
+  shareText?: string | null;
+  briefId?: string | null;
 };
 
 const RADIO_STYLE = 'caliente';
@@ -163,6 +172,21 @@ export function CableBriefPlayer() {
     .filter(Boolean)
     .join(' · ');
 
+  const slotRef = playableBriefSlot();
+  const briefId =
+    payload?.briefId ??
+    payload?.audioUrl?.match(/news-brief-[^/?]+/)?.[0] ??
+    briefStoreKey(slotRef.dayKey, slotRef.slot);
+  const fileUrl =
+    payload?.audioUrl ?? `/api/radio/brief-audio/${encodeURIComponent(briefId)}`;
+  const shareCopy = newsShareCopy({
+    title: payload?.title ?? 'Briefing de noticias',
+    slot: payload?.slot ?? slotRef.slot,
+    transcript:
+      payload?.shareText ||
+      (payload?.beats ?? []).map((b) => b.text).join(' '),
+  });
+
   return (
     <div
       data-testid="cable-brief"
@@ -182,15 +206,28 @@ export function CableBriefPlayer() {
           </p>
         </div>
 
-        <button
-          type="button"
-          data-testid="cable-brief-play"
-          onClick={() => void toggle()}
-          disabled={!ready && !loading}
-          className="af-cta !py-2 disabled:opacity-40"
-        >
-          {playing ? 'Pausa' : '▶ Escuchar'}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            data-testid="cable-brief-play"
+            onClick={() => void toggle()}
+            disabled={!ready && !loading}
+            className="af-cta !py-2 disabled:opacity-40"
+          >
+            {playing ? 'Pausa' : '▶ Escuchar'}
+          </button>
+          {ready ? (
+            <RecordingShare
+              title={shareCopy.title}
+              text={shareCopy.text}
+              path={newsSharePath(briefId)}
+              fileUrl={fileUrl}
+              fileName={recordingFileName('news', briefId)}
+              className="toma-share"
+              testId="cable-brief-share"
+            />
+          ) : null}
+        </div>
       </div>
 
       <p

@@ -11,6 +11,8 @@ type TomaCut = {
   title: string;
   label: string;
   cue: string;
+  shareText?: string;
+  jornadaNum?: number;
 };
 
 export function TomaDeskSkeleton() {
@@ -125,6 +127,8 @@ export function TomaPlayer({ take }: { take: JornadaTake }) {
               title?: string;
               label?: string;
               cue?: string;
+              shareText?: string;
+              jornadaNum?: number;
             }): TomaCut | null =>
               e.id && e.audioUrl
                 ? {
@@ -133,6 +137,8 @@ export function TomaPlayer({ take }: { take: JornadaTake }) {
                     title: e.title ?? 'Toma',
                     label: e.label ?? 'Toma',
                     cue: e.cue ?? '',
+                    shareText: e.shareText,
+                    jornadaNum: e.jornadaNum,
                   }
                 : null;
             const list = (Array.isArray(d?.episodes) ? d.episodes : [])
@@ -315,7 +321,7 @@ export function TomaPlayer({ take }: { take: JornadaTake }) {
         <p className={live ? 'toma-onair is-on' : 'toma-onair'}>
           {live ? '● al aire' : held ? 'en pausa' : ''}
         </p>
-        <TomaShare />
+        <TomaShare cut={selected} />
       </div>
 
       <div className="toma-senal-desk">

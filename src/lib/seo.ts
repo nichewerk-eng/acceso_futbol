@@ -129,6 +129,31 @@ export function newsArticleJsonLd(opts: {
   };
 }
 
+export function audioObjectJsonLd(opts: {
+  name: string;
+  description: string;
+  path: string;
+  audioPath: string;
+  datePublished?: string;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'AudioObject',
+    name: opts.name,
+    description: opts.description,
+    url: absoluteUrl(opts.path),
+    contentUrl: absoluteUrl(opts.audioPath),
+    encodingFormat: 'audio/mpeg',
+    inLanguage: 'es-MX',
+    datePublished: opts.datePublished,
+    publisher: {
+      '@type': 'Organization',
+      name: siteConfig.name,
+      url: siteConfig.url,
+    },
+  };
+}
+
 export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
   return {
     '@context': 'https://schema.org',

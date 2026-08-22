@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCache, setCache } from '@/lib/apiCache';
 import { aggregateStories } from '@/lib/news/aggregate';
-import { getPlayableBrief } from '@/lib/radio/briefEpisode';
+import { getPlayableBrief, type NewsBriefEpisode } from '@/lib/radio/briefEpisode';
 import {
   buildCableBriefFeed,
   CABLE_BRIEF_TTL_MS,
@@ -10,9 +10,30 @@ import {
   type CableBriefPayload,
 } from '@/lib/radio/cableBrief';
 import { isRadioStyle, type RadioStyle } from '@/lib/radio/personas';
+import { briefDeskTitle, briefStoreKey, playableBriefSlot } from '@/lib/radio/voiceSchedule';
+import { clipShareText } from '@/lib/share/recordingShare';
 import { getGamesOfDay } from '@/lib/sports/gamesOfDay';
 import { getJornadaOverview } from '@/lib/sports/jornada';
 import { fetchLigaMxStandings, sportmonksEnabled } from '@/lib/sports/sportmonks';
+
+function withStoredBrief(
+  payload: CableBriefPayload,
+  stored: NewsBriefEpisode | null
+): CableBriefPayload {
+  const ref = stored
+    ? { dayKey: stored.dayKey, slot: stored.slot }
+    : playableBriefSlot();
+  const id = stored?.id ?? briefStoreKey(ref.dayKey, ref.slot);
+  return {
+    ...payload,
+    audioUrl: stored?.audioUrl ?? `/api/radio/brief-audio/${encodeURIComponent(id)}`,
+    recordedAt: stored?.generatedAt ?? payload.recordedAt,
+    slot: stored?.slot ?? ref.slot,
+    title: stored?.title ?? briefDeskTitle(ref.slot),
+    briefId: id,
+    shareText: stored ? clipShareText(stored.transcript) : payload.shareText,
+  };
+}
 
 export async function GET(req: NextRequest) {
   const styleParam = req.nextUrl.searchParams.get('style') ?? 'caliente';
@@ -25,13 +46,7 @@ export async function GET(req: NextRequest) {
   const cached = getCache<CableBriefPayload>(cacheKey, CABLE_BRIEF_TTL_MS);
   const storedEarly = await getPlayableBrief().catch(() => null);
   if (cached) {
-    if (storedEarly?.audioUrl) {
-      cached.audioUrl = storedEarly.audioUrl;
-      cached.recordedAt = storedEarly.generatedAt;
-      cached.slot = storedEarly.slot;
-      cached.title = storedEarly.title;
-    }
-    return NextResponse.json(cached, {
+    return NextResponse.json(withStoredBrief(cached, storedEarly), {
       headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600' },
     });
   }
@@ -90,15 +105,10 @@ export async function GET(req: NextRequest) {
       new Date(),
       extras
     );
-    if (storedEarly?.audioUrl) {
-      payload.audioUrl = storedEarly.audioUrl;
-      payload.recordedAt = storedEarly.generatedAt;
-      payload.slot = storedEarly.slot;
-      payload.title = storedEarly.title;
-    }
-    setCache(cacheKey, payload);
+    const next = withStoredBrief(payload, storedEarly);
+    setCache(cacheKey, next);
 
-    return NextResponse.json(payload, {
+    return NextResponse.json(next, {
       headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600' },
     });
   } catch {

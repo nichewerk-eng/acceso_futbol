@@ -1,27 +1,40 @@
 'use client';
 
-export function TomaShare() {
-  async function share() {
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const url = `${origin}/toma`;
+import { RecordingShare } from '@/components/living-room/RecordingShare';
+import {
+  recordingFileName,
+  tomaShareCopy,
+  tomaSharePath,
+} from '@/lib/share/recordingShare';
 
-    try {
-      if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-        await navigator.share({ url });
-        return;
-      }
-      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(url);
-      }
-    } catch (err) {
-      const name = err instanceof DOMException ? err.name : '';
-      if (name === 'AbortError') return;
-    }
-  }
+export type TomaShareCut = {
+  id: string;
+  title: string;
+  cue: string;
+  audioUrl: string;
+  shareText?: string;
+  jornadaNum?: number;
+};
+
+export function TomaShare({ cut }: { cut?: TomaShareCut | null }) {
+  const copy = cut
+    ? tomaShareCopy({
+        title: cut.title,
+        cue: cut.cue,
+        jornadaNum: cut.jornadaNum,
+        transcript: cut.shareText,
+      })
+    : { title: 'AF://TOMA · Acceso Futbol', text: 'La toma de la jornada.' };
 
   return (
-    <button type="button" className="toma-share" data-testid="toma-share" onClick={() => void share()}>
-      Compartir
-    </button>
+    <RecordingShare
+      title={copy.title}
+      text={copy.text}
+      path={cut ? tomaSharePath(cut.id) : '/toma'}
+      fileUrl={cut?.audioUrl}
+      fileName={cut ? recordingFileName('toma', cut.id) : undefined}
+      className="toma-share"
+      testId="toma-share"
+    />
   );
 }

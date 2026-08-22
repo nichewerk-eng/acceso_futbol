@@ -2894,6 +2894,11 @@ a.lc-rail-block:hover {
   border-color: var(--brand-orange-dark);
 }
 
+.toma-share:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
 .toma-share.is-on {
   border-color: var(--signal);
   background: var(--signal);
