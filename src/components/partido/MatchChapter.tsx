@@ -88,7 +88,16 @@ const FORM_TITLE: Record<FormResult, string> = {
 function buildKeyEvents(match: MatchSnapshot): TimelineRow[] {
   return (match.events ?? [])
     .filter((e) => e.kind && e.kind !== 'other')
-    .map((e) => {
+    .map((e, i) => ({ e, i }))
+    .sort((a, b) => {
+      const ka =
+        (a.e.period ?? 0) * 1_000_000 + (a.e.minute ?? 0) * 1_000 + (a.e.extraMinute ?? 0);
+      const kb =
+        (b.e.period ?? 0) * 1_000_000 + (b.e.minute ?? 0) * 1_000 + (b.e.extraMinute ?? 0);
+      if (ka !== kb) return kb - ka;
+      return b.i - a.i;
+    })
+    .map(({ e }) => {
       const kind: TimelineRow['kind'] =
         e.kind === 'goal' || e.kind === 'penalty' || e.kind === 'own_goal'
           ? 'goal'
@@ -131,7 +140,7 @@ function buildFullCronica(match: MatchSnapshot): TimelineRow[] {
         sort: (c.order ?? 0) * 10 + (c.minute ?? 0),
       };
     })
-    .sort((a, b) => a.sort - b.sort)
+    .sort((a, b) => b.sort - a.sort)
     .map(({ id, clock, label, text, peak, kind }) => ({ id, clock, label, text, peak, kind }));
 
   return comments.length ? comments : buildKeyEvents(match);
