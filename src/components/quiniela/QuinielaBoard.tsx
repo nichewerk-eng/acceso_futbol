@@ -258,6 +258,11 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
         <h2 className="mt-2 font-display text-2xl font-bold uppercase tracking-wide">
           Quién va ganando
         </h2>
+        {board.finals > 0 ? (
+          <p className="q-lead-progress">
+            {board.finals}/{board.total}
+          </p>
+        ) : null}
         {leaderboard && leaderboard.rows.length ? (
           <div className="lead-board mt-3">
             {leaderboard.rows.slice(0, 20).map((r, i) => (
@@ -267,17 +272,7 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
               >
                 <span className="lead-rank">{i + 1}</span>
                 <span className="q-lead-name">{r.name}</span>
-                <span className="q-lead-meta">
-                  {board.finals === 0
-                    ? 'en juego'
-                    : `${board.finals} de ${board.total} sellados`}
-                </span>
-                <span className="lead-val">
-                  {r.points}
-                  <span className="lead-val-unit">
-                    {r.points === 1 ? ' acierto' : ' aciertos'}
-                  </span>
-                </span>
+                <span className="lead-val">{r.points}</span>
               </div>
             ))}
           </div>
