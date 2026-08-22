@@ -34,7 +34,8 @@ export type TomaGenerateSkip =
   | 'no_script'
   | 'no_tts'
   | 'no_store'
-  | 'exists';
+  | 'exists'
+  | 'locked';
 
 export type TomaGenerateResult = {
   episode: TomaEpisode | null;
@@ -95,7 +96,7 @@ async function runGenerate(
   }
 
   const locked = await tryEpisodeLock(storeKey, { localOnly });
-  if (!locked) return { episode: existing, skip: 'exists' };
+  if (!locked) return { episode: existing, skip: existing?.audioUrl ? 'exists' : 'locked' };
 
   const kind = showKindFromDayKey(closed.dayKey);
   const transcript = await writeTomaNarration(take, closed.fixtures, kind);

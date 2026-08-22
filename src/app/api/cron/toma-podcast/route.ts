@@ -24,7 +24,7 @@ function parseKind(raw: string | null): TomaShowKind | undefined {
   return undefined;
 }
 
-/** Daily Vercel Cron (00:20 and 10:20 Mexico City). One show per tick: cierre → missing/latest settled day (incl. yesterday) → antes. Traffic on /api/toma also generates. `?force=1` is local only. */
+/** Daily Vercel Cron (00:20 and 10:20 Mexico City). One show per tick: cierre → missing/latest settled day (incl. yesterday) → antes. `?force=1` is local only. */
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const force = url.searchParams.get('force') === '1';
@@ -36,9 +36,10 @@ export async function GET(req: Request) {
   } else if (!authorized(req)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
+  const headers = { 'Cache-Control': 'no-store' };
   try {
     const { episode, skip } = await maybeGenerateTomaEpisode({ force, kind });
-    return NextResponse.json({
+    const body = {
       ok: true,
       generated: Boolean(episode?.audioUrl),
       id: episode?.id ?? null,
@@ -46,8 +47,10 @@ export async function GET(req: Request) {
       kind: episode?.kind ?? kind ?? null,
       skip: skip ?? null,
       forced: force,
-    });
+    };
+    console.log('toma-podcast', body);
+    return NextResponse.json(body, { headers });
   } catch {
-    return NextResponse.json({ ok: false, generated: false }, { status: 502 });
+    return NextResponse.json({ ok: false, generated: false }, { status: 502, headers });
   }
 }
