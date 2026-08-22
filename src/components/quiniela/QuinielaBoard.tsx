@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { useQuiniela } from '@/lib/client/useQuiniela';
 import type { Outcome, QuinielaBoard as Board, QuinielaMatch } from '@/lib/quiniela/types';
@@ -44,14 +45,20 @@ function Row({
   m,
   pick,
   onPick,
+  flag = false,
 }: {
   m: QuinielaMatch;
   pick: Outcome | undefined;
   onPick: (id: string, o: Outcome) => void;
+  flag?: boolean;
 }) {
   const result = m.result;
   return (
-    <li className={['q-row', m.locked ? 'q-row-locked' : ''].filter(Boolean).join(' ')}>
+    <li
+      className={['q-row', m.locked ? 'q-row-locked' : '', flag ? 'q-row-need' : '']
+        .filter(Boolean)
+        .join(' ')}
+    >
       <p className="q-meta">{metaLine(m)}</p>
       <div className="q-pick" role="group" aria-label={`${m.home.name} contra ${m.away.name}`}>
         <button
@@ -105,7 +112,39 @@ function Row({
 
 export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
   const q = useQuiniela(initial);
-  const { board, leaderboard, mine, draft, name, setName, setPick, save, saving, dirtyCount } = q;
+  const {
+    board,
+    leaderboard,
+    mine,
+    draft,
+    name,
+    setName,
+    named,
+    setPick,
+    save,
+    saving,
+    dirtyCount,
+    missingCount,
+    missingIds,
+    cardFull,
+    canSave,
+  } = q;
+  const nameRef = useRef<HTMLInputElement>(null);
+  const [needName, setNeedName] = useState(false);
+  const [needCard, setNeedCard] = useState(false);
+
+  useEffect(() => {
+    if (named) setNeedName(false);
+  }, [named]);
+
+  useEffect(() => {
+    if (cardFull) setNeedCard(false);
+  }, [cardFull]);
+
+  useEffect(() => {
+    if (!needCard) return;
+    document.querySelector('.q-row-need')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [needCard, missingIds]);
 
   if (!board) {
     return (
@@ -121,13 +160,27 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
         <label className="q-name">
           <span className="af-tele text-muted">Tu nombre en la tabla</span>
           <input
+            ref={nameRef}
+            id="q-name"
             type="text"
             value={name}
             maxLength={24}
+            required
+            aria-required="true"
+            aria-invalid={needName}
+            aria-describedby={needName ? 'q-name-alert' : undefined}
+            autoComplete="nickname"
             onChange={(e) => setName(e.target.value)}
-            placeholder="Anónimo"
-            className="q-name-input"
+            placeholder="Tu apodo"
+            className={['q-name-input', named ? '' : 'is-need'].filter(Boolean).join(' ')}
           />
+          {needName ? (
+            <p id="q-name-alert" className="q-name-alert" role="alert">
+              Pon un nombre para guardar tu quiniela. No vale Anónimo.
+            </p>
+          ) : named ? null : (
+            <span className="q-name-hint">Obligatorio · no vale Anónimo.</span>
+          )}
         </label>
         <div className="q-score">
           <span className="q-score-num">
@@ -144,7 +197,13 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
 
       <ol className="q-list">
         {board.matches.map((m) => (
-          <Row key={m.id} m={m} pick={draft[m.id]} onPick={setPick} />
+          <Row
+            key={m.id}
+            m={m}
+            pick={draft[m.id]}
+            onPick={setPick}
+            flag={needCard && missingIds.includes(m.id)}
+          />
         ))}
       </ol>
 
@@ -152,15 +211,44 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
         <button
           type="button"
           className="af-cta"
-          onClick={() => void save()}
-          disabled={saving || dirtyCount === 0}
+          onClick={() => {
+            if (!named) {
+              setNeedName(true);
+              nameRef.current?.focus();
+              nameRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              return;
+            }
+            if (!cardFull) {
+              setNeedCard(true);
+              return;
+            }
+            void save();
+          }}
+          disabled={saving || (named && cardFull && !canSave)}
         >
-          {saving ? 'Guardando…' : dirtyCount ? `Guardar (${dirtyCount})` : 'Guardado'}
+          {saving
+            ? 'Guardando…'
+            : named && cardFull && !canSave
+              ? 'Guardado'
+              : dirtyCount
+                ? `Guardar (${dirtyCount})`
+                : !named
+                  ? 'Pon un nombre'
+                  : !cardFull
+                    ? 'Llena la jornada'
+                    : 'Guardar nombre'}
         </button>
         <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
           {board.jornadaLabel}
         </span>
       </div>
+      {needCard ? (
+        <p className="q-name-alert mt-3" role="alert">
+          {missingCount === 1
+            ? 'Te falta 1 partido para guardar la quiniela.'
+            : `Llena todos los partidos abiertos. Te faltan ${missingCount}.`}
+        </p>
+      ) : null}
 
       <section className="mt-12">
         <p className="af-tele text-foreground">

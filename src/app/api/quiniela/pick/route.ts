@@ -25,7 +25,8 @@ export async function POST(req: Request) {
 
   const res = await submitPicks({ userId, name: body.name, picks: body.picks });
   if (!res.ok || !res.board) {
-    return NextResponse.json({ error: res.error ?? 'failed' }, { status: 409 });
+    const status = res.error === 'need_name' || res.error === 'need_card' ? 400 : 409;
+    return NextResponse.json({ error: res.error ?? 'failed' }, { status });
   }
 
   const leaderboard = await getLeaderboard(res.board);

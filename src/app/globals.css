@@ -4328,6 +4328,30 @@ a.lead-team:hover {
   border-color: var(--signal);
 }
 
+.q-name-input.is-need {
+  border-color: color-mix(in srgb, var(--signal) 55%, var(--line));
+}
+
+.q-name-hint {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--signal);
+}
+
+.q-name-alert {
+  margin: 0;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--signal);
+  background: color-mix(in srgb, var(--signal) 12%, var(--bg-2));
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 11px;
+  line-height: 1.45;
+  letter-spacing: 0.04em;
+  color: var(--foreground);
+}
+
 .q-score {
   display: flex;
   flex-direction: column;
@@ -4392,6 +4416,11 @@ a.lead-team:hover {
 
 .q-row:last-child {
   border-bottom: none;
+}
+
+.q-row-need {
+  background: color-mix(in srgb, var(--signal) 8%, transparent);
+  box-shadow: inset 2px 0 0 var(--signal);
 }
 
 .q-pick {

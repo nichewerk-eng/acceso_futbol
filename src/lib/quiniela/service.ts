@@ -1,6 +1,8 @@
 import { clubIdentityFromAbbr } from '@/config/clubIdentity';
 import { getJornadaOverview } from '@/lib/sports/jornada';
 import type { Fixture } from '@/lib/sports/types';
+import { isOutcome, missingOpenPicks } from './card';
+import { sanitizeName } from './name';
 import { getPicks, listPicks, putPicks } from './store';
 import type {
   LeaderRow,
@@ -16,9 +18,7 @@ export const QUINIELA_TORNEO = 'apertura-2026';
 
 const OUTCOMES: readonly Outcome[] = ['1', 'X', '2'];
 
-export function isOutcome(v: unknown): v is Outcome {
-  return v === '1' || v === 'X' || v === '2';
-}
+export { isOutcome } from './card';
 
 export function jornadaKeyFor(n: number): string {
   return `${QUINIELA_TORNEO}-j${n}`;
@@ -117,11 +117,13 @@ export function scoreUser(
 export async function getLeaderboard(board: QuinielaBoard): Promise<QuinielaLeaderboard> {
   const all = await listPicks(board.jornadaKey);
   const rows: LeaderRow[] = all
+    .filter((p) => sanitizeName(p.name))
     .map((p) => {
       const s = scoreAgainst(board, p.picks);
+      const name = sanitizeName(p.name)!;
       return {
         userId: p.userId,
-        name: p.name || 'Anónimo',
+        name,
         points: s.points,
         played: s.played,
         picks: s.count,
@@ -139,11 +141,7 @@ export function sanitizeUserId(v: unknown): string | null {
   return typeof v === 'string' && USER_ID_RE.test(v) ? v : null;
 }
 
-export function sanitizeName(v: unknown, fallback = 'Anónimo'): string {
-  if (typeof v !== 'string') return fallback;
-  const clean = v.replace(/\s+/g, ' ').trim().slice(0, 24);
-  return clean || fallback;
-}
+export { sanitizeName } from './name';
 
 export interface SubmitResult {
   ok: boolean;
@@ -182,7 +180,15 @@ export async function submitPicks(input: {
     saved += 1;
   }
 
-  const name = sanitizeName(input.name, existing?.name || 'Anónimo');
+  const name = sanitizeName(input.name) ?? sanitizeName(existing?.name);
+  if (!name) return { ok: false, error: 'need_name', saved: 0, rejected: 0 };
+
+  const missing = missingOpenPicks(board.matches, merged);
+  if (missing.length) return { ok: false, error: 'need_card', saved: 0, rejected: 0 };
+  if (Object.keys(merged).length === 0) {
+    return { ok: false, error: 'need_card', saved: 0, rejected: 0 };
+  }
+
   await putPicks(board.jornadaKey, {
     userId: input.userId,
     name,

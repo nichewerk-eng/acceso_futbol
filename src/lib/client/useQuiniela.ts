@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { missingOpenPicks } from '@/lib/quiniela/card';
+import { sanitizeName } from '@/lib/quiniela/name';
 import type { Outcome, QuinielaBoard, QuinielaLeaderboard } from '@/lib/quiniela/types';
 
 const ID_KEY = 'af-quiniela-id';
@@ -38,6 +40,7 @@ export function useQuiniela(initialBoard: QuinielaBoard | null = null) {
   const [draft, setDraft] = useState<Record<string, Outcome>>({});
   const [mine, setMine] = useState<Mine | null>(null);
   const [name, setName] = useState('');
+  const [savedName, setSavedName] = useState('');
   const [loading, setLoading] = useState(!initialBoard);
   const [saving, setSaving] = useState(false);
   const idRef = useRef<string>('');
@@ -45,7 +48,9 @@ export function useQuiniela(initialBoard: QuinielaBoard | null = null) {
   useEffect(() => {
     idRef.current = readId();
     try {
-      setName(localStorage.getItem(NAME_KEY) ?? '');
+      const stored = sanitizeName(localStorage.getItem(NAME_KEY) ?? '') ?? '';
+      setName(stored);
+      setSavedName(stored);
     } catch {
       /* ignore */
     }
@@ -101,29 +106,47 @@ export function useQuiniela(initialBoard: QuinielaBoard | null = null) {
     return ids;
   }, [draft, saved]);
 
+  const missingIds = useMemo(
+    () => (board ? missingOpenPicks(board.matches, draft) : []),
+    [board, draft]
+  );
+  const cardFull = missingIds.length === 0;
+
+  const named = Boolean(sanitizeName(name));
+  const nameDirty = (sanitizeName(name) ?? '') !== savedName;
+
   const save = useCallback(async () => {
-    if (!dirtyIds.length || saving) return;
+    const display = sanitizeName(name);
+    if (!display || saving) return;
+    if (!cardFull) return;
+    if (!dirtyIds.length && display === savedName) return;
     setSaving(true);
     const id = idRef.current || readId();
-    const payload = Object.fromEntries(dirtyIds.map((mid) => [mid, draft[mid]]));
+    const openIds = (board?.matches ?? []).filter((m) => !m.locked).map((m) => m.id);
+    const payload = Object.fromEntries(
+      openIds.filter((mid) => draft[mid]).map((mid) => [mid, draft[mid]])
+    );
     try {
       try {
-        localStorage.setItem(NAME_KEY, name);
+        localStorage.setItem(NAME_KEY, display);
       } catch {
         /* ignore */
       }
       const res = await fetch('/api/quiniela/pick', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: id, name, picks: payload }),
+        body: JSON.stringify({ userId: id, name: display, picks: payload }),
       });
-      if (res.ok) applyServer(await res.json());
+      if (res.ok) {
+        applyServer(await res.json());
+        setSavedName(display);
+      }
     } catch {
       /* ignore */
     } finally {
       setSaving(false);
     }
-  }, [dirtyIds, draft, name, saving, applyServer]);
+  }, [board, cardFull, dirtyIds, draft, name, savedName, saving, applyServer]);
 
   return {
     board,
@@ -133,11 +156,19 @@ export function useQuiniela(initialBoard: QuinielaBoard | null = null) {
     saved,
     name,
     setName,
+    named,
     setPick,
     save,
     saving,
     loading,
     dirtyCount: dirtyIds.length,
+    missingCount: missingIds.length,
+    missingIds,
+    cardFull,
+    canSave:
+      named &&
+      cardFull &&
+      (dirtyIds.length > 0 || (nameDirty && Object.keys(saved).length > 0)),
     userId: idRef.current,
   };
 }

@@ -35,7 +35,7 @@ const FAQ = [
   {
     question: '¿Cómo se juega?',
     answer:
-      'Toca el escudo del equipo que crees que gana, o Empate. Cuando el partido termina, si tu elección coincide con el marcador sumas un punto.',
+      'Toca el escudo del equipo que crees que gana, o Empate, en cada partido de la jornada. Tienes que llenar toda la carta para guardar. Cuando el partido termina, si tu elección coincide con el marcador sumas un punto.',
   },
   {
     question: '¿Hasta cuándo puedo cambiar?',
@@ -45,7 +45,7 @@ const FAQ = [
   {
     question: '¿Necesito una cuenta?',
     answer:
-      'No. Pon un nombre para la tabla y listo. Tus elecciones se guardan en este teléfono o computadora.',
+      'No. Escribe un nombre (no Anónimo) para aparecer en la tabla. Tus elecciones se guardan en este teléfono o computadora.',
   },
 ];
 
@@ -86,8 +86,8 @@ export default async function QuinielaPage() {
         ) : null}
         <p className="mt-4 max-w-xl text-sm leading-6 text-muted">
           En cada partido toca el equipo que crees que gana, o Empate. Si atinas, sumas un punto.
-          Elige y guarda <em>antes</em> de que arranque el partido: después ya no se puede cambiar.
-          Gratis, sin cuenta.
+          Llena <em>todos</em> los partidos que aún no arrancan y guarda <em>antes</em> del silbatazo:
+          después ya no se puede cambiar. Gratis, sin cuenta.
         </p>
 
         <QuinielaBoard initial={board} />
