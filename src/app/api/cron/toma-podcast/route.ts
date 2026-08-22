@@ -24,7 +24,7 @@ function parseKind(raw: string | null): TomaShowKind | undefined {
   return undefined;
 }
 
-/** Daily Vercel Cron (00:20 and 10:20 Mexico City). One show per tick: cierre → día → antes. Traffic on /api/toma also generates. `?force=1` is local only. */
+/** Daily Vercel Cron (00:20 and 10:20 Mexico City). One show per tick: cierre → missing/latest settled day (incl. yesterday) → antes. Traffic on /api/toma also generates. `?force=1` is local only. */
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const force = url.searchParams.get('force') === '1';

@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from 'fs/promises';
 import path from 'path';
-import { isMexicoDay, mexicoDayKey } from '@/lib/radio/phases';
+import { mexicoDayKey } from '@/lib/radio/phases';
 import { setAudio } from '@/lib/radio/cache';
 import { kvGetJson, kvSetJson, kvSetNx, sharedKvEnabled } from '@/lib/sharedKv';
 import type { JornadaOverview } from '@/lib/sports/jornada';
@@ -112,19 +112,50 @@ export function episodeLockKey(storeKey: string): string {
   return `${storeKey}-lock`;
 }
 
-/** Today's slate is all FT and long enough after last kickoff to settle. */
+function fixturesByMexicoDay(jornada: JornadaOverview): Map<string, Fixture[]> {
+  const byDay = new Map<string, Fixture[]>();
+  for (const f of jornadaRows(jornada)) {
+    const t = +new Date(f.date);
+    if (!Number.isFinite(t)) continue;
+    const dayKey = mexicoDayKey(new Date(t));
+    const list = byDay.get(dayKey) ?? [];
+    list.push(f);
+    byDay.set(dayKey, list);
+  }
+  return byDay;
+}
+
+function dayIsSettled(fixtures: Fixture[], now: number): boolean {
+  if (fixtures.length === 0) return false;
+  if (fixtures.some((f) => f.state === 'pre' || f.state === 'in')) return false;
+  const lastKick = Math.max(...fixtures.map((f) => +new Date(f.date)));
+  return Number.isFinite(lastKick) && now >= lastKick + SETTLE_MS;
+}
+
+/**
+ * Settled jornada days on or before today, oldest first.
+ * Viernes still counts on sábado morning — we do not require the day to be "today".
+ */
+export function closedDaySlates(
+  jornada: JornadaOverview,
+  now = Date.now()
+): { dayKey: string; fixtures: Fixture[] }[] {
+  const todayKey = mexicoDayKey(new Date(now));
+  const byDay = fixturesByMexicoDay(jornada);
+  return [...byDay.keys()]
+    .filter((dayKey) => dayKey <= todayKey)
+    .sort()
+    .filter((dayKey) => dayIsSettled(byDay.get(dayKey)!, now))
+    .map((dayKey) => ({ dayKey, fixtures: byDay.get(dayKey)! }));
+}
+
+/** Latest settled slate (today or an earlier day in this fecha). */
 export function closedDaySlate(
   jornada: JornadaOverview,
   now = Date.now()
 ): { dayKey: string; fixtures: Fixture[] } | null {
-  const dayKey = mexicoDayKey(new Date(now));
-  const all = [...jornada.live, ...jornada.played, ...jornada.upcoming];
-  const today = all.filter((f) => isMexicoDay(f.date, dayKey));
-  if (today.length === 0) return null;
-  if (today.some((f) => f.state === 'pre' || f.state === 'in')) return null;
-  const lastKick = Math.max(...today.map((f) => +new Date(f.date)));
-  if (!Number.isFinite(lastKick) || now < lastKick + SETTLE_MS) return null;
-  return { dayKey, fixtures: today };
+  const days = closedDaySlates(jornada, now);
+  return days[days.length - 1] ?? null;
 }
 
 /** Smoke-test / desk override: today's key, sealed scores only. */

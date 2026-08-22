@@ -4,7 +4,7 @@ import { getJornadaOverview, type JornadaOverview } from '@/lib/sports/jornada';
 import { getJornadaTakePayload } from '@/lib/sports/jornadaTakeAi';
 import type { Fixture } from '@/lib/sports/types';
 import {
-  closedDaySlate,
+  closedDaySlates,
   closedJornadaSlate,
   episodeBlobPath,
   episodeShowCopy,
@@ -152,7 +152,8 @@ function forceSlate(
 }
 
 /**
- * One TTS pass per call. Priority: cierre de fecha → cierre del día → antes.
+ * One TTS pass per call. Priority: cierre de fecha → missing settled day
+ * (yesterday still counts) → latest day if hashes drifted → antes.
  * `force` is local `next dev` only: memory cache, never Blob/KV.
  */
 export async function maybeGenerateTomaEpisode(opts?: {
@@ -172,8 +173,14 @@ export async function maybeGenerateTomaEpisode(opts?: {
 
   const wrap = closedJornadaSlate(jornada);
   if (wrap) return runTracked(jornada, wrap, false);
-  const day = closedDaySlate(jornada);
-  if (day) return runTracked(jornada, day, false);
+  const days = closedDaySlates(jornada);
+  if (days.length > 0) {
+    for (const day of days) {
+      const existing = await getStoredEpisode(jornada.number, day.dayKey);
+      if (!existing?.audioUrl) return runTracked(jornada, day, false);
+    }
+    return runTracked(jornada, days[days.length - 1]!, false);
+  }
   const pre = preJornadaSlate(jornada);
   if (pre) return runTracked(jornada, pre, false);
   return { episode: null, skip: 'not_closed' };
