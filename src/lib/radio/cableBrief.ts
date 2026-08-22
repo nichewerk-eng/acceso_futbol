@@ -29,6 +29,10 @@ export type CableBriefPayload = {
   storyCount: number;
   jornadaLabel: string | null;
   beats: Pick<RadioBeat, 'id' | 'text' | 'kind' | 'createdAt'>[];
+  /** Stored morning/evening MP3. Play never hits ElevenLabs. */
+  audioUrl?: string | null;
+  recordedAt?: string | null;
+  slot?: 'am' | 'pm' | null;
 };
 
 function briefBucket(now = Date.now()) {
@@ -423,7 +427,7 @@ export async function buildCableBriefSegments(
   return generated ?? templateCableBriefFromDossier(dossier);
 }
 
-/** Text-only beat — TTS is deferred to play via POST /api/radio/tts (Vercel-safe). */
+/** Text-only beat for the on-page line. Spoken cut is the stored NEWS MP3. */
 function ensureBriefBeat(
   briefId: string,
   style: RadioStyle,
@@ -500,8 +504,7 @@ export async function buildCableBriefFeed(
     sources,
     storyCount: picks.length,
     jornadaLabel: jornada?.label ?? null,
-    // No audioPath — ephemeral /api/radio/audio URLs 404 across Vercel isolates.
-    // Client synthesizes on play via POST /api/radio/tts.
+    // Spoken cut is /api/radio/brief-audio (cron MP3), not per-play TTS.
     beats: beats.map((b) => ({
       id: b.id,
       text: b.text,

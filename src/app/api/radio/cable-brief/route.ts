@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCache, setCache } from '@/lib/apiCache';
 import { aggregateStories } from '@/lib/news/aggregate';
+import { getPlayableBrief } from '@/lib/radio/briefEpisode';
 import {
   buildCableBriefFeed,
   CABLE_BRIEF_TTL_MS,
@@ -22,7 +23,14 @@ export async function GET(req: NextRequest) {
   const cacheKey = `cable-brief-payload-${cableBriefId(style)}`;
 
   const cached = getCache<CableBriefPayload>(cacheKey, CABLE_BRIEF_TTL_MS);
+  const storedEarly = await getPlayableBrief().catch(() => null);
   if (cached) {
+    if (storedEarly?.audioUrl) {
+      cached.audioUrl = storedEarly.audioUrl;
+      cached.recordedAt = storedEarly.generatedAt;
+      cached.slot = storedEarly.slot;
+      cached.title = storedEarly.title;
+    }
     return NextResponse.json(cached, {
       headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600' },
     });
@@ -82,6 +90,12 @@ export async function GET(req: NextRequest) {
       new Date(),
       extras
     );
+    if (storedEarly?.audioUrl) {
+      payload.audioUrl = storedEarly.audioUrl;
+      payload.recordedAt = storedEarly.generatedAt;
+      payload.slot = storedEarly.slot;
+      payload.title = storedEarly.title;
+    }
     setCache(cacheKey, payload);
 
     return NextResponse.json(payload, {

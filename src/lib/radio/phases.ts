@@ -9,6 +9,17 @@ export function mexicoDayKey(d = new Date()): string {
   return d.toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
 }
 
+/** Hour 0–23 in Mexico City. */
+export function mexicoHour(d = new Date()): number {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'America/Mexico_City',
+    hour: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(d);
+  const h = Number(parts.find((p) => p.type === 'hour')?.value);
+  return Number.isFinite(h) ? h : 0;
+}
+
 /** Shift a YYYY-MM-DD calendar key by whole days (noon-UTC anchor). */
 export function shiftDayKey(dayKey: string, days: number): string {
   const [y, m, d] = dayKey.split('-').map(Number);

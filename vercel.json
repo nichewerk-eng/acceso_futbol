@@ -9,6 +9,14 @@
       "schedule": "20 16 * * *"
     },
     {
+      "path": "/api/cron/news-brief",
+      "schedule": "5 13 * * *"
+    },
+    {
+      "path": "/api/cron/news-brief",
+      "schedule": "5 23 * * *"
+    },
+    {
       "path": "/api/cron/push-dispatch",
       "schedule": "* * * * *"
     }

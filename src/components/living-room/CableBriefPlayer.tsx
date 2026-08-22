@@ -18,22 +18,21 @@ type BriefPayload = {
   jornadaLabel?: string | null;
   expiresAt?: string;
   beats?: Beat[];
+  audioUrl?: string | null;
+  recordedAt?: string | null;
+  slot?: 'am' | 'pm' | null;
 };
 
-/** Single Acceso voice for now. */
 const RADIO_STYLE = 'caliente';
-/** Client poll — server regenerates on a 2h bucket. */
 const REFRESH_MS = 5 * 60 * 1000;
 
 export function CableBriefPlayer() {
   const [playing, setPlaying] = useState(false);
   const [payload, setPayload] = useState<BriefPayload | null>(null);
   const [loading, setLoading] = useState(true);
-  const [line, setLine] = useState('Briefing de noticias · ~2:30');
+  const [line, setLine] = useState('Briefing de noticias · 8:00 y 18:00');
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const objectUrlRef = useRef<string | null>(null);
-  const spokenRef = useRef<Set<string>>(new Set());
-  const busyRef = useRef(false);
   const playingRef = useRef(false);
   const briefIdRef = useRef<string | null>(null);
 
@@ -48,36 +47,39 @@ export function CableBriefPlayer() {
     }
   }, []);
 
-  const loadBrief = useCallback(async (silent = false) => {
-    if (!silent) setLoading(true);
-    try {
-      const r = await fetch(`/api/radio/cable-brief?style=${RADIO_STYLE}`);
-      const d = (r.ok ? await r.json() : null) as BriefPayload | null;
-      if (!d) return;
-      const nextId = d.id ?? null;
-      if (nextId && briefIdRef.current && nextId !== briefIdRef.current && playingRef.current) {
-        // New cut arrived — stop current playback so the next listen is fresh.
-        setPlaying(false);
-        audioRef.current?.pause();
-        revokeObjectUrl();
-        if (typeof window !== 'undefined') window.speechSynthesis?.cancel();
-        busyRef.current = false;
-        spokenRef.current = new Set();
-      }
-      if (nextId !== briefIdRef.current) {
-        briefIdRef.current = nextId;
-        spokenRef.current = new Set();
-      }
-      setPayload(d);
-      if (d.beats?.length && !playingRef.current) {
-        setLine(d.beats[0]?.text ?? 'Briefing listo.');
-      }
-    } catch {
-      /* keep last good payload */
-    } finally {
-      if (!silent) setLoading(false);
-    }
+  const stop = useCallback(() => {
+    playingRef.current = false;
+    setPlaying(false);
+    audioRef.current?.pause();
+    audioRef.current = null;
+    revokeObjectUrl();
+    if (typeof window !== 'undefined') window.speechSynthesis?.cancel();
   }, [revokeObjectUrl]);
+
+  const loadBrief = useCallback(
+    async (silent = false) => {
+      if (!silent) setLoading(true);
+      try {
+        const r = await fetch(`/api/radio/cable-brief?style=${RADIO_STYLE}`);
+        const d = (r.ok ? await r.json() : null) as BriefPayload | null;
+        if (!d) return;
+        const nextId = d.id ?? d.audioUrl ?? null;
+        if (nextId && briefIdRef.current && nextId !== briefIdRef.current && playingRef.current) {
+          stop();
+        }
+        briefIdRef.current = nextId;
+        setPayload(d);
+        if (!playingRef.current) {
+          setLine(d.beats?.[0]?.text ?? 'Briefing listo.');
+        }
+      } catch {
+        /* keep last good payload */
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [stop]
+  );
 
   useEffect(() => {
     void loadBrief(false);
@@ -86,118 +88,64 @@ export function CableBriefPlayer() {
     }, REFRESH_MS);
     return () => {
       window.clearInterval(tick);
-      revokeObjectUrl();
+      stop();
     };
-  }, [loadBrief, revokeObjectUrl]);
+  }, [loadBrief, stop]);
 
-  function speakFallback(text: string, onEnd: () => void) {
+  async function playStored(url: string) {
+    const r = await fetch(url, { cache: 'no-store' });
+    if (!r.ok) throw new Error('brief');
+    const blob = await r.blob();
+    const obj = URL.createObjectURL(blob);
+    objectUrlRef.current = obj;
+    const a = new Audio(obj);
+    audioRef.current = a;
+    a.onended = () => stop();
+    a.onerror = () => stop();
+    await a.play();
+    if (!playingRef.current) a.pause();
+  }
+
+  function speakFallback(text: string) {
     if (typeof window === 'undefined' || !window.speechSynthesis) {
-      onEnd();
+      stop();
       return;
     }
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'es-MX';
     u.rate = 1.02;
-    u.onend = onEnd;
-    u.onerror = onEnd;
+    u.onend = () => stop();
+    u.onerror = () => stop();
     window.speechSynthesis.speak(u);
   }
 
-  async function fetchTtsBlob(beat: Beat): Promise<Blob | null> {
-    try {
-      const r = await fetch('/api/radio/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          key: beat.id,
-          text: beat.text,
-          style: RADIO_STYLE,
-        }),
-      });
-      if (!r.ok) return null;
-      return await r.blob();
-    } catch {
-      return null;
-    }
-  }
-
-  function playNext(queue: Beat[]) {
-    if (!playingRef.current || busyRef.current) return;
-    const next = queue.find((b) => !spokenRef.current.has(b.id));
-    if (!next) {
-      setPlaying(false);
-      setLine('Briefing completo. Vuelve en un par de horas por el siguiente corte.');
-      return;
-    }
-
-    spokenRef.current.add(next.id);
-    setLine(next.text);
-    busyRef.current = true;
-
-    const done = () => {
-      revokeObjectUrl();
-      busyRef.current = false;
-      if (playingRef.current) playNext(queue);
-    };
-
-    void (async () => {
-      if (!playingRef.current) {
-        busyRef.current = false;
-        return;
-      }
-
-      const blob = await fetchTtsBlob(next);
-      if (!playingRef.current) {
-        busyRef.current = false;
-        return;
-      }
-
-      if (blob && typeof Audio !== 'undefined') {
-        try {
-          audioRef.current?.pause();
-          revokeObjectUrl();
-          const url = URL.createObjectURL(blob);
-          objectUrlRef.current = url;
-          const a = new Audio(url);
-          audioRef.current = a;
-          a.onended = done;
-          a.onerror = () => speakFallback(next.text, done);
-          await a.play();
-          return;
-        } catch {
-          /* fall through to browser voice */
-        }
-      }
-
-      speakFallback(next.text, done);
-    })();
-  }
-
-  useEffect(() => {
-    if (!playing) return;
-    playNext(payload?.beats ?? []);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- queue driver
-  }, [playing, payload?.beats]);
-
-  function toggle() {
+  async function toggle() {
     if (playing) {
-      setPlaying(false);
-      audioRef.current?.pause();
-      revokeObjectUrl();
-      if (typeof window !== 'undefined') window.speechSynthesis?.cancel();
-      busyRef.current = false;
+      stop();
       return;
     }
+    playingRef.current = true;
     setPlaying(true);
+    const url = payload?.audioUrl;
+    if (url) {
+      try {
+        await playStored(url);
+        return;
+      } catch {
+        /* fall through */
+      }
+    }
+    const text = (payload?.beats ?? []).map((b) => b.text).join(' ');
+    if (text) speakFallback(text);
+    else stop();
   }
 
-  const beats = payload?.beats ?? [];
-  const ready = beats.length > 0;
-  const nextCut = (() => {
-    if (!payload?.expiresAt) return null;
+  const ready = Boolean(payload?.audioUrl) || (payload?.beats?.length ?? 0) > 0;
+  const recorded = (() => {
+    if (!payload?.recordedAt) return null;
     try {
-      return new Date(payload.expiresAt).toLocaleTimeString('es-MX', {
+      return new Date(payload.recordedAt).toLocaleTimeString('es-MX', {
         hour: 'numeric',
         minute: '2-digit',
       });
@@ -206,10 +154,11 @@ export function CableBriefPlayer() {
     }
   })();
   const meta = [
+    payload?.slot === 'am' ? 'Mañana' : payload?.slot === 'pm' ? 'Tarde' : null,
+    recorded ? `grabado ${recorded}` : null,
     payload?.jornadaLabel,
     payload?.storyCount ? `${payload.storyCount} notas` : null,
     payload?.sources?.slice(0, 3).join(' · '),
-    nextCut ? `nuevo corte ~${nextCut}` : null,
   ]
     .filter(Boolean)
     .join(' · ');
@@ -229,14 +178,14 @@ export function CableBriefPlayer() {
             {payload?.title ?? 'Briefing de noticias'}
           </p>
           <p className="mt-1 af-tele">
-            {loading ? 'Armando cabina…' : meta || '~2:30 · titulares'}
+            {loading ? 'Armando cabina…' : meta || '8:00 y 18:00 México'}
           </p>
         </div>
 
         <button
           type="button"
           data-testid="cable-brief-play"
-          onClick={toggle}
+          onClick={() => void toggle()}
           disabled={!ready && !loading}
           className="af-cta !py-2 disabled:opacity-40"
         >
@@ -251,7 +200,7 @@ export function CableBriefPlayer() {
         {line}
       </p>
       <p className="mt-2 af-tele">
-        Corte fresco cada ~2 h · las notas de esta pantalla.
+        Corte grabado a las 8:00 y 18:00 · México. Play no gasta créditos.
       </p>
     </div>
   );

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAudio } from '@/lib/radio/cache';
 import { isRadioStyle, type RadioStyle } from '@/lib/radio/personas';
-import { synthesize } from '@/lib/radio/tts';
+import { liveTtsEnabled, synthesize } from '@/lib/radio/tts';
 
 type TtsBody = {
   key?: string;
@@ -39,6 +39,10 @@ export async function POST(req: Request) {
         'X-AF-TTS': 'memory',
       },
     });
+  }
+
+  if (!liveTtsEnabled()) {
+    return NextResponse.json({ error: 'scheduled_voice_only' }, { status: 503 });
   }
 
   const path = await synthesize(key, text, style);

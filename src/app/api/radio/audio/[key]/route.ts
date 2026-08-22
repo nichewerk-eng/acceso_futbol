@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAudio, getBeat, setAudio } from '@/lib/radio/cache';
-import { synthesize } from '@/lib/radio/tts';
+import { liveTtsEnabled, synthesize } from '@/lib/radio/tts';
 import { loadLocalAudio } from '@/lib/toma/episode';
 
 export async function GET(
@@ -19,9 +19,8 @@ export async function GET(
     }
   }
   if (!entry) {
-    // Same-isolate recovery: beat text may still be in memory after a cold brief.
     const beat = getBeat(decoded);
-    if (beat?.text) {
+    if (beat?.text && liveTtsEnabled()) {
       await synthesize(decoded, beat.text, beat.style);
       entry = getAudio(decoded);
     }

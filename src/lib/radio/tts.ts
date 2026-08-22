@@ -5,6 +5,11 @@ export function radioEnabled(): boolean {
   return process.env.RADIO_ENABLED !== 'false';
 }
 
+/** Per-request ElevenLabs (briefing play / live cabina). Off so cron MP3s fit Starter. */
+export function liveTtsEnabled(): boolean {
+  return process.env.LIVE_TTS === 'true';
+}
+
 function wordCount(s: string) {
   return s.split(/\s+/).filter(Boolean).length;
 }
