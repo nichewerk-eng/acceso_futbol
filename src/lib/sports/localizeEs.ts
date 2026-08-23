@@ -54,8 +54,12 @@ const STATUS_ES: Record<string, string> = {
   'not started': 'Próximo',
   ns: 'Próximo',
   postponed: 'Aplazado',
+  aplazado: 'Aplazado',
   cancelled: 'Cancelado',
-  delayed: 'Retrasado',
+  cancelado: 'Cancelado',
+  delayed: 'Atrasado',
+  retrasado: 'Atrasado',
+  atrasado: 'Atrasado',
   'in play': 'En vivo',
   live: 'En vivo',
   'extra time': 'Tiempo extra',
@@ -96,7 +100,28 @@ export function localizeStatus(label?: string | null, state?: 'pre' | 'in' | 'po
   if (/full\s*time/i.test(raw)) return 'Final';
   if (/half\s*time/i.test(raw)) return 'Descanso';
   if (/not\s*started/i.test(raw)) return 'Próximo';
+  const hold = kickHoldLabel(kickHold(raw));
+  if (hold) return hold;
   return raw;
+}
+
+export type KickHold = 'delayed' | 'postponed' | 'cancelled' | null;
+
+/** Weather delay / postponed / cancelled — still `pre` or `post` on the board. */
+export function kickHold(label?: string | null): KickHold {
+  const s = normKey(label ?? '');
+  if (!s) return null;
+  if (/\b(cancel|suspend|abandon)/.test(s)) return 'cancelled';
+  if (/\b(postpon|aplaz)/.test(s)) return 'postponed';
+  if (/\b(delay|atrasad|retrasad)/.test(s) || /por\s+(lluvia|clima)/.test(s)) return 'delayed';
+  return null;
+}
+
+export function kickHoldLabel(hold: KickHold): string | null {
+  if (hold === 'delayed') return 'Atrasado';
+  if (hold === 'postponed') return 'Aplazado';
+  if (hold === 'cancelled') return 'Cancelado';
+  return null;
 }
 
 export function localizeVenueCity(

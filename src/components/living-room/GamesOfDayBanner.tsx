@@ -6,6 +6,7 @@ import { useGravity } from '@/contexts/GravityContext';
 import { useGamesOfDay } from '@/lib/client/useGamesOfDay';
 import { competitionBandTag, leaguePath } from '@/lib/radio/phases';
 import type { DayGame } from '@/lib/sports';
+import { kickHold, kickHoldLabel } from '@/lib/sports/localizeEs';
 
 function kickLabel(iso: string, tz: string) {
   try {
@@ -24,7 +25,12 @@ function cabinaLine(g: DayGame, tz: string) {
   if (g.phase === 'preshow') return { action: 'Pre-show', ready: true, note: 'Podcast previo' };
   if (g.phase === 'recap') return { action: 'Recap podcast', ready: true, note: 'Postpartido' };
   if (g.state === 'pre') {
-    return { action: 'Cabina al inicio', ready: false, note: `Arranca ${kickLabel(g.date, tz)}` };
+    const hold = kickHoldLabel(kickHold(g.statusLabel));
+    return {
+      action: 'Cabina al inicio',
+      ready: false,
+      note: hold ?? `Arranca ${kickLabel(g.date, tz)}`,
+    };
   }
   return { action: 'Cabina', ready: false, note: 'Sin audio aún' };
 }

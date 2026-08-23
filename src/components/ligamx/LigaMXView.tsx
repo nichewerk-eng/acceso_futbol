@@ -19,6 +19,7 @@ import type { LigaMXFixture } from '@/app/api/ligamx/fixtures/route';
 import { liveFetch } from '@/lib/client/liveFetch';
 import { startLivePoll } from '@/lib/client/livePoll';
 import { FRESH, paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
+import { kickHold, kickHoldLabel } from '@/lib/sports/localizeEs';
 import { mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
 import { LIGUILLA_SPOTS, liguillaPath } from '@/lib/sports/liguillaPath';
 import { FEMENIL_LIGUILLA_SPOTS } from '@/lib/sports/ligaMxFemenil';
@@ -1079,11 +1080,15 @@ function KickRow({
 }) {
   const live = f.status.state === 'in';
   const done = f.status.state === 'post';
+  const hold =
+    kickHoldLabel(kickHold(f.status.shortDetail)) ??
+    kickHoldLabel(kickHold(f.status.description));
   const when = live
     ? f.status.displayClock || 'LIVE'
     : done
       ? 'FT'
-      : fmtKick(f.date, tz);
+      : hold ?? fmtKick(f.date, tz);
+  const showHrs = !live && !done && !hold;
   const center = done || live ? `${f.home.score ?? 0}–${f.away.score ?? 0}` : 'VS';
   const homeId = ligaMxClubIdFromAbbr(f.home.abbreviation);
   const awayId = ligaMxClubIdFromAbbr(f.away.abbreviation);
@@ -1141,7 +1146,7 @@ function KickRow({
                 <p className="lc-match-when-primary">
                   {live && <span className="hoy-live-dot mr-1.5" aria-hidden />}
                   {when}
-                  {!live ? <span className="lc-match-when-hrs"> hrs</span> : null}
+                  {showHrs ? <span className="lc-match-when-hrs"> hrs</span> : null}
                 </p>
               )}
               {mine && <span className="lc-match-lock">TU CLUB</span>}

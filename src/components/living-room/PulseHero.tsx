@@ -9,6 +9,7 @@ import { useGamesOfDay } from '@/lib/client/useGamesOfDay';
 import { competitionBandTag, leaguePath, mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
 import type { Story } from '@/lib/news/types';
 import type { DayGame } from '@/lib/sports';
+import { kickHold, kickHoldLabel } from '@/lib/sports/localizeEs';
 
 function showDondeVer(g: Pick<DayGame, 'state' | 'dondeVer'>) {
   if (g.state === 'post') return false;
@@ -87,6 +88,16 @@ function bandMeta(
       stamp: 'FT',
       stageStamp: 'FT',
       center: `${g.home.score ?? 0}–${g.away.score ?? 0}`,
+    };
+  }
+
+  const hold = kickHoldLabel(kickHold(g.statusLabel));
+  if (hold) {
+    return {
+      kind: 'pre' as const,
+      stamp: hold,
+      stageStamp: hold,
+      center: 'VS',
     };
   }
 

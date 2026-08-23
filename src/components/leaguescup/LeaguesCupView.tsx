@@ -18,6 +18,7 @@ import { useGravity } from '@/contexts/GravityContext';
 import { liveFetch } from '@/lib/client/liveFetch';
 import { startLivePoll } from '@/lib/client/livePoll';
 import { paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
+import { kickHold, kickHoldLabel } from '@/lib/sports/localizeEs';
 import {
   buildLeaguesCupStandingsFromFixtures,
   LC_KO_SPOTS,
@@ -873,6 +874,7 @@ function MatchRow({
   const href = `/partido/leagues-cup/${f.id}`;
   const clickable = !f.id.startsWith('lc-');
   const kickTime = fmtTime(f.date, tz);
+  const hold = kickHoldLabel(kickHold(f.statusLabel));
   const whenPrimary =
     f.state === 'in'
       ? f.clock === 'HT' || /descanso/i.test(f.statusLabel || '')
@@ -880,7 +882,7 @@ function MatchRow({
         : f.clock || 'LIVE'
       : f.state === 'post'
         ? 'FT'
-        : kickTime;
+        : hold ?? kickTime;
   const center = f.state === 'pre' ? 'VS' : `${f.home.score ?? '0'}–${f.away.score ?? '0'}`;
   const homeLabel = bandName(f.home.name, f.home.abbreviation);
   const awayLabel = bandName(f.away.name, f.away.abbreviation);
@@ -918,7 +920,9 @@ function MatchRow({
                 <p className="lc-match-when-primary">
                   {live && <span className="hoy-live-dot mr-1.5" aria-hidden />}
                   {whenPrimary}
-                  {f.state === 'pre' ? <span className="lc-match-when-hrs"> hrs</span> : null}
+                  {f.state === 'pre' && !hold ? (
+                    <span className="lc-match-when-hrs"> hrs</span>
+                  ) : null}
                 </p>
               )}
               {mine && <span className="lc-match-lock">TU CLUB</span>}
