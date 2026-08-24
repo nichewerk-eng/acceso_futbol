@@ -1,12 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { trackClient } from '@/lib/analytics/trackClient';
 import { missingOpenPicks } from '@/lib/quiniela/card';
 import { sanitizeName } from '@/lib/quiniela/name';
 import type { Outcome, QuinielaBoard, QuinielaLeaderboard } from '@/lib/quiniela/types';
 
 const ID_KEY = 'af-quiniela-id';
 const NAME_KEY = 'af-quiniela-name';
+/** Last jornada number the user saved a card for — powers return / retention events. */
+const LAST_JORNADA_KEY = 'af-quiniela-last-jornada';
 
 type Mine = { picks: Record<string, Outcome>; points: number; played: number; count: number };
 
@@ -44,6 +47,11 @@ export function useQuiniela(initialBoard: QuinielaBoard | null = null) {
   const [loading, setLoading] = useState(!initialBoard);
   const [saving, setSaving] = useState(false);
   const idRef = useRef<string>('');
+  // Analytics guards — each keyed by the jornada it last fired for so a roll re-arms.
+  const lastSavedJornadaRef = useRef<number | null>(null);
+  const viewFiredRef = useRef<number | null>(null);
+  const cardStartFiredRef = useRef<number | null>(null);
+  const nameFiredRef = useRef<number | null>(null);
 
   useEffect(() => {
     idRef.current = readId();
@@ -54,7 +62,27 @@ export function useQuiniela(initialBoard: QuinielaBoard | null = null) {
     } catch {
       /* ignore */
     }
+    try {
+      const raw = Number(localStorage.getItem(LAST_JORNADA_KEY));
+      lastSavedJornadaRef.current = Number.isFinite(raw) && raw > 0 ? raw : null;
+    } catch {
+      /* ignore */
+    }
   }, []);
+
+  // Top of funnel + jornada-over-jornada retention cohort: fire once per jornada.
+  useEffect(() => {
+    const jn = board?.jornadaNumber;
+    if (jn == null || viewFiredRef.current === jn) return;
+    viewFiredRef.current = jn;
+    const last = lastSavedJornadaRef.current;
+    const returning = last != null && last < jn;
+    trackClient('Quiniela view', {
+      jornada: jn,
+      returning,
+      gap: returning && last != null ? jn - last : 0,
+    });
+  }, [board?.jornadaNumber]);
 
   const applyServer = useCallback(
     (data: { board?: QuinielaBoard; leaderboard?: QuinielaLeaderboard; mine?: Mine | null }) => {
@@ -93,9 +121,29 @@ export function useQuiniela(initialBoard: QuinielaBoard | null = null) {
     (matchId: string, outcome: Outcome) => {
       const locked = board?.matches.find((m) => m.id === matchId)?.locked;
       if (locked) return;
+      const jn = board?.jornadaNumber;
+      // Card start = the user's first fresh pick on a jornada they haven't saved yet.
+      if (jn != null && cardStartFiredRef.current !== jn && (mine?.count ?? 0) === 0) {
+        cardStartFiredRef.current = jn;
+        trackClient('Quiniela card start', { jornada: jn });
+      }
       setDraft((d) => ({ ...d, [matchId]: outcome }));
     },
-    [board]
+    [board, mine]
+  );
+
+  // User-typed name reaching a valid value (restore-from-storage uses the raw setter).
+  const handleSetName = useCallback(
+    (v: string) => {
+      setName(v);
+      const jn = board?.jornadaNumber;
+      if (jn == null || nameFiredRef.current === jn) return;
+      if (sanitizeName(v)) {
+        nameFiredRef.current = jn;
+        trackClient('Quiniela name set', { jornada: jn });
+      }
+    },
+    [board?.jornadaNumber]
   );
 
   const dirtyIds = useMemo(() => {
@@ -140,6 +188,19 @@ export function useQuiniela(initialBoard: QuinielaBoard | null = null) {
       if (res.ok) {
         applyServer(await res.json());
         setSavedName(display);
+        const jn = board?.jornadaNumber ?? null;
+        if (jn != null) {
+          const last = lastSavedJornadaRef.current;
+          if (last != null && last < jn) {
+            trackClient('Quiniela return', { jornada: jn, gap: jn - last });
+          }
+          lastSavedJornadaRef.current = jn;
+          try {
+            localStorage.setItem(LAST_JORNADA_KEY, String(jn));
+          } catch {
+            /* ignore */
+          }
+        }
       }
     } catch {
       /* ignore */
@@ -155,7 +216,7 @@ export function useQuiniela(initialBoard: QuinielaBoard | null = null) {
     draft,
     saved,
     name,
-    setName,
+    setName: handleSetName,
     named,
     setPick,
     save,
