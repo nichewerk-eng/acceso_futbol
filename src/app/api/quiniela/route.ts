@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getAccount } from '@/lib/quiniela/account';
 import {
   getLeaderboard,
   getQuinielaBoard,
@@ -7,6 +8,7 @@ import {
 } from '@/lib/quiniela/service';
 import { getPicks } from '@/lib/quiniela/store';
 
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /** Board + leaderboard (+ the caller's saved card when `?u=` is a valid id). */
@@ -19,15 +21,18 @@ export async function GET(req: Request) {
   const userId = sanitizeUserId(new URL(req.url).searchParams.get('u'));
   let mine: { picks: Record<string, string>; points: number; played: number; count: number } | null =
     null;
+  let account: { email: string } | null = null;
   if (userId) {
     const rec = await getPicks(board.jornadaKey, userId);
     const picks = rec?.picks ?? {};
     const s = scoreUser(board, picks);
     mine = { picks, points: s.points, played: s.played, count: s.count };
+    const acc = await getAccount(userId);
+    if (acc) account = { email: acc.email };
   }
 
   return NextResponse.json(
-    { board, leaderboard, mine },
+    { board, leaderboard, mine, account },
     { headers: { 'Cache-Control': 'no-store' } }
   );
 }

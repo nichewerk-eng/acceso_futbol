@@ -45,7 +45,7 @@ const FAQ = [
   {
     question: '¿Necesito una cuenta?',
     answer:
-      'No. Escribe un nombre (no Anónimo) para aparecer en la tabla. Tus elecciones se guardan en este teléfono o computadora.',
+      'Para jugar no: escribe un nombre (no Anónimo) y tus elecciones se guardan en este dispositivo. Si quieres conservar tu racha y tu historial en cualquier teléfono o computadora, deja tu correo y te mandamos un enlace para guardarla, sin contraseña.',
   },
   {
     question: '¿Hasta cuándo se ve la tabla?',

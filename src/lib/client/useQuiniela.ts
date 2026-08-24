@@ -46,6 +46,8 @@ export function useQuiniela(initialBoard: QuinielaBoard | null = null) {
   const [savedName, setSavedName] = useState('');
   const [loading, setLoading] = useState(!initialBoard);
   const [saving, setSaving] = useState(false);
+  const [account, setAccount] = useState<{ email: string } | null>(null);
+  const [linkStatus, setLinkStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const idRef = useRef<string>('');
   // Analytics guards — each keyed by the jornada it last fired for so a roll re-arms.
   const lastSavedJornadaRef = useRef<number | null>(null);
@@ -54,6 +56,24 @@ export function useQuiniela(initialBoard: QuinielaBoard | null = null) {
   const nameFiredRef = useRef<number | null>(null);
 
   useEffect(() => {
+    // Adopt an accountId handed back by the magic-link verify redirect, then
+    // strip it from the URL so it isn't left in history / shared links.
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const claimed = params.get('account');
+      if (claimed && /^[A-Za-z0-9_-]{8,64}$/.test(claimed)) {
+        localStorage.setItem(ID_KEY, claimed);
+        params.delete('account');
+        const qs = params.toString();
+        window.history.replaceState(
+          null,
+          '',
+          `${window.location.pathname}${qs ? `?${qs}` : ''}${window.location.hash}`
+        );
+      }
+    } catch {
+      /* ignore */
+    }
     idRef.current = readId();
     try {
       const stored = sanitizeName(localStorage.getItem(NAME_KEY) ?? '') ?? '';
@@ -85,7 +105,12 @@ export function useQuiniela(initialBoard: QuinielaBoard | null = null) {
   }, [board?.jornadaNumber]);
 
   const applyServer = useCallback(
-    (data: { board?: QuinielaBoard; leaderboard?: QuinielaLeaderboard; mine?: Mine | null }) => {
+    (data: {
+      board?: QuinielaBoard;
+      leaderboard?: QuinielaLeaderboard;
+      mine?: Mine | null;
+      account?: { email: string } | null;
+    }) => {
       if (data.board) setBoard(data.board);
       if (data.leaderboard) setLeaderboard(data.leaderboard);
       if (data.mine) {
@@ -94,8 +119,29 @@ export function useQuiniela(initialBoard: QuinielaBoard | null = null) {
         // Keep any unsaved draft edits the user has in flight.
         setDraft((d) => ({ ...data.mine!.picks, ...d }));
       }
+      if ('account' in data) setAccount(data.account ?? null);
     },
     []
+  );
+
+  const requestMagicLink = useCallback(
+    async (rawEmail: string) => {
+      const email = rawEmail.trim();
+      if (!email || linkStatus === 'sending') return;
+      setLinkStatus('sending');
+      try {
+        const res = await fetch('/api/quiniela/auth/request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, anonId: idRef.current || readId() }),
+        });
+        setLinkStatus(res.ok ? 'sent' : 'error');
+        if (res.ok) trackClient('Quiniela link requested');
+      } catch {
+        setLinkStatus('error');
+      }
+    },
+    [linkStatus]
   );
 
   const load = useCallback(async () => {
@@ -231,5 +277,9 @@ export function useQuiniela(initialBoard: QuinielaBoard | null = null) {
       cardFull &&
       (dirtyIds.length > 0 || (nameDirty && Object.keys(saved).length > 0)),
     userId: idRef.current,
+    account,
+    signedIn: Boolean(account?.email),
+    requestMagicLink,
+    linkStatus,
   };
 }

@@ -100,6 +100,21 @@ logs the magic link to the server console so the flow is testable without sendin
 (`kvSetNx` cooldown), reuse existing `sanitizeName`. Real fraud controls only matter if
 sponsor prizes attach (see `mediaKit.ts` "patrocinador de jornada").
 
+**As shipped (2026-08-24):**
+- No cookies/sessions — the verify route hands the `accountId` back via a one-time
+  `?/quiniela?account=…` redirect; the client adopts it as its localStorage id and strips
+  the param from the URL. Same low-stakes identity model as the anon id, now durable.
+- Mailer uses the **Resend REST API via `fetch`** (no SDK dependency), with a dev fallback
+  that logs the link to the server console when `RESEND_API_KEY` is unset.
+- Files: `src/lib/quiniela/mail.ts`, `src/lib/quiniela/account.ts` (KV hashes
+  `quiniela:account-by-email` / `quiniela:account-by-id`, magic token via `kvSetJson`+`kvDel`,
+  process-memory fallback), `mergePicks` in `service.ts`, routes
+  `api/quiniela/auth/request` + `auth/verify`, `account` field on `GET /api/quiniela`,
+  `useQuiniela` adoption + `requestMagicLink`, claim UI in `QuinielaBoard.tsx`.
+- Added `kvHget` + `kvDel` to `src/lib/sharedKv.ts`.
+- Smoke-tested end-to-end on the dev fallback: request → 200, verify → redirect with
+  accountId, token single-use (reuse → `login=expired`), account resolves to its email.
+
 ---
 
 ## 5. Season memory + rachas (Phase 2 — the core retention fix)
@@ -184,8 +199,8 @@ the 1-point results + streaks:
 | Phase | Ship | Status |
 |-------|------|--------|
 | **0** | Instrument funnel — client events `Quiniela view` / `card start` / `name set` / `return` (`useQuiniela.ts`) + server `Quiniela save` (`api/quiniela/pick`) | **Shipped** |
-| **1** | Magic-link/email accounts (Resend) + anon→account merge | Todo |
-| **2** | Season standing + rachas + credencial (seal-time rollup) | Todo |
+| **1** | Magic-link/email accounts (Resend) + anon→account merge | **Shipped** |
+| **2** | Season standing + rachas + credencial (seal-time rollup) | **Next** |
 | **3** | Re-engagement pushes bound to account id + new cron | Todo |
 | **4** | Quiniela perfecta celebration + estampas + share cards | Todo |
 | **Future** | Grupos privados (friend pools) — see §10 | Deferred |

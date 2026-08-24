@@ -128,10 +128,15 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
     missingIds,
     cardFull,
     canSave,
+    account,
+    signedIn,
+    requestMagicLink,
+    linkStatus,
   } = q;
   const nameRef = useRef<HTMLInputElement>(null);
   const [needName, setNeedName] = useState(false);
   const [needCard, setNeedCard] = useState(false);
+  const [email, setEmail] = useState('');
 
   useEffect(() => {
     if (named) setNeedName(false);
@@ -251,6 +256,59 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
             : `Llena todos los partidos abiertos. Te faltan ${missingCount}.`}
         </p>
       ) : null}
+
+      <section className="mt-10 border-t border-line pt-6">
+        {signedIn ? (
+          <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted">
+            <span className="text-signal">✓</span> Tu racha se guarda como {account?.email}
+          </p>
+        ) : (
+          <div>
+            <p className="af-tele text-foreground">
+              <span className="text-signal">AF</span>
+              ://RACHA
+            </p>
+            <p className="mt-2 max-w-md font-mono text-[12px] leading-6 text-muted">
+              ¿Quieres conservar tu racha y tu historial en cualquier dispositivo? Déjanos tu
+              correo y te mandamos un enlace para guardarla. Sin contraseña.
+            </p>
+            <form
+              className="mt-3 flex flex-wrap items-center gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void requestMagicLink(email);
+              }}
+            >
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tucorreo@ejemplo.com"
+                autoComplete="email"
+                aria-label="Tu correo"
+                className="q-name-input"
+              />
+              <button
+                type="submit"
+                className="af-cta af-cta-ghost"
+                disabled={linkStatus === 'sending'}
+              >
+                {linkStatus === 'sending' ? 'Enviando…' : 'Guardar mi racha'}
+              </button>
+            </form>
+            {linkStatus === 'sent' ? (
+              <p className="mt-2 font-mono text-[11px] leading-5 text-signal">
+                Te enviamos un enlace a {email}. Ábrelo para guardar tu racha.
+              </p>
+            ) : linkStatus === 'error' ? (
+              <p className="mt-2 font-mono text-[11px] leading-5 text-signal">
+                No se pudo enviar. Revisa el correo e intenta otra vez.
+              </p>
+            ) : null}
+          </div>
+        )}
+      </section>
 
       <section className="mt-12">
         <p className="af-tele text-foreground">

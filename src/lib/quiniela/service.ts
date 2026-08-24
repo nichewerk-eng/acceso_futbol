@@ -213,4 +213,26 @@ export async function submitPicks(input: {
   return { ok: true, saved, rejected, board, picks: merged };
 }
 
+/**
+ * One-time claim merge: copy the anon id's current-jornada card onto the account
+ * id, but only if the account has no card yet (never clobber existing picks).
+ * Season/streak history accrues from the account going forward.
+ */
+export async function mergePicks(fromUserId: string, toUserId: string): Promise<boolean> {
+  if (!fromUserId || fromUserId === toUserId) return false;
+  const board = await getQuinielaBoard();
+  if (!board) return false;
+  const from = await getPicks(board.jornadaKey, fromUserId);
+  if (!from || Object.keys(from.picks).length === 0) return false;
+  const to = await getPicks(board.jornadaKey, toUserId);
+  if (to && Object.keys(to.picks).length > 0) return false;
+  await putPicks(board.jornadaKey, {
+    userId: toUserId,
+    name: to?.name ?? from.name,
+    picks: from.picks,
+    ts: Date.now(),
+  });
+  return true;
+}
+
 export { OUTCOMES };

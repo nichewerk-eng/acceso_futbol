@@ -91,6 +91,19 @@ export async function kvHdel(key: string, field: string): Promise<void> {
   await kvCommand(['HDEL', `af:${key}`, field]);
 }
 
+/** Single hash field, or null when missing / KV off. */
+export async function kvHget(key: string, field: string): Promise<string | null> {
+  if (!kvConfigured()) return null;
+  const raw = await kvCommand<{ result: string | null }>(['HGET', `af:${key}`, field]);
+  return raw?.result ?? null;
+}
+
+/** Delete a key (no-op when KV off). */
+export async function kvDel(key: string): Promise<void> {
+  if (!kvConfigured()) return;
+  await kvCommand(['DEL', `af:${key}`]);
+}
+
 /** HGETALL flattened into a `{ field: value }` record. */
 export async function kvHgetall(key: string): Promise<Record<string, string>> {
   if (!kvConfigured()) return {};
