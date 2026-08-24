@@ -19,12 +19,12 @@ export const revalidate = 30;
 
 export const metadata: Metadata = {
   title: {
-    absolute: 'Acceso Futbol | Noticias, resultados y cobertura de Liga MX',
+    absolute: 'Acceso Futbol | Horarios, resultados y cobertura de Liga MX',
   },
   description: siteConfig.description,
   alternates: { canonical: siteConfig.url },
   openGraph: {
-    title: 'Acceso Futbol | Noticias, resultados y cobertura de Liga MX',
+    title: 'Acceso Futbol | Horarios, resultados y cobertura de Liga MX',
     description: siteConfig.description,
     url: siteConfig.url,
     type: 'website',
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Acceso Futbol | Noticias, resultados y cobertura de Liga MX',
+    title: 'Acceso Futbol | Horarios, resultados y cobertura de Liga MX',
     description: siteConfig.description,
   },
 };
@@ -100,6 +100,7 @@ export default async function RootPage() {
         <h1>Acceso Futbol</h1>
         <p>{siteConfig.description}</p>
         <nav aria-label="Secciones principales">
+          <Link href="/horarios">Horarios Liga MX — calendario Apertura 2026</Link>
           <Link href="/liga-mx">Liga MX — resultados, jornada y tabla</Link>
           <Link href="/club">Clubes Liga MX — salas</Link>
           <Link href="/liga-mx-femenil">Liga MX Femenil</Link>

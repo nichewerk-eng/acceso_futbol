@@ -1,0 +1,17 @@
+# Acceso Futbol
+
+> Horarios, resultados, dónde ver y cobertura de la Liga MX para aficionados en México y Estados Unidos.
+
+Acceso Futbol (https://www.accesofutbol.com) es el sitio de horarios y calendario de la Liga MX Apertura 2026. Los horarios están en hora del centro de México (CDMX).
+
+## Horarios Liga MX
+
+- [Horarios y calendario Liga MX](https://www.accesofutbol.com/horarios): jornada por jornada, hora CDMX y canales en México y Estados Unidos.
+- [Dónde ver Liga MX](https://www.accesofutbol.com/donde-ver): canal de cada partido de la jornada.
+- [Liga MX — jornada y tabla](https://www.accesofutbol.com/liga-mx): resultados en vivo, posiciones y goleo.
+
+## Otras secciones
+
+- [Liga MX Femenil](https://www.accesofutbol.com/liga-mx-femenil)
+- [Leagues Cup](https://www.accesofutbol.com/leagues-cup)
+- [Quiénes somos](https://www.accesofutbol.com/nosotros)

@@ -44,6 +44,16 @@ export function SiteFooter() {
                 </Link>
               </li>
               <li>
+                <Link href="/horarios" data-testid="footer-horarios">
+                  Horarios Liga MX
+                </Link>
+              </li>
+              <li>
+                <Link href="/donde-ver" data-testid="footer-donde-ver">
+                  Dónde ver
+                </Link>
+              </li>
+              <li>
                 <Link href="/club" data-testid="footer-clubes">
                   Clubes
                 </Link>

@@ -3,6 +3,10 @@ import { getClubIdentity, type ClubIdentity } from '@/config/clubIdentity';
 import { scheduleAbbr } from '@/lib/sports/ligaMxAbbr';
 import { fetchLigaMxFixtures } from '@/lib/sports/espnFallback';
 import { fetchLigaMxStandings, fetchClubForm, sportmonksEnabled } from '@/lib/sports/sportmonks';
+import {
+  buildLeaguesCupBoard,
+  fetchLeaguesCupLiveBoard,
+} from '@/lib/sports/leaguesCupBoard';
 import { fetchSeleccionSchedule } from '@/lib/sports/seleccion';
 import { espnFetch, standingsUrl, SLUG } from '@/lib/espn';
 import { liguillaPath, type LiguillaPath } from '@/lib/sports/liguillaPath';
@@ -55,6 +59,31 @@ function isClubSide(f: Fixture, club: ClubIdentity): boolean {
     if (f.home.id === sid || f.away.id === sid) return true;
   }
   return false;
+}
+
+/** Dedupe + keep the club's matches from every living-room board (Liga MX, LC, …). */
+export function fixturesForClub(club: ClubIdentity, pools: Fixture[]): Fixture[] {
+  const byId = new Map<string, Fixture>();
+  for (const f of pools) {
+    if (!isClubSide(f, club)) continue;
+    byId.set(f.id, f);
+  }
+  return [...byId.values()].sort((a, b) => +new Date(a.date) - +new Date(b.date));
+}
+
+async function loadClubFixturePool(club: ClubIdentity): Promise<Fixture[]> {
+  if (club.league === 'seleccion') return fetchSeleccionSchedule();
+
+  const ligaP = fetchLigaMxFixtures().then((r) => r.fixtures);
+  const lcP =
+    club.league === 'liga-mx'
+      ? fetchLeaguesCupLiveBoard()
+          .then((r) => r.fixtures)
+          .catch(() => buildLeaguesCupBoard([]))
+      : Promise.resolve([] as Fixture[]);
+
+  const [liga, lc] = await Promise.all([ligaP, lcP]);
+  return [...liga, ...lc];
 }
 
 async function loadStandingsForClub(
@@ -165,10 +194,7 @@ export async function getClubBoard(slug: string): Promise<ClubBoard | null> {
   const club = getClubIdentity(slug);
   if (!club) return null;
 
-  const fixturesPromise =
-    club.league === 'seleccion'
-      ? fetchSeleccionSchedule()
-      : fetchLigaMxFixtures().then((r) => r.fixtures);
+  const fixturesPromise = loadClubFixturePool(club);
 
   const formPromise =
     club.smTeamId != null && sportmonksEnabled()
@@ -181,7 +207,7 @@ export async function getClubBoard(slug: string): Promise<ClubBoard | null> {
     formPromise,
   ]);
 
-  const mine = fixturesRaw.filter((f) => isClubSide(f, club)).map(attachDondeVer);
+  const mine = fixturesForClub(club, fixturesRaw).map(attachDondeVer);
   const now = Date.now();
 
   const live = mine.find((f) => f.state === 'in') ?? null;
@@ -191,8 +217,7 @@ export async function getClubBoard(slug: string): Promise<ClubBoard | null> {
     .slice(0, 8);
   const upcoming = mine
     .filter((f) => f.state === 'pre' && +new Date(f.date) >= now - 60_000)
-    .sort((a, b) => +new Date(a.date) - +new Date(b.date))
-    .slice(0, 8);
+    .sort((a, b) => +new Date(a.date) - +new Date(b.date));
   const next = live ?? upcoming[0] ?? null;
 
   return {

@@ -57,6 +57,13 @@ export default function NosotrosPage() {
           </h2>
           <ul className="mt-4 space-y-3 text-[16px] leading-7 text-muted">
             <li>
+              <Link href="/horarios" className="text-signal hover:text-foreground">
+                Horarios Liga MX
+              </Link>
+              {' — '}
+              calendario oficial, hora CDMX y canales.
+            </li>
+            <li>
               <Link href="/liga-mx" className="text-signal hover:text-foreground">
                 Liga MX
               </Link>

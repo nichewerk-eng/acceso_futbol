@@ -458,14 +458,27 @@ export default function LigaMXView({
                     <h2 className="mt-1 font-display text-2xl font-bold uppercase tracking-wide sm:text-3xl">
                       Jornada {selectedJornada}
                     </h2>
-                    {jornadaFixtures[0]?.date && (
-                      <p className="mt-2 af-tele">
-                        {fmtDate(jornadaFixtures[0].date, userTz)}
-                        {jornadaFixtures.length > 1
-                          ? ` → ${fmtDate(jornadaFixtures[jornadaFixtures.length - 1].date, userTz)}`
-                          : ''}
-                      </p>
-                    )}
+                    <p className="mt-2 af-tele">
+                      {jornadaFixtures[0]?.date
+                        ? `${fmtDate(jornadaFixtures[0].date, userTz)}${
+                            jornadaFixtures.length > 1
+                              ? ` → ${fmtDate(jornadaFixtures[jornadaFixtures.length - 1].date, userTz)}`
+                              : ''
+                          }`
+                        : null}
+                      {league === 'liga-mx' ? (
+                        <>
+                          {jornadaFixtures[0]?.date ? ' · ' : null}
+                          <Link
+                            href="/horarios"
+                            className="text-signal hover:text-foreground"
+                            data-testid="ligamx-horarios-link"
+                          >
+                            Horarios y calendario
+                          </Link>
+                        </>
+                      ) : null}
+                    </p>
                   </div>
                   <p className="af-tele">
                     {jornadaPast.length + jornadaLive.length}/{jornadaFixtures.length || '–'}{' '}

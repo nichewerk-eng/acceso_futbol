@@ -16,7 +16,7 @@ import type { JornadaOverview } from '@/lib/sports/jornada';
 const KEY = 'games-of-day';
 const URL = '/api/games-of-day';
 const COALESCE_MS = 800;
-const SS_KEY = 'af-games-of-day-v10';
+const SS_KEY = 'af-games-of-day-v11';
 const SS_MAX_AGE_MS = 6 * 60 * 60 * 1000;
 const STATIC_RETRY_MS = 1_500;
 

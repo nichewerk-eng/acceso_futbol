@@ -45,7 +45,7 @@ export default async function DondeVerPage() {
             name: 'Dónde ver Liga MX hoy',
             path: '/donde-ver',
             description:
-              'En qué canal y a qué hora ver cada partido de la Liga MX en México y Estados Unidos.',
+              'En qué canal y a qué hora ver cada partido de la Liga MX en México y Estados Unidos. Horarios completos en /horarios.',
             speakableSelectors: ['h1', '.dv-guide-head'],
           }),
           ...(faq.length ? [faqPageJsonLd(faq)] : []),

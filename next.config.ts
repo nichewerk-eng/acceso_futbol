@@ -19,7 +19,12 @@ const nextConfig: NextConfig = {
     ],
   },
   async redirects() {
-    return [{ source: '/goleo', destination: '/liga-mx?tab=goleo', permanent: true }];
+    return [
+      { source: '/goleo', destination: '/liga-mx?tab=goleo', permanent: true },
+      { source: '/calendario', destination: '/horarios', permanent: true },
+      { source: '/liga-mx/calendario', destination: '/horarios', permanent: true },
+      { source: '/liga-mx/horarios', destination: '/horarios', permanent: true },
+    ];
   },
   async headers() {
     return [

@@ -52,7 +52,9 @@ function sortDayGames(games: DayGame[]): DayGame[] {
 
 /**
  * Liga MX hero rows come from the jornada board (same dates as Dónde ver).
- * Keeps Leagues Cup / Selección rows from games-of-day for that slate day.
+ * Leagues Cup / Selección come from games-of-day. The slate *day* is the
+ * soonest living-room day — not the next Liga MX jornada when a cup match
+ * is earlier (e.g. LC cuartos martes vs Liga MX viernes).
  *
  * The games-of-day route can flash a static-calendar seed (wrong Friday pairs
  * after Sportmonks moved kickoffs). Overlaying only scores left that stale slate.
@@ -64,28 +66,35 @@ export function mergeJornadaIntoHeroSlate(
 ): GamesOfDayPayload | null {
   if (!jornada) return payload;
   const board = [...jornada.live, ...jornada.played, ...jornada.upcoming];
+  const extrasPool = (payload?.games ?? []).filter((g) => g.league !== 'liga-mx');
   if (!board.length) return payload;
 
   const todayKey = mexicoDayKey(new Date(now));
-  const todayGames = board.filter((f) => isMexicoDay(f.date, todayKey) || f.state === 'in');
+  const ligaToday = board.filter((f) => isMexicoDay(f.date, todayKey) || f.state === 'in');
+  const extrasToday = extrasPool.filter(
+    (g) => isMexicoDay(g.date, todayKey) || g.state === 'in'
+  );
 
-  let liga: Fixture[];
+  let liga: Fixture[] = [];
+  let extras: DayGame[] = [];
   let dayKey = todayKey;
   let upcoming = false;
 
-  if (todayGames.length > 0) {
-    liga = todayGames;
+  if (ligaToday.length > 0 || extrasToday.length > 0) {
+    liga = ligaToday;
+    extras = extrasToday;
   } else {
-    const next = firstUpcomingDay(board, now);
-    if (!next) return payload;
-    liga = next.fixtures;
-    dayKey = next.dayKey;
-    upcoming = true;
+    const nextLiga = firstUpcomingDay(board, now);
+    const nextExtra = firstUpcomingDay(extrasPool, now);
+    const days = [nextLiga?.dayKey, nextExtra?.dayKey].filter(
+      (d): d is string => Boolean(d)
+    );
+    if (days.length === 0) return payload;
+    dayKey = days.sort()[0]!;
+    upcoming = dayKey !== todayKey;
+    liga = board.filter((f) => isMexicoDay(f.date, dayKey));
+    extras = extrasPool.filter((g) => isMexicoDay(g.date, dayKey) || g.state === 'in');
   }
-
-  const extras = (payload?.games ?? []).filter(
-    (g) => g.league !== 'liga-mx' && (isMexicoDay(g.date, dayKey) || g.state === 'in')
-  );
 
   const games = sortDayGames([...liga.map((f) => asDayGame(f, now)), ...extras]);
   const mixed = extras.length > 0 && jornada.source !== 'static';

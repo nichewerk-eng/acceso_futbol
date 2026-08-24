@@ -10,20 +10,20 @@ import { fetchLigaMxLeaders } from '@/lib/sports/leaders';
 import { fixtureToLigaMxSchedule, mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
 
 export const metadata: Metadata = {
-  title: 'Liga MX Apertura 2026 · Jornada, tabla, goleo y once',
+  title: 'Liga MX Apertura 2026 · Horarios, jornada, tabla y goleo',
   description:
-    'Jornada en vivo, tabla de posiciones, goleo y once de la fecha de la Liga MX Apertura 2026.',
+    'Horarios, jornada en vivo, tabla de posiciones, goleo y once de la Liga MX Apertura 2026.',
   alternates: { canonical: absoluteUrl('/liga-mx') },
   openGraph: {
-    title: 'Liga MX Apertura 2026 · Jornada, tabla, goleo y once',
+    title: 'Liga MX Apertura 2026 · Horarios, jornada, tabla y goleo',
     description: 'Posiciones, resultados, goleo, once de la fecha y camino a Liguilla.',
     url: absoluteUrl('/liga-mx'),
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Liga MX Apertura 2026 · Jornada, tabla, goleo y once',
-    description: 'Posiciones, resultados, goleo, once de la fecha y camino a Liguilla.',
+    title: 'Liga MX Apertura 2026 · Horarios, jornada, tabla y goleo',
+    description: 'Horarios, posiciones, resultados, goleo y camino a Liguilla.',
   },
 };
 

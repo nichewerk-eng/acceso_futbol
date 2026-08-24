@@ -12,16 +12,13 @@ import type { Fixture, MatchState } from './types';
 import { fetchEspnLigaMxFixtures, fetchLigaMxFixtures } from './espnFallback';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
 import { involvesLigaMxClub } from './ligaMxTeams';
-import { isNearKickoff, looksStillLive } from './freshness';
 import {
   fetchFixturesByDate,
-  fetchLivescores,
-  leaguesCupLeagueId,
   livingRoomLeagueIds,
-  overlayLiveFixtures,
   sportmonksEnabled,
 } from './sportmonks';
 import { fetchSeleccionGamesOfDay } from './seleccion';
+import { buildLeaguesCupBoard, fetchLeaguesCupLiveBoard } from './leaguesCupBoard';
 
 export type DayGame = Fixture & {
   phase: RadioPhase;
@@ -151,6 +148,19 @@ function keepLivingRoomFixture(f: Fixture): boolean {
   return true;
 }
 
+function livingRoomLc(fixtures: Fixture[]): Fixture[] {
+  return fixtures.filter(keepLivingRoomFixture).map(attachDondeVer);
+}
+
+async function officialLcBoard(): Promise<Fixture[]> {
+  try {
+    const { fixtures } = await fetchLeaguesCupLiveBoard();
+    return livingRoomLc(fixtures);
+  } catch {
+    return livingRoomLc(buildLeaguesCupBoard([]));
+  }
+}
+
 /** UTC date keys that cover Mexico calendar `dayKey` plus the next Mexico day (evening kickoffs roll UTC). */
 function utcBoardKeys(mexicoDay: string) {
   return [mexicoDay, shiftDayKey(mexicoDay, 1), shiftDayKey(mexicoDay, 2)];
@@ -160,6 +170,7 @@ async function ligaMxDateWindow(
   dayKey: string
 ): Promise<{ today: Fixture[]; dated: Fixture[]; source: GamesOfDayPayload['source'] }> {
   const boardKeys = utcBoardKeys(dayKey);
+  const lcP = officialLcBoard();
 
   if (sportmonksEnabled()) {
     try {
@@ -167,35 +178,9 @@ async function ligaMxDateWindow(
       // so hero and "en vivo + sellados" agree on every state — not just live.
       const board = await fetchLigaMxFixtures();
       const liga = board.fixtures.map(attachDondeVer);
-
-      // Leagues Cup (MX-involved) still comes from date boards, overlaid with the
-      // shared livescores so LC live rows stay consistent with the LC page too.
-      const lcDated = (
-        await Promise.all(
-          boardKeys.map((k) =>
-            fetchFixturesByDate(k, [leaguesCupLeagueId()]).catch(() => [] as Fixture[])
-          )
-        )
-      )
-        .flat()
-        .filter(keepLivingRoomFixture);
-      const now = Date.now();
-      const mayBeLive = [...liga, ...lcDated].some(
-        (f) => looksStillLive(f) || isNearKickoff(f.date, now, f.state)
-      );
-      const lcLive = mayBeLive
-        ? (await fetchLivescores(livingRoomLeagueIds()).catch(() => [] as Fixture[])).filter(
-            (f) => f.league === 'leagues-cup'
-          )
-        : [];
-      const lc = (lcLive.length ? overlayLiveFixtures(lcDated, lcLive) : lcDated)
-        .filter(keepLivingRoomFixture)
-        .map(attachDondeVer);
-
-      const dated = [...liga, ...lc];
-      const today = dated.filter(
-        (f) => isMexicoDay(f.date, dayKey) || f.state === 'in'
-      );
+      // Official LC board (KO included — Sportmonks has no 2026 knockout ids yet).
+      const dated = [...liga, ...(await lcP)];
+      const today = dated.filter((f) => isMexicoDay(f.date, dayKey) || f.state === 'in');
       return { today, dated, source: board.source };
     } catch {
       /* Sportmonks down → ESPN below */
@@ -203,19 +188,18 @@ async function ligaMxDateWindow(
   }
 
   const espnBoards = await Promise.all(boardKeys.map((k) => fetchEspnDayBoard(k)));
-  const dated = espnBoards.flat();
-  const today = dated.filter(
-    (f) => isMexicoDay(f.date, dayKey) || f.state === 'in'
-  );
-  if (dated.length > 0) {
+  const dated = [...espnBoards.flat(), ...(await lcP)];
+  const today = dated.filter((f) => isMexicoDay(f.date, dayKey) || f.state === 'in');
+  if (espnBoards.flat().length > 0) {
     return { today, dated, source: 'espn' };
   }
 
   const { fixtures, source } = await fetchEspnLigaMxFixtures();
   const mapped = fixtures.map(attachDondeVer);
+  const withLc = [...mapped, ...(await lcP)];
   return {
-    today: mapped.filter((f) => isMexicoDay(f.date, dayKey) || f.state === 'in'),
-    dated: mapped,
+    today: withLc.filter((f) => isMexicoDay(f.date, dayKey) || f.state === 'in'),
+    dated: withLc,
     source,
   };
 }
@@ -237,12 +221,12 @@ function firstUpcomingDay(
 
 function upcomingFromStatic(now: Date): { fixtures: Fixture[]; dayKey?: string } {
   const t = now.getTime();
-  const pool = aperturaCalendar().filter(
-    (f) => f.status.state === 'pre' && +new Date(f.date) > t
-  )
+  const liga = aperturaCalendar()
+    .filter((f) => f.status.state === 'pre' && +new Date(f.date) > t)
     .sort((a, b) => +new Date(a.date) - +new Date(b.date))
     .map(staticRowToFixture);
-  return firstUpcomingDay(pool, t) ?? { fixtures: [] };
+  const lc = livingRoomLc(buildLeaguesCupBoard([]));
+  return firstUpcomingDay([...liga, ...lc], t) ?? { fixtures: [] };
 }
 
 function staticRowToFixture(f: ReturnType<typeof aperturaCalendar>[number]): Fixture {
@@ -274,12 +258,16 @@ function staticRowToFixture(f: ReturnType<typeof aperturaCalendar>[number]): Fix
   });
 }
 
-/** Instant hero slate from the Apertura calendar — no Sportmonks, no ESPN. */
+/** Instant hero slate from the Apertura calendar + official LC board — no Sportmonks. */
 export function seedGamesOfDay(now = new Date()): GamesOfDayPayload {
   const dayKey = mexicoDayKey(now);
-  const todayStatic = aperturaCalendar().filter((f) =>
-    isMexicoDay(f.date, dayKey)
-  ).map(staticRowToFixture);
+  const lc = livingRoomLc(buildLeaguesCupBoard([]));
+  const todayStatic = [
+    ...aperturaCalendar()
+      .filter((f) => isMexicoDay(f.date, dayKey))
+      .map(staticRowToFixture),
+    ...lc.filter((f) => isMexicoDay(f.date, dayKey) || f.state === 'in'),
+  ];
 
   if (todayStatic.length > 0) {
     return {

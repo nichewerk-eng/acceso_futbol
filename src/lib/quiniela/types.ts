@@ -32,6 +32,8 @@ export interface QuinielaBoard {
   matches: QuinielaMatch[];
   finals: number;
   total: number;
+  /** Sealed ranking is kept through the Mexico day after the last kickoff. */
+  holding: boolean;
   generatedAt: string;
 }
 

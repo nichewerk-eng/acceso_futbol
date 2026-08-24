@@ -154,6 +154,8 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
     );
   }
 
+  const closed = board.holding || (board.finals === board.total && board.total > 0);
+
   return (
     <div className="mt-8">
       <div className="q-headline">
@@ -256,9 +258,11 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
           ://TABLA
         </p>
         <h2 className="mt-2 font-display text-2xl font-bold uppercase tracking-wide">
-          Quién va ganando
+          {closed ? 'Quién ganó' : 'Quién va ganando'}
         </h2>
-        {board.finals > 0 ? (
+        {board.holding ? (
+          <p className="q-lead-progress">Tabla final · se mantiene un día más</p>
+        ) : board.finals > 0 ? (
           <p className="q-lead-progress">
             {board.finals}/{board.total} cerrados
           </p>
@@ -278,7 +282,9 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
           </div>
         ) : (
           <p className="mt-3 border border-line bg-bg-2 p-4 font-mono text-[12px] leading-6 text-muted">
-            Sé el primero en llenar la quiniela de esta jornada.
+            {closed
+              ? 'Nadie llenó la quiniela de esta jornada.'
+              : 'Sé el primero en llenar la quiniela de esta jornada.'}
           </p>
         )}
       </section>

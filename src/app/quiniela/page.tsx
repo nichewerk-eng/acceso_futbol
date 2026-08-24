@@ -47,6 +47,11 @@ const FAQ = [
     answer:
       'No. Escribe un nombre (no Anónimo) para aparecer en la tabla. Tus elecciones se guardan en este teléfono o computadora.',
   },
+  {
+    question: '¿Hasta cuándo se ve la tabla?',
+    answer:
+      'La tabla de la jornada se queda un día completo después de que termina el último partido. Al día siguiente abre la quiniela de la siguiente jornada.',
+  },
 ];
 
 export default async function QuinielaPage() {

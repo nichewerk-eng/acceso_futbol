@@ -13,7 +13,7 @@ export type JornadaOverview = {
   upcoming: Fixture[];
 };
 
-function jornadaNumber(label: string | null | undefined): number | null {
+export function jornadaNumber(label: string | null | undefined): number | null {
   if (!label) return null;
   const m = label.match(/(\d+)/);
   return m ? Number(m[1]) : null;

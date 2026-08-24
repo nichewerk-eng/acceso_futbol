@@ -150,16 +150,31 @@ function ClubTapeNext({ f, tz }: { f: Fixture; tz: string }) {
       className="jor-next jor-rise"
     >
       <div className="flex items-start justify-between gap-3">
-        <p className="jor-next-when">{kickWhen(f.date, tz)}</p>
+        <p className="jor-next-when">
+          {kickWhen(f.date, tz)}
+          {f.jornada ? ` · ${f.jornada}` : ''}
+        </p>
       </div>
       <div className="jor-next-vs">
         <span className="jor-next-side jor-next-home">
-          <ClubLogo abbr={f.home.abbreviation} name={f.home.name} size="sm" />
+          <ClubLogo
+            abbr={f.home.abbreviation}
+            clubId={f.home.id}
+            name={f.home.name}
+            logoUrl={f.home.logo}
+            size="sm"
+          />
           <span className="jor-next-abbr">{f.home.abbreviation}</span>
         </span>
         <span className="jor-next-mid">VS</span>
         <span className="jor-next-side jor-next-away">
-          <ClubLogo abbr={f.away.abbreviation} name={f.away.name} size="sm" />
+          <ClubLogo
+            abbr={f.away.abbreviation}
+            clubId={f.away.id}
+            name={f.away.name}
+            logoUrl={f.away.logo}
+            size="sm"
+          />
           <span className="jor-next-abbr">{f.away.abbreviation}</span>
         </span>
       </div>
@@ -301,7 +316,9 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
                 <div className="club-next-pair mt-3">
                   <ClubLogo
                     abbr={next.home.abbreviation}
+                    clubId={next.home.id}
                     name={next.home.name}
+                    logoUrl={next.home.logo}
                     size="lg"
                   />
                   <p className="club-word club-word-lg">
@@ -315,7 +332,9 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
                   </p>
                   <ClubLogo
                     abbr={next.away.abbreviation}
+                    clubId={next.away.id}
                     name={next.away.name}
+                    logoUrl={next.away.logo}
                     size="lg"
                   />
                 </div>

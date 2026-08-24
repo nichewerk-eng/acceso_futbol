@@ -12,7 +12,7 @@ Do in [Google Search Console](https://search.google.com/search-console) on the *
 
 1. Prefer Domain property `accesofutbol.com`, or URL-prefix www (the live host).
 2. Submit sitemap: `https://www.accesofutbol.com/sitemap.xml`.
-3. URL Inspection on **www** URLs (never the apex): `/`, `/liga-mx`, `/donde-ver`, `/quiniela`, `/leagues-cup`, one `/club/*`, one `/donde-ver/*`, one `/momento/*`, one `/partido/*`.
+3. URL Inspection on **www** URLs (never the apex): `/`, `/horarios`, `/liga-mx`, `/donde-ver`, `/quiniela`, `/leagues-cup`, one `/club/*`, one `/donde-ver/*`, one `/momento/*`, one `/partido/*`.
 4. Request indexing if “URL is unknown to Google” after deploy.
 5. Monitor Coverage / Page indexing for soft-404 or duplicate `/inicio`.
 6. Ignore “not on Google” for brand-new paths until after Request indexing + a few days.
@@ -44,6 +44,8 @@ Do in [Google Search Console](https://search.google.com/search-console) on the *
 |------|--------|
 | Momento → related clubs + related momentos | Done |
 | Internal links to Liga MX / cable | Done |
+| `/horarios` crawlable calendar (Liga MX horarios + CDMX times) | Done |
+| `/calendario` → `/horarios` | Done |
 
 ## Phase 4 — Entity consistency
 

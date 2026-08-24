@@ -1,7 +1,9 @@
 import { clubIdentityFromAbbr } from '@/config/clubIdentity';
-import { getJornadaOverview } from '@/lib/sports/jornada';
+import { fetchLigaMxFixtures } from '@/lib/sports/espnFallback';
+import { jornadaNumber } from '@/lib/sports/jornada';
 import type { Fixture } from '@/lib/sports/types';
 import { isOutcome, missingOpenPicks } from './card';
+import { pickQuinielaJornada, quinielaHoldActive } from './jornada';
 import { sanitizeName } from './name';
 import { getPicks, listPicks, putPicks } from './store';
 import type {
@@ -66,26 +68,38 @@ function toMatch(f: Fixture, now: number): QuinielaMatch {
   };
 }
 
-export async function getQuinielaBoard(now = new Date()): Promise<QuinielaBoard | null> {
-  const overview = await getJornadaOverview(now);
-  if (!overview) return null;
+export function boardFromFixtures(
+  fixtures: Fixture[],
+  now = new Date()
+): QuinielaBoard | null {
+  const n = pickQuinielaJornada(fixtures, now);
+  if (n == null) return null;
+  const round = fixtures
+    .filter((f) => jornadaNumber(f.jornada) === n)
+    .sort((a, b) => +new Date(a.date) - +new Date(b.date));
+  if (round.length === 0) return null;
   const ms = now.getTime();
-  const fixtures = [...overview.upcoming, ...overview.live, ...overview.played].sort(
-    (a, b) => +new Date(a.date) - +new Date(b.date)
-  );
-  const matches = fixtures.map((f) => toMatch(f, ms));
+  const matches = round.map((f) => toMatch(f, ms));
   const open = matches.filter((m) => !m.locked);
+  const finals = matches.filter((m) => m.result).length;
+  const sealed = round.length > 0 && round.every((f) => f.state === 'post');
   return {
     torneo: QUINIELA_TORNEO,
-    jornadaKey: jornadaKeyFor(overview.number),
-    jornadaNumber: overview.number,
-    jornadaLabel: overview.label,
+    jornadaKey: jornadaKeyFor(n),
+    jornadaNumber: n,
+    jornadaLabel: `Jornada ${n}`,
     deadline: open.length ? open[0].date : null,
     matches,
-    finals: matches.filter((m) => m.result).length,
+    finals,
     total: matches.length,
-    generatedAt: new Date().toISOString(),
+    holding: sealed && quinielaHoldActive(round, now),
+    generatedAt: now.toISOString(),
   };
+}
+
+export async function getQuinielaBoard(now = new Date()): Promise<QuinielaBoard | null> {
+  const { fixtures } = await fetchLigaMxFixtures();
+  return boardFromFixtures(fixtures, now);
 }
 
 function scoreAgainst(

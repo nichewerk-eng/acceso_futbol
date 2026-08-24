@@ -158,6 +158,15 @@ export function DondeVerGuide({
           </Title>
           <p className="mt-2 max-w-xl font-mono text-[12px] leading-6 text-muted">
             Cada partido con su canal en México y en Estados Unidos. Horario en tu zona.
+            {asPage ? (
+              <>
+                {' '}
+                <Link href="/horarios" className="text-signal hover:text-foreground">
+                  Calendario completo
+                </Link>
+                .
+              </>
+            ) : null}
           </p>
         </div>
         <div className="dv-guide-actions">
