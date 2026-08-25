@@ -2,6 +2,7 @@ import { getCache, setCache, singleFlight } from '@/lib/apiCache';
 import { clubIdentityFromAbbr } from '@/config/clubIdentity';
 import {
   accesoIndex,
+  jornadaTeamScore,
   leaguePpgStats,
   pickAccesoXi,
   ppgToOpp,
@@ -184,11 +185,17 @@ function scoreFor(scores: SmScore[] | undefined, side: 'home' | 'away'): number 
   return g != null && Number.isFinite(Number(g)) ? Number(g) : null;
 }
 
+function nameOf(abbr: string, fallback: string): string {
+  return clubIdentityFromAbbr(abbr)?.name ?? fallback;
+}
+
 function sidesOf(fx: SmRoundFixture): {
   homeId: number | null;
   awayId: number | null;
   homeAbbr: string;
   awayAbbr: string;
+  homeName: string;
+  awayName: string;
   homeScore: number;
   awayScore: number;
 } {
@@ -197,11 +204,15 @@ function sidesOf(fx: SmRoundFixture): {
   const awayP = parts.find((p) => p.meta?.location === 'away') ?? parts[1];
   const homeAbbr = abbrFromTeamId(homeP?.id) || scheduleAbbr(homeP?.short_code ?? 'LOC');
   const awayAbbr = abbrFromTeamId(awayP?.id) || scheduleAbbr(awayP?.short_code ?? 'VIS');
+  const homeCanon = clubIdentityFromAbbr(homeAbbr)?.abbreviation ?? homeAbbr;
+  const awayCanon = clubIdentityFromAbbr(awayAbbr)?.abbreviation ?? awayAbbr;
   return {
     homeId: homeP?.id ?? null,
     awayId: awayP?.id ?? null,
-    homeAbbr: clubIdentityFromAbbr(homeAbbr)?.abbreviation ?? homeAbbr,
-    awayAbbr: clubIdentityFromAbbr(awayAbbr)?.abbreviation ?? awayAbbr,
+    homeAbbr: homeCanon,
+    awayAbbr: awayCanon,
+    homeName: nameOf(homeCanon, homeP?.name ?? homeCanon),
+    awayName: nameOf(awayCanon, awayP?.name ?? awayCanon),
     homeScore: scoreFor(fx.scores, 'home') ?? 0,
     awayScore: scoreFor(fx.scores, 'away') ?? 0,
   };
@@ -246,19 +257,173 @@ export type AccesoRoundXi = {
   players: AccesoRoundPlayer[];
 };
 
-export async function buildAccesoRoundXi(
+export type AccesoRoundTeam = {
+  abbr: string;
+  name: string;
+  score: number;
+  result: 'W' | 'D' | 'L';
+  gf: number;
+  ga: number;
+  home: boolean;
+  opponentAbbr: string;
+  opponentName: string;
+  pos: number | null;
+  opponentPos: number | null;
+  rank: number;
+  why: string;
+};
+
+function posMap(entries: SmStandingEntry[]): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const e of entries) {
+    const abbr = clubIdentityFromAbbr(e.team.abbreviation)?.abbreviation ?? e.team.abbreviation;
+    out.set(abbr, e.position);
+  }
+  return out;
+}
+
+function wdlOf(gd: number): 'W' | 'D' | 'L' {
+  if (gd > 0) return 'W';
+  if (gd < 0) return 'L';
+  return 'D';
+}
+
+function teamWhy(row: Omit<AccesoRoundTeam, 'rank' | 'why'>): string {
+  const score = `${row.gf}–${row.ga}`;
+  const vs = row.home ? `vs ${row.opponentAbbr}` : `visita vs ${row.opponentAbbr}`;
+  const place =
+    row.pos != null && row.opponentPos != null ? ` · ${row.pos}° vs ${row.opponentPos}°` : '';
+  if (row.result === 'W') return `Ganó ${score} ${vs}${place}`;
+  if (row.result === 'D') return `Empató ${score} ${vs}${place}`;
+  return `Perdió ${score} ${vs}${place}`;
+}
+
+function teamRow(
+  abbr: string,
+  nameFallback: string,
+  home: boolean,
+  gf: number,
+  ga: number,
+  oppAbbr: string,
+  oppNameFallback: string,
+  oppStrength: number,
+  places: Map<string, number>
+): Omit<AccesoRoundTeam, 'rank'> {
+  const pos = places.get(abbr) ?? null;
+  const opponentPos = places.get(oppAbbr) ?? null;
+  const gd = gf - ga;
+  const row = {
+    abbr,
+    name: nameOf(abbr, nameFallback),
+    score: jornadaTeamScore({
+      home,
+      gf,
+      ga,
+      opp: oppStrength,
+      pos,
+      oppPos: opponentPos,
+    }),
+    result: wdlOf(gd),
+    gf,
+    ga,
+    home,
+    opponentAbbr: oppAbbr,
+    opponentName: nameOf(oppAbbr, oppNameFallback),
+    pos,
+    opponentPos,
+  };
+  return { ...row, why: teamWhy(row) };
+}
+
+export function rankAccesoRoundTeams(
+  sides: {
+    homeAbbr: string;
+    awayAbbr: string;
+    homeName: string;
+    awayName: string;
+    homeScore: number;
+    awayScore: number;
+  }[],
+  opp: Map<string, number>,
+  places: Map<string, number>
+): AccesoRoundTeam[] {
+  const rows: Omit<AccesoRoundTeam, 'rank'>[] = [];
+  for (const s of sides) {
+    rows.push(
+      teamRow(
+        s.homeAbbr,
+        s.homeName,
+        true,
+        s.homeScore,
+        s.awayScore,
+        s.awayAbbr,
+        s.awayName,
+        opp.get(s.awayAbbr) ?? 0.5,
+        places
+      ),
+      teamRow(
+        s.awayAbbr,
+        s.awayName,
+        false,
+        s.awayScore,
+        s.homeScore,
+        s.homeAbbr,
+        s.homeName,
+        opp.get(s.homeAbbr) ?? 0.5,
+        places
+      )
+    );
+  }
+  const sorted = [...rows].sort(
+    (a, b) =>
+      b.score - a.score ||
+      b.gf - b.ga - (a.gf - a.ga) ||
+      b.gf - a.gf ||
+      a.abbr.localeCompare(b.abbr)
+  );
+  return sorted.map((row, i) => ({ ...row, rank: i + 1 }));
+}
+
+async function loadAccesoRound(
   roundId: number,
   jornada: number
-): Promise<AccesoRoundXi | null> {
+): Promise<{ xi: AccesoRoundXi | null; teams: AccesoRoundTeam[] }> {
+  return singleFlight(`sm-acceso-pack-v2-omega-${roundId}-${jornada}`, ROUND_XI_TTL_MS, () =>
+    computeAccesoRound(roundId, jornada)
+  );
+}
+
+async function computeAccesoRound(
+  roundId: number,
+  jornada: number
+): Promise<{ xi: AccesoRoundXi | null; teams: AccesoRoundTeam[] }> {
   const [fixtures, standings] = await Promise.all([
     fetchRoundFixtures(roundId),
     fetchLigaMxStandings().catch(() => ({ entries: [] as SmStandingEntry[] })),
   ]);
   const opp = oppMap(standings.entries, jornada);
+  const places = posMap(standings.entries);
   const pool: Eligible[] = [];
+  const matchSides: {
+    homeAbbr: string;
+    awayAbbr: string;
+    homeName: string;
+    awayName: string;
+    homeScore: number;
+    awayScore: number;
+  }[] = [];
 
   for (const fx of fixtures) {
     const sides = sidesOf(fx);
+    if (!sides.homeAbbr || !sides.awayAbbr) continue;
+    matchSides.push({
+      homeAbbr: sides.homeAbbr,
+      awayAbbr: sides.awayAbbr,
+      homeName: sides.homeName,
+      awayName: sides.awayName,
+      homeScore: sides.homeScore,
+      awayScore: sides.awayScore,
+    });
     const fixtureId = String(fx.id ?? '');
     for (const row of fx.lineups ?? []) {
       if (!isEligible(row)) continue;
@@ -291,8 +456,9 @@ export async function buildAccesoRoundXi(
     }
   }
 
+  const teams = rankAccesoRoundTeams(matchSides, opp, places);
   const picked = pickAccesoXi(pool);
-  if (!picked) return null;
+  if (!picked) return { xi: null, teams };
 
   const players: AccesoRoundPlayer[] = picked.players.map((p) => ({
     ...p,
@@ -304,7 +470,33 @@ export async function buildAccesoRoundXi(
     p.rank = i + 1;
   });
   return {
-    formation: picked.formation,
-    players: [...players].sort((a, b) => a.slot - b.slot),
+    xi: {
+      formation: picked.formation,
+      players: [...players].sort((a, b) => a.slot - b.slot),
+    },
+    teams,
   };
+}
+
+export async function buildAccesoRound(
+  roundId: number,
+  jornada: number
+): Promise<{ xi: AccesoRoundXi | null; teams: AccesoRoundTeam[] }> {
+  return loadAccesoRound(roundId, jornada);
+}
+
+export async function buildAccesoRoundXi(
+  roundId: number,
+  jornada: number
+): Promise<AccesoRoundXi | null> {
+  const packed = await loadAccesoRound(roundId, jornada);
+  return packed.xi;
+}
+
+export async function buildAccesoRoundTeams(
+  roundId: number,
+  jornada: number
+): Promise<AccesoRoundTeam[]> {
+  const packed = await loadAccesoRound(roundId, jornada);
+  return packed.teams;
 }

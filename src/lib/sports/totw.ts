@@ -1,5 +1,9 @@
 import { getCache, setCache, singleFlight } from '@/lib/apiCache';
-import { buildAccesoRoundXi } from '@/lib/sports/accesoRound';
+import {
+  buildAccesoRound,
+  type AccesoRoundTeam,
+  type AccesoRoundXi,
+} from '@/lib/sports/accesoRound';
 import { APERTURA_MATCHDAYS } from '@/lib/sports/liguillaPath';
 import { smFetch } from '@/lib/sports/sm/client';
 import { ligaMxSeasonId, sportmonksEnabled } from '@/lib/sports/sportmonks';
@@ -29,6 +33,25 @@ export type TotwPlayer = {
   why?: string;
 };
 
+export type TotwClub = {
+  abbr: string;
+  name: string;
+  score: number;
+  result: 'W' | 'D' | 'L';
+  gf: number;
+  ga: number;
+  home: boolean;
+  opponentAbbr: string;
+  opponentName: string;
+  pos: number | null;
+  opponentPos: number | null;
+  rank: number;
+  /** Short fact chip: Ganó 2–0 visita vs CAZ · 2° vs 12°. */
+  why: string;
+  /** 1–2 sentences on why this club is #1. Anthropic when the key is on. */
+  pickedWhy?: string;
+};
+
 export type TotwBoard = {
   jornada: number | null;
   roundId: number | null;
@@ -40,6 +63,8 @@ export type TotwBoard = {
   players: TotwPlayer[];
   ranking: TotwPlayer[];
   mvp: TotwPlayer | null;
+  teams: TotwClub[];
+  teamOfWeek: TotwClub | null;
   publishedJornadas: number[];
   pendingJornada: number | null;
 };
@@ -84,6 +109,8 @@ function emptyBoard(partial: Partial<TotwBoard> = {}): TotwBoard {
     players: [],
     ranking: [],
     mvp: null,
+    teams: [],
+    teamOfWeek: null,
     publishedJornadas: [],
     pendingJornada: null,
     ...partial,
@@ -91,7 +118,8 @@ function emptyBoard(partial: Partial<TotwBoard> = {}): TotwBoard {
 }
 
 function boardFromAcceso(
-  xi: NonNullable<Awaited<ReturnType<typeof buildAccesoRoundXi>>>,
+  xi: AccesoRoundXi,
+  teams: AccesoRoundTeam[],
   meta: {
     jornada: number | null;
     roundId: number | null;
@@ -117,6 +145,7 @@ function boardFromAcceso(
     rank: p.rank,
   }));
   const ranking = [...players].sort((a, b) => a.rank - b.rank);
+  const clubs: TotwClub[] = teams;
   return {
     jornada: meta.jornada,
     roundId: meta.roundId,
@@ -128,6 +157,8 @@ function boardFromAcceso(
     players,
     ranking,
     mvp: ranking[0] ?? null,
+    teams: clubs,
+    teamOfWeek: clubs[0] ?? null,
     publishedJornadas: meta.publishedJornadas,
     pendingJornada: meta.pendingJornada,
   };
@@ -165,8 +196,8 @@ async function latestPublished(
   for (const n of [...finished].sort((a, b) => b - a)) {
     const round = byJornada.get(n);
     if (!round) continue;
-    const xi = await buildAccesoRoundXi(round.id, n).catch(() => null);
-    if (xi && xi.players.length >= 11) return { jornada: n, round };
+    const packed = await buildAccesoRound(round.id, n).catch(() => null);
+    if (packed?.xi && packed.xi.players.length >= 11) return { jornada: n, round };
   }
   return null;
 }
@@ -203,8 +234,10 @@ export async function getTotwBoard(jornada?: number | null): Promise<TotwBoard> 
     };
 
     if (round && (publishedJornadas.includes(want) || round.finished)) {
-      const xi = await buildAccesoRoundXi(round.id, want).catch(() => null);
-      if (xi && xi.players.length >= 11) return attachTotwWhy(boardFromAcceso(xi, meta));
+      const packed = await buildAccesoRound(round.id, want).catch(() => null);
+      if (packed?.xi && packed.xi.players.length >= 11) {
+        return attachTotwWhy(boardFromAcceso(packed.xi, packed.teams, meta));
+      }
       return emptyBoard({
         ...meta,
         pending: Boolean(round.finished),

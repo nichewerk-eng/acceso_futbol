@@ -61,6 +61,121 @@ export function accesoIndex(r: number, teamScore: number, lambda = ACCESO_LAMBDA
   return clipAcceso((1 - lambda) * r + lambda * teamScore);
 }
 
+/** Liga MX Apertura has 18 clubs; gaps on the tabla sit in [0, 1]. */
+export const ACCESO_TABLA_SPAN = 17;
+
+/** World Football Elo home bump (eloratings.net). Liga MX home edge is real. */
+export const ACCESO_HFA_ELO = 100;
+export const ACCESO_ELO_DIVISOR = 400;
+/** Mild pos→Elo so J5 tabla noise (2° vs 12°) is not a 400-point canyon. */
+export const ACCESO_POS_ELO_K = 16;
+export const ACCESO_OPP_ELO_K = 1800;
+export const ACCESO_RATING_OPP_MIX = 0.62;
+
+export const ACCESO_OMEGA_BASE = 6.4;
+export const ACCESO_OMEGA_RESIDUAL = 1.05;
+export const ACCESO_OMEGA_ATTACK = 0.94;
+export const ACCESO_OMEGA_DEFENSE = 0.18;
+export const ACCESO_DEFENSE_TAU = 2.3;
+export const ACCESO_ATTACK_OPP_FLOOR = 0.7;
+export const ACCESO_ATTACK_OPP_GAIN = 0.6;
+
+export type JornadaTeamInput = {
+  home: boolean;
+  gf: number;
+  ga: number;
+  /** Opponent strength in [0.30, 0.70] from PPG. */
+  opp: number;
+  /** 1 = first. Null if the tabla is missing. */
+  pos: number | null;
+  oppPos: number | null;
+};
+
+export type JornadaTeamParts = {
+  expected: number;
+  margin: number;
+  result: number;
+  residual: number;
+  attack: number;
+  defense: number;
+  omega: number;
+};
+
+export function eloFromPos(pos: number | null): number {
+  if (pos == null || !Number.isFinite(pos)) return 1500;
+  return 1500 + ACCESO_POS_ELO_K * (9.5 - pos);
+}
+
+export function eloFromOpp(opp: number): number {
+  const x = Number.isFinite(opp) ? opp : 0.5;
+  return 1500 + ACCESO_OPP_ELO_K * (x - 0.5);
+}
+
+function rivalRating(opp: number, oppPos: number | null): number {
+  const fromOpp = eloFromOpp(opp);
+  if (oppPos == null) return fromOpp;
+  return ACCESO_RATING_OPP_MIX * fromOpp + (1 - ACCESO_RATING_OPP_MIX) * eloFromPos(oppPos);
+}
+
+/**
+ * Win expectancy in [0, 1] (draw = 0.5), Elo logistic + home advantage.
+ * We = 1 / (1 + 10^(-Δ/400)), Δ = R_us - R_them ± HFA.
+ */
+export function expectedMatchScore(input: JornadaTeamInput): number {
+  const us = eloFromPos(input.pos);
+  const them = rivalRating(input.opp, input.oppPos);
+  const delta = us - them + (input.home ? ACCESO_HFA_ELO : -ACCESO_HFA_ELO);
+  return 1 / (1 + 10 ** (-delta / ACCESO_ELO_DIVISOR));
+}
+
+/** World Football Elo / ClubElo-family margin G. */
+export function marginG(gd: number): number {
+  const n = Math.abs(gd);
+  if (n <= 1) return 1;
+  if (n === 2) return 1.5;
+  return (11 + n) / 8;
+}
+
+function matchS(gd: number): number {
+  if (gd > 0) return 1;
+  if (gd < 0) return 0;
+  return 0.5;
+}
+
+/**
+ * Acceso Ω — one-match team value on the 3–10 kit.
+ *
+ * Industry core (ClubElo / World Football Elo / SPI):
+ *   residual = G × (S − We)  → how surprising the result was, scaled by margin
+ * Then SPI-style split, without extra xG calls:
+ *   attack  = ln(1+GF) × (0.70 + 0.60·Opp)   goals vs a real opponent, slow saturate
+ *   defense = e^(−GA / 2.3)                   soft sheet, not a 0.22 lump
+ *
+ * Ω = 6.4 + 1.05·residual + 0.94·attack + 0.18·defense
+ */
+export function jornadaTeamParts(input: JornadaTeamInput): JornadaTeamParts {
+  const gd = input.gf - input.ga;
+  const expected = expectedMatchScore(input);
+  const margin = marginG(gd);
+  const result = matchS(gd);
+  const residual = margin * (result - expected);
+  const attack =
+    Math.log1p(Math.max(0, input.gf)) *
+    (ACCESO_ATTACK_OPP_FLOOR + ACCESO_ATTACK_OPP_GAIN * input.opp);
+  const defense = Math.exp(-Math.max(0, input.ga) / ACCESO_DEFENSE_TAU);
+  const omega = clipAcceso(
+    ACCESO_OMEGA_BASE +
+      ACCESO_OMEGA_RESIDUAL * residual +
+      ACCESO_OMEGA_ATTACK * attack +
+      ACCESO_OMEGA_DEFENSE * defense
+  );
+  return { expected, margin, result, residual, attack, defense, omega };
+}
+
+export function jornadaTeamScore(input: JornadaTeamInput): number {
+  return jornadaTeamParts(input).omega;
+}
+
 function repeatBand(band: AccesoBand, n: number): AccesoBand[] {
   return Array.from({ length: n }, () => band);
 }

@@ -8258,10 +8258,26 @@ a.lead-team:hover {
 
 @media (min-width: 900px) {
   .once-grid {
-    grid-template-columns: minmax(0, 1fr) 14.5rem;
-    max-width: 64rem;
+    grid-template-columns: minmax(0, 36rem) 15.5rem;
+    grid-template-areas:
+      "pitch rank"
+      "eotw eotw";
+    max-width: 53rem;
     align-items: start;
     gap: 1.5rem;
+  }
+
+  .once-pitch {
+    grid-area: pitch;
+    max-width: none;
+  }
+
+  .once-rank {
+    grid-area: rank;
+  }
+
+  .once-eotw {
+    grid-area: eotw;
   }
 }
 
@@ -8643,6 +8659,193 @@ a.lead-team:hover {
   font-family: var(--font-oswald), sans-serif;
   font-size: 0.9rem;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.once-eotw {
+  min-width: 0;
+}
+
+.once-eotw-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.once-eotw-title {
+  margin-top: 0.2rem;
+  font-family: var(--font-oswald), sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.05;
+}
+
+.once-eotw-picked {
+  margin: 0.55rem 0 0;
+  max-width: 40rem;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.once-eotw-board {
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+}
+
+.once-eotw-tr {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1.15fr) minmax(6.2rem, 1fr) 3.2rem;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.7rem 0.75rem;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: inherit;
+  text-decoration: none;
+}
+
+.once-eotw-tr:last-child {
+  border-bottom: 0;
+}
+
+.once-eotw-pos {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .once-eotw-tr {
+    grid-template-columns: 2.5rem minmax(0, 1.4fr) 9.5rem 3rem 3.6rem;
+    padding: 0.75rem 1rem;
+    gap: 0.5rem;
+  }
+
+  .once-eotw-pos {
+    display: block;
+  }
+}
+
+.once-eotw-tr.is-head {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.once-eotw-center {
+  text-align: center;
+}
+
+.once-eotw-end,
+.once-eotw-tr.is-head > :last-child,
+.once-eotw-tr > .once-rank-rating {
+  text-align: right;
+}
+
+.once-eotw-tr.is-1 {
+  box-shadow: inset 3px 0 0 var(--signal);
+}
+
+.once-eotw-tr.is-mine {
+  background: color-mix(in srgb, var(--signal) 6%, transparent);
+}
+
+.once-eotw-tr:not(.is-head):hover {
+  background: var(--bg-3);
+}
+
+.once-eotw-tr.is-1 .once-rank-n {
+  color: var(--signal);
+}
+
+.once-eotw-club {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.once-eotw-club .club-logo-sm,
+.once-eotw-club .club-logo {
+  flex-shrink: 0;
+}
+
+.once-eotw-club-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+
+.once-eotw-club-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-oswald), sans-serif;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+
+.once-eotw-club-abbr {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.once-eotw-result {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+.once-eotw-wdl {
+  flex-shrink: 0;
+  width: 1.15rem;
+  text-align: center;
+  color: var(--muted);
+}
+
+.once-eotw-wdl.is-w {
+  color: var(--signal);
+}
+
+.once-eotw-wdl.is-l {
+  color: var(--foreground);
+}
+
+.once-eotw-num {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   font-variant-numeric: tabular-nums;
 }
 

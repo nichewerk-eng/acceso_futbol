@@ -2,7 +2,7 @@ import { serveSwr } from '@/lib/serveSwr';
 import { getTotwBoard, type TotwBoard } from '@/lib/sports/totw';
 
 const CACHE_KEY = (jornada: number | null) =>
-  jornada != null ? `totw-v6-j${jornada}` : 'totw-v6-latest';
+  jornada != null ? `totw-v13-omega-j${jornada}` : 'totw-v13-omega-latest';
 
 function parseJornada(raw: string | null): number | null {
   if (!raw) return null;

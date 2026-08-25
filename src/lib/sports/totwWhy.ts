@@ -1,12 +1,13 @@
 /**
- * One-line “why this Acceso Index” for each AF://ONCE player.
+ * One-line “why this Acceso Index” for each AF://ONCE player,
+ * plus 1–2 sentences for the equipo de la jornada.
  * Facts from the sealed match (score + events). Copy from Anthropic when the key is on.
  */
 import { anthropicChat, anthropicEnabled } from '@/lib/ai/anthropic';
 import { getCache, setCache, singleFlight } from '@/lib/apiCache';
 import { fetchMatchTick } from '@/lib/sports/sportmonks';
 import type { LiveEvent, MatchSnapshot } from '@/lib/sports/types';
-import type { TotwBoard, TotwPlayer } from '@/lib/sports/totw';
+import type { TotwBoard, TotwClub, TotwPlayer } from '@/lib/sports/totw';
 
 const WHY_TTL_MS = 24 * 60 * 60_000;
 const FACTS_TTL_MS = 24 * 60 * 60_000;
@@ -234,8 +235,130 @@ function fallbackWhy(d: PlayerDossier): string {
   return `${indexLine}.`;
 }
 
+export function fallbackTeamPickedWhy(t: TotwClub): string {
+  const score = `${t.gf}-${t.ga}`;
+  const vs = t.opponentName || t.opponentAbbr;
+  const venue = t.home ? `en casa contra ${vs}` : `de visita contra ${vs}`;
+  let result = `cerró ${score} ${venue}`;
+  if (t.result === 'W') result = `ganó ${score} ${venue}`;
+  else if (t.result === 'D') result = `empató ${score} ${venue}`;
+  else if (t.result === 'L') result = `perdió ${score} ${venue}`;
+
+  const extras: string[] = [];
+  if (t.result === 'W' && t.ga === 0) extras.push('portería en cero');
+  if (t.pos != null && t.opponentPos != null) {
+    extras.push(`${t.name} es ${t.pos}° y ${vs} es ${t.opponentPos}°`);
+  }
+  const extra = extras.length ? `, ${extras.join(', ')}` : '';
+  return `${t.name} es el equipo de la jornada: ${result}${extra}. Acceso ${t.score.toFixed(2)} premia el marcador, los goles y el rival.`;
+}
+
+function foldEs(raw: string): string {
+  return raw
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+/** True when copy invents a tabla climb or smashes a score into "2, 0". */
+export function teamWhyLooksWrong(text: string, t: TotwClub): boolean {
+  const fold = foldEs(text);
+  if (/escal/.test(fold)) return true;
+  if (/subio del/.test(fold) || /paso del/.test(fold) || /trep/.test(fold)) return true;
+  if (/logaritm/.test(fold) || /residual/.test(fold) || /\bomega\b/.test(fold)) return true;
+  if (/\d,\s*\d/.test(text)) return true;
+  if (t.pos != null && t.opponentPos != null && t.pos < t.opponentPos) {
+    const climb = new RegExp(`del\\s+${t.opponentPos}[^0-9]{0,12}${t.pos}`);
+    if (climb.test(fold)) return true;
+  }
+  const gap =
+    t.pos != null && t.opponentPos != null ? Math.abs(t.pos - t.opponentPos) : 0;
+  if (gap > 3 && /rival directo/.test(fold)) return true;
+  return false;
+}
+
+function clampSentences(raw: string, n: number): string {
+  const parts = scrubWhy(raw)
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return parts.slice(0, n).join(' ');
+}
+
+function clubChip(t: TotwClub) {
+  const vs = t.opponentName || t.opponentAbbr;
+  const verb =
+    t.result === 'W' ? 'ganó' : t.result === 'D' ? 'empató' : 'perdió';
+  return {
+    club: t.name,
+    acceso: Number(t.score.toFixed(2)),
+    partido: `${verb} ${t.gf}-${t.ga} ${t.home ? 'en casa' : 'de visita'} contra ${vs}`,
+    porteriaEnCero: t.ga === 0,
+    tablaDeEsteClub:
+      t.pos != null ? `${t.name} es ${t.pos}° en la tabla hoy. No subió de otra posición en este partido.` : null,
+    tablaDelRival:
+      t.opponentPos != null ? `${vs} es ${t.opponentPos}° en la tabla hoy.` : null,
+  };
+}
+
+function parseTeamWhy(raw: string): string | null {
+  const start = raw.indexOf('{');
+  const end = raw.lastIndexOf('}');
+  if (start < 0 || end < 0) return null;
+  try {
+    const json = JSON.parse(raw.slice(start, end + 1)) as { why?: string };
+    const why = json.why?.trim();
+    return why ? clampSentences(why, 2) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function writeTeamWithAnthropic(
+  picked: TotwClub,
+  field: TotwClub[],
+  jornada: number | null
+): Promise<string | null> {
+  if (!anthropicEnabled()) return null;
+
+  const raw = await Promise.race([
+    anthropicChat({
+      system: `Eres editor de Acceso Futbol para el SITIO, no para VO.
+Acentos ON. Nunca uses em-dash (—). Punto o coma. Marcador con guion ASCII: 2-0, nunca "2, 0".
+Dos frases máximo, 45 palabras en total, tercera persona.
+Explica POR QUÉ este club es el equipo de la jornada Acceso (el #1).
+Acceso Ω paga el marcador contra lo esperado (tabla, PPG, localía) y los goles con retornos lentos. Un 5-2 puede ganar a un 2-0. La portería en cero NO gana sola.
+Habla como editor Acceso, no como paper. PROHIBIDO en la prosa: logarítmico, residual, Omega, Ω, We, tanh.
+
+tablaDeEsteClub y tablaDelRival son lugares ACTUALES, no un movimiento.
+PROHIBIDO: escalar, subir de X a Y, "del 12 al 2", "rival directo", inventar goles, xG u otros partidos.
+No hables de jugadores de la once. No digas "creo" ni "para mí".
+
+Responde SOLO JSON:
+{"why":"..."}`,
+      user: JSON.stringify({
+        kind: 'totw-team-why',
+        jornada,
+        picked: clubChip(picked),
+        field: field.slice(0, 4).map(clubChip),
+      }),
+      temperature: 0.2,
+      maxTokens: 220,
+    }),
+    new Promise<null>((resolve) => {
+      setTimeout(() => resolve(null), AI_WAIT_MS);
+    }),
+  ]);
+
+  if (!raw) return null;
+  const why = parseTeamWhy(raw);
+  if (!why || teamWhyLooksWrong(why, picked)) return null;
+  return why;
+}
+
 function scrubWhy(raw: string): string {
   return raw
+    .replace(/(\d)[—–](\d)/g, '$1-$2')
     .replace(/[—–]/g, ', ')
     .replace(/\s{2,}/g, ' ')
     .replace(/\s+,/g, ',')
@@ -296,7 +419,12 @@ Responde SOLO JSON:
   return parseReasons(raw);
 }
 
-async function buildReasons(board: TotwBoard): Promise<Record<string, string>> {
+type WhyPack = {
+  players: Record<string, string>;
+  teamPicked?: string;
+};
+
+async function buildReasons(board: TotwBoard): Promise<WhyPack> {
   const byId = await factsMap(board.players.map((p) => p.fixtureId));
 
   const dossiers = board.players.map((p) =>
@@ -307,41 +435,63 @@ async function buildReasons(board: TotwBoard): Promise<Record<string, string>> {
       board.players.filter((x) => x.fixtureId && x.fixtureId === p.fixtureId)
     )
   );
-  const fallback: Record<string, string> = {};
-  for (const d of dossiers) fallback[d.id] = fallbackWhy(d);
+  const players: Record<string, string> = {};
+  for (const d of dossiers) players[d.id] = fallbackWhy(d);
 
-  const ai = await writeWithAnthropic(dossiers);
-  if (!ai) return fallback;
+  const picked = board.teams[0] ?? null;
+  const teamFallback = picked ? fallbackTeamPickedWhy(picked) : undefined;
 
-  const merged = { ...fallback };
-  for (const [id, why] of Object.entries(ai)) {
-    if (why) merged[id] = why;
+  const [ai, teamAi] = await Promise.all([
+    writeWithAnthropic(dossiers),
+    picked
+      ? writeTeamWithAnthropic(picked, board.teams.slice(1), board.jornada)
+      : Promise.resolve(null),
+  ]);
+
+  if (ai) {
+    for (const [id, why] of Object.entries(ai)) {
+      if (why) players[id] = why;
+    }
   }
-  return merged;
+
+  return {
+    players,
+    teamPicked: teamAi || teamFallback,
+  };
 }
 
-function applyWhy(board: TotwBoard, reasons: Record<string, string>): TotwBoard {
+function applyWhy(board: TotwBoard, pack: WhyPack): TotwBoard {
   const players = board.players.map((p) => ({
     ...p,
-    why: reasons[p.id] || p.why,
+    why: pack.players[p.id] || p.why,
   }));
   const ranking = [...players].sort((a, b) => a.rank - b.rank);
+  const teams = board.teams.map((t, i) =>
+    i === 0 && pack.teamPicked ? { ...t, pickedWhy: pack.teamPicked } : t
+  );
   return {
     ...board,
     players,
     ranking,
     mvp: ranking[0] ?? null,
+    teams,
+    teamOfWeek: teams[0] ?? null,
   };
 }
 
 /** Attach cached why-lines. Never fails the board. */
 export async function attachTotwWhy(board: TotwBoard): Promise<TotwBoard> {
   if (!board.published || board.players.length === 0) return board;
-  const key = `totw-why-v6-${board.roundId ?? board.jornada ?? 'x'}`;
+  const key = `totw-why-v12-omega-${board.roundId ?? board.jornada ?? 'x'}`;
   try {
-    const reasons = await singleFlight(key, WHY_TTL_MS, () => buildReasons(board));
-    return applyWhy(board, reasons);
+    const pack = await singleFlight(key, WHY_TTL_MS, () => buildReasons(board));
+    return applyWhy(board, pack);
   } catch {
-    return board;
+    const picked = board.teams[0];
+    if (!picked) return board;
+    return applyWhy(board, {
+      players: {},
+      teamPicked: fallbackTeamPickedWhy(picked),
+    });
   }
 }

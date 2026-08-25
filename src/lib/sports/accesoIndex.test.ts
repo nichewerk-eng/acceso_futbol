@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import {
   accesoIndex,
   bandsForFormation,
+  jornadaTeamScore,
   pickAccesoXi,
   ppgToOpp,
   shrinkOpp,
@@ -28,6 +29,69 @@ describe('teamPerformanceScore', () => {
     const narrow = teamPerformanceScore(1, 0.5);
     assert.ok(blowout > narrow);
     assert.ok(blowout - narrow < 0.7);
+  });
+});
+
+describe('jornadaTeamScore Acceso Ω', () => {
+  it('rewards a bottom-table 3-0 away win over a home 1-0 vs last', () => {
+    const underdog = jornadaTeamScore({
+      home: false,
+      gf: 3,
+      ga: 0,
+      opp: 0.62,
+      pos: 15,
+      oppPos: 2,
+    });
+    const favorite = jornadaTeamScore({
+      home: true,
+      gf: 1,
+      ga: 0,
+      opp: 0.38,
+      pos: 1,
+      oppPos: 18,
+    });
+    assert.ok(underdog > favorite, `underdog=${underdog} favorite=${favorite}`);
+  });
+
+  it('ranks a 5-2 over a 2-0 against the same peer', () => {
+    const open = jornadaTeamScore({ home: true, gf: 5, ga: 2, opp: 0.5, pos: 8, oppPos: 9 });
+    const sheet = jornadaTeamScore({ home: true, gf: 2, ga: 0, opp: 0.5, pos: 8, oppPos: 9 });
+    assert.ok(open > sheet, `5-2=${open} 2-0=${sheet}`);
+  });
+
+  it('ranks a win above a 0-0 draw', () => {
+    const win = jornadaTeamScore({ home: true, gf: 1, ga: 0, opp: 0.5, pos: 8, oppPos: 9 });
+    const draw = jornadaTeamScore({ home: true, gf: 0, ga: 0, opp: 0.5, pos: 8, oppPos: 9 });
+    assert.ok(win > draw);
+  });
+
+  it('puts Chivas 5-2 vs Tijuana over León and Tigres 2-0s on J5 priors', () => {
+    const chivas = jornadaTeamScore({
+      home: true,
+      gf: 5,
+      ga: 2,
+      opp: 0.5,
+      pos: 4,
+      oppPos: 6,
+    });
+    const leon = jornadaTeamScore({
+      home: true,
+      gf: 2,
+      ga: 0,
+      opp: 0.54,
+      pos: 8,
+      oppPos: 7,
+    });
+    const tigres = jornadaTeamScore({
+      home: true,
+      gf: 2,
+      ga: 0,
+      opp: 0.46,
+      pos: 15,
+      oppPos: 13,
+    });
+    assert.ok(chivas > leon, `Chivas=${chivas} León=${leon}`);
+    assert.ok(chivas > tigres, `Chivas=${chivas} Tigres=${tigres}`);
   });
 });
 

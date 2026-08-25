@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:acceso": "npx tsx --test src/lib/sports/accesoIndex.test.ts",
+    "test:acceso": "npx tsx --test src/lib/sports/accesoIndex.test.ts src/lib/sports/accesoRound.test.ts src/lib/sports/totwWhy.team.test.ts",
     "test:toma": "npx tsx --test src/lib/toma/episode.test.ts",
     "test:voice": "npx tsx --test src/lib/radio/voiceSchedule.test.ts",
     "process-logo": "node scripts/process-logo.mjs"

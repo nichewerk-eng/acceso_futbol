@@ -48,7 +48,7 @@ export {
   fetchLeaguesCupStandings,
 } from './sportmonks';
 export { getTotwBoard } from './totw';
-export type { TotwBoard, TotwPlayer } from './totw';
+export type { TotwBoard, TotwClub, TotwPlayer } from './totw';
 export { getClubBoard } from './clubBoard';
 export type { ClubBoard, ClubTableRow } from './clubBoard';
 export { liguillaPath, LIGUILLA_SPOTS, APERTURA_MATCHDAYS } from './liguillaPath';

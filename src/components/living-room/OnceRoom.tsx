@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { ClubLogo } from '@/components/brand/ClubLogo';
+import { ClubLink } from '@/components/club/ClubLink';
 import { OncePitch } from '@/components/living-room/OncePitch';
 import { useGravity } from '@/contexts/GravityContext';
 import { APERTURA_MATCHDAYS } from '@/lib/sports/liguillaPath';
 import { useTotw } from '@/lib/client/useTotw';
-import type { TotwPlayer, TotwBoard } from '@/lib/sports/totw';
+import type { TotwClub, TotwPlayer, TotwBoard } from '@/lib/sports/totw';
 
 function formatRating(n: number): string {
   return n.toFixed(2);
@@ -46,6 +48,98 @@ function RankRow({
       </span>
       <span className="once-rank-rating">{formatRating(p.rating)}</span>
     </button>
+  );
+}
+
+function EquipoJornada({
+  teams,
+  isMineAbbr,
+}: {
+  teams: TotwClub[];
+  isMineAbbr: (abbr: string) => boolean;
+}) {
+  const top = teams.slice(0, 5);
+  if (!top.length) return null;
+  const hero = top[0];
+  const picked =
+    hero.pickedWhy ?? `${hero.name} es el equipo de la jornada. ${hero.why}.`;
+
+  return (
+    <div className="once-eotw" data-testid="once-eotw">
+      <div className="once-eotw-head">
+        <div>
+          <p className="af-tele text-foreground">
+            <span className="text-signal">AF</span>
+            ://EQUIPO
+          </p>
+          <h3 className="once-eotw-title">Equipo de la jornada</h3>
+          <p className="once-eotw-picked" data-testid="once-eotw-picked">
+            {picked}
+          </p>
+        </div>
+        <p className="af-tele">acceso</p>
+      </div>
+
+      <div className="once-eotw-board">
+        <div className="once-eotw-tr is-head" role="row">
+          <span>#</span>
+          <span>Club</span>
+          <span>Resultado</span>
+          <span className="once-eotw-pos once-eotw-center">Pos</span>
+          <span className="once-eotw-end">Acceso</span>
+        </div>
+        {top.map((t) => {
+          const mine = isMineAbbr(t.abbr);
+          const first = t.rank === 1;
+          return (
+            <ClubLink
+              key={t.abbr}
+              abbr={t.abbr}
+              title={t.name}
+              className={[
+                'once-eotw-tr',
+                first ? 'is-1' : '',
+                mine ? 'is-mine' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              <span className="once-rank-n">{first ? '★' : t.rank}</span>
+              <span
+                className="once-eotw-club"
+                data-testid={first ? 'once-eotw-hero' : undefined}
+              >
+                <ClubLogo abbr={t.abbr} name={t.name} size="sm" />
+                <span className="once-eotw-club-copy">
+                  <span className="once-eotw-club-name">{t.name}</span>
+                  <span className="once-eotw-club-abbr">
+                    {t.abbr}
+                    {mine ? <span className="ml-2 af-tele !text-signal">LOCK</span> : null}
+                  </span>
+                </span>
+              </span>
+              <span className="once-eotw-result">
+                <span className={`once-eotw-wdl is-${t.result.toLowerCase()}`}>{t.result}</span>
+                <span>
+                  {t.gf}-{t.ga} {t.home ? 'vs' : '@'} {t.opponentAbbr}
+                </span>
+              </span>
+              <span
+                className="once-eotw-pos once-eotw-center once-eotw-num"
+                title={
+                  t.pos != null && t.opponentPos != null
+                    ? `${t.name} ${t.pos}° · ${t.opponentName || t.opponentAbbr} ${t.opponentPos}°`
+                    : undefined
+                }
+              >
+                {t.pos != null ? `${t.pos}°` : '—'}
+              </span>
+              <span className="once-rank-rating">{formatRating(t.score)}</span>
+            </ClubLink>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -180,6 +274,11 @@ export function OnceRoom({
               />
             ))}
           </div>
+
+          <EquipoJornada
+            teams={payload.teams ?? []}
+            isMineAbbr={isMineAbbr}
+          />
         </div>
       ) : null}
     </section>
