@@ -1,14 +1,19 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { useQuiniela } from '@/lib/client/useQuiniela';
-import type { Outcome, QuinielaBoard as Board, QuinielaMatch } from '@/lib/quiniela/types';
+import type {
+  LeaderRow,
+  Outcome,
+  QuinielaBoard as Board,
+  QuinielaMatch,
+  SeasonStandingRow,
+} from '@/lib/quiniela/types';
 
-function kickoffLabel(iso: string): string {
+function kickoffClock(iso: string): string {
   try {
     return new Intl.DateTimeFormat('es-MX', {
-      weekday: 'short',
       hour: 'numeric',
       minute: '2-digit',
       timeZone: 'America/Mexico_City',
@@ -18,12 +23,46 @@ function kickoffLabel(iso: string): string {
   }
 }
 
+function mexicoDayKey(iso: string): string {
+  try {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Mexico_City' }).format(
+      new Date(iso)
+    );
+  } catch {
+    return iso.slice(0, 10);
+  }
+}
+
+function dayHeading(iso: string): string {
+  try {
+    return new Intl.DateTimeFormat('es-MX', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'short',
+      timeZone: 'America/Mexico_City',
+    }).format(new Date(iso));
+  } catch {
+    return '';
+  }
+}
+
+function groupByDay(matches: QuinielaMatch[]): { key: string; label: string; items: QuinielaMatch[] }[] {
+  const groups: { key: string; label: string; items: QuinielaMatch[] }[] = [];
+  for (const m of matches) {
+    const key = mexicoDayKey(m.date);
+    const last = groups[groups.length - 1];
+    if (last && last.key === key) last.items.push(m);
+    else groups.push({ key, label: dayHeading(m.date), items: [m] });
+  }
+  return groups;
+}
+
 function metaLine(m: QuinielaMatch): string {
   const h = m.home.score ?? 0;
   const a = m.away.score ?? 0;
   if (m.state === 'post') return `Final · ${h}-${a}`;
   if (m.state === 'in') return `En vivo · ${h}-${a}`;
-  return kickoffLabel(m.date);
+  return kickoffClock(m.date);
 }
 
 function optClass(on: boolean, result: Outcome | null, o: Outcome): string {
@@ -110,6 +149,105 @@ function Row({
   );
 }
 
+function AccountStrip({
+  signedIn,
+  emailShown,
+  email,
+  setEmail,
+  requestMagicLink,
+  linkStatus,
+}: {
+  signedIn: boolean;
+  emailShown: string | undefined;
+  email: string;
+  setEmail: (v: string) => void;
+  requestMagicLink: (v: string) => Promise<void> | void;
+  linkStatus: 'idle' | 'sending' | 'sent' | 'error';
+}) {
+  if (signedIn) {
+    return (
+      <p className="q-acct-ok">
+        <span className="text-signal">✓</span> Ligada a {emailShown}
+      </p>
+    );
+  }
+  return (
+    <div className="q-acct">
+      <p className="q-acct-sum">¿Otro teléfono? Recupera tu racha</p>
+      <p className="q-acct-copy">
+        El mismo correo, un enlace, sin contraseña. Ábrelo en este dispositivo.
+      </p>
+      <form
+        className="q-acct-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void requestMagicLink(email);
+        }}
+      >
+        <input
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="tucorreo@ejemplo.com"
+          autoComplete="email"
+          aria-label="Tu correo"
+          className="q-name-input"
+        />
+        <button type="submit" className="af-cta af-cta-ghost" disabled={linkStatus === 'sending'}>
+          {linkStatus === 'sending' ? 'Enviando…' : 'Enviar enlace'}
+        </button>
+      </form>
+      {linkStatus === 'sent' ? (
+        <p className="q-acct-note">Enlace enviado. Ábrelo aquí · 15 min.</p>
+      ) : linkStatus === 'error' ? (
+        <p className="q-acct-note q-acct-err">No se pudo enviar. Intenta otra vez.</p>
+      ) : null}
+    </div>
+  );
+}
+
+function RankingTable({
+  kind,
+  rows,
+  meId,
+}: {
+  kind: 'jornada' | 'apertura';
+  rows: { userId: string; name: string; points: number; extra?: number }[];
+  meId: string;
+}) {
+  return (
+    <div className="lead-board q-rank">
+      <div className={['q-rank-head', kind === 'apertura' ? 'q-rank-head-4' : ''].filter(Boolean).join(' ')}>
+        <span>#</span>
+        <span>Nombre</span>
+        <span>{kind === 'apertura' ? 'Pts' : 'Aciertos'}</span>
+        {kind === 'apertura' ? <span>Jgs.</span> : null}
+      </div>
+      {rows.map((r, i) => (
+        <div
+          key={r.userId || `${r.name}-${i}`}
+          className={[
+            kind === 'apertura' ? 'q-lead-row q-lead-row-4' : 'q-lead-row',
+            i === 0 ? 'lead-row-top' : '',
+            meId && r.userId === meId ? 'q-lead-me' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          <span className="lead-rank">{i + 1}</span>
+          <span className="q-lead-name">
+            <span className="q-lead-name-text">{r.name}</span>
+            {meId && r.userId === meId ? <span className="q-you">tú</span> : null}
+          </span>
+          <span className="lead-val">{r.points}</span>
+          {kind === 'apertura' ? <span className="q-lead-extra">{r.extra ?? 0}</span> : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
   const q = useQuiniela(initial);
   const {
@@ -133,12 +271,14 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
     signedIn,
     requestMagicLink,
     linkStatus,
+    userId,
   } = q;
   const me = season?.me ?? null;
   const nameRef = useRef<HTMLInputElement>(null);
   const [needName, setNeedName] = useState(false);
   const [needCard, setNeedCard] = useState(false);
   const [email, setEmail] = useState('');
+  const [rankTab, setRankTab] = useState<'jornada' | 'apertura'>('jornada');
 
   useEffect(() => {
     if (named) setNeedName(false);
@@ -153,6 +293,8 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
     document.querySelector('.q-row-need')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [needCard, missingIds]);
 
+  const days = useMemo(() => (board ? groupByDay(board.matches) : []), [board]);
+
   if (!board) {
     return (
       <p className="mt-8 border border-line bg-bg-2 p-5 font-mono text-[12px] leading-6 text-muted">
@@ -162,12 +304,14 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
   }
 
   const closed = board.holding || (board.finals === board.total && board.total > 0);
+  const jornadaRows: LeaderRow[] = leaderboard?.rows.slice(0, 20) ?? [];
+  const aperturaRows: SeasonStandingRow[] = season?.top ?? [];
 
   return (
-    <div className="mt-8">
+    <div className="mt-6">
       <div className="q-headline">
         <label className="q-name">
-          <span className="af-tele text-muted">Tu nombre en la tabla</span>
+          <span className="af-tele text-muted">Tu nombre</span>
           <input
             ref={nameRef}
             id="q-name"
@@ -185,10 +329,10 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
           />
           {needName ? (
             <p id="q-name-alert" className="q-name-alert" role="alert">
-              Pon un nombre para guardar tu quiniela. No vale Anónimo.
+              Pon un nombre para guardar. No vale Anónimo.
             </p>
           ) : named ? null : (
-            <span className="q-name-hint">Obligatorio · no vale Anónimo.</span>
+            <span className="q-name-hint">Obligatorio · no Anónimo</span>
           )}
         </label>
         <div className="q-score">
@@ -196,30 +340,31 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
             {mine?.points ?? 0}
             <span className="q-score-of">/{board.total}</span>
           </span>
-          <span className="q-score-label">
-            {mine?.points ?? 0} {(mine?.points ?? 0) === 1 ? 'acierto' : 'aciertos'}
-            {' · '}
-            de {board.finals} {board.finals === 1 ? 'partido terminado' : 'partidos terminados'}
-          </span>
+          <span className="q-score-label">esta jornada</span>
           {me && me.participation >= 2 ? (
             <span className="q-streak" title={`Racha de ${me.participation} jornadas seguidas`}>
-              <span aria-hidden="true">🔥</span> {me.participation} seguidas
+              <span aria-hidden="true">🔥</span> {me.participation} jornadas
             </span>
           ) : null}
         </div>
       </div>
 
-      <ol className="q-list">
-        {board.matches.map((m) => (
-          <Row
-            key={m.id}
-            m={m}
-            pick={draft[m.id]}
-            onPick={setPick}
-            flag={needCard && missingIds.includes(m.id)}
-          />
-        ))}
-      </ol>
+      {days.map((g) => (
+        <div key={g.key} className="q-day">
+          <p className="q-day-label">{g.label}</p>
+          <ol className="q-list">
+            {g.items.map((m) => (
+              <Row
+                key={m.id}
+                m={m}
+                pick={draft[m.id]}
+                onPick={setPick}
+                flag={needCard && missingIds.includes(m.id)}
+              />
+            ))}
+          </ol>
+        </div>
+      ))}
 
       <div className="q-savebar">
         <button
@@ -259,195 +404,116 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
       {needCard ? (
         <p className="q-name-alert mt-3" role="alert">
           {missingCount === 1
-            ? 'Te falta 1 partido para guardar la quiniela.'
-            : `Llena todos los partidos abiertos. Te faltan ${missingCount}.`}
+            ? 'Te falta 1 partido para guardar.'
+            : `Te faltan ${missingCount} partidos abiertos.`}
         </p>
       ) : null}
 
-      <section className="mt-10 border-t border-line pt-6">
-        {signedIn ? (
-          <div>
-            <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted">
-              <span className="text-signal">✓</span> Tu racha se guarda como {account?.email}
+      <AccountStrip
+        signedIn={signedIn}
+        emailShown={account?.email}
+        email={email}
+        setEmail={setEmail}
+        requestMagicLink={requestMagicLink}
+        linkStatus={linkStatus}
+      />
+
+      <section className="q-standings">
+        <div className="q-tabs" role="tablist" aria-label="Clasificación">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={rankTab === 'jornada'}
+            className={['q-tab', rankTab === 'jornada' ? 'q-tab-on' : ''].filter(Boolean).join(' ')}
+            onClick={() => setRankTab('jornada')}
+          >
+            Esta jornada
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={rankTab === 'apertura'}
+            className={['q-tab', rankTab === 'apertura' ? 'q-tab-on' : ''].filter(Boolean).join(' ')}
+            onClick={() => setRankTab('apertura')}
+          >
+            Apertura
+          </button>
+        </div>
+
+        {rankTab === 'jornada' ? (
+          <div role="tabpanel">
+            <h2 className="q-stand-title">
+              {closed ? 'Quién ganó' : 'Quién va ganando'}
+            </h2>
+            <p className="q-stand-sub">
+              {board.holding
+                ? `${board.jornadaLabel} · solo estos partidos · se mantiene un día más`
+                : board.finals > 0
+                  ? `${board.jornadaLabel} · ${board.finals}/${board.total} cerrados · se reinicia la próxima`
+                  : `${board.jornadaLabel} · un punto por partido · se reinicia la próxima`}
             </p>
-            <p className="mt-2 max-w-md font-mono text-[12px] leading-6 text-muted">
-              En otro teléfono o computadora, entra con{' '}
-              <span className="text-foreground">este mismo correo</span> para ver aquí tu
-              racha y tu historial.
-            </p>
+            {jornadaRows.length ? (
+              <RankingTable kind="jornada" rows={jornadaRows} meId={userId} />
+            ) : (
+              <p className="q-empty">
+                {closed
+                  ? 'Nadie llenó esta jornada.'
+                  : 'Nadie ha llenado esta jornada. Sé el primero.'}
+              </p>
+            )}
           </div>
         ) : (
-          <div>
-            <p className="af-tele text-foreground">
-              <span className="text-signal">AF</span>
-              ://RACHA
+          <div role="tabpanel">
+            <h2 className="q-stand-title">Clasificación del Apertura</h2>
+            <p className="q-stand-sub">
+              Puntos acumulados · cada jornada cerrada suma aquí
             </p>
-            <p className="mt-2 max-w-md font-mono text-[12px] leading-6 text-muted">
-              Guarda tu racha, tus aciertos y tu historial de temporada para verlos en
-              cualquier teléfono o computadora, <span className="text-foreground">sin
-              contraseña</span>. Te mandamos un enlace por correo; ábrelo y tu progreso
-              queda ligado a tu cuenta.
-            </p>
-            <p className="mt-2 max-w-md font-mono text-[12px] leading-6 text-muted">
-              ¿Cambiaste de teléfono o borraste el navegador? Escribe el{' '}
-              <span className="text-foreground">mismo correo de antes</span> y te
-              reenviamos el enlace para <span className="text-foreground">recuperar</span>{' '}
-              tu racha en este dispositivo.
-            </p>
-            <form
-              className="mt-3 flex flex-wrap items-center gap-2"
-              onSubmit={(e) => {
-                e.preventDefault();
-                void requestMagicLink(email);
-              }}
-            >
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="tucorreo@ejemplo.com"
-                autoComplete="email"
-                aria-label="Tu correo"
-                className="q-name-input"
-              />
-              <button
-                type="submit"
-                className="af-cta af-cta-ghost"
-                disabled={linkStatus === 'sending'}
-              >
-                {linkStatus === 'sending' ? 'Enviando…' : 'Guardar o recuperar'}
-              </button>
-            </form>
-            {linkStatus === 'sent' ? (
-              <p className="mt-2 max-w-md font-mono text-[11px] leading-5 text-signal">
-                Te enviamos un enlace a {email}. Ábrelo{' '}
-                <span className="font-semibold">en este dispositivo</span> para guardar o
-                recuperar tu racha (vence en 15 min).
-              </p>
-            ) : linkStatus === 'error' ? (
-              <p className="mt-2 font-mono text-[11px] leading-5 text-signal">
-                No se pudo enviar. Revisa el correo e intenta otra vez.
-              </p>
-            ) : null}
-          </div>
-        )}
-      </section>
 
-      <section className="mt-12">
-        <p className="af-tele text-foreground">
-          <span className="text-signal">AF</span>
-          ://TABLA
-        </p>
-        <h2 className="mt-2 font-display text-2xl font-bold uppercase tracking-wide">
-          {closed ? 'Quién ganó' : 'Quién va ganando'}
-        </h2>
-        {board.holding ? (
-          <p className="q-lead-progress">Tabla final · se mantiene un día más</p>
-        ) : board.finals > 0 ? (
-          <p className="q-lead-progress">
-            {board.finals}/{board.total} cerrados
-          </p>
-        ) : null}
-        {leaderboard && leaderboard.rows.length ? (
-          <div className="lead-board mt-3">
-            {leaderboard.rows.slice(0, 20).map((r, i) => (
-              <div
-                key={r.userId}
-                className={['q-lead-row', i === 0 ? 'lead-row-top' : ''].filter(Boolean).join(' ')}
-              >
-                <span className="lead-rank">{i + 1}</span>
-                <span className="q-lead-name">{r.name}</span>
-                <span className="lead-val">{r.points}</span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="mt-3 border border-line bg-bg-2 p-4 font-mono text-[12px] leading-6 text-muted">
-            {closed
-              ? 'Nadie llenó la quiniela de esta jornada.'
-              : 'Sé el primero en llenar la quiniela de esta jornada.'}
-          </p>
-        )}
-      </section>
-
-      {season && season.entries > 0 ? (
-        <section className="mt-12">
-          <p className="af-tele text-foreground">
-            <span className="text-signal">AF</span>
-            ://TEMPORADA
-          </p>
-          <h2 className="mt-2 font-display text-2xl font-bold uppercase tracking-wide">
-            Tu temporada
-          </h2>
-          <p className="q-lead-progress">
-            Apertura 2026 · {season.entries} {season.entries === 1 ? 'quinielero' : 'quinieleros'}
-          </p>
-
-          {me ? (
-            <div className="q-cred">
-              <div className="q-cred-head">
-                <div className="q-cred-rank">
-                  <span className="q-cred-rank-num">#{me.rank}</span>
-                  <span className="q-cred-rank-of">de {me.entries}</span>
+            {me ? (
+              <div className="q-me">
+                <div className="q-me-stat">
+                  <span className="q-me-k">Lugar</span>
+                  <span className="q-me-v">#{me.rank}</span>
+                  <span className="q-me-s">de {me.entries}</span>
                 </div>
-                <div className="q-cred-hero">
-                  <span className="q-cred-hero-num">{me.points}</span>
-                  <span className="q-cred-hero-k">aciertos en la temporada</span>
+                <div className="q-me-stat">
+                  <span className="q-me-k">Puntos</span>
+                  <span className="q-me-v">{me.points}</span>
+                  <span className="q-me-s">en el Apertura</span>
                 </div>
-              </div>
-              <dl className="q-cred-grid">
-                <div className="q-cred-stat">
-                  <dt className="q-cred-k">Racha de jornadas</dt>
-                  <dd className="q-cred-v">
+                <div className="q-me-stat">
+                  <span className="q-me-k">Racha</span>
+                  <span className="q-me-v">
                     {me.participation >= 1 ? <span aria-hidden="true">🔥</span> : null}
                     {me.participation}
-                    <span className="q-cred-sub">mejor {me.bestParticipation}</span>
-                  </dd>
+                  </span>
+                  <span className="q-me-s">
+                    {me.jornadasPlayed} {me.jornadasPlayed === 1 ? 'jornada' : 'jornadas'}
+                  </span>
                 </div>
-                <div className="q-cred-stat">
-                  <dt className="q-cred-k">Jornadas jugadas</dt>
-                  <dd className="q-cred-v">{me.jornadasPlayed}</dd>
-                </div>
-                <div className="q-cred-stat">
-                  <dt className="q-cred-k">Mejor jornada</dt>
-                  <dd className="q-cred-v">{me.bestJornada}</dd>
-                </div>
-                <div className="q-cred-stat">
-                  <dt className="q-cred-k">Efectividad</dt>
-                  <dd className="q-cred-v">{me.winRate}%</dd>
-                </div>
-                <div className="q-cred-stat">
-                  <dt className="q-cred-k">Aciertos seguidos</dt>
-                  <dd className="q-cred-v">
-                    {me.accuracy}
-                    <span className="q-cred-sub">mejor {me.bestAccuracy}</span>
-                  </dd>
-                </div>
-              </dl>
-            </div>
-          ) : (
-            <p className="mt-3 border border-line bg-bg-2 p-4 font-mono text-[12px] leading-6 text-muted">
-              Juega esta jornada para empezar tu temporada y tu racha.
-            </p>
-          )}
+              </div>
+            ) : null}
 
-          {season.top.length ? (
-            <div className="lead-board mt-4">
-              {season.top.map((r, i) => (
-                <div
-                  key={`${r.name}-${i}`}
-                  className={['q-lead-row', i === 0 ? 'lead-row-top' : ''].filter(Boolean).join(' ')}
-                >
-                  <span className="lead-rank">{i + 1}</span>
-                  <span className="q-lead-name">{r.name}</span>
-                  <span className="lead-val">{r.points}</span>
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </section>
-      ) : null}
+            {aperturaRows.length ? (
+              <RankingTable
+                kind="apertura"
+                rows={aperturaRows.map((r) => ({
+                  userId: r.userId,
+                  name: r.name,
+                  points: r.points,
+                  extra: r.jornadasPlayed,
+                }))}
+                meId={userId}
+              />
+            ) : (
+              <p className="q-empty">
+                La del Apertura se actualiza cuando cierra cada jornada. La Jornada 6 es la
+                primera que cuenta.
+              </p>
+            )}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

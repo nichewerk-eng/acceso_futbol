@@ -45,12 +45,12 @@ const FAQ = [
   {
     question: '¿Necesito una cuenta?',
     answer:
-      'Para jugar no: escribe un nombre (no Anónimo) y tus elecciones se guardan en este dispositivo. Si quieres conservar tu racha y tu historial en cualquier teléfono o computadora, deja tu correo y te mandamos un enlace para guardarla, sin contraseña.',
+      'Para jugar no. Con un nombre alcanza en este teléfono. Para ver tu racha en otro dispositivo, deja el mismo correo y te mandamos un enlace.',
   },
   {
-    question: '¿Hasta cuándo se ve la tabla?',
+    question: '¿Hay dos tablas?',
     answer:
-      'La tabla de la jornada se queda un día completo después de que termina el último partido. Al día siguiente abre la quiniela de la siguiente jornada.',
+      'La tabla de esta jornada es solo esos partidos. La del Apertura suma todas las jornadas y se actualiza cuando cierra cada una. La de la jornada se queda un día después del último partido.',
   },
 ];
 
@@ -81,29 +81,25 @@ export default async function QuinielaPage() {
           <span className="text-signal">AF</span>
           ://QUINIELA
         </p>
-        <h1 className="mt-2 font-display text-3xl font-bold uppercase tracking-wide sm:text-4xl">
-          La Quiniela
-        </h1>
-        {board ? (
-          <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
-            {board.jornadaLabel}
-          </p>
-        ) : null}
-        <p className="mt-4 max-w-xl text-sm leading-6 text-muted">
-          En cada partido toca el equipo que crees que gana, o Empate. Si atinas, sumas un punto.
-          Llena <em>todos</em> los partidos que aún no arrancan y guarda <em>antes</em> del silbatazo:
-          después ya no se puede cambiar. Gratis, sin cuenta.
+        <div className="q-page-head">
+          <h1 className="font-display text-3xl font-bold uppercase tracking-wide sm:text-4xl">
+            La Quiniela
+          </h1>
+          {board ? <span className="q-jornada-chip">{board.jornadaLabel}</span> : null}
+        </div>
+        <p className="q-page-lead">
+          Toca al ganador o Empate. Un punto por acierto. Guarda antes del silbatazo.
         </p>
 
         <QuinielaBoard initial={board} />
 
-        <section className="mt-14">
-          <h2 className="font-display text-xl font-bold uppercase tracking-wide">Cómo funciona</h2>
-          <dl className="mt-4 space-y-4">
+        <section className="q-faq">
+          <h2>Cómo se juega</h2>
+          <dl>
             {FAQ.map((f) => (
-              <div key={f.question} className="border-l-2 border-line pl-4">
-                <dt className="font-display text-base font-semibold">{f.question}</dt>
-                <dd className="mt-1 font-mono text-[12px] leading-6 text-muted">{f.answer}</dd>
+              <div key={f.question}>
+                <dt>{f.question}</dt>
+                <dd>{f.answer}</dd>
               </div>
             ))}
           </dl>

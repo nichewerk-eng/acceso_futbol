@@ -316,6 +316,7 @@ export async function getSeasonView(userId: string | null, topN = 20): Promise<S
   const rows = await sortedStandings();
   if (rows.length === 0) return null;
   const top = rows.slice(0, topN).map((r) => ({
+    userId: r.userId,
     name: r.rec.name,
     points: r.rec.points,
     jornadasPlayed: r.rec.jornadasPlayed,

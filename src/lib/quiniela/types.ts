@@ -83,6 +83,7 @@ export interface SeasonMe {
 }
 
 export interface SeasonStandingRow {
+  userId: string;
   name: string;
   points: number;
   jornadasPlayed: number;
