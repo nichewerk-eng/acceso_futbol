@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { LeaguesCupMark } from '@/components/brand/LeaguesCupMark';
 import { LEAGUES_CUP_KNOCKOUT, type LcKnockoutSlot } from '@/config/leaguesCup2026';
@@ -108,8 +109,9 @@ function BracketMatch({
   const homeSet = isSet(slot.home);
   const awaySet = isSet(slot.away);
   const empty = !homeSet && !awaySet;
+  const href = homeSet && awaySet ? `/partido/leagues-cup/${slot.id}` : null;
 
-  return (
+  const article = (
     <article
       className={[
         'lc-br-match',
@@ -142,6 +144,13 @@ function BracketMatch({
         </>
       )}
     </article>
+  );
+
+  if (!href) return article;
+  return (
+    <Link href={href} className="lc-br-match-link">
+      {article}
+    </Link>
   );
 }
 

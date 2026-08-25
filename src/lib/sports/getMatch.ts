@@ -10,7 +10,7 @@ import { smTeamIdFromAbbr } from './ligaMxTeams';
 import { mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
 import { enrichMatchWithEspnCommentary } from './espnCommentary';
 import { FRESH, isNearKickoff, looksStillLive } from './freshness';
-import { applyLeaguesCupOfficial } from './leaguesCupBoard';
+import { applyLeaguesCupOfficial, officialLeaguesCupMatch, resolveLeaguesCupSmId } from './leaguesCupBoard';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
 import {
   fetchFixturesByDate,
@@ -35,15 +35,15 @@ type LeagueKey = 'liga-mx' | 'liga-mx-femenil' | 'mundial' | 'seleccion' | 'leag
 
 /** Shared with `/api/sports/match` + radio so both surfaces coalesce. */
 export function sportsMatchCacheKey(league: string, id: string) {
-  return `sports-match-v15-lc-board-${league}-${id}`;
+  return `sports-match-v16-lc-ko-${league}-${id}`;
 }
 
 export function sportsMatchTickCacheKey(league: string, id: string) {
-  return `sports-match-tick-v3-ht-clock-${league}-${id}`;
+  return `sports-match-tick-v4-lc-ko-${league}-${id}`;
 }
 
 export function sportsMatchContextoCacheKey(league: string, id: string) {
-  return `sports-match-contexto-v2-${league}-${id}`;
+  return `sports-match-contexto-v4-all-form-${league}-${id}`;
 }
 
 export type MatchContexto = {
@@ -332,9 +332,13 @@ async function fromEspn(league: LeagueKey, id: string): Promise<MatchSnapshot | 
 async function getMatchUncached(league: string, id: string): Promise<MatchSnapshot | null> {
   const key = normalizeLeague(league);
 
-  // Liga MX / Femenil / Leagues Cup: Sportmonks while the token is present.
+  if (key === 'leagues-cup') {
+    return getLeaguesCupMatch(id);
+  }
+
+  // Liga MX / Femenil: Sportmonks while the token is present.
   if (
-    (key === 'liga-mx' || key === 'liga-mx-femenil' || key === 'leagues-cup') &&
+    (key === 'liga-mx' || key === 'liga-mx-femenil') &&
     sportmonksEnabled()
   ) {
     try {
@@ -356,18 +360,8 @@ async function getMatchUncached(league: string, id: string): Promise<MatchSnapsh
       }
       if (sm) {
         // SM scores/lineups; Completa uses ESPN Spanish PBP (budgeted so live isn't stalled).
-        let enriched =
+        const enriched =
           key === 'liga-mx' ? await enrichMatchWithEspnCommentary(sm) : sm;
-        if (key === 'leagues-cup') {
-          const board = applyLeaguesCupOfficial(enriched);
-          enriched = {
-            ...enriched,
-            ...board,
-            // Keep snapshot extras; only override board fields (venue/date/sides).
-            home: { ...enriched.home, ...board.home },
-            away: { ...enriched.away, ...board.away },
-          };
-        }
         return attachDondeVer(enriched) as MatchSnapshot;
       }
       // Token present but fixture missing — do not serve ESPN match content.
@@ -377,8 +371,44 @@ async function getMatchUncached(league: string, id: string): Promise<MatchSnapsh
     }
   }
 
-  if (key === 'leagues-cup' || key === 'liga-mx-femenil') return null;
+  if (key === 'liga-mx-femenil') return null;
   return fromEspn(key, id);
+}
+
+function stampLeaguesCupOfficial(sm: MatchSnapshot): MatchSnapshot {
+  const board = applyLeaguesCupOfficial(sm);
+  return {
+    ...sm,
+    ...board,
+    home: { ...sm.home, ...board.home },
+    away: { ...sm.away, ...board.away },
+  };
+}
+
+async function getLeaguesCupMatch(id: string): Promise<MatchSnapshot | null> {
+  const official = officialLeaguesCupMatch(id);
+  if (!sportmonksEnabled()) {
+    return official ? (attachDondeVer(official) as MatchSnapshot) : null;
+  }
+
+  try {
+    const resolved = resolveLeaguesCupSmId(id);
+    const fixtureId = resolved ?? id;
+    let sm: MatchSnapshot | null = null;
+    if (looksLikeSmFixtureId(fixtureId)) {
+      sm = await fetchMatchSnapshot(fixtureId);
+    }
+    if (!sm && fixtureId !== id && looksLikeSmFixtureId(id)) {
+      sm = await fetchMatchSnapshot(id);
+    }
+    if (sm) {
+      return attachDondeVer(stampLeaguesCupOfficial(sm)) as MatchSnapshot;
+    }
+  } catch {
+    /* official board below */
+  }
+
+  return official ? (attachDondeVer(official) as MatchSnapshot) : null;
 }
 
 async function getMatchTickUncached(
@@ -386,8 +416,46 @@ async function getMatchTickUncached(
   id: string
 ): Promise<MatchSnapshot | null> {
   const key = normalizeLeague(league);
+  if (key === 'leagues-cup') {
+    const official = officialLeaguesCupMatch(id);
+    if (!sportmonksEnabled()) {
+      return official ? (attachDondeVer(official) as MatchSnapshot) : null;
+    }
+
+    try {
+      const resolved = resolveLeaguesCupSmId(id);
+      const fixtureId = resolved ?? id;
+      const dateLeagueIds = livingRoomLeagueIds();
+      const dated =
+        (await fixtureFromDateBoards(fixtureId, dateLeagueIds)) ??
+        (fixtureId !== id ? await fixtureFromDateBoards(id, dateLeagueIds) : null);
+
+      const datedIsQuietPre =
+        dated?.state === 'pre' &&
+        !isNearKickoff(dated.date, Date.now(), dated.state) &&
+        !looksStillLive(dated);
+
+      let sm = datedIsQuietPre
+        ? dated
+        : looksLikeSmFixtureId(fixtureId)
+          ? ((await fetchMatchTick(fixtureId)) ??
+            (fixtureId !== id && looksLikeSmFixtureId(id)
+              ? await fetchMatchTick(id)
+              : null) ??
+            dated)
+          : dated;
+      if (sm) {
+        sm = stampLeaguesCupOfficial(sm);
+        return attachDondeVer(sm) as MatchSnapshot;
+      }
+    } catch {
+      /* official board below */
+    }
+    return official ? (attachDondeVer(official) as MatchSnapshot) : null;
+  }
+
   if (
-    (key !== 'liga-mx' && key !== 'liga-mx-femenil' && key !== 'leagues-cup') ||
+    (key !== 'liga-mx' && key !== 'liga-mx-femenil') ||
     !sportmonksEnabled()
   ) {
     return getMatchUncached(league, id);
@@ -420,15 +488,6 @@ async function getMatchTickUncached(
         dated;
     if (!sm) return null;
 
-    if (key === 'leagues-cup') {
-      const board = applyLeaguesCupOfficial(sm);
-      sm = {
-        ...sm,
-        ...board,
-        home: { ...sm.home, ...board.home },
-        away: { ...sm.away, ...board.away },
-      };
-    }
     if (key === 'liga-mx' && sm.state === 'in') {
       sm = await enrichMatchWithEspnCommentary(sm, {
         budgetMs: FRESH.espnEnrichBudgetMs,
@@ -491,8 +550,8 @@ async function getMatchContextoUncached(
   if (!snap) return null;
   if (snap.home.id === 'home' || snap.away.id === 'away') return null;
   return fetchMatchContexto(
-    snap.home.id,
-    snap.away.id,
+    smTeamIdFromAbbr(snap.home.abbreviation) ?? snap.home.id,
+    smTeamIdFromAbbr(snap.away.abbreviation) ?? snap.away.id,
     snap.home.abbreviation,
     snap.away.abbreviation
   );

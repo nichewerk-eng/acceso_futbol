@@ -20,7 +20,7 @@ import {
   overlayLiveFixtures,
   sportmonksEnabled,
 } from './sportmonks';
-import type { Fixture, TeamRef } from './types';
+import type { Fixture, MatchSnapshot, TeamRef } from './types';
 
 function norm(abbr: string): string {
   const a = abbr.trim().toUpperCase();
@@ -102,22 +102,7 @@ function fixtureFromKick(kick: LcKick, sm?: Fixture): Fixture {
   };
 }
 
-function knockoutSide(
-  abbr: string | null,
-  label: string,
-  slotId: string,
-  side: 'h' | 'a'
-): TeamRef {
-  if (abbr) return teamFromAbbr(abbr);
-  return {
-    id: `${slotId}-${side}`,
-    name: label,
-    abbreviation: 'TBD',
-    score: null,
-  };
-}
-
-function knockoutFixture(slot: LcKnockoutSlot): Fixture {
+function knockoutFixture(slot: LcKnockoutSlot, sm?: Fixture): Fixture {
   const tz = slot.tz ?? 'America/New_York';
   const localTime = slot.localTime ?? '20:00';
   const date = slot.boardDate
@@ -125,6 +110,16 @@ function knockoutFixture(slot: LcKnockoutSlot): Fixture {
     : '2026-08-25T00:00:00.000Z';
   const sidesSet = Boolean(slot.home && slot.away);
   const scheduled = sidesSet && Boolean(slot.localTime && slot.boardDate);
+  const homeSm = slot.home && sm ? pickSide(sm, slot.home) : undefined;
+  const awaySm = slot.away && sm ? pickSide(sm, slot.away) : undefined;
+  let winnerSide: Fixture['winnerSide'] = null;
+  if (sm?.winnerSide && homeSm && awaySm) {
+    if (sm.winnerSide === 'home') {
+      winnerSide = homeSm.id === sm.home.id ? 'home' : 'away';
+    } else if (sm.winnerSide === 'away') {
+      winnerSide = awaySm.id === sm.away.id ? 'away' : 'home';
+    }
+  }
   return {
     id: slot.id,
     provider: 'sportmonks',
@@ -133,17 +128,94 @@ function knockoutFixture(slot: LcKnockoutSlot): Fixture {
     scheduleDay: slot.boardDate ?? undefined,
     venueTz: tz,
     jornada: slot.stage,
-    state: 'pre',
-    statusLabel: scheduled ? 'Programado' : sidesSet ? 'Por anunciar' : 'Por definir',
+    state: sm?.state ?? 'pre',
+    statusLabel: sm?.statusLabel ?? (scheduled ? 'Programado' : sidesSet ? 'Por anunciar' : 'Por definir'),
+    clock: sm?.clock,
     venue: slot.venueLabel,
     city: null,
-    home: knockoutSide(slot.home, slot.homeLabel, slot.id, 'h'),
-    away: knockoutSide(slot.away, slot.awayLabel, slot.id, 'a'),
+    winnerSide,
+    scorers: sm?.scorers,
+    home: knockoutSide(slot.home, slot.homeLabel, slot.id, 'h', homeSm),
+    away: knockoutSide(slot.away, slot.awayLabel, slot.id, 'a', awaySm),
     dondeVer: channelsFor({
       us: slot.us ?? ['apple-tv'],
       mx: slot.mx,
     }),
   };
+}
+
+function knockoutSide(
+  abbr: string | null,
+  label: string,
+  slotId: string,
+  side: 'h' | 'a',
+  sm?: TeamRef
+): TeamRef {
+  if (abbr) return teamFromAbbr(abbr, sm);
+  return {
+    id: `${slotId}-${side}`,
+    name: label,
+    abbreviation: 'TBD',
+    score: null,
+  };
+}
+
+function smForKnockout(
+  slot: LcKnockoutSlot,
+  byId: Map<string, Fixture>,
+  all: Fixture[]
+): Fixture | undefined {
+  if (slot.smId != null) {
+    const hit = byId.get(String(slot.smId));
+    if (hit) return hit;
+  }
+  if (!slot.home || !slot.away || !slot.boardDate) return undefined;
+  const dateIso = lcLocalToIso(
+    slot.boardDate,
+    slot.localTime ?? '20:00',
+    slot.tz ?? 'America/New_York'
+  );
+  const utcDay = new Date(dateIso).toISOString().slice(0, 10);
+  const wantH = norm(slot.home);
+  const wantA = norm(slot.away);
+  return all.find((f) => {
+    const h = norm(f.home.abbreviation);
+    const a = norm(f.away.abbreviation);
+    const sides = (h === wantH && a === wantA) || (h === wantA && a === wantH);
+    if (!sides) return false;
+    const fDay = f.date.slice(0, 10);
+    return fDay === slot.boardDate || fDay === utcDay;
+  });
+}
+
+function knockoutSlotFor(fixtureId: string): LcKnockoutSlot | undefined {
+  return (
+    LEAGUES_CUP_KNOCKOUT.find((s) => s.id === fixtureId) ??
+    LEAGUES_CUP_KNOCKOUT.find((s) => s.smId != null && String(s.smId) === fixtureId)
+  );
+}
+
+/** Sportmonks fixture id for a board URL (`lc-qf-1`) or a raw SM id. */
+export function resolveLeaguesCupSmId(id: string): string | null {
+  if (/^\d{6,}$/.test(id)) return id;
+  const slot = knockoutSlotFor(id);
+  return slot?.smId != null ? String(slot.smId) : null;
+}
+
+/** Official KO / Phase One snapshot — used when Sportmonks has no row yet. */
+export function officialLeaguesCupMatch(id: string): MatchSnapshot | null {
+  const slot = knockoutSlotFor(id);
+  if (slot) {
+    const f = knockoutFixture(slot);
+    return { ...f, events: [], comments: [] };
+  }
+  const kick = LEAGUES_CUP_PHASE_ONE.find((k) => String(k.smId) === id);
+  if (!kick) return null;
+  return { ...fixtureFromKick(kick), events: [], comments: [] };
+}
+
+function lcSidesSet(f: Fixture): boolean {
+  return f.home.abbreviation !== 'TBD' && f.away.abbreviation !== 'TBD';
 }
 
 /** Official board + Sportmonks live state/scores. */
@@ -152,7 +224,9 @@ export function buildLeaguesCupBoard(smFixtures: Fixture[]): Fixture[] {
   const phaseOne = LEAGUES_CUP_PHASE_ONE.map((kick) =>
     fixtureFromKick(kick, byId.get(String(kick.smId)))
   );
-  const knockout = LEAGUES_CUP_KNOCKOUT.map(knockoutFixture);
+  const knockout = LEAGUES_CUP_KNOCKOUT.map((slot) =>
+    knockoutFixture(slot, smForKnockout(slot, byId, smFixtures))
+  );
   return [...phaseOne, ...knockout].sort((a, b) => +new Date(a.date) - +new Date(b.date));
 }
 
@@ -215,7 +289,7 @@ export async function fetchLeaguesCupLiveBoard(): Promise<{
   const withDated = dated.length ? overlayLiveFixtures(raw, dated) : raw;
 
   const board = buildLeaguesCupBoard(withDated);
-  const playable = board.filter((f) => !f.id.startsWith('lc-'));
+  const playable = board.filter(lcSidesSet);
   const mayBeLive = playable.some(
     (f) => looksStillLive(f) || isNearKickoff(f.date, now, f.state)
   );
@@ -237,8 +311,10 @@ export async function fetchLeaguesCupLiveBoard(): Promise<{
 /** Overlay official venue / kickoff / sides onto a single Sportmonks match snapshot. */
 export function applyLeaguesCupOfficial(fixture: Fixture): Fixture {
   const kick = LEAGUES_CUP_PHASE_ONE.find((k) => String(k.smId) === fixture.id);
-  if (!kick) return fixture;
-  return fixtureFromKick(kick, fixture);
+  if (kick) return fixtureFromKick(kick, fixture);
+  const slot = knockoutSlotFor(fixture.id);
+  if (slot) return knockoutFixture(slot, fixture);
+  return fixture;
 }
 
 export function leaguesCupKnockoutSlots(): LcKnockoutSlot[] {

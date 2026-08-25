@@ -853,6 +853,16 @@ body {
   padding: 0.45rem 0.55rem 0.5rem;
 }
 
+a.lc-br-match-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+a.lc-br-match-link:hover .lc-br-match {
+  border-color: color-mix(in srgb, var(--signal) 40%, var(--line));
+}
+
 .lc-br-match-empty {
   max-width: 7.25rem;
   padding: 0.4rem 0.55rem;

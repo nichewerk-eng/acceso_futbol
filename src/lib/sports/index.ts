@@ -29,6 +29,7 @@ export {
   fetchMatchSnapshot,
   fetchMatchTick,
   fetchClubForm,
+  selectLatestFinished,
   ligaMxLeagueId,
   ligaMxSeasonId,
   ligaMxFemenilLeagueId,
@@ -59,6 +60,8 @@ export {
   fetchLeaguesCupLiveBoard,
   lcActiveDateKeys,
   leaguesCupKnockoutSlots,
+  officialLeaguesCupMatch,
+  resolveLeaguesCupSmId,
 } from './leaguesCupBoard';
 export {
   buildLeaguesCupStandingsFromFixtures,

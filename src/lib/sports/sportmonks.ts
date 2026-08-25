@@ -895,6 +895,63 @@ function isFinishedState(state?: { short_name?: string; state?: string; develope
   return matchStateFromBlob(blob) === 'post';
 }
 
+function formKickAtMs(startingAt?: string | null): number {
+  if (!startingAt) return 0;
+  const iso = startingAt.includes('T') ? startingAt : startingAt.replace(' ', 'T');
+  const t = +new Date(iso.endsWith('Z') ? iso : `${iso}Z`);
+  return Number.isFinite(t) ? t : 0;
+}
+
+/** Last N finished fixtures, every competition, newest first. */
+export function selectLatestFinished<T extends {
+  starting_at?: string | null;
+  state?: { short_name?: string; state?: string; developer_name?: string; name?: string };
+}>(latest: T[], limit: number): T[] {
+  return latest
+    .filter((f) => isFinishedState(f.state))
+    .sort((a, b) => formKickAtMs(b.starting_at) - formKickAtMs(a.starting_at))
+    .slice(0, limit);
+}
+
+/** Form row from this club's participant — not the fixture's listed home side. */
+export function formMatchFromLatest(
+  teamId: string,
+  f: {
+    id: string | number;
+    starting_at?: string | null;
+    participants?: SmParticipant[];
+    scores?: SmScore[];
+  }
+): FormMatch | null {
+  const parts = f.participants ?? [];
+  const mine = parts.find((p) => String(p.id) === String(teamId));
+  if (!mine) return null;
+  const opp = parts.find((p) => String(p.id) !== String(teamId));
+  const playedHome = participantSide(mine) === 'home';
+  const hs = Number(currentGoals(f.scores, 'home'));
+  const as = Number(currentGoals(f.scores, 'away'));
+  let result: FormResult = 'D';
+  if (Number.isFinite(hs) && Number.isFinite(as) && hs === as) {
+    result = 'D';
+  } else if (mine.meta?.winner === true) {
+    result = 'W';
+  } else if (mine.meta?.winner === false) {
+    result = 'L';
+  } else if (Number.isFinite(hs) && Number.isFinite(as)) {
+    result = (playedHome ? hs > as : as > hs) ? 'W' : 'L';
+  }
+  return {
+    id: String(f.id),
+    date: f.starting_at ? `${f.starting_at.replace(' ', 'T')}Z` : '',
+    opponentAbbr: scheduleAbbr(opp?.short_code ?? 'RIV'),
+    opponentName: opp?.name ?? 'Rival',
+    homeScore: currentGoals(f.scores, 'home'),
+    awayScore: currentGoals(f.scores, 'away'),
+    playedHome,
+    result,
+  };
+}
+
 function meetingFromSm(f: SmFixture): HeadToHeadMeeting | null {
   const parts = f.participants ?? [];
   const homeP = parts.find((p) => participantSide(p) === 'home') ?? parts[0];
@@ -983,16 +1040,15 @@ function recountH2hForPair(
   return { ...summary, homeWins, draws, awayWins, played: summary.meetings.length };
 }
 
-/** Last N finished matches for a club (Liga MX preferred). */
+/** Last N finished matches for a club, every competition. */
 export async function fetchClubForm(teamId: string, limit = 5): Promise<FormMatch[]> {
-  return singleFlight(`sm-team-form-v1-${teamId}`, FORM_TTL_MS, () =>
+  return singleFlight(`sm-team-form-v3-all-${teamId}`, FORM_TTL_MS, () =>
     fetchTeamForm(teamId, limit)
   );
 }
 
 async function fetchTeamForm(teamId: string, limit = 5): Promise<FormMatch[]> {
   try {
-    const leagueId = ligaMxLeagueId();
     const data = await smFetch<{ data?: { latest?: SmFixture[] } }>(
       `/teams/${teamId}`,
       {
@@ -1000,38 +1056,10 @@ async function fetchTeamForm(teamId: string, limit = 5): Promise<FormMatch[]> {
       },
       'catalog'
     );
-    const latest = data.data?.latest ?? [];
-    // Prefer Liga MX; fall back to any finished if SM omits league on latest.
-    const finished = latest
-      .filter((f) => isFinishedState(f.state))
-      .sort((a, b) => +new Date(b.starting_at ?? 0) - +new Date(a.starting_at ?? 0));
-    const ligaOnly = finished.filter((f) => f.league?.id === leagueId);
-    const pool = (ligaOnly.length > 0 ? ligaOnly : finished).slice(0, limit);
-
-    return pool.map((f) => {
-      const parts = f.participants ?? [];
-      const homeP = parts.find((p) => participantSide(p) === 'home') ?? parts[0];
-      const awayP = parts.find((p) => participantSide(p) === 'away') ?? parts[1];
-      const playedHome = String(homeP?.id) === teamId;
-      const hs = Number(currentGoals(f.scores, 'home'));
-      const as = Number(currentGoals(f.scores, 'away'));
-      let result: FormResult = 'D';
-      if (Number.isFinite(hs) && Number.isFinite(as) && hs !== as) {
-        const won = playedHome ? hs > as : as > hs;
-        result = won ? 'W' : 'L';
-      }
-      const opp = playedHome ? awayP : homeP;
-      return {
-        id: String(f.id),
-        date: f.starting_at ? `${f.starting_at.replace(' ', 'T')}Z` : '',
-        opponentAbbr: scheduleAbbr(opp?.short_code ?? 'RIV'),
-        opponentName: opp?.name ?? 'Rival',
-        homeScore: currentGoals(f.scores, 'home'),
-        awayScore: currentGoals(f.scores, 'away'),
-        playedHome,
-        result,
-      };
-    });
+    const pool = selectLatestFinished(data.data?.latest ?? [], limit);
+    return pool
+      .map((f) => formMatchFromLatest(teamId, f))
+      .filter((row): row is FormMatch => row != null);
   } catch {
     return [];
   }

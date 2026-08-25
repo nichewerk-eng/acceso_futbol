@@ -80,7 +80,7 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
         const d = (await res.json()) as { fixtures?: Fixture[] };
         const next = d.fixtures ?? [];
         setFixtures(next);
-        paceRef.current = paceFromFixtures(next.filter((f) => !f.id.startsWith('lc-')));
+        paceRef.current = paceFromFixtures(next);
       }
     } finally {
       if (!silent) setRefreshing(false);
@@ -872,7 +872,7 @@ function MatchRow({
   live?: boolean;
 }) {
   const href = `/partido/leagues-cup/${f.id}`;
-  const clickable = !f.id.startsWith('lc-');
+  const clickable = f.home.abbreviation !== 'TBD' && f.away.abbreviation !== 'TBD';
   const kickTime = fmtTime(f.date, tz);
   const hold = kickHoldLabel(kickHold(f.statusLabel));
   const whenPrimary =

@@ -1,4 +1,4 @@
-import { LEAGUES_CUP_PHASE_ONE } from '@/config/leaguesCup2026';
+import { LEAGUES_CUP_KNOCKOUT, LEAGUES_CUP_PHASE_ONE } from '@/config/leaguesCup2026';
 import { mexicoDayKey } from '@/lib/radio/phases';
 import { scheduleAbbr } from '@/lib/sports/ligaMxAbbr';
 import type { Fixture } from '@/lib/sports/types';
@@ -490,7 +490,7 @@ export function resolveDondeVer(
   return { ...UNCONFIRMED };
 }
 
-/** Official Leagues Cup TV grid by Sportmonks fixture id (Imagen / FS1 selects). */
+/** Official Leagues Cup TV grid by board id or Sportmonks fixture id. */
 function leaguesCupBoardDondeVer(fixtureId: string): {
   mx: string;
   us: string;
@@ -499,9 +499,23 @@ function leaguesCupBoardDondeVer(fixtureId: string): {
   confirmed: boolean;
 } | null {
   const kick = LEAGUES_CUP_PHASE_ONE.find((k) => String(k.smId) === fixtureId);
-  if (!kick) return null;
-  const us = kick.us;
-  const mx: TvChannelId[] = kick.mx ?? ['apple-tv'];
+  if (kick) {
+    const us = kick.us;
+    const mx: TvChannelId[] = kick.mx ?? ['apple-tv'];
+    return {
+      mx: labelList(mx),
+      us: labelList(us),
+      mxChannels: mx,
+      usChannels: us,
+      confirmed: true,
+    };
+  }
+  const slot =
+    LEAGUES_CUP_KNOCKOUT.find((s) => s.id === fixtureId) ??
+    LEAGUES_CUP_KNOCKOUT.find((s) => s.smId != null && String(s.smId) === fixtureId);
+  if (!slot) return null;
+  const us = slot.us ?? ['apple-tv'];
+  const mx: TvChannelId[] = slot.mx ?? ['apple-tv'];
   return {
     mx: labelList(mx),
     us: labelList(us),

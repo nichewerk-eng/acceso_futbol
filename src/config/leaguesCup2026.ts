@@ -34,6 +34,8 @@ export type LcKick = {
 
 export type LcKnockoutSlot = {
   id: string;
+  /** Sportmonks fixture id when the KO tie exists in their season dump. */
+  smId?: number;
   stage: 'Quarterfinals' | 'Semifinals' | 'Third Place Match' | 'Final';
   boardDate: string | null;
   boardDateLabel: string;
@@ -173,12 +175,13 @@ export const LEAGUES_CUP_PHASE_ONE: LcKick[] = [
 
 /**
  * Knockout tree — QF sides, venues, and kickoffs are official.
- * Sportmonks has no 2026 KO fixture ids yet.
+ * `smId` links to Sportmonks for live scores (QF 2026 ids are in the season dump).
  * SF: winner(LEO–RSL) vs winner(TOL–ATX) · winner(MTY–CHI) vs winner(AME–COL).
  */
 export const LEAGUES_CUP_KNOCKOUT: LcKnockoutSlot[] = [
   {
     id: 'lc-qf-1',
+    smId: 19868234,
     stage: 'Quarterfinals',
     boardDate: '2026-08-25',
     boardDateLabel: '25 ago',
@@ -195,6 +198,7 @@ export const LEAGUES_CUP_KNOCKOUT: LcKnockoutSlot[] = [
   },
   {
     id: 'lc-qf-2',
+    smId: 19868232,
     stage: 'Quarterfinals',
     boardDate: '2026-08-26',
     boardDateLabel: '26 ago',
@@ -212,6 +216,7 @@ export const LEAGUES_CUP_KNOCKOUT: LcKnockoutSlot[] = [
   },
   {
     id: 'lc-qf-3',
+    smId: 19868233,
     stage: 'Quarterfinals',
     boardDate: '2026-08-25',
     boardDateLabel: '25 ago',
@@ -228,6 +233,7 @@ export const LEAGUES_CUP_KNOCKOUT: LcKnockoutSlot[] = [
   },
   {
     id: 'lc-qf-4',
+    smId: 19868231,
     stage: 'Quarterfinals',
     boardDate: '2026-08-26',
     boardDateLabel: '26 ago',

@@ -617,7 +617,7 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
     };
 
     const loadContexto = () =>
-      fetch(`/api/sports/match/${league}/${id}/contexto`)
+      fetch(`/api/sports/match/${league}/${id}/contexto?v=all`)
         .then((r) => (r.ok ? r.json() : Promise.reject()))
         .then((d: NonNullable<typeof pendingCtx>) => applyContexto(d));
 
