@@ -73,6 +73,7 @@ function EquipoJornada({
             ://EQUIPO
           </p>
           <h3 className="once-eotw-title">Equipo de la jornada</h3>
+          <p className="once-eotw-kicker">Por qué es el 1</p>
           <p className="once-eotw-picked" data-testid="once-eotw-picked">
             {picked}
           </p>
