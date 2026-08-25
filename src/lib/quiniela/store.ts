@@ -1,4 +1,4 @@
-import { kvHdel, kvHgetall, kvHset, sharedKvEnabled } from '@/lib/sharedKv';
+import { kvDel, kvHdel, kvHgetall, kvHset, sharedKvEnabled } from '@/lib/sharedKv';
 import type { QuinielaPicks } from './types';
 
 /**
@@ -60,4 +60,17 @@ export async function delPicks(jornadaKey: string, userId: string): Promise<void
     return;
   }
   mem.get(jornadaKey)?.delete(userId);
+}
+
+/** Wipe every card for a jornada (ops reset). Returns how many were removed. */
+export async function clearPicks(jornadaKey: string): Promise<number> {
+  if (sharedKvEnabled()) {
+    const all = await kvHgetall(hashKey(jornadaKey));
+    const n = Object.keys(all).length;
+    if (n > 0) await kvDel(hashKey(jornadaKey));
+    return n;
+  }
+  const n = mem.get(jornadaKey)?.size ?? 0;
+  mem.delete(jornadaKey);
+  return n;
 }

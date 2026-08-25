@@ -97,10 +97,10 @@ describe('applyJornadaToRecord', () => {
 
 describe('rollupSeason + getSeasonView (memory fallback)', () => {
   const FIX: Fixture[] = [
-    fx('m1', 1, '2026-08-01T00:00:00Z', 2, 0), // result 1
-    fx('m2', 1, '2026-08-01T02:00:00Z', 1, 1), // result X
-    fx('m3', 2, '2026-08-08T00:00:00Z', 0, 1), // result 2
-    fx('m4', 2, '2026-08-08T02:00:00Z', 3, 1), // result 1
+    fx('m1', 6, '2026-08-28T00:00:00Z', 2, 0), // result 1
+    fx('m2', 6, '2026-08-28T02:00:00Z', 1, 1), // result X
+    fx('m3', 7, '2026-09-04T00:00:00Z', 0, 1), // result 2
+    fx('m4', 7, '2026-09-04T02:00:00Z', 3, 1), // result 1
   ];
 
   it('accrues season totals + streaks across sealed jornadas and is idempotent', async () => {
@@ -108,10 +108,10 @@ describe('rollupSeason + getSeasonView (memory fallback)', () => {
     const anaJ2: Record<string, Outcome> = { m3: '2', m4: '1' };
     const ben: Record<string, Outcome> = { m1: '2', m2: 'X' };
     const benJ2: Record<string, Outcome> = { m3: '1', m4: '1' };
-    await putPicks(jornadaKeyFor(1), { userId: 'ana00000', name: 'Ana', picks: ana, ts: 1 });
-    await putPicks(jornadaKeyFor(1), { userId: 'ben00000', name: 'Ben', picks: ben, ts: 1 });
-    await putPicks(jornadaKeyFor(2), { userId: 'ana00000', name: 'Ana', picks: anaJ2, ts: 1 });
-    await putPicks(jornadaKeyFor(2), { userId: 'ben00000', name: 'Ben', picks: benJ2, ts: 1 });
+    await putPicks(jornadaKeyFor(6), { userId: 'ana00000', name: 'Ana', picks: ana, ts: 1 });
+    await putPicks(jornadaKeyFor(6), { userId: 'ben00000', name: 'Ben', picks: ben, ts: 1 });
+    await putPicks(jornadaKeyFor(7), { userId: 'ana00000', name: 'Ana', picks: anaJ2, ts: 1 });
+    await putPicks(jornadaKeyFor(7), { userId: 'ben00000', name: 'Ben', picks: benJ2, ts: 1 });
 
     await rollupSeason(FIX);
 

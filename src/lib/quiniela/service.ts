@@ -3,7 +3,7 @@ import { fetchLigaMxFixtures } from '@/lib/sports/espnFallback';
 import { jornadaNumber } from '@/lib/sports/jornada';
 import type { Fixture } from '@/lib/sports/types';
 import { isOutcome, missingOpenPicks } from './card';
-import { pickQuinielaJornada, quinielaHoldActive } from './jornada';
+import { pickQuinielaJornada, quinielaHoldActive, QUINIELA_FROM } from './jornada';
 import { sanitizeName } from './name';
 import { delPicks, getPicks, listPicks, putPicks } from './store';
 import type {
@@ -17,6 +17,7 @@ import type {
 
 /** Bump when the torneo rolls so pick history / leaderboards don't collide. */
 export const QUINIELA_TORNEO = 'apertura-2026';
+export { QUINIELA_FROM };
 
 const OUTCOMES: readonly Outcome[] = ['1', 'X', '2'];
 
@@ -146,7 +147,7 @@ export function sealedJornadaNumbers(fixtures: Fixture[]): number[] {
   for (const [n, games] of byNum) {
     if (games.length > 0 && games.every((g) => g.state === 'post')) out.push(n);
   }
-  return out.sort((a, b) => a - b);
+  return out.filter((n) => n >= QUINIELA_FROM).sort((a, b) => a - b);
 }
 
 function scoreAgainst(

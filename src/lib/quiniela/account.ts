@@ -3,6 +3,7 @@ import {
   kvDel,
   kvGetJson,
   kvHget,
+  kvHgetall,
   kvHset,
   kvSetJson,
   kvSetNx,
@@ -129,6 +130,27 @@ export async function consumeMagicToken(token: string): Promise<MagicPayload | n
   memMagic.delete(token);
   if (m.exp < Date.now()) return null;
   return m.data;
+}
+
+/** Count accounts on file (ops preview). */
+export async function countAccounts(): Promise<number> {
+  if (!sharedKvEnabled()) return memId.size;
+  return Object.keys(await kvHgetall(BY_ID)).length;
+}
+
+/** Delete every account + email mapping (ops reset). Returns how many existed. */
+export async function resetAccounts(): Promise<number> {
+  const n = await countAccounts();
+  if (sharedKvEnabled()) {
+    await kvDel(BY_ID);
+    await kvDel(BY_EMAIL);
+  } else {
+    memId.clear();
+    memEmail.clear();
+    memMagic.clear();
+    memCooldown.clear();
+  }
+  return n;
 }
 
 /** True if a send is allowed now (per-email cooldown to throttle abuse). */

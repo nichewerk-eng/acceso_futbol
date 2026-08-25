@@ -5,6 +5,7 @@ import type { Fixture, MatchState } from '../sports/types';
 import {
   pickQuinielaJornada,
   quinielaHoldThroughDay,
+  QUINIELA_FROM,
 } from './jornada';
 
 function fx(
@@ -29,8 +30,10 @@ function fx(
 /** J5 last kickoff: Sunday 23 Aug 2026, 8pm Mexico. */
 const J5_LAST = '2026-08-23T20:00:00-05:00';
 const J5_EARLY = '2026-08-22T20:00:00-05:00';
-/** J6 first kickoff: Friday 28 Aug 2026, 8pm Mexico. */
+/** J6 first / last kickoff. */
 const J6_FIRST = '2026-08-28T20:00:00-05:00';
+const J6_LAST = '2026-08-30T21:00:00-05:00';
+const J7_FIRST = '2026-09-04T20:00:00-05:00';
 
 function j5(state: MatchState): Fixture[] {
   return [fx('j5-a', J5_EARLY, 5, state), fx('j5-b', J5_LAST, 5, state)];
@@ -47,34 +50,25 @@ describe('quinielaHoldThroughDay', () => {
 });
 
 describe('pickQuinielaJornada', () => {
-  it('stays on a sealed jornada the day after the last game', () => {
+  it('ignores jornadas before QUINIELA_FROM (soft reset at J6)', () => {
+    assert.equal(QUINIELA_FROM, 6);
     const mondayAfternoon = new Date('2026-08-24T16:53:00-06:00');
-    assert.equal(pickQuinielaJornada(slate('post'), mondayAfternoon), 5);
+    assert.equal(pickQuinielaJornada(slate('post'), mondayAfternoon), 6);
   });
 
-  it('rolls to the next jornada after that full day', () => {
+  it('rolls to the next jornada after the hold day', () => {
     const tuesdayMexico = new Date('2026-08-25T00:00:01-06:00');
     assert.equal(pickQuinielaJornada(slate('post'), tuesdayMexico), 6);
   });
 
-  it('does not roll while the last match is still live', () => {
+  it('does not stay on a live jornada below QUINIELA_FROM', () => {
     const sundayNight = new Date('2026-08-23T21:30:00-05:00');
     const games = [
       fx('j5-a', J5_EARLY, 5, 'post'),
       fx('j5-b', J5_LAST, 5, 'in'),
       fx('j6-a', J6_FIRST, 6, 'pre'),
     ];
-    assert.equal(pickQuinielaJornada(games, sundayNight), 5);
-  });
-
-  it('stays on an in-progress jornada with remaining games', () => {
-    const saturday = new Date('2026-08-22T21:00:00-05:00');
-    const games = [
-      fx('j5-a', J5_EARLY, 5, 'post'),
-      fx('j5-b', J5_LAST, 5, 'pre'),
-      fx('j6-a', J6_FIRST, 6, 'pre'),
-    ];
-    assert.equal(pickQuinielaJornada(games, saturday), 5);
+    assert.equal(pickQuinielaJornada(games, sundayNight), 6);
   });
 
   it('opens the next jornada on its match day even if a hold would overlap', () => {
@@ -82,14 +76,26 @@ describe('pickQuinielaJornada', () => {
     assert.equal(pickQuinielaJornada(slate('post'), friday), 6);
   });
 
-  it('holds Jornada 5 of the Apertura calendar through Monday 24 Aug', () => {
+  it('holds a sealed jornada (J6+) through the next Mexico day', () => {
+    const monday = new Date('2026-08-31T16:00:00-06:00');
+    const games = [
+      fx('j6-a', J6_FIRST, 6, 'post'),
+      fx('j6-b', J6_LAST, 6, 'post'),
+      fx('j7-a', J7_FIRST, 7, 'pre'),
+    ];
+    assert.equal(pickQuinielaJornada(games, monday), 6);
+    const tuesday = new Date('2026-09-01T00:00:01-06:00');
+    assert.equal(pickQuinielaJornada(games, tuesday), 7);
+  });
+
+  it('opens Jornada 6 of the Apertura calendar once J5 is ignored', () => {
     const monday = new Date('2026-08-24T16:53:00-06:00');
     const fixtures = seedLigaMxFixtures().map((f) => {
       const end = +new Date(f.date) + 2 * 3600_000;
       const state: MatchState = end <= +monday ? 'post' : 'pre';
       return { ...f, state };
     });
-    assert.equal(pickQuinielaJornada(fixtures, monday), 5);
+    assert.equal(pickQuinielaJornada(fixtures, monday), 6);
     const tuesday = new Date('2026-08-25T00:30:00-06:00');
     assert.equal(pickQuinielaJornada(fixtures, tuesday), 6);
   });

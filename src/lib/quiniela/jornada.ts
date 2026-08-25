@@ -2,6 +2,12 @@ import { isMexicoDay, mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
 import { jornadaNumber } from '@/lib/sports/jornada';
 import type { Fixture } from '@/lib/sports/types';
 
+/**
+ * Soft reset: ignore every jornada before this number. History through J5 was
+ * wiped (duplicate anon/account rows); season memory starts at Jornada 6.
+ */
+export const QUINIELA_FROM = 6;
+
 /** Same gate as the site jornada board: live, or pre with kickoff still ahead. */
 function stillOnBoard(f: Fixture, now: Date): boolean {
   if (f.state === 'in') return true;
@@ -57,7 +63,8 @@ export function pickQuinielaJornada(fixtures: Fixture[], now = new Date()): numb
   const byNum = groupByJornada(fixtures);
   if (byNum.size === 0) return null;
 
-  const nums = [...byNum.keys()].sort((a, b) => a - b);
+  const nums = [...byNum.keys()].filter((n) => n >= QUINIELA_FROM).sort((a, b) => a - b);
+  if (nums.length === 0) return null;
   const dayKey = mexicoDayKey(now);
 
   for (const n of nums) {

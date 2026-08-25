@@ -187,6 +187,25 @@ async function delRecord(userId: string): Promise<void> {
   await kvHdel(SEASON_HASH, userId);
 }
 
+export async function countSeasonRecords(): Promise<number> {
+  return (await getAllRecords()).size;
+}
+
+/** Wipe every season record + rolled set (ops reset). Accounts are left intact. */
+export async function resetSeason(): Promise<number> {
+  const n = await countSeasonRecords();
+  standingsCache = null;
+  rolledThroughThisIsolate = 0;
+  memSeason.clear();
+  memRolled.clear();
+  if (sharedKvEnabled()) {
+    await kvDel(SEASON_HASH);
+    await kvDel(ROLLED_KEY);
+    await kvDel(LOCK_KEY);
+  }
+  return n;
+}
+
 async function readRolled(): Promise<Set<number>> {
   if (!sharedKvEnabled()) return new Set(memRolled);
   const rec = await kvGetJson<number[]>(ROLLED_KEY);
