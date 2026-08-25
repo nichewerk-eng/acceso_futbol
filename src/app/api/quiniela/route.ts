@@ -1,20 +1,26 @@
 import { NextResponse } from 'next/server';
 import { getAccount } from '@/lib/quiniela/account';
+import { getSeasonView, rollupSeason } from '@/lib/quiniela/season';
 import {
+  boardFromFixtures,
   getLeaderboard,
-  getQuinielaBoard,
   sanitizeUserId,
   scoreUser,
 } from '@/lib/quiniela/service';
 import { getPicks } from '@/lib/quiniela/store';
+import { fetchLigaMxFixtures } from '@/lib/sports/espnFallback';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-/** Board + leaderboard (+ the caller's saved card when `?u=` is a valid id). */
+/** Board + leaderboard + season (+ the caller's card/account when `?u=` is valid). */
 export async function GET(req: Request) {
-  const board = await getQuinielaBoard();
+  const { fixtures } = await fetchLigaMxFixtures();
+  const board = boardFromFixtures(fixtures);
   if (!board) return NextResponse.json({ error: 'no_jornada' }, { status: 404 });
+
+  // Seal-time season rollup: cheap no-op unless a jornada just finished.
+  await rollupSeason(fixtures);
 
   const leaderboard = await getLeaderboard(board);
 
@@ -31,8 +37,10 @@ export async function GET(req: Request) {
     if (acc) account = { email: acc.email };
   }
 
+  const season = await getSeasonView(userId);
+
   return NextResponse.json(
-    { board, leaderboard, mine, account },
+    { board, leaderboard, mine, account, season },
     { headers: { 'Cache-Control': 'no-store' } }
   );
 }

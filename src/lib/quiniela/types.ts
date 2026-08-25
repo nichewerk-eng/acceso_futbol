@@ -60,3 +60,36 @@ export interface QuinielaLeaderboard {
   rows: LeaderRow[];
   entries: number;
 }
+
+/** The caller's cumulative season card (Phase 2 — season memory + rachas). */
+export interface SeasonMe {
+  /** 1-based position on the season tabla. */
+  rank: number;
+  entries: number;
+  /** Cumulative correct picks. */
+  points: number;
+  /** Cumulative graded picks. */
+  played: number;
+  jornadasPlayed: number;
+  bestJornada: number;
+  /** Correct / played, 0–100. */
+  winRate: number;
+  /** Consecutive jornadas played. */
+  participation: number;
+  bestParticipation: number;
+  /** Consecutive correct picks across matches. */
+  accuracy: number;
+  bestAccuracy: number;
+}
+
+export interface SeasonStandingRow {
+  name: string;
+  points: number;
+  jornadasPlayed: number;
+}
+
+export interface SeasonView {
+  me: SeasonMe | null;
+  top: SeasonStandingRow[];
+  entries: number;
+}

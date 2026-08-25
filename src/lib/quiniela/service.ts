@@ -5,7 +5,7 @@ import type { Fixture } from '@/lib/sports/types';
 import { isOutcome, missingOpenPicks } from './card';
 import { pickQuinielaJornada, quinielaHoldActive } from './jornada';
 import { sanitizeName } from './name';
-import { getPicks, listPicks, putPicks } from './store';
+import { delPicks, getPicks, listPicks, putPicks } from './store';
 import type {
   LeaderRow,
   Outcome,
@@ -100,6 +100,53 @@ export function boardFromFixtures(
 export async function getQuinielaBoard(now = new Date()): Promise<QuinielaBoard | null> {
   const { fixtures } = await fetchLigaMxFixtures();
   return boardFromFixtures(fixtures, now);
+}
+
+export interface JornadaResults {
+  n: number;
+  total: number;
+  /** Every fixture for the jornada has finished. */
+  sealed: boolean;
+  /** matchId → final outcome (graded matches only). */
+  resultById: Map<string, Outcome>;
+  /** All match ids for the jornada in kickoff order (chronological streaks). */
+  orderedIds: string[];
+}
+
+/** Results + kickoff order for a specific jornada number — the season-rollup input. */
+export function jornadaResults(fixtures: Fixture[], n: number): JornadaResults {
+  const round = fixtures
+    .filter((f) => jornadaNumber(f.jornada) === n)
+    .sort((a, b) => +new Date(a.date) - +new Date(b.date));
+  const resultById = new Map<string, Outcome>();
+  for (const f of round) {
+    const o = outcomeOf(f);
+    if (o) resultById.set(f.id, o);
+  }
+  return {
+    n,
+    total: round.length,
+    sealed: round.length > 0 && round.every((f) => f.state === 'post'),
+    resultById,
+    orderedIds: round.map((f) => f.id),
+  };
+}
+
+/** Jornada numbers whose every fixture has finished, ascending. */
+export function sealedJornadaNumbers(fixtures: Fixture[]): number[] {
+  const byNum = new Map<number, Fixture[]>();
+  for (const f of fixtures) {
+    const n = jornadaNumber(f.jornada);
+    if (n == null) continue;
+    const list = byNum.get(n) ?? [];
+    list.push(f);
+    byNum.set(n, list);
+  }
+  const out: number[] = [];
+  for (const [n, games] of byNum) {
+    if (games.length > 0 && games.every((g) => g.state === 'post')) out.push(n);
+  }
+  return out.sort((a, b) => a - b);
 }
 
 function scoreAgainst(
@@ -215,7 +262,8 @@ export async function submitPicks(input: {
 
 /**
  * One-time claim merge: copy the anon id's current-jornada card onto the account
- * id, but only if the account has no card yet (never clobber existing picks).
+ * id (only when the account has no card yet — never clobber existing picks), then
+ * **retire the anon entry** so the player isn't listed twice on the leaderboard.
  * Season/streak history accrues from the account going forward.
  */
 export async function mergePicks(fromUserId: string, toUserId: string): Promise<boolean> {
@@ -225,13 +273,17 @@ export async function mergePicks(fromUserId: string, toUserId: string): Promise<
   const from = await getPicks(board.jornadaKey, fromUserId);
   if (!from || Object.keys(from.picks).length === 0) return false;
   const to = await getPicks(board.jornadaKey, toUserId);
-  if (to && Object.keys(to.picks).length > 0) return false;
-  await putPicks(board.jornadaKey, {
-    userId: toUserId,
-    name: to?.name ?? from.name,
-    picks: from.picks,
-    ts: Date.now(),
-  });
+  const accountHasCard = Boolean(to && Object.keys(to.picks).length > 0);
+  if (!accountHasCard) {
+    await putPicks(board.jornadaKey, {
+      userId: toUserId,
+      name: to?.name ?? from.name,
+      picks: from.picks,
+      ts: Date.now(),
+    });
+  }
+  // Absorb the anon id: without this it lingers as a second leaderboard row.
+  await delPicks(board.jornadaKey, fromUserId);
   return true;
 }
 

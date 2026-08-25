@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { trackServer } from '@/lib/analytics/trackServer';
 import { consumeMagicToken } from '@/lib/quiniela/account';
+import { mergeSeasonRecord } from '@/lib/quiniela/season';
 import { mergePicks } from '@/lib/quiniela/service';
 
 export const runtime = 'nodejs';
@@ -21,7 +22,10 @@ export async function GET(req: Request) {
 
   if (payload.anonId) {
     try {
+      // Carry the current card + accrued season/streak onto the account so
+      // claiming never costs the player their racha.
       await mergePicks(payload.anonId, payload.accountId);
+      await mergeSeasonRecord(payload.anonId, payload.accountId);
     } catch {
       /* merge is best-effort; never block the claim */
     }

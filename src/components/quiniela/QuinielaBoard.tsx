@@ -129,10 +129,12 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
     cardFull,
     canSave,
     account,
+    season,
     signedIn,
     requestMagicLink,
     linkStatus,
   } = q;
+  const me = season?.me ?? null;
   const nameRef = useRef<HTMLInputElement>(null);
   const [needName, setNeedName] = useState(false);
   const [needCard, setNeedCard] = useState(false);
@@ -199,6 +201,11 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
             {' · '}
             de {board.finals} {board.finals === 1 ? 'partido terminado' : 'partidos terminados'}
           </span>
+          {me && me.participation >= 2 ? (
+            <span className="q-streak" title={`Racha de ${me.participation} jornadas seguidas`}>
+              <span aria-hidden="true">🔥</span> {me.participation} seguidas
+            </span>
+          ) : null}
         </div>
       </div>
 
@@ -259,9 +266,16 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
 
       <section className="mt-10 border-t border-line pt-6">
         {signedIn ? (
-          <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted">
-            <span className="text-signal">✓</span> Tu racha se guarda como {account?.email}
-          </p>
+          <div>
+            <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted">
+              <span className="text-signal">✓</span> Tu racha se guarda como {account?.email}
+            </p>
+            <p className="mt-2 max-w-md font-mono text-[12px] leading-6 text-muted">
+              En otro teléfono o computadora, entra con{' '}
+              <span className="text-foreground">este mismo correo</span> para ver aquí tu
+              racha y tu historial.
+            </p>
+          </div>
         ) : (
           <div>
             <p className="af-tele text-foreground">
@@ -269,8 +283,16 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
               ://RACHA
             </p>
             <p className="mt-2 max-w-md font-mono text-[12px] leading-6 text-muted">
-              ¿Quieres conservar tu racha y tu historial en cualquier dispositivo? Déjanos tu
-              correo y te mandamos un enlace para guardarla. Sin contraseña.
+              Guarda tu racha, tus aciertos y tu historial de temporada para verlos en
+              cualquier teléfono o computadora, <span className="text-foreground">sin
+              contraseña</span>. Te mandamos un enlace por correo; ábrelo y tu progreso
+              queda ligado a tu cuenta.
+            </p>
+            <p className="mt-2 max-w-md font-mono text-[12px] leading-6 text-muted">
+              ¿Cambiaste de teléfono o borraste el navegador? Escribe el{' '}
+              <span className="text-foreground">mismo correo de antes</span> y te
+              reenviamos el enlace para <span className="text-foreground">recuperar</span>{' '}
+              tu racha en este dispositivo.
             </p>
             <form
               className="mt-3 flex flex-wrap items-center gap-2"
@@ -294,12 +316,14 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
                 className="af-cta af-cta-ghost"
                 disabled={linkStatus === 'sending'}
               >
-                {linkStatus === 'sending' ? 'Enviando…' : 'Guardar mi racha'}
+                {linkStatus === 'sending' ? 'Enviando…' : 'Guardar o recuperar'}
               </button>
             </form>
             {linkStatus === 'sent' ? (
-              <p className="mt-2 font-mono text-[11px] leading-5 text-signal">
-                Te enviamos un enlace a {email}. Ábrelo para guardar tu racha.
+              <p className="mt-2 max-w-md font-mono text-[11px] leading-5 text-signal">
+                Te enviamos un enlace a {email}. Ábrelo{' '}
+                <span className="font-semibold">en este dispositivo</span> para guardar o
+                recuperar tu racha (vence en 15 min).
               </p>
             ) : linkStatus === 'error' ? (
               <p className="mt-2 font-mono text-[11px] leading-5 text-signal">
@@ -346,6 +370,84 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
           </p>
         )}
       </section>
+
+      {season && season.entries > 0 ? (
+        <section className="mt-12">
+          <p className="af-tele text-foreground">
+            <span className="text-signal">AF</span>
+            ://TEMPORADA
+          </p>
+          <h2 className="mt-2 font-display text-2xl font-bold uppercase tracking-wide">
+            Tu temporada
+          </h2>
+          <p className="q-lead-progress">
+            Apertura 2026 · {season.entries} {season.entries === 1 ? 'quinielero' : 'quinieleros'}
+          </p>
+
+          {me ? (
+            <div className="q-cred">
+              <div className="q-cred-head">
+                <div className="q-cred-rank">
+                  <span className="q-cred-rank-num">#{me.rank}</span>
+                  <span className="q-cred-rank-of">de {me.entries}</span>
+                </div>
+                <div className="q-cred-hero">
+                  <span className="q-cred-hero-num">{me.points}</span>
+                  <span className="q-cred-hero-k">aciertos en la temporada</span>
+                </div>
+              </div>
+              <dl className="q-cred-grid">
+                <div className="q-cred-stat">
+                  <dt className="q-cred-k">Racha de jornadas</dt>
+                  <dd className="q-cred-v">
+                    {me.participation >= 1 ? <span aria-hidden="true">🔥</span> : null}
+                    {me.participation}
+                    <span className="q-cred-sub">mejor {me.bestParticipation}</span>
+                  </dd>
+                </div>
+                <div className="q-cred-stat">
+                  <dt className="q-cred-k">Jornadas jugadas</dt>
+                  <dd className="q-cred-v">{me.jornadasPlayed}</dd>
+                </div>
+                <div className="q-cred-stat">
+                  <dt className="q-cred-k">Mejor jornada</dt>
+                  <dd className="q-cred-v">{me.bestJornada}</dd>
+                </div>
+                <div className="q-cred-stat">
+                  <dt className="q-cred-k">Efectividad</dt>
+                  <dd className="q-cred-v">{me.winRate}%</dd>
+                </div>
+                <div className="q-cred-stat">
+                  <dt className="q-cred-k">Aciertos seguidos</dt>
+                  <dd className="q-cred-v">
+                    {me.accuracy}
+                    <span className="q-cred-sub">mejor {me.bestAccuracy}</span>
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          ) : (
+            <p className="mt-3 border border-line bg-bg-2 p-4 font-mono text-[12px] leading-6 text-muted">
+              Juega esta jornada para empezar tu temporada y tu racha.
+            </p>
+          )}
+
+          {season.top.length ? (
+            <div className="lead-board mt-4">
+              {season.top.map((r, i) => (
+                <div
+                  key={`${r.name}-${i}`}
+                  className={['q-lead-row', i === 0 ? 'lead-row-top' : ''].filter(Boolean).join(' ')}
+                >
+                  <span className="lead-rank">{i + 1}</span>
+                  <span className="q-lead-name">{r.name}</span>
+                  <span className="lead-val">{r.points}</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
     </div>
   );
 }

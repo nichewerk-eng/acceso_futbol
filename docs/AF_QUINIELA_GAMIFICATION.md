@@ -147,6 +147,32 @@ jornada, current/best streak, win rate, badges (§7).
 **Scoring stays 1-point.** Season = sum of per-jornada points; streaks = derived. No
 change to `scoreAgainst`.
 
+**As shipped (2026-08-24):**
+- `src/lib/quiniela/season.ts` — rollup + streaks + season view + `mergeSeasonRecord`.
+  Storage **consolidated into one hash** `quiniela:season:{torneo}` (field = userId → `{ name,
+  points, played, jornadasPlayed, lastJornada, bestJornada, participation, bestParticipation,
+  accuracy, bestAccuracy }`) rather than a separate `streak:` key — one read gets the whole
+  credencial, fewer KV ops.
+- **Seal-time rollup** fires from `GET /api/quiniela` (route now fetches fixtures once and
+  shares them with `boardFromFixtures` + `rollupSeason`). Idempotent via three guards: a
+  per-isolate high-water mark (steady state does **zero** KV reads), a durable rolled-set
+  `quiniela:season-rolled:{torneo}`, and a short `quiniela:season-lock:{torneo}` mutex so
+  concurrent isolates can't double-count (R3). Jornadas roll up **ascending** so
+  participation/accuracy stay chronological. Helpers `jornadaResults` + `sealedJornadaNumbers`
+  added to `service.ts`.
+- **Streaks:** participation resets lazily (next play where `lastJornada !== n-1` → 1);
+  accuracy = consecutive correct picks across matches in kickoff order, carried across
+  jornadas. Both keep a `best`.
+- **Claim preserves the racha** — the verify route now also runs `mergeSeasonRecord(anonId →
+  accountId)` (copies only when the account has no season yet), so "guarda tu racha" is
+  honest even across the claim (R2). Anon players still accrue season under the anon id.
+- **UI:** a `🔥 N seguidas` chip in the headline + an `AF://TEMPORADA` credencial (rank,
+  season aciertos, racha + best, jornadas, mejor jornada, efectividad, aciertos seguidos) and
+  the season tabla. `season` added to the `GET /api/quiniela` payload, `useQuiniela`, and
+  `types.ts` (`SeasonView`/`SeasonMe`). Season standings read is cached ~45s per isolate.
+- Covered by `season.test.ts` (6 tests): `scoreCard`, streak math, rollup accrual +
+  idempotency, and the claim merge.
+
 ---
 
 ## 6. Re-engagement pushes (Phase 3 — the trigger)
@@ -200,12 +226,13 @@ the 1-point results + streaks:
 |-------|------|--------|
 | **0** | Instrument funnel — client events `Quiniela view` / `card start` / `name set` / `return` (`useQuiniela.ts`) + server `Quiniela save` (`api/quiniela/pick`) | **Shipped** |
 | **1** | Magic-link/email accounts (Resend) + anon→account merge | **Shipped** |
-| **2** | Season standing + rachas + credencial (seal-time rollup) | **Next** |
-| **3** | Re-engagement pushes bound to account id + new cron | Todo |
+| **2** | Season standing + rachas + credencial (seal-time rollup) | **Shipped** |
+| **3** | Re-engagement pushes bound to account id + new cron | **Next** |
 | **4** | Quiniela perfecta celebration + estampas + share cards | Todo |
 | **Future** | Grupos privados (friend pools) — see §10 | Deferred |
 
-Phase 0 shipped. Phase 1 mailer = **Resend** (see §4).
+Phases 0–2 shipped. Phase 1 mailer = **Resend** (see §4). Phase 2 = season memory +
+rachas + credencial, rolled up idempotently at seal time (see §5).
 
 ---
 
@@ -243,8 +270,8 @@ Retention = saves for J(n+1) among `Quiniela view` `returning:true` / prior save
 | # | Risk / decision | Note |
 |---|-----------------|------|
 | R1 | Email transport | **Resolved — Resend** (`RESEND_API_KEY`, `QUINIELA_MAIL_FROM`); dev fallback logs the link. |
-| R2 | Anon→account merge correctness | Merge per-jornada picks + recompute season on claim; add `jornada.test.ts`-style coverage. |
-| R3 | Seal-time rollup idempotency | Guard with a KV once-key per sealed jornada so cron/traffic can't double-count. |
+| R2 | Anon→account merge correctness | **Resolved** — verify route runs `mergePicks` + `mergeSeasonRecord` (copy only when the account is empty); covered by `season.test.ts`. |
+| R3 | Seal-time rollup idempotency | **Resolved** — durable rolled-set + `season-lock` mutex + per-isolate high-water mark; jornadas roll up ascending. |
 | R4 | Cost | Keep season/badges rollup **on seal**, not per request; pushes within `AF_DATA_KPIS.md` budget. |
 | R5 | "One board" rule (`AGENTS.md`) | Quiniela already derives from `fetchLigaMxFixtures`; any new live surface must too. |
 | R6 | Multi-account gaming | Acceptable while prize-free; revisit with sponsor prizes. |

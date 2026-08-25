@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { trackClient } from '@/lib/analytics/trackClient';
 import { missingOpenPicks } from '@/lib/quiniela/card';
 import { sanitizeName } from '@/lib/quiniela/name';
-import type { Outcome, QuinielaBoard, QuinielaLeaderboard } from '@/lib/quiniela/types';
+import type { Outcome, QuinielaBoard, QuinielaLeaderboard, SeasonView } from '@/lib/quiniela/types';
 
 const ID_KEY = 'af-quiniela-id';
 const NAME_KEY = 'af-quiniela-name';
@@ -47,6 +47,7 @@ export function useQuiniela(initialBoard: QuinielaBoard | null = null) {
   const [loading, setLoading] = useState(!initialBoard);
   const [saving, setSaving] = useState(false);
   const [account, setAccount] = useState<{ email: string } | null>(null);
+  const [season, setSeason] = useState<SeasonView | null>(null);
   const [linkStatus, setLinkStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const idRef = useRef<string>('');
   // Analytics guards — each keyed by the jornada it last fired for so a roll re-arms.
@@ -110,6 +111,7 @@ export function useQuiniela(initialBoard: QuinielaBoard | null = null) {
       leaderboard?: QuinielaLeaderboard;
       mine?: Mine | null;
       account?: { email: string } | null;
+      season?: SeasonView | null;
     }) => {
       if (data.board) setBoard(data.board);
       if (data.leaderboard) setLeaderboard(data.leaderboard);
@@ -120,6 +122,7 @@ export function useQuiniela(initialBoard: QuinielaBoard | null = null) {
         setDraft((d) => ({ ...data.mine!.picks, ...d }));
       }
       if ('account' in data) setAccount(data.account ?? null);
+      if ('season' in data) setSeason(data.season ?? null);
     },
     []
   );
@@ -278,6 +281,7 @@ export function useQuiniela(initialBoard: QuinielaBoard | null = null) {
       (dirtyIds.length > 0 || (nameDirty && Object.keys(saved).length > 0)),
     userId: idRef.current,
     account,
+    season,
     signedIn: Boolean(account?.email),
     requestMagicLink,
     linkStatus,

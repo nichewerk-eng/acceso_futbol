@@ -1,4 +1,4 @@
-import { kvHgetall, kvHset, sharedKvEnabled } from '@/lib/sharedKv';
+import { kvHdel, kvHgetall, kvHset, sharedKvEnabled } from '@/lib/sharedKv';
 import type { QuinielaPicks } from './types';
 
 /**
@@ -51,4 +51,13 @@ export async function getPicks(jornadaKey: string, userId: string): Promise<Quin
   } catch {
     return null;
   }
+}
+
+/** Remove one player's card from a jornada (used to retire an anon id on claim). */
+export async function delPicks(jornadaKey: string, userId: string): Promise<void> {
+  if (sharedKvEnabled()) {
+    await kvHdel(hashKey(jornadaKey), userId);
+    return;
+  }
+  mem.get(jornadaKey)?.delete(userId);
 }
