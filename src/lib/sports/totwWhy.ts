@@ -235,22 +235,60 @@ function fallbackWhy(d: PlayerDossier): string {
   return `${indexLine}.`;
 }
 
-export function fallbackTeamPickedWhy(t: TotwClub): string {
-  const score = `${t.gf}-${t.ga}`;
-  const vs = t.opponentName || t.opponentAbbr;
-  const venue = t.home ? `en casa contra ${vs}` : `de visita contra ${vs}`;
-  let result = `cerró ${score} ${venue}`;
-  if (t.result === 'W') result = `ganó ${score} ${venue}`;
-  else if (t.result === 'D') result = `empató ${score} ${venue}`;
-  else if (t.result === 'L') result = `perdió ${score} ${venue}`;
+function yJoin(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? '';
+  if (names.length === 2) return `${names[0]} y ${names[1]}`;
+  return `${names.slice(0, -1).join(', ')} y ${names[names.length - 1]}`;
+}
 
-  const extras: string[] = [];
-  if (t.result === 'W' && t.ga === 0) extras.push('portería en cero');
-  if (t.pos != null && t.opponentPos != null) {
-    extras.push(`${t.name} es ${t.pos}° y ${vs} es ${t.opponentPos}°`);
+export function fallbackTeamPickedWhy(t: TotwClub, others: TotwClub[] = []): string {
+  const vs = t.opponentName || t.opponentAbbr;
+  const score = `${t.gf}-${t.ga}`;
+  const where = t.home ? `en casa a` : `de visita a`;
+
+  let first = `${t.name} es el equipo de la jornada: `;
+  if (t.result === 'W' && t.gf >= 4) {
+    first += `goleó ${score} ${where} ${vs}.`;
+  } else if (t.result === 'W' && t.ga === 0 && !t.home) {
+    first += `ganó ${score} de visita a ${vs} y no le metieron.`;
+  } else if (t.result === 'W' && t.ga === 0) {
+    first += `ganó ${score} en casa a ${vs} y no le metieron.`;
+  } else if (t.result === 'W') {
+    first += `ganó ${score} ${where} ${vs}.`;
+  } else if (t.result === 'D') {
+    first += `empató ${score} ${t.home ? 'en casa con' : 'de visita con'} ${vs}.`;
+  } else {
+    first += `perdió ${score} ${t.home ? 'en casa con' : 'de visita con'} ${vs}.`;
   }
-  const extra = extras.length ? `, ${extras.join(', ')}` : '';
-  return `${t.name} es el equipo de la jornada: ${result}${extra}. Acceso ${t.score.toFixed(2)} premia el marcador, los goles y el rival.`;
+
+  const twoNilRows = others
+    .filter((row) => row.result === 'W' && row.ga === 0 && row.gf <= 2)
+    .slice(0, 2);
+  const twoNils = yJoin(twoNilRows.map((row) => row.name));
+  const twoNilVerb = twoNilRows.length === 1 ? 'ganó' : 'ganaron';
+  const twoNilScore =
+    twoNilRows.length > 0 && twoNilRows.every((row) => row.gf === twoNilRows[0]?.gf)
+      ? `${twoNilRows[0]?.gf}-0`
+      : 'sin recibir';
+
+  let second = '';
+  if (t.gf >= 4 && twoNils) {
+    second = `${t.gf} goles es lo más ruidoso de la fecha; ${twoNils} ${twoNilVerb} ${twoNilScore} y eso no alcanza.`;
+  } else if (t.gf >= 4) {
+    second = `${t.gf} goles es lo más ruidoso de la fecha, más que cualquier 2-0.`;
+  } else if (t.result === 'W' && t.ga === 0 && !t.home) {
+    second = `Tres puntos fuera, sin recibir, es el partido más limpio.`;
+  } else if (t.result === 'W' && t.pos != null && t.opponentPos != null && t.pos > t.opponentPos) {
+    second = `Lo hizo desde el ${t.pos}° ante el ${t.opponentPos}°.`;
+  } else if (t.result === 'W' && t.ga === 0) {
+    second = `Ganó y no le metieron.`;
+  } else if (t.result === 'W') {
+    second = `El marcador y el rival lo dejan arriba del resto.`;
+  } else {
+    second = `En esta fecha nadie tuvo una noche más clara.`;
+  }
+
+  return `${first} ${second}`;
 }
 
 function foldEs(raw: string): string {
@@ -266,94 +304,19 @@ export function teamWhyLooksWrong(text: string, t: TotwClub): boolean {
   if (/escal/.test(fold)) return true;
   if (/subio del/.test(fold) || /paso del/.test(fold) || /trep/.test(fold)) return true;
   if (/logaritm/.test(fold) || /residual/.test(fold) || /\bomega\b/.test(fold)) return true;
+  if (/modelo/.test(fold) || /retorno/.test(fold) || /validand/.test(fold)) return true;
+  if (/puntuacion/.test(fold) || /formula/.test(fold) || /sin necesidad/.test(fold)) return true;
+  if (/\bacceso\b/.test(fold) || /porteria en cero/.test(fold)) return true;
   if (/\d,\s*\d/.test(text)) return true;
   if (t.pos != null && t.opponentPos != null && t.pos < t.opponentPos) {
     const climb = new RegExp(`del\\s+${t.opponentPos}[^0-9]{0,12}${t.pos}`);
     if (climb.test(fold)) return true;
+    if (/mejor posicion/.test(fold)) return true;
   }
   const gap =
     t.pos != null && t.opponentPos != null ? Math.abs(t.pos - t.opponentPos) : 0;
   if (gap > 3 && /rival directo/.test(fold)) return true;
   return false;
-}
-
-function clampSentences(raw: string, n: number): string {
-  const parts = scrubWhy(raw)
-    .split(/(?<=[.!?])\s+/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-  return parts.slice(0, n).join(' ');
-}
-
-function clubChip(t: TotwClub) {
-  const vs = t.opponentName || t.opponentAbbr;
-  const verb =
-    t.result === 'W' ? 'ganó' : t.result === 'D' ? 'empató' : 'perdió';
-  return {
-    club: t.name,
-    acceso: Number(t.score.toFixed(2)),
-    partido: `${verb} ${t.gf}-${t.ga} ${t.home ? 'en casa' : 'de visita'} contra ${vs}`,
-    porteriaEnCero: t.ga === 0,
-    tablaDeEsteClub:
-      t.pos != null ? `${t.name} es ${t.pos}° en la tabla hoy. No subió de otra posición en este partido.` : null,
-    tablaDelRival:
-      t.opponentPos != null ? `${vs} es ${t.opponentPos}° en la tabla hoy.` : null,
-  };
-}
-
-function parseTeamWhy(raw: string): string | null {
-  const start = raw.indexOf('{');
-  const end = raw.lastIndexOf('}');
-  if (start < 0 || end < 0) return null;
-  try {
-    const json = JSON.parse(raw.slice(start, end + 1)) as { why?: string };
-    const why = json.why?.trim();
-    return why ? clampSentences(why, 2) : null;
-  } catch {
-    return null;
-  }
-}
-
-async function writeTeamWithAnthropic(
-  picked: TotwClub,
-  field: TotwClub[],
-  jornada: number | null
-): Promise<string | null> {
-  if (!anthropicEnabled()) return null;
-
-  const raw = await Promise.race([
-    anthropicChat({
-      system: `Eres editor de Acceso Futbol para el SITIO, no para VO.
-Acentos ON. Nunca uses em-dash (—). Punto o coma. Marcador con guion ASCII: 2-0, nunca "2, 0".
-Dos frases máximo, 45 palabras en total, tercera persona.
-Explica POR QUÉ este club es el equipo de la jornada Acceso (el #1).
-Acceso Ω paga el marcador contra lo esperado (tabla, PPG, localía) y los goles con retornos lentos. Un 5-2 puede ganar a un 2-0. La portería en cero NO gana sola.
-Habla como editor Acceso, no como paper. PROHIBIDO en la prosa: logarítmico, residual, Omega, Ω, We, tanh.
-
-tablaDeEsteClub y tablaDelRival son lugares ACTUALES, no un movimiento.
-PROHIBIDO: escalar, subir de X a Y, "del 12 al 2", "rival directo", inventar goles, xG u otros partidos.
-No hables de jugadores de la once. No digas "creo" ni "para mí".
-
-Responde SOLO JSON:
-{"why":"..."}`,
-      user: JSON.stringify({
-        kind: 'totw-team-why',
-        jornada,
-        picked: clubChip(picked),
-        field: field.slice(0, 4).map(clubChip),
-      }),
-      temperature: 0.2,
-      maxTokens: 220,
-    }),
-    new Promise<null>((resolve) => {
-      setTimeout(() => resolve(null), AI_WAIT_MS);
-    }),
-  ]);
-
-  if (!raw) return null;
-  const why = parseTeamWhy(raw);
-  if (!why || teamWhyLooksWrong(why, picked)) return null;
-  return why;
 }
 
 function scrubWhy(raw: string): string {
@@ -439,15 +402,10 @@ async function buildReasons(board: TotwBoard): Promise<WhyPack> {
   for (const d of dossiers) players[d.id] = fallbackWhy(d);
 
   const picked = board.teams[0] ?? null;
-  const teamFallback = picked ? fallbackTeamPickedWhy(picked) : undefined;
+  const rest = board.teams.slice(1);
+  const teamPicked = picked ? fallbackTeamPickedWhy(picked, rest) : undefined;
 
-  const [ai, teamAi] = await Promise.all([
-    writeWithAnthropic(dossiers),
-    picked
-      ? writeTeamWithAnthropic(picked, board.teams.slice(1), board.jornada)
-      : Promise.resolve(null),
-  ]);
-
+  const ai = await writeWithAnthropic(dossiers);
   if (ai) {
     for (const [id, why] of Object.entries(ai)) {
       if (why) players[id] = why;
@@ -456,7 +414,7 @@ async function buildReasons(board: TotwBoard): Promise<WhyPack> {
 
   return {
     players,
-    teamPicked: teamAi || teamFallback,
+    teamPicked,
   };
 }
 
@@ -482,7 +440,7 @@ function applyWhy(board: TotwBoard, pack: WhyPack): TotwBoard {
 /** Attach cached why-lines. Never fails the board. */
 export async function attachTotwWhy(board: TotwBoard): Promise<TotwBoard> {
   if (!board.published || board.players.length === 0) return board;
-  const key = `totw-why-v12-omega-${board.roundId ?? board.jornada ?? 'x'}`;
+  const key = `totw-why-v14-fan-${board.roundId ?? board.jornada ?? 'x'}`;
   try {
     const pack = await singleFlight(key, WHY_TTL_MS, () => buildReasons(board));
     return applyWhy(board, pack);
@@ -491,7 +449,7 @@ export async function attachTotwWhy(board: TotwBoard): Promise<TotwBoard> {
     if (!picked) return board;
     return applyWhy(board, {
       players: {},
-      teamPicked: fallbackTeamPickedWhy(picked),
+      teamPicked: fallbackTeamPickedWhy(picked, board.teams.slice(1)),
     });
   }
 }
