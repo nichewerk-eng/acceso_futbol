@@ -10,5 +10,8 @@ export async function POST(req: Request) {
   if (!geo) return new NextResponse(null, { status: 204 });
 
   await trackServer('City', { city: geo.city, country: geo.country });
-  return NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
+  return NextResponse.json(
+    { ok: true, city: geo.city, country: geo.country },
+    { headers: { 'Cache-Control': 'no-store' } },
+  );
 }
