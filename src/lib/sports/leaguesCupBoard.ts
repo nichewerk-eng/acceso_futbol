@@ -115,8 +115,20 @@ function knockoutFixture(slot: LcKnockoutSlot, sm?: Fixture, filled?: {
   const scheduled = sidesSet && Boolean(slot.localTime && slot.boardDate);
   const homeSm = slot.home && sm ? pickSide(sm, slot.home) : undefined;
   const awaySm = slot.away && sm ? pickSide(sm, slot.away) : undefined;
-  const home = knockoutSide(slot.home, slot.homeLabel, slot.id, 'h', homeSm ?? filled?.home);
-  const away = knockoutSide(slot.away, slot.awayLabel, slot.id, 'a', awaySm ?? filled?.away);
+  const home = knockoutSide(
+    slot.home,
+    slot.homeLabel,
+    slot.id,
+    'h',
+    homeSm ?? filled?.home ?? undefined
+  );
+  const away = knockoutSide(
+    slot.away,
+    slot.awayLabel,
+    slot.id,
+    'a',
+    awaySm ?? filled?.away ?? undefined
+  );
   let winnerSide: Fixture['winnerSide'] = null;
   if (sm?.winnerSide && homeSm && awaySm) {
     if (sm.winnerSide === 'home') {
