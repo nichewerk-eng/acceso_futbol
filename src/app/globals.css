@@ -912,6 +912,10 @@ a.lc-br-match-link:hover .lc-br-match {
   border-color: color-mix(in srgb, var(--signal) 40%, var(--line));
 }
 
+.lc-br-match-live {
+  border-color: var(--signal);
+}
+
 .lc-br-match-meta {
   margin: 0 0 0.35rem;
   font-family: var(--font-plex-mono), ui-monospace, monospace;
@@ -919,6 +923,12 @@ a.lc-br-match-link:hover .lc-br-match {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
+}
+
+.lc-br-match-live .lc-br-match-meta {
+  color: var(--signal);
+  display: flex;
+  align-items: center;
 }
 
 .lc-br-match-final .lc-br-match-meta {
@@ -981,6 +991,32 @@ a.lc-br-match-link:hover .lc-br-match {
   text-transform: uppercase;
   color: var(--muted);
   white-space: nowrap;
+}
+
+.lc-br-score {
+  margin: 0;
+  font-family: var(--font-oswald), sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.lc-br-side.is-win .lc-br-abbr,
+.lc-br-side.is-win .lc-br-score {
+  color: var(--signal);
+}
+
+.lc-br-side.is-lose {
+  opacity: 0.48;
+}
+
+.lc-br-side-gap {
+  display: block;
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
 }
 
 @media (max-width: 1023px) {

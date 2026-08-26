@@ -19,6 +19,7 @@ import { liveFetch } from '@/lib/client/liveFetch';
 import { startLivePoll } from '@/lib/client/livePoll';
 import { paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
 import { kickHold, kickHoldLabel } from '@/lib/sports/localizeEs';
+import { lcOnPartidosCalendar } from '@/lib/sports/leaguesCupBoard';
 import {
   buildLeaguesCupStandingsFromFixtures,
   LC_KO_SPOTS,
@@ -111,12 +112,7 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
       if (isKo) ko.push(f);
       else phase.push(f);
 
-      const onCalendar =
-        !isKo ||
-        f.statusLabel === 'Programado' ||
-        f.state === 'in' ||
-        f.state === 'post';
-      if (!onCalendar) continue;
+      if (!lcOnPartidosCalendar(f)) continue;
       if (f.state === 'in') liveRows.push(f);
       calendar.push(f);
     }
@@ -133,7 +129,7 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
     ): DayGroup[] => {
       const byDay = new Map<string, Fixture[]>();
       for (const f of rows) {
-        const day = dayKeyInTz(new Date(f.date), userTz);
+        const day = f.scheduleDay ?? dayKeyInTz(new Date(f.date), userTz);
         const list = byDay.get(day) ?? [];
         list.push(f);
         byDay.set(day, list);

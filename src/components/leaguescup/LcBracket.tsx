@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { LeaguesCupMark } from '@/components/brand/LeaguesCupMark';
 import { LEAGUES_CUP_KNOCKOUT, type LcKnockoutSlot } from '@/config/leaguesCup2026';
+import { lcKnockoutWinnerSide } from '@/lib/sports/leaguesCupBoard';
 import type { Fixture, TeamRef } from '@/lib/sports/types';
 
 type Tone = 'qf' | 'sf' | 'final' | 'third';
@@ -22,6 +23,15 @@ function isSet(abbr?: string | null) {
   return a !== 'TBD' && a !== 'TBC';
 }
 
+function metaFor(slot: LcKnockoutSlot, fixture?: Fixture): string {
+  if (fixture?.state === 'in') {
+    if (fixture.clock === 'HT' || /descanso/i.test(fixture.statusLabel || '')) return 'HT';
+    return fixture.clock || 'En vivo';
+  }
+  if (fixture?.state === 'post') return 'FT';
+  return slot.boardDateLabel;
+}
+
 export function LcBracket({
   fixtures,
   isMine,
@@ -31,6 +41,10 @@ export function LcBracket({
 }) {
   const fx = byId(fixtures);
   const slots = slotMap();
+  const live = fixtures.some((f) => f.state === 'in');
+  const advanced = fixtures.some(
+    (f) => f.id.startsWith('lc-sf') && (isSet(f.home.abbreviation) || isSet(f.away.abbreviation))
+  );
 
   const cell = (id: string, tone: Tone, area: string, align: 'left' | 'right' | 'center') => {
     const slot = slots.get(id);
@@ -87,7 +101,11 @@ export function LcBracket({
         </div>
       </div>
       <p className="lc-bracket-note">
-        Emparejamientos oficiales · sedes y horarios por anunciar
+        {live
+          ? 'Cuadro en vivo · se actualiza con el marcador'
+          : advanced
+            ? 'Ganadores avanzan al siguiente cruce · semis 1–2 sep · final 6 sep'
+            : 'Emparejamientos oficiales · sedes y horarios por anunciar'}
       </p>
     </div>
   );
@@ -106,10 +124,15 @@ function BracketMatch({
 }) {
   const home = fixture?.home;
   const away = fixture?.away;
-  const homeSet = isSet(slot.home);
-  const awaySet = isSet(slot.away);
+  const homeAbbr = home?.abbreviation ?? slot.home;
+  const awayAbbr = away?.abbreviation ?? slot.away;
+  const homeSet = isSet(homeAbbr);
+  const awaySet = isSet(awayAbbr);
   const empty = !homeSet && !awaySet;
   const href = homeSet && awaySet ? `/partido/leagues-cup/${slot.id}` : null;
+  const winner = fixture ? lcKnockoutWinnerSide(fixture) : null;
+  const showScore = fixture?.state === 'in' || fixture?.state === 'post';
+  const live = fixture?.state === 'in';
 
   const article = (
     <article
@@ -117,6 +140,7 @@ function BracketMatch({
         'lc-br-match',
         `lc-br-match-${tone}`,
         empty ? 'lc-br-match-empty' : '',
+        live ? 'lc-br-match-live' : '',
         mine ? 'lc-br-match-mine' : '',
       ]
         .filter(Boolean)
@@ -126,20 +150,29 @@ function BracketMatch({
       {empty && tone === 'final' ? (
         <LeaguesCupMark size="sm" surface="paper" className="lc-br-final-mark" />
       ) : null}
-      <p className="lc-br-match-meta">{slot.boardDateLabel}</p>
+      <p className="lc-br-match-meta">
+        {live ? <span className="hoy-live-dot mr-1.5" aria-hidden /> : null}
+        {metaFor(slot, fixture)}
+      </p>
       {empty ? null : (
         <>
           <BracketSide
             team={home}
-            abbr={slot.home}
-            label={slot.homeLabel}
-            seed={slot.homeSeed}
+            abbr={homeAbbr}
+            label={homeSet ? home?.name || slot.homeLabel : slot.homeLabel}
+            seed={!showScore ? slot.homeSeed : undefined}
+            score={showScore ? home?.score : null}
+            won={winner === 'home'}
+            lost={winner === 'away'}
           />
           <BracketSide
             team={away}
-            abbr={slot.away}
-            label={slot.awayLabel}
-            seed={slot.awaySeed}
+            abbr={awayAbbr}
+            label={awaySet ? away?.name || slot.awayLabel : slot.awayLabel}
+            seed={!showScore ? slot.awaySeed : undefined}
+            score={showScore ? away?.score : null}
+            won={winner === 'away'}
+            lost={winner === 'home'}
           />
         </>
       )}
@@ -159,28 +192,47 @@ function BracketSide({
   abbr,
   label,
   seed,
+  score,
+  won,
+  lost,
 }: {
   team?: TeamRef;
   abbr: string | null;
   label: string;
   seed?: string;
+  score?: string | null;
+  won?: boolean;
+  lost?: boolean;
 }) {
   const code = (abbr || team?.abbreviation || '').toUpperCase();
+  const tbd = !isSet(code);
   return (
-    <div className="lc-br-side">
-      <ClubLogo
-        abbr={code}
-        clubId={team?.id}
-        name={team?.name || label}
-        logoUrl={team?.logo}
-        size="xs"
-      />
+    <div
+      className={['lc-br-side', won ? 'is-win' : '', lost ? 'is-lose' : '', tbd ? 'is-tbd' : '']
+        .filter(Boolean)
+        .join(' ')}
+    >
+      {tbd ? (
+        <span className="lc-br-side-gap" aria-hidden />
+      ) : (
+        <ClubLogo
+          abbr={code}
+          clubId={team?.id}
+          name={team?.name || label}
+          logoUrl={team?.logo}
+          size="xs"
+        />
+      )}
       <div className="lc-br-side-copy">
         <div className="min-w-0">
-          <p className="lc-br-abbr">{code}</p>
-          <p className="lc-br-name">{team?.name || label}</p>
+          <p className={tbd ? 'lc-br-abbr lc-br-abbr-tbd' : 'lc-br-abbr'}>{tbd ? '—' : code}</p>
+          <p className="lc-br-name">{team?.name && !tbd ? team.name : label}</p>
         </div>
-        {seed ? <p className="lc-br-seed">{seed}</p> : null}
+        {score != null && score !== '' ? (
+          <p className="lc-br-score">{score}</p>
+        ) : seed ? (
+          <p className="lc-br-seed">{seed}</p>
+        ) : null}
       </div>
     </div>
   );

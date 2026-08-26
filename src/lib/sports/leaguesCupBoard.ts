@@ -102,7 +102,10 @@ function fixtureFromKick(kick: LcKick, sm?: Fixture): Fixture {
   };
 }
 
-function knockoutFixture(slot: LcKnockoutSlot, sm?: Fixture): Fixture {
+function knockoutFixture(slot: LcKnockoutSlot, sm?: Fixture, filled?: {
+  home?: TeamRef | null;
+  away?: TeamRef | null;
+}): Fixture {
   const tz = slot.tz ?? 'America/New_York';
   const localTime = slot.localTime ?? '20:00';
   const date = slot.boardDate
@@ -112,6 +115,8 @@ function knockoutFixture(slot: LcKnockoutSlot, sm?: Fixture): Fixture {
   const scheduled = sidesSet && Boolean(slot.localTime && slot.boardDate);
   const homeSm = slot.home && sm ? pickSide(sm, slot.home) : undefined;
   const awaySm = slot.away && sm ? pickSide(sm, slot.away) : undefined;
+  const home = knockoutSide(slot.home, slot.homeLabel, slot.id, 'h', homeSm ?? filled?.home);
+  const away = knockoutSide(slot.away, slot.awayLabel, slot.id, 'a', awaySm ?? filled?.away);
   let winnerSide: Fixture['winnerSide'] = null;
   if (sm?.winnerSide && homeSm && awaySm) {
     if (sm.winnerSide === 'home') {
@@ -119,6 +124,9 @@ function knockoutFixture(slot: LcKnockoutSlot, sm?: Fixture): Fixture {
     } else if (sm.winnerSide === 'away') {
       winnerSide = awaySm.id === sm.away.id ? 'away' : 'home';
     }
+  }
+  if (!winnerSide) {
+    winnerSide = winnerFromScores(home.score, away.score, sm?.state ?? 'pre');
   }
   return {
     id: slot.id,
@@ -135,8 +143,8 @@ function knockoutFixture(slot: LcKnockoutSlot, sm?: Fixture): Fixture {
     city: null,
     winnerSide,
     scorers: sm?.scorers,
-    home: knockoutSide(slot.home, slot.homeLabel, slot.id, 'h', homeSm),
-    away: knockoutSide(slot.away, slot.awayLabel, slot.id, 'a', awaySm),
+    home,
+    away,
     dondeVer: channelsFor({
       us: slot.us ?? ['apple-tv'],
       mx: slot.mx,
@@ -214,8 +222,111 @@ export function officialLeaguesCupMatch(id: string): MatchSnapshot | null {
   return { ...fixtureFromKick(kick), events: [], comments: [] };
 }
 
+function lcAbbrSet(abbr?: string | null): boolean {
+  if (!abbr) return false;
+  const a = abbr.toUpperCase();
+  return a !== 'TBD' && a !== 'TBC';
+}
+
 function lcSidesSet(f: Fixture): boolean {
-  return f.home.abbreviation !== 'TBD' && f.away.abbreviation !== 'TBD';
+  return lcAbbrSet(f.home.abbreviation) && lcAbbrSet(f.away.abbreviation);
+}
+
+function winnerFromScores(
+  homeScore: string | null | undefined,
+  awayScore: string | null | undefined,
+  state: Fixture['state']
+): 'home' | 'away' | null {
+  if (state !== 'post') return null;
+  const hs = Number(homeScore);
+  const as = Number(awayScore);
+  if (!Number.isFinite(hs) || !Number.isFinite(as) || hs === as) return null;
+  return hs > as ? 'home' : 'away';
+}
+
+/** Decided knockout side once the match is finished (incl. penalties via winnerSide). */
+export function lcKnockoutWinnerSide(f: Fixture): 'home' | 'away' | null {
+  if (f.state !== 'post') return null;
+  if (f.winnerSide === 'home' || f.winnerSide === 'away') return f.winnerSide;
+  return winnerFromScores(f.home.score, f.away.score, f.state);
+}
+
+function clubWithoutScore(t: TeamRef): TeamRef {
+  return {
+    id: t.id,
+    name: t.name,
+    abbreviation: t.abbreviation,
+    logo: t.logo,
+    score: null,
+  };
+}
+
+function pickAdvance(f: Fixture, which: 'winner' | 'loser'): TeamRef | null {
+  const side = lcKnockoutWinnerSide(f);
+  if (!side) return null;
+  const winner = side === 'home' ? f.home : f.away;
+  const loser = side === 'home' ? f.away : f.home;
+  const club = which === 'winner' ? winner : loser;
+  if (!lcAbbrSet(club.abbreviation)) return null;
+  return clubWithoutScore(club);
+}
+
+function fillKnockoutSlot(
+  slot: LcKnockoutSlot,
+  resolved: Map<string, Fixture>
+): { slot: LcKnockoutSlot; home?: TeamRef | null; away?: TeamRef | null } {
+  if (!slot.feedsFrom) return { slot };
+  const which = slot.stage === 'Third Place Match' ? 'loser' : 'winner';
+  const homeSrc = resolved.get(slot.feedsFrom[0]);
+  const awaySrc = resolved.get(slot.feedsFrom[1]);
+  const home = homeSrc ? pickAdvance(homeSrc, which) : null;
+  const away = awaySrc ? pickAdvance(awaySrc, which) : null;
+  if (!home && !away) return { slot };
+  return {
+    slot: {
+      ...slot,
+      home: home?.abbreviation ?? slot.home,
+      away: away?.abbreviation ?? slot.away,
+      homeLabel: home?.name ?? slot.homeLabel,
+      awayLabel: away?.name ?? slot.awayLabel,
+    },
+    home,
+    away,
+  };
+}
+
+function buildKnockoutTree(smFixtures: Fixture[]): Fixture[] {
+  const byId = new Map(smFixtures.map((f) => [f.id, f]));
+  const resolved = new Map<string, Fixture>();
+  for (const raw of LEAGUES_CUP_KNOCKOUT) {
+    const { slot, home, away } = fillKnockoutSlot(raw, resolved);
+    resolved.set(
+      slot.id,
+      knockoutFixture(slot, smForKnockout(slot, byId, smFixtures), { home, away })
+    );
+  }
+  return [...resolved.values()];
+}
+
+function isLeaguesCupKnockout(f: Fixture): boolean {
+  return (
+    f.id.startsWith('lc-') ||
+    Boolean(f.jornada && /final|semifinal|quarter|third|tercer/i.test(f.jornada))
+  );
+}
+
+/**
+ * Knockout TBD slots stay on the bracket only.
+ * Named QF/SF ties belong on Partidos even when Sportmonks labels them
+ * "Próximo" instead of the official "Programado".
+ */
+export function lcOnPartidosCalendar(f: Fixture): boolean {
+  if (!isLeaguesCupKnockout(f)) return true;
+  if (!lcSidesSet(f)) return false;
+  if (f.state === 'pre' && /por anunciar|por definir/i.test(f.statusLabel || '')) {
+    return false;
+  }
+  return true;
 }
 
 /** Official board + Sportmonks live state/scores. */
@@ -224,9 +335,7 @@ export function buildLeaguesCupBoard(smFixtures: Fixture[]): Fixture[] {
   const phaseOne = LEAGUES_CUP_PHASE_ONE.map((kick) =>
     fixtureFromKick(kick, byId.get(String(kick.smId)))
   );
-  const knockout = LEAGUES_CUP_KNOCKOUT.map((slot) =>
-    knockoutFixture(slot, smForKnockout(slot, byId, smFixtures))
-  );
+  const knockout = buildKnockoutTree(smFixtures);
   return [...phaseOne, ...knockout].sort((a, b) => +new Date(a.date) - +new Date(b.date));
 }
 

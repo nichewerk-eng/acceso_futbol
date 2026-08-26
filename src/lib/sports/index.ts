@@ -59,6 +59,8 @@ export {
   buildLeaguesCupBoard,
   fetchLeaguesCupLiveBoard,
   lcActiveDateKeys,
+  lcKnockoutWinnerSide,
+  lcOnPartidosCalendar,
   leaguesCupKnockoutSlots,
   officialLeaguesCupMatch,
   resolveLeaguesCupSmId,
