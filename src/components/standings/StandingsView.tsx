@@ -9,6 +9,7 @@ import BracketSimulator from './BracketSimulator';
 import { downloadGroupImage, downloadGroupImageWithPhoto } from './generateImage';
 import { teamNameEs } from './teamNames';
 import { startLivePoll } from '@/lib/client/livePoll';
+import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
 import { FRESH } from '@/lib/sports/freshness';
 import type { Fixture, Group } from './types';
 
@@ -68,13 +69,11 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
   const [refreshing, setRefreshing]       = useState(false);
   const [copied, setCopied]               = useState(false);
   const [downloading, setDownloading]     = useState(false);
-  const [userTz, setUserTz]               = useState('America/Mexico_City');
+  const userTz = useDeviceTimeZone();
   const [bgPhotoUrl, setBgPhotoUrl]       = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (tz) setUserTz(tz);
     const saved = localStorage.getItem('af-theme');
     if (saved === 'light' || saved === 'dark') setTheme(saved);
   }, []);

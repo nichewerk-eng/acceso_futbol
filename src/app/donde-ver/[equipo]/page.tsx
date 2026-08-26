@@ -7,6 +7,7 @@ import { DondeVerAir } from '@/components/living-room/DondeVerAir';
 import { DondeVerTeamsNav } from '@/components/living-room/DondeVerTeamsNav';
 import { PulseNav } from '@/components/living-room/PulseNav';
 import { JsonLd } from '@/components/seo/JsonLd';
+import { LocalKickoff } from '@/components/time/LocalKickoff';
 import { LIGA_MX_CLUBS } from '@/config/clubs';
 import { clubIdentityFromAbbr, getClubIdentity } from '@/config/clubIdentity';
 import {
@@ -92,7 +93,7 @@ function MatchRow({ f }: { f: Fixture }) {
           ) : post ? (
             'FT'
           ) : (
-            kickoffLabelMx(f.date)
+            <LocalKickoff iso={f.date} variant="long" />
           )}
         </p>
       </div>
@@ -176,7 +177,7 @@ export default async function DondeVerTeamPage({ params }: PageParams) {
         </h1>
         <p className="mt-3 max-w-2xl font-mono text-[12px] leading-6 text-muted">
           Canal y horario del próximo partido de {club.name} en la Liga MX, en México y Estados
-          Unidos. Horarios en hora del centro de México.
+          Unidos. Horario en la zona de tu dispositivo.
         </p>
 
         {next && nextOpp ? (
@@ -206,7 +207,7 @@ export default async function DondeVerTeamPage({ params }: PageParams) {
               </span>
             </div>
             <p className="mt-1 text-center font-mono text-[12px] uppercase tracking-wide text-muted">
-              {nextLive ? next.clock || 'EN VIVO' : kickoffLabelMx(next.date)}
+              {nextLive ? next.clock || 'EN VIVO' : <LocalKickoff iso={next.date} variant="long" />}
               {next.venue ? ` · ${next.venue}` : ''}
             </p>
             <div className="mt-4 flex justify-center">

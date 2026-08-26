@@ -2,19 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import type { ClubPulseItem, ClubPulsePayload } from '@/lib/news/clubPulse';
+import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
+import { formatKickoffLong } from '@/lib/localTime';
 
-function when(iso: string | null) {
+function when(iso: string | null, tz: string) {
   if (!iso) return '';
-  try {
-    return new Date(iso).toLocaleString('es-MX', {
-      day: 'numeric',
-      month: 'short',
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-  } catch {
-    return '';
-  }
+  return formatKickoffLong(iso, tz);
 }
 
 function kindClass(kind: ClubPulseItem['kind']) {
@@ -25,6 +18,7 @@ function kindClass(kind: ClubPulseItem['kind']) {
 }
 
 export function ClubPulseWall({ clubId }: { clubId: string }) {
+  const tz = useDeviceTimeZone();
   const [items, setItems] = useState<ClubPulseItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -98,7 +92,7 @@ export function ClubPulseWall({ clubId }: { clubId: string }) {
                   <span className="af-tele club-pulse-stamp">{item.stamp}</span>
                   <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
                     {item.sourceLabel}
-                    {when(item.publishedAt) ? ` · ${when(item.publishedAt)}` : ''}
+                    {when(item.publishedAt, tz) ? ` · ${when(item.publishedAt, tz)}` : ''}
                   </span>
                 </div>
                 <p className="mt-2 font-display text-lg font-bold uppercase leading-tight tracking-wide sm:text-xl">

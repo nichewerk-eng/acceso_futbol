@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState, type CSSProperties } from 'react';
+import { type CSSProperties } from 'react';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { DondeVerGuide } from '@/components/living-room/DondeVerGuide';
 import { JornadaTakeBoard } from '@/components/living-room/JornadaTake';
@@ -11,6 +11,7 @@ import { isLeaguesCupWindow } from '@/config/leaguesCup2026';
 import type { Fixture } from '@/lib/sports';
 import { useJornadaOverview } from '@/lib/client/useJornadaOverview';
 import { useTomaTake } from '@/lib/client/useTomaTake';
+import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
 import { buildJornadaTake, mergeJornadaTake } from '@/lib/sports/jornadaTake';
 
 function scorerLine(f: Fixture): string {
@@ -86,12 +87,7 @@ function ResultStamp({ f, mine }: { f: Fixture; mine: boolean }) {
 export function JornadaRecap() {
   const { matchesGravity, club, elTri } = useGravity();
   const { payload: data, loading } = useJornadaOverview();
-  const [userTz, setUserTz] = useState('America/Mexico_City');
-
-  useEffect(() => {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (tz) setUserTz(tz);
-  }, []);
+  const userTz = useDeviceTimeZone();
 
   const lcPause =
     data != null &&

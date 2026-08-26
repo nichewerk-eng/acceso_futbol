@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { useGravity } from '@/contexts/GravityContext';
 import { useGamesOfDay } from '@/lib/client/useGamesOfDay';
+import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
 import { competitionBandTag, leaguePath, mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
 import type { Story } from '@/lib/news/types';
 import type { DayGame } from '@/lib/sports';
@@ -133,12 +134,7 @@ function bandMeta(
 export function PulseHero({ leadStory }: Props) {
   const { matchesGravity } = useGravity();
   const { payload, loading } = useGamesOfDay();
-  const [userTz, setUserTz] = useState('America/Mexico_City');
-
-  useEffect(() => {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (tz) setUserTz(tz);
-  }, []);
+  const userTz = useDeviceTimeZone();
 
   const games = useMemo(() => {
     const list = payload?.games ?? [];

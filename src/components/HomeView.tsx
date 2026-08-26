@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
 import { teamNameEs } from '@/components/standings/teamNames';
 import type { Fixture } from '@/components/standings/types';
 
@@ -35,8 +36,7 @@ function useCountdown(targetDate: string | null) {
 interface Props { fixtures: Fixture[] }
 
 export default function HomeView({ fixtures }: Props) {
-  const [userTz, setUserTz] = useState('America/Mexico_City');
-  useEffect(() => { const tz = Intl.DateTimeFormat().resolvedOptions().timeZone; if (tz) setUserTz(tz); }, []);
+  const userTz = useDeviceTimeZone();
 
   const mexFixtures = fixtures.filter((f) => f.home.abbreviation === 'MEX' || f.away.abbreviation === 'MEX');
   const mexLive     = mexFixtures.find((f) => f.status.state === 'in');

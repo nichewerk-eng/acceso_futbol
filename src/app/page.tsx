@@ -2,9 +2,10 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PulseHome } from '@/components/living-room/PulseHome';
 import { JsonLd } from '@/components/seo/JsonLd';
+import { LocalKickoff } from '@/components/time/LocalKickoff';
 import { LIGA_MX_CLUBS } from '@/config/clubs';
 import { siteConfig } from '@/config/site';
-import { fixtureChannelLabels, kickoffLabelMx } from '@/lib/dondeVerCopy';
+import { fixtureChannelLabels } from '@/lib/dondeVerCopy';
 import {
   organizationJsonLd,
   sportsEventItemListJsonLd,
@@ -38,20 +39,26 @@ export const metadata: Metadata = {
   },
 };
 
-function crawlLine(f: Fixture): string {
+function CrawlKick({ f }: { f: Fixture }) {
   const score =
     f.home.score != null && f.away.score != null
       ? `${f.home.score}-${f.away.score}`
       : 'vs';
-  const status =
-    f.state === 'in'
-      ? liveStampLabel(f)
-      : f.state === 'post'
-        ? 'Final'
-        : kickoffLabelMx(f.date);
   const { mx, us } = fixtureChannelLabels(f);
   const tv = [mx ? `MX: ${mx}` : '', us ? `US: ${us}` : ''].filter(Boolean).join(' · ');
-  return `${f.home.name} ${score} ${f.away.name} — ${status}${tv ? ` — ${tv}` : ''}`;
+  return (
+    <>
+      {f.home.name} {score} {f.away.name} —{' '}
+      {f.state === 'in' ? (
+        liveStampLabel(f)
+      ) : f.state === 'post' ? (
+        'Final'
+      ) : (
+        <LocalKickoff iso={f.date} variant="long" />
+      )}
+      {tv ? ` — ${tv}` : ''}
+    </>
+  );
 }
 
 /** Server-rendered, crawlable board of the active jornada. */
@@ -66,7 +73,9 @@ function HomeJornadaCrawl({ jornada }: { jornada: JornadaOverview }) {
       <ul>
         {all.map((f) => (
           <li key={f.id}>
-            <Link href={`/partido/liga-mx/${f.id}`}>{crawlLine(f)}</Link>
+            <Link href={`/partido/liga-mx/${f.id}`}>
+              <CrawlKick f={f} />
+            </Link>
           </li>
         ))}
       </ul>

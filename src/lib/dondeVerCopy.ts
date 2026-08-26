@@ -69,11 +69,11 @@ export function teamDondeVerFaq(
         : 'El canal se confirma cerca del partido.';
     items.push({
       question: `¿Dónde ver a ${club.name} hoy?`,
-      answer: `El próximo partido de ${club.name} es contra ${opp} (${when}, hora del centro de México). ${where}`,
+      answer: `El próximo partido de ${club.name} es contra ${opp} (${when}, hora del centro de México; en Acceso Futbol el reloj sigue la zona de tu dispositivo). ${where}`,
     });
     items.push({
       question: `¿A qué hora juega ${club.name}?`,
-      answer: `${club.name} juega el ${when}, hora del centro de México, ante ${opp}.`,
+      answer: `${club.name} juega el ${when} hora del centro de México ante ${opp}. En la ficha el horario se muestra en tu zona.`,
     });
     if (us) {
       items.push({

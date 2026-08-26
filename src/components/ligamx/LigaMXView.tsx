@@ -18,6 +18,7 @@ import type { LigaMXTable, LigaMXEntry } from '@/app/api/ligamx/standings/route'
 import type { LigaMXFixture } from '@/app/api/ligamx/fixtures/route';
 import { liveFetch } from '@/lib/client/liveFetch';
 import { startLivePoll } from '@/lib/client/livePoll';
+import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
 import { FRESH, paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
 import { kickHold, kickHoldLabel } from '@/lib/sports/localizeEs';
 import { mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
@@ -135,11 +136,9 @@ export default function LigaMXView({
   const [tab, setTab] = useState<LigaMxTab>(initialTab);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [userTz, setUserTz] = useState('America/Mexico_City');
+  const userTz = useDeviceTimeZone();
   const [selectedJornada, setSelectedJornada] = useState(() => getCurrentJornada(baseFixtures));
   useEffect(() => {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (tz) setUserTz(tz);
     setLastUpdated(new Date());
   }, []);
 

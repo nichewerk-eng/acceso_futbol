@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RecordingShare } from '@/components/living-room/RecordingShare';
+import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
+import { formatKickoffTime } from '@/lib/localTime';
 import { briefStoreKey, playableBriefSlot } from '@/lib/radio/voiceSchedule';
 import {
   newsShareCopy,
@@ -36,6 +38,7 @@ const RADIO_STYLE = 'caliente';
 const REFRESH_MS = 5 * 60 * 1000;
 
 export function CableBriefPlayer() {
+  const tz = useDeviceTimeZone();
   const [playing, setPlaying] = useState(false);
   const [payload, setPayload] = useState<BriefPayload | null>(null);
   const [loading, setLoading] = useState(true);
@@ -151,17 +154,9 @@ export function CableBriefPlayer() {
   }
 
   const ready = Boolean(payload?.audioUrl) || (payload?.beats?.length ?? 0) > 0;
-  const recorded = (() => {
-    if (!payload?.recordedAt) return null;
-    try {
-      return new Date(payload.recordedAt).toLocaleTimeString('es-MX', {
-        hour: 'numeric',
-        minute: '2-digit',
-      });
-    } catch {
-      return null;
-    }
-  })();
+  const recorded = payload?.recordedAt
+    ? formatKickoffTime(payload.recordedAt, tz) || null
+    : null;
   const meta = [
     payload?.slot === 'am' ? 'Mañana' : payload?.slot === 'pm' ? 'Tarde' : null,
     recorded ? `grabado ${recorded}` : null,

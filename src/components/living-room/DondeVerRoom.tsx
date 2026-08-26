@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { DondeVerGuide } from '@/components/living-room/DondeVerGuide';
 import { useGravity } from '@/contexts/GravityContext';
+import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
 import { useJornadaOverview } from '@/lib/client/useJornadaOverview';
 import type { JornadaOverview } from '@/lib/sports/jornada';
 import type { Fixture } from '@/lib/sports';
@@ -10,12 +10,7 @@ import type { Fixture } from '@/lib/sports';
 export function DondeVerRoom({ initial = null }: { initial?: JornadaOverview | null }) {
   const { matchesGravity } = useGravity();
   const { payload: data } = useJornadaOverview(initial);
-  const [tz, setTz] = useState('America/Mexico_City');
-
-  useEffect(() => {
-    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (zone) setTz(zone);
-  }, []);
+  const tz = useDeviceTimeZone();
 
   const isMine = (f: Fixture) =>
     matchesGravity(f.home.name, f.away.name, f.home.abbreviation, f.away.abbreviation);

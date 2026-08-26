@@ -133,14 +133,14 @@ export function horariosFaq(rounds: HorarioRound[], currentLabel: string): FaqIt
     {
       question: '¿Dónde ver los horarios de la Liga MX en Acceso Futbol?',
       answer:
-        'En Acceso Futbol publicamos el calendario oficial de la Liga MX Apertura 2026 jornada por jornada, con hora del centro de México (CDMX) y canales de transmisión en México y Estados Unidos. La guía vive en accesofutbol.com/horarios.',
+        'En Acceso Futbol publicamos el calendario oficial de la Liga MX Apertura 2026 jornada por jornada, con el horario en la zona de tu dispositivo y canales de transmisión en México y Estados Unidos. La guía vive en accesofutbol.com/horarios.',
     },
     {
       question: `¿Cuáles son los horarios de ${currentLabel} de la Liga MX?`,
       answer:
         upcoming.length > 0
           ? `Los próximos partidos de ${currentLabel} y la fecha siguiente en Acceso Futbol: ${nextLines.join('; ')}.`
-          : `Consulta el calendario completo de ${currentLabel} en Acceso Futbol, con hora CDMX en cada fila.`,
+          : `Consulta el calendario completo de ${currentLabel} en Acceso Futbol, con el horario en tu zona en cada fila.`,
     },
     {
       question: '¿Los horarios de Liga MX están en hora de México?',

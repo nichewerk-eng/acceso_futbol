@@ -19,6 +19,8 @@ import type {
 } from '@/lib/sports';
 import { liveFetch } from '@/lib/client/liveFetch';
 import { startLivePoll } from '@/lib/client/livePoll';
+import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
+import { formatKickoffDay, formatKickoffTime } from '@/lib/localTime';
 import type { FreshPace } from '@/lib/sports/freshness';
 import { scheduleAbbr } from '@/lib/sports/ligaMxAbbr';
 import { localizeStatus } from '@/lib/sports/localizeEs';
@@ -209,24 +211,7 @@ function statusCopy(match: MatchSnapshot): string {
 }
 
 function kickoffCopy(iso: string, tz: string): { day: string; time: string } {
-  try {
-    const d = new Date(iso);
-    return {
-      day: d.toLocaleDateString('es-MX', {
-        timeZone: tz,
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-      }),
-      time: d.toLocaleTimeString('es-MX', {
-        timeZone: tz,
-        hour: 'numeric',
-        minute: '2-digit',
-      }),
-    };
-  } catch {
-    return { day: '', time: '' };
-  }
+  return { day: formatKickoffDay(iso, tz), time: formatKickoffTime(iso, tz) };
 }
 
 function formatMeetingShort(iso: string, tz: string): string {
@@ -547,14 +532,9 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
     initialMatch ? (initialMatch.state === 'pre' ? 'contexto' : 'momentos') : null
   );
   const [feed, setFeed] = useState<FeedFilter>('clave');
-  const [userTz, setUserTz] = useState('America/Mexico_City');
+  const userTz = useDeviceTimeZone();
   const [tabla, setTabla] = useState<LigaMXEntry[] | null>(null);
   const [richReady, setRichReady] = useState(() => hasContexto(initialMatch));
-
-  useEffect(() => {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (tz) setUserTz(tz);
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -767,8 +747,7 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
 
   const live = match.state === 'in';
   const pre = match.state === 'pre';
-  // Leagues Cup: venue-local wall clock (matches ESPN listings). Else viewer TZ.
-  const kick = kickoffCopy(match.date, match.venueTz || userTz);
+  const kick = kickoffCopy(match.date, userTz);
   const headlines = headlineLines(match);
   const homeLines = headlines.filter((s) => s.side === 'home');
   const awayLines = headlines.filter((s) => s.side === 'away');

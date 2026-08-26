@@ -6,6 +6,7 @@ import { teamNameEs } from '@/components/standings/teamNames';
 import type { MatchEvent } from '@/app/api/match/[league]/[id]/route';
 import { liveFetch } from '@/lib/client/liveFetch';
 import { startLivePoll } from '@/lib/client/livePoll';
+import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
 import { paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
 
 // ── Team logo map — use uploaded crests when available ────────────────────────
@@ -160,14 +161,9 @@ function GameCard({ f, tz }: { f: BannerFixture; tz: string }) {
 // ── Main banner ───────────────────────────────────────────────────────────────
 export default function HeroBanner() {
   const [fixtures, setFixtures] = useState<BannerFixture[]>([]);
-  const [userTz, setUserTz]     = useState('America/Mexico_City');
+  const userTz = useDeviceTimeZone();
   const [lastUp, setLastUp]     = useState(new Date());
   const [refreshing, setRefreshing] = useState(false);
-
-  useEffect(() => {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (tz) setUserTz(tz);
-  }, []);
 
   const [goals, setGoals] = useState<GoalEvent[]>([]);
   const paceRef = useRef<FreshPace>('near');

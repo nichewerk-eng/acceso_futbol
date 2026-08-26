@@ -19,9 +19,9 @@ import { getJornadaOverview } from '@/lib/sports/jornada';
 
 export const revalidate = 60;
 
-const TITLE = 'Horarios Liga MX Apertura 2026 · Calendario CDMX';
+const TITLE = 'Horarios Liga MX Apertura 2026 · Calendario en tu zona';
 const DESCRIPTION =
-  'Horarios oficiales de la Liga MX Apertura 2026 en Acceso Futbol: calendario jornada por jornada, hora del centro de México (CDMX) y canales en México y Estados Unidos.';
+  'Horarios oficiales de la Liga MX Apertura 2026 en Acceso Futbol: calendario jornada por jornada, hora en la zona de tu dispositivo y canales en México y Estados Unidos.';
 
 export const metadata: Metadata = {
   title: TITLE,

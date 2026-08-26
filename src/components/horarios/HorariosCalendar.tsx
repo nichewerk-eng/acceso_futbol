@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { HorariosHashOpen } from '@/components/horarios/HorariosHashOpen';
+import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
 import {
   groupFixturesByDay,
   horarioDateIn,
@@ -156,13 +156,8 @@ export function HorariosCalendar({
   focus: HorarioRound[];
   rounds: HorarioRound[];
 }) {
-  const [tz, setTz] = useState('America/Mexico_City');
+  const tz = useDeviceTimeZone();
   const focusNums = new Set(focus.map((r) => r.number));
-
-  useEffect(() => {
-    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (zone) setTz(zone);
-  }, []);
 
   return (
     <div className="af-horarios">

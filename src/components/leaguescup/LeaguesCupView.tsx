@@ -17,6 +17,7 @@ import { ligaMxClubIdFromAbbr } from '@/config/ligaMxLogos';
 import { useGravity } from '@/contexts/GravityContext';
 import { liveFetch } from '@/lib/client/liveFetch';
 import { startLivePoll } from '@/lib/client/livePoll';
+import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
 import { paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
 import { kickHold, kickHoldLabel } from '@/lib/sports/localizeEs';
 import { lcOnPartidosCalendar } from '@/lib/sports/leaguesCupBoard';
@@ -65,11 +66,7 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
   const [fixtures, setFixtures] = useState(initialFixtures);
   const [tab, setTab] = useState<'partidos' | 'tabla' | 'bracket'>('partidos');
   const [refreshing, setRefreshing] = useState(false);
-  const [userTz, setUserTz] = useState('America/Mexico_City');
-  useEffect(() => {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (tz) setUserTz(tz);
-  }, []);
+  const userTz = useDeviceTimeZone();
 
   const paceRef = useRef<FreshPace>('near');
 

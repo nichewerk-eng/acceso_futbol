@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
 import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { ClubPulseWall } from '@/components/club/ClubPulseWall';
@@ -9,6 +8,7 @@ import { ClubTrophyCase } from '@/components/club/ClubTrophyCase';
 import { ClubsNav } from '@/components/club/ClubsNav';
 import { LiguillaPathShare } from '@/components/ligamx/LiguillaPathShare';
 import { useGravity } from '@/contexts/GravityContext';
+import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
 import type { ClubBoard } from '@/lib/sports/clubBoard';
 import {
   APERTURA_MATCHDAYS,
@@ -186,18 +186,10 @@ function ClubTapeNext({ f, tz }: { f: Fixture; tz: string }) {
 export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
   const board = initialBoard;
   const { clubId, setClub, setElTri, settled, elTri } = useGravity();
-  const [tz, setTz] = useState('America/Mexico_City');
+  const tz = useDeviceTimeZone();
   const isMine =
     settled &&
     (clubId === board.club.id || (board.club.id === 'el-tri' && elTri));
-
-  useEffect(() => {
-    try {
-      setTz(Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Mexico_City');
-    } catch {
-      /* keep default */
-    }
-  }, []);
 
   const { club, next, live, table, liguilla, form, recent, upcoming, accesoLine } = board;
   const style = {

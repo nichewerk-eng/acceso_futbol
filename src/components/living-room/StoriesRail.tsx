@@ -2,24 +2,18 @@
 
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
+import { formatKickoffLong } from '@/lib/localTime';
 import type { Story } from '@/lib/news/types';
 import { CableBriefPlayer } from './CableBriefPlayer';
 
-function timeLabel(iso: string | null) {
+function timeLabel(iso: string | null, tz: string) {
   if (!iso) return '';
-  try {
-    return new Date(iso).toLocaleString('es-MX', {
-      day: 'numeric',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return '';
-  }
+  return formatKickoffLong(iso, tz);
 }
 
 export function StoriesRail() {
+  const tz = useDeviceTimeZone();
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -123,7 +117,7 @@ export function StoriesRail() {
             <div className="flex flex-col justify-center px-5 py-6 sm:px-8 sm:py-8">
               <p className="af-tele text-signal">
                 {lead.sourceLabel}
-                {lead.publishedAt ? ` · ${timeLabel(lead.publishedAt)}` : ''}
+                {lead.publishedAt ? ` · ${timeLabel(lead.publishedAt, tz)}` : ''}
               </p>
               <h3 className="mt-3 font-display text-2xl font-bold uppercase leading-[1.02] tracking-wide text-foreground transition group-hover:text-signal sm:text-4xl">
                 {lead.title}

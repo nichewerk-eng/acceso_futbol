@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { MatchChapter } from '@/components/partido/MatchChapter';
 import { JsonLd } from '@/components/seo/JsonLd';
+import { LocalKickoff } from '@/components/time/LocalKickoff';
 import { getMatch, peekMatch } from '@/lib/sports/getMatch';
 import type { MatchSnapshot } from '@/lib/sports/types';
 import {
@@ -55,12 +56,12 @@ function MatchCrawlSummary({
         {status}
         {match.jornada ? ` · ${match.jornada}` : ''}
         {match.venue ? ` · ${match.venue}` : ''}
-        {match.date
-          ? ` · ${new Date(match.date).toLocaleString('es-MX', {
-              dateStyle: 'full',
-              timeStyle: 'short',
-            })}`
-          : ''}
+        {match.date ? (
+          <>
+            {' · '}
+            <LocalKickoff iso={match.date} variant="full" />
+          </>
+        ) : null}
       </p>
       <p>{matchSeoDescription(match, league)}</p>
       <nav>

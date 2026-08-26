@@ -6,6 +6,7 @@ import { teamNameEs } from '@/components/standings/teamNames';
 import type { MatchSummary } from '@/app/api/match/[league]/[id]/route';
 import { liveFetch } from '@/lib/client/liveFetch';
 import { startLivePoll } from '@/lib/client/livePoll';
+import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
 
 const FLAG: Record<string, string> = {
   MEX: '🇲🇽', ECU: '🇪🇨', USA: '🇺🇸', CAN: '🇨🇦', ARG: '🇦🇷', BRA: '🇧🇷',
@@ -30,12 +31,7 @@ export default function MatchView({ league, id }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(false);
   const [tab, setTab]         = useState<'resumen' | 'estadisticas' | 'alineaciones' | 'eventos'>('resumen');
-  const [userTz, setUserTz]   = useState('America/Mexico_City');
-
-  useEffect(() => {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (tz) setUserTz(tz);
-  }, []);
+  const userTz = useDeviceTimeZone();
 
   useEffect(() => {
     setLoading(true);

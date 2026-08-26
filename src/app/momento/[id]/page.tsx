@@ -6,6 +6,7 @@ import { PulseNav } from '@/components/living-room/PulseNav';
 import { RitualSlot } from '@/components/ritual/RitualSlot';
 import { SiteFooter } from '@/components/home/SiteFooter';
 import { JsonLd } from '@/components/seo/JsonLd';
+import { LocalKickoff } from '@/components/time/LocalKickoff';
 import { getClubIdentity } from '@/config/clubIdentity';
 import { MOMENTS } from '@/config/moments';
 import { siteConfig } from '@/config/site';
@@ -55,15 +56,6 @@ export default async function MomentoPage({ params }: Props) {
   if (!m) notFound();
 
   const paragraphs = m.sections?.length ? m.sections : [m.body];
-  const when = m.publishedAt
-    ? new Date(m.publishedAt).toLocaleString('es-MX', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-      })
-    : null;
 
   const clubs = (m.clubIds ?? [])
     .map((cid) => getClubIdentity(cid))
@@ -107,7 +99,12 @@ export default async function MomentoPage({ params }: Props) {
         {m.tag && (
           <p className="mt-8 text-[11px] font-semibold uppercase tracking-[0.22em] text-signal">
             {m.tag}
-            {when ? ` · ${when}` : ''}
+            {m.publishedAt ? (
+              <>
+                {' · '}
+                <LocalKickoff iso={m.publishedAt} variant="long" />
+              </>
+            ) : null}
           </p>
         )}
         <h1 className="mt-3 font-display text-4xl font-semibold uppercase leading-[1.05] tracking-wide sm:text-5xl">

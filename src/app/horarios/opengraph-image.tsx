@@ -45,7 +45,7 @@ export default function OgImage() {
             Horarios Liga MX
           </div>
           <div style={{ fontSize: 32, color: '#444' }}>
-            Apertura 2026 · Hora CDMX · Calendario
+            Apertura 2026 · Horario en tu zona · Calendario
           </div>
         </div>
         <div style={{ display: 'flex', fontSize: 24, color: '#666' }}>

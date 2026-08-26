@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ClubLogo } from '@/components/brand/ClubLogo';
+import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
 import { useQuiniela } from '@/lib/client/useQuiniela';
+import { dayKeyInTz, formatKickoffDay, formatKickoffTime } from '@/lib/localTime';
 import type {
   LeaderRow,
   Outcome,
@@ -11,58 +13,26 @@ import type {
   SeasonStandingRow,
 } from '@/lib/quiniela/types';
 
-function kickoffClock(iso: string): string {
-  try {
-    return new Intl.DateTimeFormat('es-MX', {
-      hour: 'numeric',
-      minute: '2-digit',
-      timeZone: 'America/Mexico_City',
-    }).format(new Date(iso));
-  } catch {
-    return '';
-  }
-}
-
-function mexicoDayKey(iso: string): string {
-  try {
-    return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Mexico_City' }).format(
-      new Date(iso)
-    );
-  } catch {
-    return iso.slice(0, 10);
-  }
-}
-
-function dayHeading(iso: string): string {
-  try {
-    return new Intl.DateTimeFormat('es-MX', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'short',
-      timeZone: 'America/Mexico_City',
-    }).format(new Date(iso));
-  } catch {
-    return '';
-  }
-}
-
-function groupByDay(matches: QuinielaMatch[]): { key: string; label: string; items: QuinielaMatch[] }[] {
+function groupByDay(
+  matches: QuinielaMatch[],
+  tz: string
+): { key: string; label: string; items: QuinielaMatch[] }[] {
   const groups: { key: string; label: string; items: QuinielaMatch[] }[] = [];
   for (const m of matches) {
-    const key = mexicoDayKey(m.date);
+    const key = dayKeyInTz(m.date, tz) || m.date.slice(0, 10);
     const last = groups[groups.length - 1];
     if (last && last.key === key) last.items.push(m);
-    else groups.push({ key, label: dayHeading(m.date), items: [m] });
+    else groups.push({ key, label: formatKickoffDay(m.date, tz), items: [m] });
   }
   return groups;
 }
 
-function metaLine(m: QuinielaMatch): string {
+function metaLine(m: QuinielaMatch, tz: string): string {
   const h = m.home.score ?? 0;
   const a = m.away.score ?? 0;
   if (m.state === 'post') return `Final · ${h}-${a}`;
   if (m.state === 'in') return `En vivo · ${h}-${a}`;
-  return kickoffClock(m.date);
+  return formatKickoffTime(m.date, tz);
 }
 
 function optClass(on: boolean, result: Outcome | null, o: Outcome): string {
@@ -85,11 +55,13 @@ function Row({
   pick,
   onPick,
   flag = false,
+  tz,
 }: {
   m: QuinielaMatch;
   pick: Outcome | undefined;
   onPick: (id: string, o: Outcome) => void;
   flag?: boolean;
+  tz: string;
 }) {
   const result = m.result;
   return (
@@ -98,7 +70,7 @@ function Row({
         .filter(Boolean)
         .join(' ')}
     >
-      <p className="q-meta">{metaLine(m)}</p>
+      <p className="q-meta">{metaLine(m, tz)}</p>
       <div className="q-pick" role="group" aria-label={`${m.home.name} contra ${m.away.name}`}>
         <button
           type="button"
@@ -279,6 +251,7 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
   const [needCard, setNeedCard] = useState(false);
   const [email, setEmail] = useState('');
   const [rankTab, setRankTab] = useState<'jornada' | 'apertura'>('jornada');
+  const tz = useDeviceTimeZone();
 
   useEffect(() => {
     if (named) setNeedName(false);
@@ -293,7 +266,7 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
     document.querySelector('.q-row-need')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [needCard, missingIds]);
 
-  const days = useMemo(() => (board ? groupByDay(board.matches) : []), [board]);
+  const days = useMemo(() => (board ? groupByDay(board.matches, tz) : []), [board, tz]);
 
   if (!board) {
     return (
@@ -360,6 +333,7 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
                 pick={draft[m.id]}
                 onPick={setPick}
                 flag={needCard && missingIds.includes(m.id)}
+                tz={tz}
               />
             ))}
           </ol>

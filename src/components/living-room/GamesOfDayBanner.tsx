@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useGravity } from '@/contexts/GravityContext';
+import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
 import { useGamesOfDay } from '@/lib/client/useGamesOfDay';
 import { competitionBandTag, leaguePath } from '@/lib/radio/phases';
 import type { DayGame } from '@/lib/sports';
@@ -38,12 +39,7 @@ function cabinaLine(g: DayGame, tz: string) {
 export function GamesOfDayBanner() {
   const { matchesGravity, club, elTri } = useGravity();
   const { payload, loading } = useGamesOfDay();
-  const [userTz, setUserTz] = useState('America/Mexico_City');
-
-  useEffect(() => {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (tz) setUserTz(tz);
-  }, []);
+  const userTz = useDeviceTimeZone();
 
   const sorted = useMemo(() => {
     const games = payload?.games ?? [];

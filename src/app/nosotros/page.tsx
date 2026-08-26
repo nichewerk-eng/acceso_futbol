@@ -61,7 +61,7 @@ export default function NosotrosPage() {
                 Horarios Liga MX
               </Link>
               {' — '}
-              calendario oficial, hora CDMX y canales.
+              calendario oficial, horario en tu zona y canales.
             </li>
             <li>
               <Link href="/liga-mx" className="text-signal hover:text-foreground">
