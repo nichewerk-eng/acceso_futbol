@@ -1,4 +1,4 @@
-import { kvDel, kvHdel, kvHgetall, kvHset, sharedKvEnabled } from '@/lib/sharedKv';
+import { kvDel, kvHdel, kvHget, kvHgetall, kvHset, sharedKvEnabled } from '@/lib/sharedKv';
 import type { QuinielaPicks } from './types';
 
 /**
@@ -23,11 +23,13 @@ export async function putPicks(jornadaKey: string, rec: QuinielaPicks): Promise<
   mem.set(jornadaKey, m);
 }
 
-export async function listPicks(jornadaKey: string): Promise<QuinielaPicks[]> {
+/** `null` means the hash could not be read — not that nobody has played. */
+export async function listPicks(jornadaKey: string): Promise<QuinielaPicks[] | null> {
   if (!sharedKvEnabled()) {
     return [...(mem.get(jornadaKey)?.values() ?? [])];
   }
   const all = await kvHgetall(hashKey(jornadaKey));
+  if (all == null) return null;
   const out: QuinielaPicks[] = [];
   for (const raw of Object.values(all)) {
     try {
@@ -43,8 +45,7 @@ export async function getPicks(jornadaKey: string, userId: string): Promise<Quin
   if (!sharedKvEnabled()) {
     return mem.get(jornadaKey)?.get(userId) ?? null;
   }
-  const all = await kvHgetall(hashKey(jornadaKey));
-  const raw = all[userId];
+  const raw = await kvHget(hashKey(jornadaKey), userId);
   if (!raw) return null;
   try {
     return JSON.parse(raw) as QuinielaPicks;
@@ -66,7 +67,7 @@ export async function delPicks(jornadaKey: string, userId: string): Promise<void
 export async function clearPicks(jornadaKey: string): Promise<number> {
   if (sharedKvEnabled()) {
     const all = await kvHgetall(hashKey(jornadaKey));
-    const n = Object.keys(all).length;
+    const n = Object.keys(all ?? {}).length;
     if (n > 0) await kvDel(hashKey(jornadaKey));
     return n;
   }

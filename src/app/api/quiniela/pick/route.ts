@@ -42,7 +42,7 @@ export async function POST(req: Request) {
       saved: res.saved,
       rejected: res.rejected,
       mine: { picks: res.picks ?? {}, points: s.points, played: s.played, count: s.count },
-      leaderboard,
+      ...(leaderboard ? { leaderboard } : {}),
     },
     { headers: { 'Cache-Control': 'no-store' } }
   );

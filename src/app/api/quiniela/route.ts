@@ -3,11 +3,11 @@ import { getAccount } from '@/lib/quiniela/account';
 import { getSeasonView, rollupSeason } from '@/lib/quiniela/season';
 import {
   boardFromFixtures,
-  getLeaderboard,
+  leaderboardFromPicks,
   sanitizeUserId,
   scoreUser,
 } from '@/lib/quiniela/service';
-import { getPicks } from '@/lib/quiniela/store';
+import { listPicks } from '@/lib/quiniela/store';
 import { fetchLigaMxFixtures } from '@/lib/sports/espnFallback';
 
 export const runtime = 'nodejs';
@@ -22,17 +22,22 @@ export async function GET(req: Request) {
   // Seal-time season rollup: cheap no-op unless a jornada just finished.
   await rollupSeason(fixtures);
 
-  const leaderboard = await getLeaderboard(board);
+  const all = await listPicks(board.jornadaKey);
+  const leaderboard = all ? leaderboardFromPicks(board, all) : null;
 
   const userId = sanitizeUserId(new URL(req.url).searchParams.get('u'));
   let mine: { picks: Record<string, string>; points: number; played: number; count: number } | null =
     null;
   let account: { email: string } | null = null;
   if (userId) {
-    const rec = await getPicks(board.jornadaKey, userId);
-    const picks = rec?.picks ?? {};
-    const s = scoreUser(board, picks);
-    mine = { picks, points: s.points, played: s.played, count: s.count };
+    // Same hash as the leaderboard — skip mine on a failed read so the client
+    // keeps the last saved card instead of flashing empty.
+    if (all) {
+      const rec = all.find((p) => p.userId === userId);
+      const picks = rec?.picks ?? {};
+      const s = scoreUser(board, picks);
+      mine = { picks, points: s.points, played: s.played, count: s.count };
+    }
     const acc = await getAccount(userId);
     if (acc) account = { email: acc.email };
   }

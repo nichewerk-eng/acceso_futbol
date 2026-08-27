@@ -4,7 +4,7 @@ import { SiteFooter } from '@/components/home/SiteFooter';
 import { PulseNav } from '@/components/living-room/PulseNav';
 import { QuinielaBoard } from '@/components/quiniela/QuinielaBoard';
 import { JsonLd } from '@/components/seo/JsonLd';
-import { getQuinielaBoard } from '@/lib/quiniela/service';
+import { getLeaderboard, getQuinielaBoard } from '@/lib/quiniela/service';
 import { absoluteUrl, breadcrumbJsonLd, faqPageJsonLd, webPageJsonLd } from '@/lib/seo';
 
 export const revalidate = 30;
@@ -56,6 +56,7 @@ const FAQ = [
 
 export default async function QuinielaPage() {
   const board = await getQuinielaBoard().catch(() => null);
+  const leaderboard = board ? await getLeaderboard(board).catch(() => null) : null;
 
   return (
     <div className="flex min-h-screen flex-col bg-bg-1 text-foreground">
@@ -91,7 +92,7 @@ export default async function QuinielaPage() {
           Toca al ganador o Empate. Un punto por acierto. Guarda antes del silbatazo.
         </p>
 
-        <QuinielaBoard initial={board} />
+        <QuinielaBoard initial={board} initialLeaderboard={leaderboard} />
 
         <section className="q-faq">
           <h2>Cómo se juega</h2>

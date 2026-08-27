@@ -5,10 +5,12 @@ import { ClubLogo } from '@/components/brand/ClubLogo';
 import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
 import { useQuiniela } from '@/lib/client/useQuiniela';
 import { dayKeyInTz, formatKickoffDay, formatKickoffTime } from '@/lib/localTime';
+import { sanitizeName } from '@/lib/quiniela/name';
 import type {
   LeaderRow,
   Outcome,
   QuinielaBoard as Board,
+  QuinielaLeaderboard,
   QuinielaMatch,
   SeasonStandingRow,
 } from '@/lib/quiniela/types';
@@ -220,8 +222,14 @@ function RankingTable({
   );
 }
 
-export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
-  const q = useQuiniela(initial);
+export function QuinielaBoard({
+  initial = null,
+  initialLeaderboard = null,
+}: {
+  initial?: Board | null;
+  initialLeaderboard?: QuinielaLeaderboard | null;
+}) {
+  const q = useQuiniela(initial, initialLeaderboard);
   const {
     board,
     leaderboard,
@@ -244,6 +252,7 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
     requestMagicLink,
     linkStatus,
     userId,
+    rankingReady,
   } = q;
   const me = season?.me ?? null;
   const nameRef = useRef<HTMLInputElement>(null);
@@ -277,7 +286,23 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
   }
 
   const closed = board.holding || (board.finals === board.total && board.total > 0);
-  const jornadaRows: LeaderRow[] = leaderboard?.rows.slice(0, 20) ?? [];
+  const jornadaRows: LeaderRow[] = (() => {
+    const rows = leaderboard?.rows.slice(0, 20) ?? [];
+    if (rows.length) return rows;
+    const display = sanitizeName(name);
+    if (mine && mine.count > 0 && display) {
+      return [
+        {
+          userId,
+          name: display,
+          points: mine.points,
+          played: mine.played,
+          picks: mine.count,
+        },
+      ];
+    }
+    return [];
+  })();
   const aperturaRows: SeasonStandingRow[] = season?.top ?? [];
 
   return (
@@ -428,6 +453,8 @@ export function QuinielaBoard({ initial = null }: { initial?: Board | null }) {
             </p>
             {jornadaRows.length ? (
               <RankingTable kind="jornada" rows={jornadaRows} meId={userId} />
+            ) : !rankingReady ? (
+              <p className="q-empty">Cargando la tabla…</p>
             ) : (
               <p className="q-empty">
                 {closed

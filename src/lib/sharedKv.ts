@@ -104,11 +104,15 @@ export async function kvDel(key: string): Promise<void> {
   await kvCommand(['DEL', `af:${key}`]);
 }
 
-/** HGETALL flattened into a `{ field: value }` record. */
-export async function kvHgetall(key: string): Promise<Record<string, string>> {
+/**
+ * HGETALL flattened into a `{ field: value }` record.
+ * Empty hash → `{}`. Command/network failure → `null` (do not treat as empty).
+ */
+export async function kvHgetall(key: string): Promise<Record<string, string> | null> {
   if (!kvConfigured()) return {};
   const raw = await kvCommand<{ result: unknown }>(['HGETALL', `af:${key}`]);
-  const res = raw?.result;
+  if (raw == null) return null;
+  const res = raw.result;
   const out: Record<string, string> = {};
   if (Array.isArray(res)) {
     for (let i = 0; i + 1 < res.length; i += 2) out[String(res[i])] = String(res[i + 1]);

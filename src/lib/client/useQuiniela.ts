@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { trackClient } from '@/lib/analytics/trackClient';
 import { missingOpenPicks } from '@/lib/quiniela/card';
+import { adoptLeaderboard } from '@/lib/quiniela/leaderboard';
 import { sanitizeName } from '@/lib/quiniela/name';
 import type { Outcome, QuinielaBoard, QuinielaLeaderboard, SeasonView } from '@/lib/quiniela/types';
 
@@ -36,9 +37,12 @@ function readId(): string {
   }
 }
 
-export function useQuiniela(initialBoard: QuinielaBoard | null = null) {
+export function useQuiniela(
+  initialBoard: QuinielaBoard | null = null,
+  initialLeaderboard: QuinielaLeaderboard | null = null
+) {
   const [board, setBoard] = useState<QuinielaBoard | null>(initialBoard);
-  const [leaderboard, setLeaderboard] = useState<QuinielaLeaderboard | null>(null);
+  const [leaderboard, setLeaderboard] = useState<QuinielaLeaderboard | null>(initialLeaderboard);
   const [saved, setSaved] = useState<Record<string, Outcome>>({});
   const [draft, setDraft] = useState<Record<string, Outcome>>({});
   const [mine, setMine] = useState<Mine | null>(null);
@@ -49,7 +53,9 @@ export function useQuiniela(initialBoard: QuinielaBoard | null = null) {
   const [account, setAccount] = useState<{ email: string } | null>(null);
   const [season, setSeason] = useState<SeasonView | null>(null);
   const [linkStatus, setLinkStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [rankingReady, setRankingReady] = useState(initialLeaderboard != null);
   const idRef = useRef<string>('');
+  const loadGenRef = useRef(0);
   // Analytics guards — each keyed by the jornada it last fired for so a roll re-arms.
   const lastSavedJornadaRef = useRef<number | null>(null);
   const viewFiredRef = useRef<number | null>(null);
@@ -108,13 +114,13 @@ export function useQuiniela(initialBoard: QuinielaBoard | null = null) {
   const applyServer = useCallback(
     (data: {
       board?: QuinielaBoard;
-      leaderboard?: QuinielaLeaderboard;
+      leaderboard?: QuinielaLeaderboard | null;
       mine?: Mine | null;
       account?: { email: string } | null;
       season?: SeasonView | null;
     }) => {
       if (data.board) setBoard(data.board);
-      if (data.leaderboard) setLeaderboard(data.leaderboard);
+      setLeaderboard((prev) => adoptLeaderboard(prev, data.leaderboard));
       if (data.mine) {
         setMine(data.mine);
         setSaved(data.mine.picks);
@@ -149,14 +155,20 @@ export function useQuiniela(initialBoard: QuinielaBoard | null = null) {
 
   const load = useCallback(async () => {
     const id = idRef.current || readId();
+    const gen = ++loadGenRef.current;
     try {
       const res = await fetch(`/api/quiniela?u=${encodeURIComponent(id)}`, { cache: 'no-store' });
       if (!res.ok) return;
-      applyServer(await res.json());
+      const data = await res.json();
+      if (gen !== loadGenRef.current) return;
+      applyServer(data);
     } catch {
       /* ignore */
     } finally {
-      setLoading(false);
+      if (gen === loadGenRef.current) {
+        setLoading(false);
+        setRankingReady(true);
+      }
     }
   }, [applyServer]);
 
@@ -285,5 +297,6 @@ export function useQuiniela(initialBoard: QuinielaBoard | null = null) {
     signedIn: Boolean(account?.email),
     requestMagicLink,
     linkStatus,
+    rankingReady,
   };
 }

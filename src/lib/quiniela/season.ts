@@ -155,6 +155,12 @@ function parseRecord(raw: string): SeasonRecord | null {
 async function getAllRecords(): Promise<Map<string, SeasonRecord>> {
   if (!sharedKvEnabled()) return new Map(memSeason);
   const all = await kvHgetall(SEASON_HASH);
+  if (all == null) {
+    if (standingsCache) {
+      return new Map(standingsCache.rows.map((r) => [r.userId, r.rec]));
+    }
+    return new Map();
+  }
   const out = new Map<string, SeasonRecord>();
   for (const [uid, raw] of Object.entries(all)) {
     const rec = parseRecord(raw);
@@ -232,6 +238,7 @@ async function rollupPending(
     const results = jornadaResults(fixtures, n);
     if (!results.sealed) continue;
     const cards = await listPicks(jornadaKeyFor(n));
+    if (cards == null) throw new Error('quiniela_picks_unavailable');
     for (const card of cards) {
       const name = sanitizeName(card.name);
       if (!name) continue; // unnamed cards are excluded, same as the leaderboard

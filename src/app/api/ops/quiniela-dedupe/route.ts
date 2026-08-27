@@ -55,7 +55,7 @@ async function buildPlan(): Promise<{ jornadas: number[]; plan: RemovalPlan[] }>
   for (const n of jornadas) {
     const jornadaKey = jornadaKeyFor(n);
     const entries = await listPicks(jornadaKey);
-    if (entries.length < 2) continue;
+    if (!entries || entries.length < 2) continue;
 
     // Group by exact identity fingerprint: normalized name + identical card.
     const groups = new Map<string, typeof entries>();

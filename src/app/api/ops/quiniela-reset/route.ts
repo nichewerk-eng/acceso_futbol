@@ -45,7 +45,7 @@ async function preview(): Promise<{
   const picks: { jornadaKey: string; entries: number }[] = [];
   for (const n of nums) {
     const jornadaKey = jornadaKeyFor(n);
-    const entries = (await listPicks(jornadaKey)).length;
+    const entries = (await listPicks(jornadaKey))?.length ?? 0;
     if (entries > 0) picks.push({ jornadaKey, entries });
   }
   return {

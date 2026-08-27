@@ -135,7 +135,7 @@ export async function consumeMagicToken(token: string): Promise<MagicPayload | n
 /** Count accounts on file (ops preview). */
 export async function countAccounts(): Promise<number> {
   if (!sharedKvEnabled()) return memId.size;
-  return Object.keys(await kvHgetall(BY_ID)).length;
+  return Object.keys((await kvHgetall(BY_ID)) ?? {}).length;
 }
 
 /** Delete every account + email mapping (ops reset). Returns how many existed. */

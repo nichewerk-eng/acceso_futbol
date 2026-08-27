@@ -46,6 +46,7 @@ export async function listSubs(): Promise<{ id: string; sub: PushSub }[]> {
     return [...mem.entries()].map(([id, sub]) => ({ id, sub }));
   }
   const all = await kvHgetall(SUBS_KEY);
+  if (!all) return [];
   const out: { id: string; sub: PushSub }[] = [];
   for (const [id, raw] of Object.entries(all)) {
     try {

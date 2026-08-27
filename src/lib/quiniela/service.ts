@@ -176,8 +176,10 @@ export function scoreUser(
   return scoreAgainst(board, picks);
 }
 
-export async function getLeaderboard(board: QuinielaBoard): Promise<QuinielaLeaderboard> {
-  const all = await listPicks(board.jornadaKey);
+export function leaderboardFromPicks(
+  board: QuinielaBoard,
+  all: { userId: string; name: string; picks: Record<string, Outcome> }[]
+): QuinielaLeaderboard {
   const rows: LeaderRow[] = all
     .filter((p) => sanitizeName(p.name))
     .map((p) => {
@@ -195,6 +197,13 @@ export async function getLeaderboard(board: QuinielaBoard): Promise<QuinielaLead
       (a, b) => b.points - a.points || b.played - a.played || a.name.localeCompare(b.name)
     );
   return { jornadaKey: board.jornadaKey, rows, entries: rows.length };
+}
+
+/** `null` when the picks hash could not be read (caller must not treat as empty). */
+export async function getLeaderboard(board: QuinielaBoard): Promise<QuinielaLeaderboard | null> {
+  const all = await listPicks(board.jornadaKey);
+  if (all == null) return null;
+  return leaderboardFromPicks(board, all);
 }
 
 const USER_ID_RE = /^[A-Za-z0-9_-]{8,64}$/;
