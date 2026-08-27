@@ -340,6 +340,80 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
     mx: ['canal-5', 'tudn', 'vix'],
     us: ['tudn'],
   },
+
+  // Jornada 6 · 28–30 ago 2026
+  '2026-08-28|ATL|LEO': {
+    mx: ['azteca-7', 'espn', 'disney-plus'],
+    us: ['tudn'],
+  },
+  'j6|ATL|LEO': {
+    mx: ['azteca-7', 'espn', 'disney-plus'],
+    us: ['tudn'],
+  },
+  '2026-08-28|CAZ|NCX': {
+    mx: ['fox-one'],
+    us: ['fox-deportes'],
+  },
+  'j6|CAZ|NCX': {
+    mx: ['fox-one'],
+    us: ['fox-deportes'],
+  },
+  '2026-08-28|TIJ|UNAM': {
+    mx: ['fox-one'],
+    us: ['tudn'],
+  },
+  'j6|TIJ|UNAM': {
+    mx: ['fox-one'],
+    us: ['tudn'],
+  },
+  '2026-08-29|ATS|QRO': {
+    mx: ['vix', 'layvtime'],
+    us: ['vix'],
+  },
+  'j6|ATS|QRO': {
+    mx: ['vix', 'layvtime'],
+    us: ['vix'],
+  },
+  '2026-08-29|GDL|PAC': {
+    mx: ['fox', 'fox-one'],
+    us: ['tudn', 'univision'],
+  },
+  'j6|GDL|PAC': {
+    mx: ['fox', 'fox-one'],
+    us: ['tudn', 'univision'],
+  },
+  '2026-08-29|AME|PUE': {
+    mx: ['canal-5', 'tudn', 'vix', 'layvtime'],
+    us: ['tudn', 'univision', 'vix'],
+  },
+  'j6|AME|PUE': {
+    mx: ['canal-5', 'tudn', 'vix', 'layvtime'],
+    us: ['tudn', 'univision', 'vix'],
+  },
+  '2026-08-29|SAN|UANL': {
+    mx: ['canal-5', 'tudn', 'vix', 'layvtime'],
+    us: ['tudn', 'univision'],
+  },
+  'j6|SAN|UANL': {
+    mx: ['canal-5', 'tudn', 'vix', 'layvtime'],
+    us: ['tudn', 'univision'],
+  },
+  '2026-08-30|JUA|TOL': {
+    mx: ['vix'],
+    us: ['tudn'],
+  },
+  'j6|JUA|TOL': {
+    mx: ['vix'],
+    us: ['tudn'],
+  },
+  '2026-08-30|ASL|MTY': {
+    mx: ['vix', 'layvtime'],
+    us: ['vix', 'tudn'],
+  },
+  'j6|ASL|MTY': {
+    mx: ['vix', 'layvtime'],
+    us: ['vix', 'tudn'],
+  },
 };
 
 /**
