@@ -174,9 +174,9 @@ export const LEAGUES_CUP_PHASE_ONE: LcKick[] = [
 ];
 
 /**
- * Knockout tree — QF sides, venues, and kickoffs are official.
+ * Knockout tree — QF/SF sides, venues, and kickoffs are official.
  * `smId` links to Sportmonks for live scores (QF 2026 ids are in the season dump).
- * SF: winner(LEO–RSL) vs winner(TOL–ATX) · winner(MTY–CHI) vs winner(AME–COL).
+ * SF 2 sep: Toluca–León (Houston) · América–Monterrey (Los Ángeles).
  */
 export const LEAGUES_CUP_KNOCKOUT: LcKnockoutSlot[] = [
   {
@@ -252,26 +252,36 @@ export const LEAGUES_CUP_KNOCKOUT: LcKnockoutSlot[] = [
   {
     id: 'lc-sf-1',
     stage: 'Semifinals',
-    boardDate: '2026-09-01',
-    boardDateLabel: '1–2 sep',
-    home: null,
-    away: null,
-    homeLabel: 'Ganador León / Salt Lake',
-    awayLabel: 'Ganador Austin / Toluca',
-    venueLabel: 'Por anunciar',
-    feedsFrom: ['lc-qf-3', 'lc-qf-2'],
+    boardDate: '2026-09-02',
+    boardDateLabel: '2 sep',
+    home: 'TOL',
+    away: 'LEO',
+    homeLabel: 'Toluca',
+    awayLabel: 'León',
+    homeSeed: '1',
+    awaySeed: '28',
+    venueLabel: 'Shell Energy Stadium',
+    localTime: '20:00',
+    tz: CT,
+    us: TV,
+    feedsFrom: ['lc-qf-2', 'lc-qf-3'],
   },
   {
     id: 'lc-sf-2',
     stage: 'Semifinals',
-    boardDate: '2026-09-01',
-    boardDateLabel: '1–2 sep',
-    home: null,
-    away: null,
-    homeLabel: 'Ganador Chicago / Monterrey',
-    awayLabel: 'Ganador América / Columbus',
-    venueLabel: 'Por anunciar',
-    feedsFrom: ['lc-qf-1', 'lc-qf-4'],
+    boardDate: '2026-09-02',
+    boardDateLabel: '2 sep',
+    home: 'AME',
+    away: 'MTY',
+    homeLabel: 'América',
+    awayLabel: 'Monterrey',
+    homeSeed: '3',
+    awaySeed: '11',
+    venueLabel: 'Dignity Health Sports Park',
+    localTime: '20:30',
+    tz: PT,
+    us: TV,
+    feedsFrom: ['lc-qf-4', 'lc-qf-1'],
   },
   {
     id: 'lc-third',

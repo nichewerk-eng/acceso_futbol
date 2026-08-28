@@ -112,4 +112,12 @@ describe('seedGamesOfDay', () => {
     assert.ok(seed.games.some((g) => g.id === 'lc-qf-1'));
     assert.ok(seed.games.some((g) => g.id === 'lc-qf-3'));
   });
+
+  it('surfaces Leagues Cup semis on 2 sep after jornada 6', () => {
+    const seed = seedGamesOfDay(new Date('2026-09-01T17:00:00-06:00'));
+    assert.equal(seed.dayKey, '2026-09-02');
+    assert.equal(seed.upcoming, true);
+    assert.ok(seed.games.some((g) => g.id === 'lc-sf-1'));
+    assert.ok(seed.games.some((g) => g.id === 'lc-sf-2'));
+  });
 });

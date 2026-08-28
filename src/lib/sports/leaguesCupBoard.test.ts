@@ -83,9 +83,27 @@ describe('leagues cup knockout board', () => {
     assert.ok(qf);
     assert.equal(qf.statusLabel, 'Próximo');
     assert.equal(lcOnPartidosCalendar(qf), true);
-    const sf = board.find((f) => f.id === 'lc-sf-1');
-    assert.ok(sf);
-    assert.equal(lcOnPartidosCalendar(sf), false);
+    const third = board.find((f) => f.id === 'lc-third');
+    assert.ok(third);
+    assert.equal(lcOnPartidosCalendar(third), false);
+  });
+
+  it('lists the official semis on the partidos calendar', () => {
+    const board = buildLeaguesCupBoard([]);
+    const sf1 = board.find((f) => f.id === 'lc-sf-1');
+    const sf2 = board.find((f) => f.id === 'lc-sf-2');
+    assert.ok(sf1 && sf2);
+    assert.equal(sf1.home.abbreviation, 'TOL');
+    assert.equal(sf1.away.abbreviation, 'LEO');
+    assert.equal(sf1.venue, 'Shell Energy Stadium');
+    assert.equal(sf1.scheduleDay, '2026-09-02');
+    assert.equal(sf1.jornada, 'Semifinals');
+    assert.equal(lcOnPartidosCalendar(sf1), true);
+    assert.equal(sf2.home.abbreviation, 'AME');
+    assert.equal(sf2.away.abbreviation, 'MTY');
+    assert.equal(sf2.venue, 'Dignity Health Sports Park');
+    assert.equal(sf2.scheduleDay, '2026-09-02');
+    assert.equal(lcOnPartidosCalendar(sf2), true);
   });
 
   it('rewrites a Sportmonks QF snapshot onto the official slot', () => {
@@ -119,11 +137,11 @@ describe('leagues cup knockout board', () => {
     const sf1 = board.find((f) => f.id === 'lc-sf-1');
     const sf2 = board.find((f) => f.id === 'lc-sf-2');
     assert.ok(sf1 && sf2);
-    assert.equal(sf1.home.abbreviation, 'LEO');
-    assert.equal(sf1.away.abbreviation, 'TBD');
-    assert.equal(sf2.home.abbreviation, 'MTY');
-    assert.equal(sf2.away.abbreviation, 'TBD');
-    assert.equal(lcOnPartidosCalendar(sf1), false);
+    assert.equal(sf1.home.abbreviation, 'TOL');
+    assert.equal(sf1.away.abbreviation, 'LEO');
+    assert.equal(sf2.home.abbreviation, 'AME');
+    assert.equal(sf2.away.abbreviation, 'MTY');
+    assert.equal(lcOnPartidosCalendar(sf1), true);
     const final = board.find((f) => f.id === 'lc-final');
     assert.equal(final?.home.abbreviation, 'TBD');
   });
@@ -154,10 +172,10 @@ describe('leagues cup knockout board', () => {
     ]);
     const sf1 = board.find((f) => f.id === 'lc-sf-1');
     const sf2 = board.find((f) => f.id === 'lc-sf-2');
-    assert.equal(sf1?.home.abbreviation, 'LEO');
-    assert.equal(sf1?.away.abbreviation, 'TOL');
-    assert.equal(sf2?.home.abbreviation, 'MTY');
-    assert.equal(sf2?.away.abbreviation, 'AME');
+    assert.equal(sf1?.home.abbreviation, 'TOL');
+    assert.equal(sf1?.away.abbreviation, 'LEO');
+    assert.equal(sf2?.home.abbreviation, 'AME');
+    assert.equal(sf2?.away.abbreviation, 'MTY');
     assert.equal(board.find((f) => f.id === 'lc-final')?.home.abbreviation, 'TBD');
   });
 });

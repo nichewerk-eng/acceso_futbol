@@ -104,7 +104,7 @@ export function LcBracket({
         {live
           ? 'Cuadro en vivo · se actualiza con el marcador'
           : advanced
-            ? 'Ganadores avanzan al siguiente cruce · semis 1–2 sep · final 6 sep'
+            ? 'Ganadores avanzan a la final · semis 2 sep · Houston y Los Ángeles · final 6 sep'
             : 'Emparejamientos oficiales · sedes y horarios por anunciar'}
       </p>
     </div>

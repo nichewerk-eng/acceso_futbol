@@ -253,7 +253,7 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
                 Ronda eliminatoria
               </h2>
               <p className="mt-3 font-mono text-[11px] text-muted">
-                Cuartos (25–26 ago) · Semis (1–2 sep) · Tercer lugar y Final (6 sep)
+                Cuartos (25–26 ago) · Semis (2 sep) · Tercer lugar y Final (6 sep)
               </p>
             </div>
             <LcBracket fixtures={knockout} isMine={isMine} />
