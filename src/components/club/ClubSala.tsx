@@ -7,7 +7,7 @@ import { ClubPulseWall } from '@/components/club/ClubPulseWall';
 import { ClubTrophyCase } from '@/components/club/ClubTrophyCase';
 import { ClubsNav } from '@/components/club/ClubsNav';
 import { LiguillaPathShare } from '@/components/ligamx/LiguillaPathShare';
-import { useGravity } from '@/contexts/GravityContext';
+import { SelladoFromFixture } from '@/components/match/SelladoCard';
 import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
 import type { ClubBoard } from '@/lib/sports/clubBoard';
 import {
@@ -48,22 +48,6 @@ function partidoHref(f: Fixture) {
   return `/partido/${f.league}/${f.id}`;
 }
 
-function scorerLine(f: Fixture): string {
-  const list = f.scorers ?? [];
-  if (list.length === 0) {
-    const hs = Number(f.home.score ?? 0);
-    const as = Number(f.away.score ?? 0);
-    if (f.state === 'post' && hs === 0 && as === 0) return '0-0';
-    return '';
-  }
-  const parts = list.map((s) => {
-    const tag = s.pen ? ' (P)' : s.og ? ' (OG)' : '';
-    return `${s.name}${s.minute ? ` ${s.minute}` : ''}${tag}`;
-  });
-  if (parts.length <= 3) return parts.join(' · ');
-  return `${parts.slice(0, 2).join(' · ')} · +${parts.length - 2}`;
-}
-
 function ClubTapeStamp({
   f,
   clubAbbr,
@@ -71,74 +55,13 @@ function ClubTapeStamp({
   f: Fixture;
   clubAbbr: string;
 }) {
-  const live = f.state === 'in';
-  const winner = f.winnerSide ?? null;
-  const draw = !live && winner === null && f.state === 'post';
-  const homeCls =
-    winner === 'home'
-      ? 'jor-team-win is-win'
-      : winner === 'away'
-        ? 'jor-team-lose is-lose'
-        : draw
-          ? 'jor-team-draw'
-          : '';
-  const awayCls =
-    winner === 'away'
-      ? 'jor-team-win is-win'
-      : winner === 'home'
-        ? 'jor-team-lose is-lose'
-        : draw
-          ? 'jor-team-draw'
-          : '';
-  const chip = resultForClub(f, clubAbbr);
-  const scorers = scorerLine(f);
-
   return (
-    <Link
+    <SelladoFromFixture
+      f={f}
       href={partidoHref(f)}
-      data-testid={`club-recent-${f.id}`}
-      className={['jor-stamp jor-rise', live ? 'jor-stamp-live' : ''].join(' ')}
-    >
-      <div className="jor-stamp-meta">
-        {live && <span className="hoy-live-dot" aria-hidden />}
-        <span>
-          {live
-            ? f.clock === 'HT' || /descanso/i.test(f.statusLabel || '')
-              ? 'HT'
-              : f.clock || 'LIVE'
-            : 'FT'}
-        </span>
-        {chip && <span aria-hidden>· {chip}</span>}
-      </div>
-      <div>
-        <p className="jor-stamp-score">
-          <span className={homeCls}>{f.home.score ?? 0}</span>
-          <span className="mx-1 opacity-35">:</span>
-          <span className={awayCls}>{f.away.score ?? 0}</span>
-        </p>
-        <div className="jor-stamp-teams">
-          <span className={['jor-stamp-home inline-flex items-center gap-2', homeCls].join(' ')}>
-            <ClubLogo abbr={f.home.abbreviation} name={f.home.name} size="sm" />
-            <span className="club-word club-word-sm">{f.home.abbreviation}</span>
-          </span>
-          <span
-            className={['jor-stamp-away inline-flex items-center justify-end gap-2', awayCls].join(
-              ' '
-            )}
-          >
-            <span className="club-word club-word-sm">{f.away.abbreviation}</span>
-            <ClubLogo abbr={f.away.abbreviation} name={f.away.name} size="sm" />
-          </span>
-        </div>
-        {scorers ? (
-          <p className="jor-stamp-scorers" title={scorers}>
-            {scorers}
-          </p>
-        ) : (
-          <p className="jor-stamp-scorers">&nbsp;</p>
-        )}
-      </div>
-    </Link>
+      testId={`club-recent-${f.id}`}
+      clubResult={resultForClub(f, clubAbbr)}
+    />
   );
 }
 
@@ -185,11 +108,7 @@ function ClubTapeNext({ f, tz }: { f: Fixture; tz: string }) {
 
 export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
   const board = initialBoard;
-  const { clubId, setClub, setElTri, settled, elTri } = useGravity();
   const tz = useDeviceTimeZone();
-  const isMine =
-    settled &&
-    (clubId === board.club.id || (board.club.id === 'el-tri' && elTri));
 
   const { club, next, live, table, liguilla, form, recent, upcoming, accesoLine } = board;
   const style = {
@@ -197,14 +116,6 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
     ['--club-signal' as string]: club.palette.signal,
     ['--club-on-ink' as string]: club.palette.onInk,
   };
-
-  function claimClub() {
-    if (club.id === 'el-tri') {
-      setElTri(true);
-    } else {
-      setClub(club.id);
-    }
-  }
 
   return (
     <div className="club-sala" style={style} data-testid="club-sala" data-club={club.id}>
@@ -254,29 +165,6 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
             <div className="club-hero-tools animate-pulse-in-delay-2">
               {!table && form.length > 0 && (
                 <p className="af-tele club-tele">FORMA {form.map((m) => m.result).join('')}</p>
-              )}
-              {(!settled || clubId !== club.id) && club.id !== 'el-tri' && (
-                <button
-                  type="button"
-                  onClick={claimClub}
-                  className="club-claim-btn"
-                  data-testid="club-claim"
-                >
-                  Este es mi club
-                </button>
-              )}
-              {club.id === 'el-tri' && (
-                <button
-                  type="button"
-                  onClick={claimClub}
-                  className="club-claim-btn"
-                  data-testid="club-claim-tri"
-                >
-                  Lock El Tri
-                </button>
-              )}
-              {isMine && clubId === club.id && (
-                <span className="af-tele text-[var(--club-signal)]">LOCK</span>
               )}
             </div>
           </div>
@@ -502,7 +390,7 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
           <ClubsNav
             activeSlug={club.id}
             title="Otras salas"
-            dek="Cambia de club — cada sala tiene su jornada, pulso y cobertura."
+            dek="Partidos, pulso y cobertura de cada club de Liga MX."
           />
         </div>
       </div>

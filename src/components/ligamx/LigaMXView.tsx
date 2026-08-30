@@ -8,10 +8,8 @@ import { ClubLogo } from '@/components/brand/ClubLogo';
 import { LigaMxMark } from '@/components/brand/LigaMxMark';
 import { LigaMxFemenilMark } from '@/components/brand/LigaMxFemenilMark';
 import { PartidoLink } from '@/components/partido/PartidoLink';
-import { useGravity } from '@/contexts/GravityContext';
 import { teamNameEs } from '@/components/standings/teamNames';
 import { resolveDondeVer } from '@/config/dondeVer';
-import { clubIdentityFromAbbr } from '@/config/clubIdentity';
 import { ligaMxClubIdFromAbbr } from '@/config/ligaMxLogos';
 import { getCurrentJornada } from '@/fixtures/ligamx-apertura-2026';
 import type { LigaMXTable, LigaMXEntry } from '@/app/api/ligamx/standings/route';
@@ -22,11 +20,11 @@ import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
 import { FRESH, paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
 import { kickHold, kickHoldLabel } from '@/lib/sports/localizeEs';
 import { mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
-import { LIGUILLA_SPOTS, liguillaPath } from '@/lib/sports/liguillaPath';
+import { LIGUILLA_SPOTS } from '@/lib/sports/liguillaPath';
 import { FEMENIL_LIGUILLA_SPOTS } from '@/lib/sports/ligaMxFemenil';
-import { LiguillaPathShare } from '@/components/ligamx/LiguillaPathShare';
 import { GoleoRailCard, GoleoTabla } from '@/components/ligamx/GoleoTabla';
 import { OnceRoom } from '@/components/living-room/OnceRoom';
+import { SelladoCard } from '@/components/match/SelladoCard';
 import type { GoleoBoard } from '@/lib/sports/leaders';
 
 /** Shared header + row shell — tracks live in `.lm-standings-grid` (globals.css). */
@@ -95,13 +93,6 @@ function shortClubName(name: string, abbr: string) {
   return cleaned;
 }
 
-type GravityFn = (
-  homeName: string,
-  awayName: string,
-  homeAbbr?: string,
-  awayAbbr?: string
-) => boolean;
-
 type LigaMxTab = 'tabla' | 'jornada' | 'goleo' | 'once';
 export type LigaMxBoardLeague = 'liga-mx' | 'liga-mx-femenil';
 
@@ -121,7 +112,6 @@ export default function LigaMXView({
   league = 'liga-mx',
 }: Props) {
   const router = useRouter();
-  const { matchesGravity, club } = useGravity();
   const hubPath = league === 'liga-mx-femenil' ? '/liga-mx-femenil' : '/liga-mx';
   const fixturesApi =
     league === 'liga-mx-femenil' ? '/api/ligamx-femenil/fixtures' : '/api/ligamx/fixtures';
@@ -233,9 +223,6 @@ export default function LigaMXView({
   const liguillaSpots = grouped ? FEMENIL_LIGUILLA_SPOTS : LIGUILLA_SPOTS;
   const isEmpty = entries.length === 0;
 
-  const isMine = (f: LigaMXFixture) =>
-    matchesGravity(f.home.name, f.away.name, f.home.abbreviation, f.away.abbreviation);
-
   const selectTab = useCallback(
     (id: LigaMxTab) => {
       setTab(id);
@@ -246,11 +233,6 @@ export default function LigaMXView({
   );
   const openTabla = useCallback(() => selectTab('tabla'), [selectTab]);
   const openGoleo = useCallback(() => selectTab('goleo'), [selectTab]);
-  const goleoMine = useCallback(
-    (abbr?: string) =>
-      Boolean(abbr && matchesGravity(abbr, abbr, abbr, abbr)),
-    [matchesGravity]
-  );
 
   return (
     <div
@@ -285,7 +267,6 @@ export default function LigaMXView({
                 {league === 'liga-mx-femenil'
                   ? 'Jornada, tabla y goleo en una sola sala. Camino a Liguilla (top 8).'
                   : 'Jornada, tabla, goleo y once de la fecha. Camino a Liguilla (top 8).'}
-                {club ? ` Tu LOCK: ${club.abbreviation}.` : ''}
               </p>
               {league === 'liga-mx' && (
                 <Link
@@ -405,7 +386,6 @@ export default function LigaMXView({
                         </h3>
                         <StandingsBoard
                           entries={g.entries}
-                          matchesGravity={matchesGravity}
                           liguillaSpots={liguillaSpots}
                           testId={`ligamx-standings-${g.id}`}
                         />
@@ -415,7 +395,6 @@ export default function LigaMXView({
                 ) : (
                   <StandingsBoard
                     entries={entries}
-                    matchesGravity={matchesGravity}
                     liguillaSpots={liguillaSpots}
                     testId="ligamx-standings"
                   />
@@ -429,7 +408,6 @@ export default function LigaMXView({
           <section data-testid="ligamx-goleo-tab">
             <GoleoTabla
               board={goleo}
-              isMine={goleoMine}
               sourceNote={league === 'liga-mx-femenil' ? 'fuente Sportmonks.' : undefined}
             />
           </section>
@@ -526,7 +504,7 @@ export default function LigaMXView({
                   <p className="mb-3 af-tele text-signal">En vivo</p>
                   <ul className="lc-day-list">
                     {jornadaLive.map((f) => (
-                      <KickRow key={f.id} f={f} tz={userTz} mine={isMine(f)} league={league} />
+                      <KickRow key={f.id} f={f} tz={userTz} league={league} />
                     ))}
                   </ul>
                 </div>
@@ -554,7 +532,7 @@ export default function LigaMXView({
                         </div>
                         <ul className="lc-day-list">
                           {group.rows.map((f) => (
-                            <KickRow key={f.id} f={f} tz={userTz} mine={isMine(f)} league={league} />
+                            <KickRow key={f.id} f={f} tz={userTz} league={league} />
                           ))}
                         </ul>
                       </div>
@@ -583,11 +561,18 @@ export default function LigaMXView({
                           )}
                           <h4 className="lc-day-title">{group.label}</h4>
                         </div>
-                        <ul className="lc-day-list">
+                        <div className="jor-mosaic">
                           {group.rows.map((f) => (
-                            <KickRow key={f.id} f={f} tz={userTz} mine={isMine(f)} league={league} />
+                            <SelladoCard
+                              key={f.id}
+                              href={`/partido/${league}/${f.id}`}
+                              testId={`ligamx-match-${f.id}`}
+                              home={f.home}
+                              away={f.away}
+                              jornada={f.jornada}
+                            />
                           ))}
-                        </ul>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -606,10 +591,9 @@ export default function LigaMXView({
                   entries={entries}
                   groups={grouped ? groups : undefined}
                   liguillaSpots={liguillaSpots}
-                  matchesGravity={matchesGravity}
                   onOpenTabla={openTabla}
                 />
-                <GoleoRailCard board={goleo} isMine={goleoMine} onOpenGoleo={openGoleo} />
+                <GoleoRailCard board={goleo} onOpenGoleo={openGoleo} />
               </div>
             </div>
 
@@ -618,12 +602,6 @@ export default function LigaMXView({
               groups={grouped ? groups : undefined}
               liguillaSpots={liguillaSpots}
               goleo={goleo}
-              jornadaUpcoming={jornadaUpcoming}
-              userTz={userTz}
-              clubName={club?.name ?? null}
-              clubAbbr={club?.abbreviation ?? null}
-              matchesGravity={matchesGravity}
-              goleoMine={goleoMine}
               onOpenTabla={openTabla}
               onOpenGoleo={openGoleo}
             />
@@ -639,12 +617,6 @@ function LmPartidosRail({
   groups,
   liguillaSpots,
   goleo,
-  jornadaUpcoming,
-  userTz,
-  clubName,
-  clubAbbr,
-  matchesGravity,
-  goleoMine,
   onOpenTabla,
   onOpenGoleo,
 }: {
@@ -652,139 +624,26 @@ function LmPartidosRail({
   groups?: { id: string; name: string; entries: LigaMXEntry[] }[];
   liguillaSpots: number;
   goleo: GoleoBoard | null;
-  jornadaUpcoming: LigaMXFixture[];
-  userTz: string;
-  clubName: string | null;
-  clubAbbr: string | null;
-  matchesGravity: GravityFn;
-  goleoMine: (abbr?: string) => boolean;
   onOpenTabla: () => void;
   onOpenGoleo: () => void;
 }) {
-  const myEntry = useMemo(() => {
-    if (!clubName && !clubAbbr) return null;
-    return (
-      entries.find((e) =>
-        matchesGravity(e.team.name, e.team.name, e.team.abbreviation, e.team.abbreviation)
-      ) ?? null
-    );
-  }, [clubName, clubAbbr, entries, matchesGravity]);
-
-  const myNext = useMemo(() => {
-    if (!clubName && !clubAbbr) return null;
-    return (
-      jornadaUpcoming.find((f) =>
-        matchesGravity(f.home.name, f.away.name, f.home.abbreviation, f.away.abbreviation)
-      ) ?? null
-    );
-  }, [clubName, clubAbbr, jornadaUpcoming, matchesGravity]);
-
   const grouped = Boolean(groups && groups.length > 1);
-  const path = useMemo(() => {
-    if (!myEntry || grouped) return null;
-    return liguillaPath(
-      {
-        position: myEntry.position,
-        pts: myEntry.pts,
-        gp: myEntry.gp,
-        abbreviation: myEntry.team.abbreviation,
-      },
-      entries.map((e) => ({
-        position: e.position,
-        pts: e.pts,
-        gp: e.gp,
-        abbreviation: e.team.abbreviation,
-      }))
-    );
-  }, [myEntry, entries, grouped]);
-
-  const clubSlug = myEntry ? clubIdentityFromAbbr(myEntry.team.abbreviation)?.id : null;
-  const mineClass = 'lc-rail-block lc-rail-mine';
-  const mineInner = myEntry ? (
-    <>
-          <p className="af-tele text-signal">Tu club</p>
-          <div className="lc-rail-mine-row">
-            <ClubLogo
-              abbr={myEntry.team.abbreviation}
-              name={myEntry.team.name}
-              logoUrl={myEntry.team.logo}
-              size="sm"
-            />
-            <div className="min-w-0">
-              <p className="lc-rail-mine-name">{myEntry.team.abbreviation}</p>
-              <p className="af-tele text-muted">#{myEntry.position}</p>
-            </div>
-            <p className="lc-rail-mine-pts">
-              <span>{myEntry.pts}</span>
-              <span className="af-tele text-muted">pts</span>
-            </p>
-          </div>
-          <p
-            className={[
-              'lc-rail-mine-mark',
-              path?.zone === 'in' || path?.zone === 'edge' || myEntry.position <= liguillaSpots
-                ? 'text-signal'
-                : 'text-muted',
-            ].join(' ')}
-            data-testid="liguilla-path-headline"
-          >
-            {path?.headline ?? (myEntry.position <= liguillaSpots ? 'Liguilla' : 'Fuera')}
-          </p>
-          {myNext && (
-            <p className="lc-rail-next">
-              <span className="af-tele text-muted">Siguiente</span>
-              <span className="lc-rail-next-match">
-                {fmtTime(myNext.date, userTz)} · {myNext.home.abbreviation}–
-                {myNext.away.abbreviation}
-              </span>
-            </p>
-          )}
-    </>
-  ) : null;
 
   return (
     <aside className="lc-rail" data-testid="ligamx-rail">
-      {myEntry && mineInner && (
-        clubSlug ? (
-          <Link
-            href={`/club/${clubSlug}`}
-            className={mineClass}
-            data-testid="ligamx-rail-mine"
-            title={`Sala de ${myEntry.team.name}`}
-          >
-            {mineInner}
-          </Link>
-        ) : (
-          <div className={mineClass} data-testid="ligamx-rail-mine">
-            {mineInner}
-          </div>
-        )
-      )}
-
       <div className="lc-rail-tabla-desk space-y-4">
         <LmClasificacionCard
           entries={entries}
           groups={groups}
           liguillaSpots={liguillaSpots}
-          matchesGravity={matchesGravity}
           onOpenTabla={onOpenTabla}
         />
-        <GoleoRailCard board={goleo} isMine={goleoMine} onOpenGoleo={onOpenGoleo} />
+        <GoleoRailCard board={goleo} onOpenGoleo={onOpenGoleo} />
       </div>
 
       <div className="lc-rail-block" data-testid="ligamx-rail-liguilla">
-        <div className="flex items-start justify-between gap-3">
-          <p className="af-tele text-foreground">Camino a Liguilla</p>
-          {path && myEntry ? <LiguillaPathShare abbr={myEntry.team.abbreviation} path={path} /> : null}
-        </div>
-        {path ? (
-          <>
-            <p className="lg-path-line" data-testid="liguilla-path-detail">
-              {path.detail}
-            </p>
-            <p className="lc-rail-note">Top {LIGUILLA_SPOTS} directo · sin Play-In</p>
-          </>
-        ) : grouped ? (
+        <p className="af-tele text-foreground">Camino a Liguilla</p>
+        {grouped ? (
           <ul className="lc-rail-tv-list">
             <li>Top 4 de cada grupo a Liguilla</li>
             <li>Grupo A y Grupo B · 9 clubes cada uno</li>
@@ -806,27 +665,18 @@ function LmClasificacionCard({
   entries,
   groups,
   liguillaSpots,
-  matchesGravity,
   onOpenTabla,
 }: {
   entries: LigaMXEntry[];
   groups?: { id: string; name: string; entries: LigaMXEntry[] }[];
   liguillaSpots: number;
-  matchesGravity: GravityFn;
   onOpenTabla: () => void;
 }) {
   const grouped = Boolean(groups && groups.length > 1);
   const rows = useMemo(() => {
     if (grouped || entries.length === 0) return [] as LigaMXEntry[];
-    const window = entries.slice(0, liguillaSpots + 1);
-    const mine = entries.find((e) =>
-      matchesGravity(e.team.name, e.team.name, e.team.abbreviation, e.team.abbreviation)
-    );
-    if (mine && mine.position > liguillaSpots + 1) {
-      return [...window, mine];
-    }
-    return window;
-  }, [entries, grouped, liguillaSpots, matchesGravity]);
+    return entries.slice(0, liguillaSpots + 1);
+  }, [entries, grouped, liguillaSpots]);
 
   if (entries.length === 0) {
     return (
@@ -868,7 +718,6 @@ function LmClasificacionCard({
                 title={g.name}
                 entries={g.entries}
                 liguillaSpots={liguillaSpots}
-                matchesGravity={matchesGravity}
               />
             ))
           : (
@@ -876,7 +725,6 @@ function LmClasificacionCard({
                 title="Apertura"
                 entries={rows}
                 liguillaSpots={liguillaSpots}
-                matchesGravity={matchesGravity}
               />
             )}
       </div>
@@ -888,12 +736,10 @@ function RailMiniStandings({
   title,
   entries,
   liguillaSpots,
-  matchesGravity,
 }: {
   title: string;
   entries: LigaMXEntry[];
   liguillaSpots: number;
-  matchesGravity: GravityFn;
 }) {
   const rows = entries.slice(0, liguillaSpots + 1);
   return (
@@ -904,12 +750,6 @@ function RailMiniStandings({
       </div>
       <ul className="lc-rail-mini-list">
         {rows.map((entry) => {
-          const mine = matchesGravity(
-            entry.team.name,
-            entry.team.name,
-            entry.team.abbreviation,
-            entry.team.abbreviation
-          );
           const cut = entry.position === liguillaSpots;
           return (
             <li
@@ -918,7 +758,6 @@ function RailMiniStandings({
                 'lc-rail-mini-row',
                 cut ? 'lc-rail-mini-cut' : '',
                 entry.position > liguillaSpots ? 'lc-rail-mini-out' : '',
-                mine ? 'lc-rail-mini-mine' : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
@@ -945,12 +784,10 @@ function RailMiniStandings({
 
 function StandingsBoard({
   entries,
-  matchesGravity,
   liguillaSpots,
   testId,
 }: {
   entries: LigaMXEntry[];
-  matchesGravity: GravityFn;
   liguillaSpots: number;
   testId?: string;
 }) {
@@ -972,12 +809,6 @@ function StandingsBoard({
         <StandingsRow
           key={entry.team.id}
           entry={entry}
-          mine={matchesGravity(
-            entry.team.name,
-            entry.team.name,
-            entry.team.abbreviation,
-            entry.team.abbreviation
-          )}
           liguillaSpots={liguillaSpots}
         />
       ))}
@@ -987,20 +818,14 @@ function StandingsBoard({
 
 function StandingsRow({
   entry,
-  mine,
   liguillaSpots = LIGUILLA_SPOTS,
 }: {
   entry: LigaMXEntry;
-  mine: boolean;
   liguillaSpots?: number;
 }) {
   const inLiguilla = entry.position <= liguillaSpots;
   const zoneEdge = entry.position === liguillaSpots + 1;
   const clubSlug = ligaMxClubIdFromAbbr(entry.team.abbreviation);
-  const nameTone = mine ? 'text-signal' : 'text-foreground';
-  const lockMark = mine ? (
-    <span className="ml-2 af-tele !text-signal">LOCK</span>
-  ) : null;
   const teamLabel = (
     <>
       <ClubLogo
@@ -1010,18 +835,11 @@ function StandingsRow({
         size="sm"
       />
       <span className="min-w-0 truncate">
-        <span className={['club-word club-word-sm sm:hidden', nameTone].join(' ')}>
+        <span className="club-word club-word-sm sm:hidden">
           {entry.team.abbreviation}
-          {lockMark}
         </span>
-        <span
-          className={[
-            'hidden font-display text-base font-bold uppercase tracking-wide sm:inline',
-            nameTone,
-          ].join(' ')}
-        >
+        <span className="hidden font-display text-base font-bold uppercase tracking-wide sm:inline">
           {teamNameEs(entry.team.name)}
-          {mine ? <span className="ml-2 af-tele !text-signal">LOCK</span> : null}
         </span>
       </span>
     </>
@@ -1034,7 +852,6 @@ function StandingsRow({
         STANDINGS_GRID,
         'border-t border-line py-3 transition hover:bg-bg-3',
         zoneEdge ? 'border-t-2 border-t-foreground' : '',
-        mine ? 'bg-signal/5' : '',
       ].join(' ')}
     >
       <span
@@ -1082,12 +899,10 @@ function StandingsRow({
 function KickRow({
   f,
   tz,
-  mine,
   league,
 }: {
   f: LigaMXFixture;
   tz: string;
-  mine: boolean;
   league: LigaMxBoardLeague;
 }) {
   const live = f.status.state === 'in';
@@ -1133,7 +948,6 @@ function KickRow({
         className={[
           'lc-match lm-kick',
           live ? 'lc-match-live' : '',
-          mine ? 'lc-match-mine' : '',
         ]
           .filter(Boolean)
           .join(' ')}
@@ -1152,16 +966,13 @@ function KickRow({
         </span>
 
         <div className="lc-match-mid">
-          {(!done || mine) && (
+          {!done && (
             <div className="lc-match-when">
-              {!done && (
-                <p className="lc-match-when-primary">
-                  {live && <span className="hoy-live-dot mr-1.5" aria-hidden />}
-                  {when}
-                  {showHrs ? <span className="lc-match-when-hrs"> hrs</span> : null}
-                </p>
-              )}
-              {mine && <span className="lc-match-lock">TU CLUB</span>}
+              <p className="lc-match-when-primary">
+                {live && <span className="hoy-live-dot mr-1.5" aria-hidden />}
+                {when}
+                {showHrs ? <span className="lc-match-when-hrs"> hrs</span> : null}
+              </p>
             </div>
           )}
           <span

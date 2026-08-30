@@ -22,11 +22,9 @@ function kickClock(iso: string, tz: string) {
 
 function GuideRow({
   f,
-  mine,
   tz,
 }: {
   f: Fixture;
-  mine: boolean;
   tz: string;
 }) {
   const live = f.state === 'in';
@@ -38,7 +36,7 @@ function GuideRow({
     <Link
       href={`/partido/liga-mx/${f.id}`}
       data-testid={`donde-ver-match-${f.id}`}
-      className={['dv-row', mine ? 'dv-row-mine' : '', live ? 'dv-row-live' : ''].join(' ')}
+      className={['dv-row', live ? 'dv-row-live' : ''].join(' ')}
     >
       <div className="dv-row-meta">
         <p className={live ? 'dv-kick is-live' : post ? 'dv-kick is-ft' : 'dv-kick'}>
@@ -53,7 +51,6 @@ function GuideRow({
             kickClock(f.date, tz)
           )}
         </p>
-        {mine ? <span className="dv-lock">LOCK</span> : null}
       </div>
 
       <div className="dv-pair">
@@ -88,13 +85,11 @@ function DayBlock({
   label,
   rows,
   tz,
-  isMine,
   live = false,
 }: {
   label: string;
   rows: Fixture[];
   tz: string;
-  isMine: (f: Fixture) => boolean;
   live?: boolean;
 }) {
   if (!rows.length) return null;
@@ -109,7 +104,7 @@ function DayBlock({
       </div>
       <div className="dv-list">
         {rows.map((f) => (
-          <GuideRow key={f.id} f={f} mine={isMine(f)} tz={tz} />
+          <GuideRow key={f.id} f={f} tz={tz} />
         ))}
       </div>
     </section>
@@ -122,7 +117,6 @@ export function DondeVerGuide({
   upcoming,
   played = [],
   tz,
-  isMine,
   asPage = false,
   showRitual = true,
 }: {
@@ -131,7 +125,6 @@ export function DondeVerGuide({
   upcoming: Fixture[];
   played?: Fixture[];
   tz: string;
-  isMine: (f: Fixture) => boolean;
   asPage?: boolean;
   showRitual?: boolean;
 }) {
@@ -175,9 +168,9 @@ export function DondeVerGuide({
         </div>
       </div>
 
-      <DayBlock label="En vivo" rows={grouped.live} tz={tz} isMine={isMine} live />
+      <DayBlock label="En vivo" rows={grouped.live} tz={tz} live />
       {grouped.days.map((d) => (
-        <DayBlock key={d.key} label={d.label} rows={d.rows} tz={tz} isMine={isMine} />
+        <DayBlock key={d.key} label={d.label} rows={d.rows} tz={tz} />
       ))}
 
       {showRitual ? (

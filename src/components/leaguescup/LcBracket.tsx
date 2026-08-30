@@ -34,10 +34,8 @@ function metaFor(slot: LcKnockoutSlot, fixture?: Fixture): string {
 
 export function LcBracket({
   fixtures,
-  isMine,
 }: {
   fixtures: Fixture[];
-  isMine?: (f: Fixture) => boolean;
 }) {
   const fx = byId(fixtures);
   const slots = slotMap();
@@ -56,7 +54,6 @@ export function LcBracket({
           slot={slot}
           fixture={f}
           tone={tone}
-          mine={f ? Boolean(isMine?.(f)) : false}
         />
       </div>
     );
@@ -115,12 +112,10 @@ function BracketMatch({
   slot,
   fixture,
   tone,
-  mine,
 }: {
   slot: LcKnockoutSlot;
   fixture?: Fixture;
   tone: Tone;
-  mine: boolean;
 }) {
   const home = fixture?.home;
   const away = fixture?.away;
@@ -141,7 +136,6 @@ function BracketMatch({
         `lc-br-match-${tone}`,
         empty ? 'lc-br-match-empty' : '',
         live ? 'lc-br-match-live' : '',
-        mine ? 'lc-br-match-mine' : '',
       ]
         .filter(Boolean)
         .join(' ')}

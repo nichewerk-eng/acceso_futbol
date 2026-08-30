@@ -50,10 +50,10 @@ export function JornadaTakeBoard({
             <ol className="toma-stakes">
               {take.beats.map((b, i) => (
                 <li key={b.id}>
-                  <Link href={b.href} className={b.lock ? 'is-lock' : undefined}>
+                  <Link href={b.href}>
                     <span className="toma-n">{String(i + 1).padStart(2, '0')}</span>
                     <span className="toma-stake">
-                      <span className="toma-when">{b.lock ? `LOCK · ${b.kicker}` : b.kicker}</span>
+                      <span className="toma-when">{b.kicker}</span>
                       <span className="toma-beat-line">{b.line}</span>
                     </span>
                   </Link>

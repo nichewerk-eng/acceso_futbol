@@ -109,14 +109,12 @@ export function OncePitch({
   players,
   formation,
   mvpId,
-  mineId,
   selectedId,
   onSelect,
 }: {
   players: TotwPlayer[];
   formation: string;
   mvpId?: string | null;
-  mineId?: string | null;
   selectedId?: string | null;
   onSelect?: (id: string) => void;
 }) {
@@ -155,10 +153,6 @@ export function OncePitch({
   }, [passKey, ballId, passMs]);
 
   const ballPin = pins.find((pin) => pin.player.id === ballId) ?? null;
-  const shown =
-    (selectedId
-      ? pins.find((pin) => pin.player.id === selectedId)?.player
-      : null) ?? null;
 
   function passTo(pin: Pin) {
     if (pin.player.id !== ballId) {
@@ -182,12 +176,10 @@ export function OncePitch({
 
   return (
     <div className="once-pitch" data-testid="once-pitch">
-      <p className="once-pitch-form af-tele">{formation}</p>
       <div className="once-pitch-board">
         <PitchLines />
         {pins.map((pin) => {
           const totw = pin.player;
-          const mine = mineId === totw.id;
           const mvp = mvpId === totw.id;
           const hasBall = ballId === totw.id;
           const hot = selectedId === totw.id;
@@ -201,7 +193,6 @@ export function OncePitch({
                 'once-pin',
                 gk ? 'is-gk' : '',
                 mvp ? 'is-mvp' : '',
-                mine ? 'is-mine' : '',
                 hasBall ? 'is-on' : '',
                 hot ? 'is-hot' : '',
                 hop ? 'is-hop' : '',
@@ -251,42 +242,49 @@ export function OncePitch({
         })}
         {ballPin ? <XiBall pin={ballPin} passMs={passMs} passKey={passKey} /> : null}
       </div>
-      <div
-        className={shown ? 'once-tip is-on' : 'once-tip'}
-        data-testid="once-tip"
-      >
-        {shown ? (
-          <>
-            <p className="once-tip-kicker">
-              {shown.teamAbbr} · Acceso {formatRating(shown.rating)}
-              {mvpId === shown.id ? ' · FIGURA' : ''}
+    </div>
+  );
+}
+
+export function OnceFicha({
+  player,
+  mvpId,
+}: {
+  player: TotwPlayer | null;
+  mvpId?: string | null;
+}) {
+  return (
+    <div className={player ? 'once-tip is-on' : 'once-tip'} data-testid="once-tip">
+      {player ? (
+        <>
+          <p className="once-tip-kicker">
+            {player.teamAbbr} · {formatRating(player.rating)}
+            {mvpId === player.id ? ' · FIGURA' : ''}
+          </p>
+          <p className="once-tip-name">{player.name}</p>
+          {player.acceso ? (
+            <p className="once-tip-split" data-testid="once-tip-index">
+              Partido {formatRating(player.acceso.sm)} · equipo {formatRating(player.acceso.team)}
             </p>
-            <p className="once-tip-name">{shown.name}</p>
-            {shown.acceso ? (
-              <p className="once-tip-split" data-testid="once-tip-index">
-                SM {formatRating(shown.acceso.sm)} · equipo {formatRating(shown.acceso.team)} ·
-                Acceso {formatRating(shown.acceso.index)}
-              </p>
-            ) : null}
-            {shown.why ? (
-              <p className="once-tip-why" data-testid="once-tip-why">
-                {shown.why}
-              </p>
-            ) : null}
-            {shown.fixtureId ? (
-              <Link
-                href={`/partido/liga-mx/${shown.fixtureId}`}
-                className="once-tip-link"
-                data-testid="once-tip-match"
-              >
-                Ver partido
-              </Link>
-            ) : null}
-          </>
-        ) : (
-          <p>Click · pasa el balón</p>
-        )}
-      </div>
+          ) : null}
+          {player.why ? (
+            <p className="once-tip-why" data-testid="once-tip-why">
+              {player.why}
+            </p>
+          ) : null}
+          {player.fixtureId ? (
+            <Link
+              href={`/partido/liga-mx/${player.fixtureId}`}
+              className="once-tip-link"
+              data-testid="once-tip-match"
+            >
+              Ver partido
+            </Link>
+          ) : null}
+        </>
+      ) : (
+        <p>Toca un jugador del once para ver por qué está aquí.</p>
+      )}
     </div>
   );
 }

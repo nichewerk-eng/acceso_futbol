@@ -19,7 +19,7 @@ import type { Fixture } from './types';
 
 const BOARD_KEY = 'liga-mx-femenil-board-v1';
 const GOLEO_KEY = 'liga-mx-femenil-goleo-v1';
-const GOLEO_TTL_MS = 20 * 60_000;
+const GOLEO_TTL_MS = 45_000;
 const DATE_BOARD_PAST_MS = 36 * 3600_000;
 const DATE_BOARD_FUTURE_MS = 8 * 86400_000;
 

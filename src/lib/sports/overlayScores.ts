@@ -26,6 +26,7 @@ export function overlayLiveScores<T extends Fixture>(base: T[], live: Fixture[])
       clock: l.clock ?? f.clock,
       winnerSide: l.winnerSide ?? f.winnerSide,
       scorers: l.scorers ?? f.scorers,
+      assists: l.assists ?? f.assists,
       home: {
         ...f.home,
         id: l.home.id,

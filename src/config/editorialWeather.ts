@@ -20,8 +20,8 @@ const ROTATION: EditorialWeather[] = [
     tag: 'El Tri',
     headline: 'La Selección siempre es titulares.',
     body: 'Convocatorias, rivales y el camino al siguiente ciclo. Cuando El Tri respira, Acceso narra.',
-    ctaLabel: 'Elegir mi gravedad',
-    ctaHref: '/#gravedad',
+    ctaLabel: 'Sala El Tri',
+    ctaHref: '/club/el-tri',
   },
   {
     tag: 'Femenil',

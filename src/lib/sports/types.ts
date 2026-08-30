@@ -85,6 +85,8 @@ export interface Fixture {
   winnerSide?: 'home' | 'away' | null;
   /** Goal scorers from board details (compact UI). */
   scorers?: FixtureScorer[];
+  /** Assist providers on this fixture (live overlay for AF://ASISTENCIAS). */
+  assists?: FixtureScorer[];
   /** MX / US broadcast hints when known */
   dondeVer?: {
     mx?: string;

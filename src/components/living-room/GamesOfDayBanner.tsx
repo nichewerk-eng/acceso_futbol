@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useMemo } from 'react';
-import { useGravity } from '@/contexts/GravityContext';
 import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
 import { useGamesOfDay } from '@/lib/client/useGamesOfDay';
 import { competitionBandTag, leaguePath } from '@/lib/radio/phases';
@@ -37,7 +36,6 @@ function cabinaLine(g: DayGame, tz: string) {
 }
 
 export function GamesOfDayBanner() {
-  const { matchesGravity, club, elTri } = useGravity();
   const { payload, loading } = useGamesOfDay();
   const userTz = useDeviceTimeZone();
 
@@ -51,17 +49,10 @@ export function GamesOfDayBanner() {
         if (g.state === 'pre') return 3;
         return 4;
       };
-      const ag = matchesGravity(a.home.name, a.away.name, a.home.abbreviation, a.away.abbreviation)
-        ? 0
-        : 1;
-      const bg = matchesGravity(b.home.name, b.away.name, b.home.abbreviation, b.away.abbreviation)
-        ? 0
-        : 1;
-      if (ag !== bg) return ag - bg;
       if (rank(a) !== rank(b)) return rank(a) - rank(b);
       return +new Date(a.date) - +new Date(b.date);
     });
-  }, [payload, matchesGravity]);
+  }, [payload]);
 
   const openCount = sorted.filter((g) => g.radioAvailable).length;
 
@@ -98,9 +89,7 @@ export function GamesOfDayBanner() {
               ? 'SYNC…'
               : openCount > 0
                 ? `${openCount} al aire`
-                : club || elTri
-                  ? `LOCK ${(club?.abbreviation ?? '') + (elTri ? '+TRI' : '')}`
-                  : 'Cabina'}
+                : 'Cabina'}
           </p>
         </div>
 
@@ -131,12 +120,6 @@ export function GamesOfDayBanner() {
               const href = `/partido/${path}/${g.id}?tab=radio`;
               const line = cabinaLine(g, userTz);
               const compTag = competitionBandTag(g.league, g.jornada);
-              const mine = matchesGravity(
-                g.home.name,
-                g.away.name,
-                g.home.abbreviation,
-                g.away.abbreviation
-              );
 
               return (
                 <li
@@ -160,7 +143,6 @@ export function GamesOfDayBanner() {
                         </span>
                       )}
                       {compTag && <span className="text-[var(--signal)]">· {compTag}</span>}
-                      {mine && <span className="text-[var(--signal)]">· TU CLUB</span>}
                     </p>
                     <p className="mt-1.5 font-display text-xl font-bold uppercase tracking-wide text-[var(--hoy-paper)] sm:text-2xl">
                       {g.home.name}

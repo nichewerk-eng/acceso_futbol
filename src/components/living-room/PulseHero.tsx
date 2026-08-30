@@ -4,9 +4,10 @@ import Link from 'next/link';
 import { useMemo } from 'react';
 import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { ClubLogo } from '@/components/brand/ClubLogo';
-import { useGravity } from '@/contexts/GravityContext';
 import { useGamesOfDay } from '@/lib/client/useGamesOfDay';
+import { useJornadaOverview } from '@/lib/client/useJornadaOverview';
 import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
+import { HeroTablero } from './HeroTablero';
 import { competitionBandTag, leaguePath, mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
 import type { Story } from '@/lib/news/types';
 import type { DayGame } from '@/lib/sports';
@@ -132,8 +133,8 @@ function bandMeta(
 }
 
 export function PulseHero({ leadStory }: Props) {
-  const { matchesGravity } = useGravity();
   const { payload, loading } = useGamesOfDay();
+  const { payload: jornada } = useJornadaOverview();
   const userTz = useDeviceTimeZone();
 
   const games = useMemo(() => {
@@ -143,21 +144,16 @@ export function PulseHero({ leadStory }: Props) {
       const la = live(a);
       const lb = live(b);
       if (la !== lb) return la - lb;
-      const ag = matchesGravity(a.home.name, a.away.name, a.home.abbreviation, a.away.abbreviation)
-        ? 0
-        : 1;
-      const bg = matchesGravity(b.home.name, b.away.name, b.home.abbreviation, b.away.abbreviation)
-        ? 0
-        : 1;
-      if (ag !== bg) return ag - bg;
       if (a.state === 'post' && b.state === 'pre') return -1;
       if (b.state === 'post' && a.state === 'pre') return 1;
       return +new Date(a.date) - +new Date(b.date);
     });
-  }, [payload, matchesGravity]);
+  }, [payload]);
 
-  const liveCount = games.filter((g) => g.state === 'in').length;
-  const stage = games.find((g) => g.state === 'in') ?? games[0] ?? null;
+  const played = jornada?.played ?? [];
+  const paperGames = played.length > 0 ? games.filter((g) => g.state !== 'post') : games;
+  const liveCount = paperGames.filter((g) => g.state === 'in').length;
+  const stage = paperGames.find((g) => g.state === 'in') ?? paperGames[0] ?? null;
   const stageTag = stage ? competitionBandTag(stage.league, stage.jornada) : null;
   const upcoming = Boolean(payload?.upcoming);
   const todayKey = mexicoDayKey();
@@ -172,18 +168,28 @@ export function PulseHero({ leadStory }: Props) {
       className="hero-theater border-b border-line"
       aria-label="Acceso Futbol · Marcadores"
     >
-      <div className="pointer-events-none absolute inset-0 af-grain opacity-25" data-testid="hero-backdrop" />
+      {played.length > 0 ? (
+        <HeroTablero played={played} jornadaNum={jornada?.number} />
+      ) : null}
 
-      <div className="relative mx-auto max-w-6xl px-4 pt-5 sm:px-6 sm:pt-6">
-        <p className="hero-ident af-tele mb-5 text-muted" data-testid="hero-support">
-          {loading && !payload
-            ? 'Sincronizando jornada…'
-            : upcoming && games.length > 0
-              ? `${headline} · ${games.length} partido${games.length === 1 ? '' : 's'} · no hay cartelera hoy`
-              : games.length > 0
-                ? `${headline} · ${games.length} partido${games.length === 1 ? '' : 's'}${liveCount ? ` · ${liveCount} en vivo` : ''}`
-                : `${headline} · sin partidos en cartelera`}
-        </p>
+      <div className="hero-hoy">
+        <div
+          className="pointer-events-none absolute inset-0 af-grain opacity-25"
+          data-testid="hero-backdrop"
+        />
+
+        <div className="relative mx-auto max-w-6xl px-4 pt-5 sm:px-6 sm:pt-6">
+        {paperGames.length > 0 || (loading && !payload) || played.length === 0 ? (
+          <p className="hero-ident af-tele mb-5 text-muted" data-testid="hero-support">
+            {loading && !payload
+              ? 'Sincronizando jornada…'
+              : upcoming && paperGames.length > 0
+                ? `${headline} · ${paperGames.length} partido${paperGames.length === 1 ? '' : 's'} · no hay cartelera hoy`
+                : paperGames.length > 0
+                  ? `${headline} · ${paperGames.length} partido${paperGames.length === 1 ? '' : 's'}${liveCount ? ` · ${liveCount} en vivo` : ''}`
+                  : `${headline} · sin partidos en cartelera`}
+          </p>
+        ) : null}
 
         {/* Stage: one dominant live/featured match */}
         {stage && stageMeta && (
@@ -206,16 +212,6 @@ export function PulseHero({ leadStory }: Props) {
                 ) : null}
                 {stageMeta.kind === 'pre' ? stageMeta.stageStamp : stageMeta.stamp}
               </span>
-              {matchesGravity(
-                stage.home.name,
-                stage.away.name,
-                stage.home.abbreviation,
-                stage.away.abbreviation
-              ) && (
-                <span className="af-chip text-signal" data-testid="hero-stage-lock">
-                  TU CLUB
-                </span>
-              )}
               {stageTag ? (
                 <span className="af-tele hidden text-signal sm:inline">{stageTag}</span>
               ) : null}
@@ -288,7 +284,7 @@ export function PulseHero({ leadStory }: Props) {
           </Link>
         )}
 
-        {!loading && games.length === 0 && (
+        {!loading && paperGames.length === 0 && played.length === 0 && (
           <div
             className="border border-line bg-bg-2 px-5 py-10 text-center"
             data-testid="hero-empty"
@@ -311,20 +307,14 @@ export function PulseHero({ leadStory }: Props) {
         )}
 
         {/* Score wall — every game today / upcoming slate */}
-        {games.length > 1 && (
+        {paperGames.length > 1 && (
           <div className="hero-wall mt-1" data-testid="hero-score-wall">
-            {games
+            {paperGames
               .filter((g) => g.id !== stage?.id)
               .map((g) => {
                 const meta = bandMeta(g, userTz, upcoming, slateKey, todayKey);
                 const href = `/partido/${leaguePath(g.league)}/${g.id}`;
                 const compTag = competitionBandTag(g.league, g.jornada);
-                const mine = matchesGravity(
-                  g.home.name,
-                  g.away.name,
-                  g.home.abbreviation,
-                  g.away.abbreviation
-                );
                 return (
                   <Link
                     key={`${g.league}-${g.id}`}
@@ -334,7 +324,6 @@ export function PulseHero({ leadStory }: Props) {
                       'hero-band',
                       meta.kind === 'live' ? 'hero-band-live' : '',
                       meta.kind === 'ft' ? 'hero-band-ft' : '',
-                      mine ? 'hero-band-mine' : '',
                     ].join(' ')}
                   >
                     {meta.kind !== 'ft' ? (
@@ -429,6 +418,7 @@ export function PulseHero({ leadStory }: Props) {
             </a>
           </div>
         )}
+      </div>
       </div>
     </section>
   );

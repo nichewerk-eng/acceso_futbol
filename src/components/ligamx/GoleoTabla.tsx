@@ -15,11 +15,9 @@ function lastName(name: string): string {
 function GoleoRow({
   e,
   unit,
-  mine,
 }: {
   e: GoleoEntry;
   unit: string;
-  mine: boolean;
 }) {
   const club = e.teamAbbr ? clubIdentityFromAbbr(e.teamAbbr) : null;
   const team = (
@@ -46,7 +44,6 @@ function GoleoRow({
         GRID,
         'border-t border-line py-3 transition hover:bg-bg-3',
         e.rank === 1 ? 'shadow-[inset_3px_0_0_var(--signal)]' : '',
-        mine ? 'bg-signal/5' : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -61,7 +58,6 @@ function GoleoRow({
       </span>
       <span className="min-w-0 truncate font-display text-sm font-bold uppercase tracking-wide sm:text-base">
         {e.name}
-        {mine ? <span className="ml-2 af-tele !text-signal">LOCK</span> : null}
       </span>
       {club ? (
         <Link href={`/club/${club.id}`} className="min-w-0 transition hover:opacity-90">
@@ -88,13 +84,11 @@ function Table({
   title,
   unit,
   entries,
-  isMine,
 }: {
   kicker: string;
   title: string;
   unit: string;
   entries: GoleoEntry[];
-  isMine: (abbr?: string) => boolean;
 }) {
   if (!entries.length) return null;
   return (
@@ -122,7 +116,6 @@ function Table({
             key={`${e.athleteId}-${e.rank}`}
             e={e}
             unit={unit}
-            mine={isMine(e.teamAbbr)}
           />
         ))}
       </div>
@@ -132,11 +125,9 @@ function Table({
 
 export function GoleoTabla({
   board,
-  isMine,
   sourceNote = 'fuente ESPN.',
 }: {
   board: GoleoBoard | null;
-  isMine: (abbr?: string) => boolean;
   sourceNote?: string;
 }) {
   if (!board || (!board.goals.length && !board.assists.length)) {
@@ -157,14 +148,12 @@ export function GoleoTabla({
         title="Goleo"
         unit="Goles"
         entries={board.goals}
-        isMine={isMine}
       />
       <Table
         kicker="ASISTENCIAS"
         title="Asistencias"
         unit="Asist."
         entries={board.assists}
-        isMine={isMine}
       />
       <p className="font-mono text-[11px] leading-5 text-muted">
         {board.seasonLabel} · {sourceNote}
@@ -175,11 +164,9 @@ export function GoleoTabla({
 
 export function GoleoRailCard({
   board,
-  isMine,
   onOpenGoleo,
 }: {
   board: GoleoBoard | null;
-  isMine: (abbr?: string) => boolean;
   onOpenGoleo: () => void;
 }) {
   const rows = board?.goals.slice(0, 5) ?? [];
@@ -203,14 +190,11 @@ export function GoleoRailCard({
             </div>
             <ul className="lc-rail-mini-list">
               {rows.map((e) => {
-                const mine = isMine(e.teamAbbr);
                 const club = e.teamAbbr ? clubIdentityFromAbbr(e.teamAbbr) : null;
                 return (
                   <li
                     key={`${e.athleteId}-${e.rank}`}
-                    className={['lc-rail-mini-row', mine ? 'lc-rail-mini-mine' : '']
-                      .filter(Boolean)
-                      .join(' ')}
+                    className="lc-rail-mini-row"
                   >
                     <span className="lc-rail-mini-pos">{e.rank}</span>
                     <ClubLogo

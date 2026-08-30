@@ -3,9 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useId, useState } from 'react';
-import { GravityAlertsToggle } from '@/components/living-room/GravityAlertsToggle';
 import { SeguirMenu } from '@/components/living-room/SeguirMenu';
-import { useGravity } from '@/contexts/GravityContext';
 
 const LINKS = [
   { href: '/', label: 'Pulso' },
@@ -23,8 +21,6 @@ function linkActive(pathname: string, href: string) {
 
 export function PulseNav() {
   const pathname = usePathname();
-  const { club, elTri, settled } = useGravity();
-  const lock = [club?.abbreviation, elTri ? 'TRI' : null].filter(Boolean).join('+');
   const [open, setOpen] = useState(false);
   const menuId = useId();
 
@@ -84,19 +80,6 @@ export function PulseNav() {
             ))}
           </nav>
 
-          <GravityAlertsToggle className="hidden md:inline" />
-
-          {settled && lock && (
-            <Link
-              href={club ? `/club/${club.id}` : elTri ? '/club/el-tri' : '/#gravedad'}
-              className="af-chip hidden text-signal sm:inline-flex"
-              title="Abrir sala del club"
-              data-testid="nav-gravity-lock"
-            >
-              LOCK {lock}
-            </Link>
-          )}
-
           <SeguirMenu className="hidden md:block" testId="nav-seguir-desktop" />
 
           <button
@@ -140,10 +123,6 @@ export function PulseNav() {
               {label}
             </Link>
           ))}
-          <GravityAlertsToggle
-            className="nav-drawer-link w-full text-left"
-            testId="gravity-alerts-toggle-drawer"
-          />
         </nav>
       ) : null}
     </header>

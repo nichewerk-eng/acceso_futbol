@@ -226,6 +226,7 @@ function mergeLiveOntoStatic(live: Fixture[]): Fixture[] {
       city: overlay.city ?? s.city,
       winnerSide: overlay.winnerSide,
       scorers: overlay.scorers,
+      assists: overlay.assists,
       home: {
         ...s.home,
         id: overlay.home.id,

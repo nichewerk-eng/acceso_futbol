@@ -2,90 +2,17 @@
 
 import Link from 'next/link';
 import { type CSSProperties } from 'react';
-import { ClubLogo } from '@/components/brand/ClubLogo';
 import { DondeVerGuide } from '@/components/living-room/DondeVerGuide';
 import { JornadaTakeBoard } from '@/components/living-room/JornadaTake';
 import { OnceRoom } from '@/components/living-room/OnceRoom';
-import { useGravity } from '@/contexts/GravityContext';
+import { SelladoFromFixture } from '@/components/match/SelladoCard';
 import { isLeaguesCupWindow } from '@/config/leaguesCup2026';
-import type { Fixture } from '@/lib/sports';
 import { useJornadaOverview } from '@/lib/client/useJornadaOverview';
 import { useTomaTake } from '@/lib/client/useTomaTake';
 import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
 import { buildJornadaTake, mergeJornadaTake } from '@/lib/sports/jornadaTake';
 
-function scorerLine(f: Fixture): string {
-  const list = f.scorers ?? [];
-  if (list.length === 0) return '';
-  const parts = list.map((s) => {
-    const tag = s.pen ? ' (P)' : s.og ? ' (OG)' : '';
-    return `${s.name}${s.minute ? ` ${s.minute}` : ''}${tag}`;
-  });
-  if (parts.length <= 3) return parts.join(' · ');
-  return `${parts.slice(0, 2).join(' · ')} · +${parts.length - 2}`;
-}
-
-function ResultStamp({ f, mine }: { f: Fixture; mine: boolean }) {
-  const live = f.state === 'in';
-  const winner = f.winnerSide ?? null;
-  const draw = !live && winner === null && f.state === 'post';
-  const homeCls =
-    winner === 'home' ? 'is-win' : winner === 'away' ? 'is-lose' : draw ? 'is-draw' : '';
-  const awayCls =
-    winner === 'away' ? 'is-win' : winner === 'home' ? 'is-lose' : draw ? 'is-draw' : '';
-  const scorers = scorerLine(f);
-  const stamp = live
-    ? f.clock === 'HT' || /descanso/i.test(f.statusLabel || '')
-      ? 'HT'
-      : f.clock || 'LIVE'
-    : 'FT';
-
-  return (
-    <Link
-      href={`/partido/liga-mx/${f.id}`}
-      data-testid={`jornada-match-${f.id}`}
-      className={[
-        'jor-stamp jor-ticket jor-rise',
-        live ? 'jor-stamp-live' : '',
-        mine ? 'jor-stamp-mine' : '',
-      ]
-        .filter(Boolean)
-        .join(' ')}
-    >
-      <div className="jor-stamp-meta">
-        {live && <span className="hoy-live-dot" aria-hidden />}
-        <span>{stamp}</span>
-        {mine ? <span className="text-signal">LOCK</span> : null}
-      </div>
-      <div className="jor-ticket-board">
-        <span className={['jor-ticket-side is-home', homeCls].filter(Boolean).join(' ')}>
-          <ClubLogo abbr={f.home.abbreviation} name={f.home.name} size="md" />
-          <span className="jor-ticket-abbr">{f.home.abbreviation}</span>
-        </span>
-        <p
-          className="jor-ticket-score"
-          aria-label={`${f.home.score ?? 0} a ${f.away.score ?? 0}`}
-        >
-          <span className={homeCls}>{f.home.score ?? 0}</span>
-          <span className="jor-ticket-dash">–</span>
-          <span className={awayCls}>{f.away.score ?? 0}</span>
-        </p>
-        <span className={['jor-ticket-side is-away', awayCls].filter(Boolean).join(' ')}>
-          <span className="jor-ticket-abbr">{f.away.abbreviation}</span>
-          <ClubLogo abbr={f.away.abbreviation} name={f.away.name} size="md" />
-        </span>
-      </div>
-      {scorers ? (
-        <p className="jor-stamp-scorers" title={scorers}>
-          {scorers}
-        </p>
-      ) : null}
-    </Link>
-  );
-}
-
 export function JornadaRecap() {
-  const { matchesGravity, club, elTri } = useGravity();
   const { payload: data, loading } = useJornadaOverview();
   const userTz = useDeviceTimeZone();
 
@@ -108,15 +35,7 @@ export function JornadaRecap() {
   const fechaCerrada =
     !loading && Boolean(data) && live.length === 0 && upcoming.length === 0 && played.length > 0;
 
-  const isMine = (f: Fixture) =>
-    matchesGravity(f.home.name, f.away.name, f.home.abbreviation, f.away.abbreviation);
-  const local =
-    data && !lcPause
-      ? buildJornadaTake(data, {
-          isMine,
-          lockAbbr: club?.abbreviation ?? (elTri ? 'MEX' : null),
-        })
-      : null;
+  const local = data && !lcPause ? buildJornadaTake(data) : null;
   const take = local && remote ? mergeJornadaTake(local, remote) : local;
 
   return (
@@ -244,7 +163,6 @@ export function JornadaRecap() {
                 live={live}
                 upcoming={upcoming}
                 tz={userTz}
-                isMine={isMine}
               />
             )}
 
@@ -258,7 +176,12 @@ export function JornadaRecap() {
                 </div>
                 <div className="jor-mosaic">
                   {played.map((f) => (
-                    <ResultStamp key={f.id} f={f} mine={isMine(f)} />
+                    <SelladoFromFixture
+                      key={f.id}
+                      f={f}
+                      href={`/partido/liga-mx/${f.id}`}
+                      testId={`jornada-match-${f.id}`}
+                    />
                   ))}
                 </div>
               </div>

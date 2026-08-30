@@ -32,9 +32,9 @@ import type {
 const SEASON_CACHE_KEY = 'sm-ligamx-season-fixtures-v6-states';
 const FEM_SEASON_CACHE_KEY = 'sm-ligamx-femenil-season-fixtures-v1-states';
 const LC_SEASON_CACHE_KEY = 'sm-leagues-cup-season-fixtures-v3-states';
-const LIVE_CACHE_KEY = 'sm-livescores-v8-ht-clock';
-/** Hot-path livescores: type_id locally; state_id via refs. */
-const LIVESCORES_INCLUDE = 'participants;scores;state;periods;events';
+const LIVE_CACHE_KEY = 'sm-livescores-v9-events-player';
+/** Hot-path livescores: type_id locally; player names so goleo can overlay live goals. */
+const LIVESCORES_INCLUDE = 'participants;scores;state;periods;events;events.player';
 /** Lean in-play tick — state so true HT stamps Descanso; periods win while the clock still ticks. */
 const MATCH_TICK_INCLUDE = 'participants;scores;state;periods;events;events.player';
 /** Full match chapter (lineups, stats, comments). */
@@ -335,6 +335,7 @@ export function overlayLiveFixtures(base: Fixture[], live: Fixture[]): Fixture[]
       clock: l.clock ?? f.clock,
       winnerSide: l.winnerSide ?? f.winnerSide,
       scorers: l.scorers ?? f.scorers,
+      assists: l.assists ?? f.assists,
       home: {
         ...f.home,
         id: l.home.id,
@@ -442,6 +443,7 @@ export function mapFixture(f: SmFixture): Fixture {
 
   const events = mapEvents(f.events, homeId, awayId, homeAbbr, awayAbbr);
   const scorers = scorersFromEvents(events);
+  const assists = assistsFromEvents(events);
 
   return {
     id: String(f.id),
@@ -456,6 +458,7 @@ export function mapFixture(f: SmFixture): Fixture {
     city: localizeCity(f.venue?.city_name),
     winnerSide: winnerSideOf(homeP, awayP, state, homeScore, awayScore),
     scorers: scorers.length ? scorers : undefined,
+    assists: assists.length ? assists : undefined,
     home: {
       id: homeId,
       name: homeName,
@@ -605,6 +608,20 @@ function scorersFromEvents(events: LiveEvent[]): FixtureScorer[] {
       pen: e.kind === 'penalty',
       og: e.kind === 'own_goal',
       photo: e.playerPhoto,
+    }));
+}
+
+function assistsFromEvents(events: LiveEvent[]): FixtureScorer[] {
+  return events
+    .filter(
+      (e) =>
+        (e.kind === 'goal' || e.kind === 'penalty') &&
+        Boolean(e.relatedPlayerName?.trim())
+    )
+    .map((e) => ({
+      name: e.relatedPlayerName!.trim(),
+      minute: e.clock.replace(/'$/, ''),
+      side: e.side === 'away' ? 'away' : 'home',
     }));
 }
 

@@ -13,8 +13,8 @@ import { ClubLogo } from '@/components/brand/ClubLogo';
 import { LcBracket } from '@/components/leaguescup/LcBracket';
 import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { LeaguesCupMark } from '@/components/brand/LeaguesCupMark';
+import { SelladoFromFixture } from '@/components/match/SelladoCard';
 import { ligaMxClubIdFromAbbr } from '@/config/ligaMxLogos';
-import { useGravity } from '@/contexts/GravityContext';
 import { liveFetch } from '@/lib/client/liveFetch';
 import { startLivePoll } from '@/lib/client/livePoll';
 import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
@@ -62,7 +62,6 @@ type Props = {
 };
 
 export default function LeaguesCupView({ initialFixtures }: Props) {
-  const { matchesGravity, club } = useGravity();
   const [fixtures, setFixtures] = useState(initialFixtures);
   const [tab, setTab] = useState<'partidos' | 'tabla' | 'bracket'>('partidos');
   const [refreshing, setRefreshing] = useState(false);
@@ -173,9 +172,6 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
     };
   }, [fixtures, userTz, todayKey]);
 
-  const isMine = (f: Fixture) =>
-    matchesGravity(f.home.name, f.away.name, f.home.abbreviation, f.away.abbreviation);
-
   return (
     <div data-testid="page-leagues-cup" className="bg-bg-1 text-foreground">
       <section className="border-b border-line px-4 py-10 sm:px-6 sm:py-14">
@@ -239,7 +235,7 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
 
       <div className="mx-auto max-w-6xl space-y-14 px-4 py-10 sm:px-6 sm:py-12">
         {tab === 'tabla' && (
-          <LcTabla standings={standings} matchesGravity={matchesGravity} />
+          <LcTabla standings={standings} />
         )}
 
         {tab === 'bracket' && (
@@ -256,7 +252,7 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
                 Cuartos (25–26 ago) · Semis (2 sep) · Tercer lugar y Final (6 sep)
               </p>
             </div>
-            <LcBracket fixtures={knockout} isMine={isMine} />
+            <LcBracket fixtures={knockout} />
           </section>
         )}
 
@@ -280,7 +276,7 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
                 {live.length > 0 && (
                   <BoardBlock title="En vivo" testId="lc-live">
                     {live.map((f) => (
-                      <MatchRow key={f.id} f={f} tz={userTz} mine={isMine(f)} live />
+                      <MatchRow key={f.id} f={f} tz={userTz} live />
                     ))}
                   </BoardBlock>
                 )}
@@ -288,7 +284,6 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
                 <div className="lc-mobile-tabla">
                   <LcClasificacionCard
                     standings={standings}
-                    matchesGravity={matchesGravity}
                     onOpenTabla={() => setTab('tabla')}
                   />
                 </div>
@@ -307,7 +302,6 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
                         groups={porJugarByDay}
                         todayKey={todayKey}
                         userTz={userTz}
-                        isMine={isMine}
                         testIdPrefix="upcoming"
                       />
                     </div>
@@ -315,12 +309,15 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
 
                   {jugadosByDay.length > 0 && (
                     <div className="lc-section" data-testid="lc-jugados">
+                      <div className="lc-section-head">
+                        <h3 className="af-tele text-foreground">Sellados</h3>
+                      </div>
                       <LcDayGroups
                         groups={jugadosByDay}
                         todayKey={todayKey}
                         userTz={userTz}
-                        isMine={isMine}
                         testIdPrefix="played"
+                        layout="sellados"
                       />
                     </div>
                   )}
@@ -329,11 +326,6 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
 
               <LcPartidosRail
                 standings={standings}
-                porJugarByDay={porJugarByDay}
-                userTz={userTz}
-                clubName={club?.name ?? null}
-                clubAbbr={club?.abbreviation ?? null}
-                matchesGravity={matchesGravity}
                 onOpenTabla={() => setTab('tabla')}
               />
             </div>
@@ -345,114 +337,16 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
 
 function LcPartidosRail({
   standings,
-  porJugarByDay,
-  userTz,
-  clubName,
-  clubAbbr,
-  matchesGravity,
   onOpenTabla,
 }: {
   standings: LcStandingsPayload;
-  porJugarByDay: { day: string; label: string; rows: Fixture[] }[];
-  userTz: string;
-  clubName: string | null;
-  clubAbbr: string | null;
-  matchesGravity: (
-    homeName: string,
-    awayName: string,
-    homeAbbr?: string,
-    awayAbbr?: string
-  ) => boolean;
   onOpenTabla: () => void;
 }) {
-  const myEntry = useMemo(() => {
-    if (!clubName && !clubAbbr) return null;
-    const all = [...standings.ligaMx, ...standings.mls];
-    return (
-      all.find((e) =>
-        matchesGravity(e.team.name, e.team.name, e.team.abbreviation, e.team.abbreviation)
-      ) ?? null
-    );
-  }, [clubName, clubAbbr, standings, matchesGravity]);
-
-  const myLeague = myEntry
-    ? standings.ligaMx.some((e) => e.team.abbreviation === myEntry.team.abbreviation)
-      ? 'Liga MX'
-      : 'MLS'
-    : null;
-
-  const myNext = useMemo(() => {
-    if (!clubName && !clubAbbr) return null;
-    for (const g of porJugarByDay) {
-      const hit = g.rows.find((f) =>
-        matchesGravity(f.home.name, f.away.name, f.home.abbreviation, f.away.abbreviation)
-      );
-      if (hit) return hit;
-    }
-    return null;
-  }, [clubName, clubAbbr, porJugarByDay, matchesGravity]);
-
-  const markLabel = (mark?: 'x' | 'a' | 'e' | null) => {
-    if (mark === 'x') return '1º asegurado';
-    if (mark === 'a') return 'Avanza';
-    if (mark === 'e') return 'Eliminado';
-    return 'En carrera';
-  };
-
   return (
     <aside className="lc-rail" data-testid="lc-rail">
-      {myEntry && (
-        <div className="lc-rail-block lc-rail-mine" data-testid="lc-rail-mine">
-          <p className="af-tele text-signal">Tu club</p>
-          <div className="lc-rail-mine-row">
-            <ClubLogo
-              abbr={myEntry.team.abbreviation}
-              clubId={myEntry.team.id}
-              name={myEntry.team.name}
-              logoUrl={myEntry.team.logo}
-              size="sm"
-            />
-            <div className="min-w-0">
-              <p className="lc-rail-mine-name">{myEntry.team.abbreviation}</p>
-              <p className="af-tele text-muted">
-                {myLeague} · #{myEntry.position}
-              </p>
-            </div>
-            <p className="lc-rail-mine-pts">
-              <span>{myEntry.pts}</span>
-              <span className="af-tele text-muted">pts</span>
-            </p>
-          </div>
-          <p
-            className={[
-              'lc-rail-mine-mark',
-              myEntry.mark === 'e' ? 'text-muted' : 'text-signal',
-            ].join(' ')}
-          >
-            {markLabel(myEntry.mark)}
-            {myEntry.gd !== 0 && (
-              <span className="text-muted">
-                {' '}
-                · Dif {myEntry.gd > 0 ? `+${myEntry.gd}` : myEntry.gd}
-              </span>
-            )}
-          </p>
-          {myNext && (
-            <p className="lc-rail-next">
-              <span className="af-tele text-muted">Siguiente</span>
-              <span className="lc-rail-next-match">
-                {fmtTime(myNext.date, userTz)} · {myNext.home.abbreviation}–
-                {myNext.away.abbreviation}
-              </span>
-            </p>
-          )}
-        </div>
-      )}
-
       <div className="lc-rail-tabla-desk">
         <LcClasificacionCard
           standings={standings}
-          matchesGravity={matchesGravity}
           onOpenTabla={onOpenTabla}
         />
       </div>
@@ -471,16 +365,9 @@ function LcPartidosRail({
 
 function LcClasificacionCard({
   standings,
-  matchesGravity,
   onOpenTabla,
 }: {
   standings: LcStandingsPayload;
-  matchesGravity: (
-    homeName: string,
-    awayName: string,
-    homeAbbr?: string,
-    awayAbbr?: string
-  ) => boolean;
   onOpenTabla: () => void;
 }) {
   return (
@@ -496,9 +383,8 @@ function LcClasificacionCard({
         <RailMiniTable
           title="Liga MX"
           entries={standings.ligaMx}
-          matchesGravity={matchesGravity}
         />
-        <RailMiniTable title="MLS" entries={standings.mls} matchesGravity={matchesGravity} />
+        <RailMiniTable title="MLS" entries={standings.mls} />
       </div>
     </div>
   );
@@ -507,16 +393,9 @@ function LcClasificacionCard({
 function RailMiniTable({
   title,
   entries,
-  matchesGravity,
 }: {
   title: string;
   entries: LcStandingEntry[];
-  matchesGravity: (
-    homeName: string,
-    awayName: string,
-    homeAbbr?: string,
-    awayAbbr?: string
-  ) => boolean;
 }) {
   const rows = entries.slice(0, LC_KO_SPOTS + 1);
   return (
@@ -527,12 +406,6 @@ function RailMiniTable({
       </div>
       <ul className="lc-rail-mini-list">
         {rows.map((entry) => {
-          const mine = matchesGravity(
-            entry.team.name,
-            entry.team.name,
-            entry.team.abbreviation,
-            entry.team.abbreviation
-          );
           const cut = entry.position === LC_KO_SPOTS;
           return (
             <li
@@ -541,7 +414,6 @@ function RailMiniTable({
                 'lc-rail-mini-row',
                 cut ? 'lc-rail-mini-cut' : '',
                 entry.position > LC_KO_SPOTS ? 'lc-rail-mini-out' : '',
-                mine ? 'lc-rail-mini-mine' : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
@@ -566,15 +438,8 @@ function RailMiniTable({
 
 function LcTabla({
   standings,
-  matchesGravity,
 }: {
   standings: LcStandingsPayload;
-  matchesGravity: (
-    homeName: string,
-    awayName: string,
-    homeAbbr?: string,
-    awayAbbr?: string
-  ) => boolean;
 }) {
   return (
     <section data-testid="lc-tabla" className="space-y-12">
@@ -601,13 +466,11 @@ function LcTabla({
         title="Liga MX"
         testId="lc-tabla-ligamx"
         entries={standings.ligaMx}
-        matchesGravity={matchesGravity}
       />
       <StandingsTable
         title="MLS"
         testId="lc-tabla-mls"
         entries={standings.mls}
-        matchesGravity={matchesGravity}
       />
 
       <aside className="border border-line bg-bg-2 px-4 py-5 sm:px-5" data-testid="lc-tabla-rules">
@@ -640,17 +503,10 @@ function StandingsTable({
   title,
   testId,
   entries,
-  matchesGravity,
 }: {
   title: string;
   testId: string;
   entries: LcStandingEntry[];
-  matchesGravity: (
-    homeName: string,
-    awayName: string,
-    homeAbbr?: string,
-    awayAbbr?: string
-  ) => boolean;
 }) {
   return (
     <div data-testid={testId}>
@@ -692,12 +548,6 @@ function StandingsTable({
           <span className="text-center">Clave</span>
         </div>
         {entries.map((entry) => {
-          const mine = matchesGravity(
-            entry.team.name,
-            entry.team.name,
-            entry.team.abbreviation,
-            entry.team.abbreviation
-          );
           const advances = entry.mark === 'a' || entry.mark === 'x';
           return (
             <div
@@ -707,7 +557,6 @@ function StandingsTable({
                 STANDINGS_GRID,
                 'border-b border-line py-2.5 text-sm last:border-b-0',
                 advances ? 'bg-signal/[0.04]' : '',
-                mine ? 'bg-foreground/[0.03]' : '',
               ].join(' ')}
             >
               <span
@@ -751,7 +600,6 @@ function StandingsTable({
                     inner
                   );
                 })()}
-                {mine && <span className="af-tele shrink-0 text-signal">TU</span>}
               </span>
               <span className="text-center font-semibold tabular-nums">{entry.pts}</span>
               <span className="text-center tabular-nums text-muted">{entry.gp}</span>
@@ -799,14 +647,14 @@ function LcDayGroups({
   groups,
   todayKey,
   userTz,
-  isMine,
   testIdPrefix,
+  layout = 'list',
 }: {
   groups: { day: string; label: string; rows: Fixture[] }[];
   todayKey: string;
   userTz: string;
-  isMine: (f: Fixture) => boolean;
   testIdPrefix: string;
+  layout?: 'list' | 'sellados';
 }) {
   return (
     <div className="lc-day-stack">
@@ -822,11 +670,24 @@ function LcDayGroups({
               {isToday && <span className="lc-day-kicker">Hoy</span>}
               <h4 className="lc-day-title">{group.label}</h4>
             </div>
-            <ul className="lc-day-list">
-              {group.rows.map((f) => (
-                <MatchRow key={f.id} f={f} tz={userTz} mine={isMine(f)} />
-              ))}
-            </ul>
+            {layout === 'sellados' ? (
+              <div className="jor-mosaic">
+                {group.rows.map((f) => (
+                  <SelladoFromFixture
+                    key={f.id}
+                    f={f}
+                    href={`/partido/leagues-cup/${f.id}`}
+                    testId={`lc-match-${f.id}`}
+                  />
+                ))}
+              </div>
+            ) : (
+              <ul className="lc-day-list">
+                {group.rows.map((f) => (
+                  <MatchRow key={f.id} f={f} tz={userTz} />
+                ))}
+              </ul>
+            )}
           </div>
         );
       })}
@@ -856,12 +717,10 @@ function BoardBlock({
 function MatchRow({
   f,
   tz,
-  mine,
   live,
 }: {
   f: Fixture;
   tz: string;
-  mine: boolean;
   live?: boolean;
 }) {
   const href = `/partido/leagues-cup/${f.id}`;
@@ -887,7 +746,7 @@ function MatchRow({
       f.dondeVer?.us
   );
 
-  const className = ['lc-match', 'lm-kick', live ? 'lc-match-live' : '', mine ? 'lc-match-mine' : '']
+  const className = ['lc-match', 'lm-kick', live ? 'lc-match-live' : '']
     .filter(Boolean)
     .join(' ');
 
@@ -907,18 +766,15 @@ function MatchRow({
         </span>
 
         <div className="lc-match-mid">
-          {(f.state !== 'post' || mine) && (
+          {f.state !== 'post' && (
             <div className="lc-match-when">
-              {f.state !== 'post' && (
-                <p className="lc-match-when-primary">
-                  {live && <span className="hoy-live-dot mr-1.5" aria-hidden />}
-                  {whenPrimary}
-                  {f.state === 'pre' && !hold ? (
-                    <span className="lc-match-when-hrs"> hrs</span>
-                  ) : null}
-                </p>
-              )}
-              {mine && <span className="lc-match-lock">TU CLUB</span>}
+              <p className="lc-match-when-primary">
+                {live && <span className="hoy-live-dot mr-1.5" aria-hidden />}
+                {whenPrimary}
+                {f.state === 'pre' && !hold ? (
+                  <span className="lc-match-when-hrs"> hrs</span>
+                ) : null}
+              </p>
             </div>
           )}
 
