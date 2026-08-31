@@ -17,8 +17,8 @@ function isScoreEvent(e: LiveEvent): boolean {
 function pickEvents(
   prev: LiveEvent[] | undefined,
   next: LiveEvent[] | undefined
-): LiveEvent[] | undefined {
-  if (!next?.length) return prev ?? next;
+): LiveEvent[] {
+  if (!next?.length) return prev ?? next ?? [];
   if (!prev?.length) return next;
   const nextAnulado = next.some((e) => e.type === 'Anulado' || e.kind === 'var');
   const prevGoals = prev.filter(isScoreEvent).length;
@@ -63,7 +63,7 @@ export function mergeMatchSnapshot(
     headToHead:
       (next.headToHead?.meetings.length ?? 0) > 0 ? next.headToHead : prev.headToHead,
     lineups: lineupPlayers(next) >= lineupPlayers(prev) ? next.lineups : prev.lineups,
-    comments: pickComments(prev.comments, next.comments) as MatchSnapshot['comments'],
+    comments: (pickComments(prev.comments, next.comments) ?? []) as MatchSnapshot['comments'],
     stats:
       (next.stats?.length ?? 0) >= (prev.stats?.length ?? 0) ? next.stats : prev.stats,
     events: pickEvents(prev.events, next.events),
