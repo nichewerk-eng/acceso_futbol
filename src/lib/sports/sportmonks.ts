@@ -1,3 +1,4 @@
+/** Sportmonks fixtures, livescores, and match snapshots. */
 import { getCache, peekCacheAgeMs, setCache, singleFlight } from '@/lib/apiCache';
 import { FRESH } from './freshness';
 import { dayPairKey, scheduleAbbr } from './ligaMxAbbr';
@@ -7,7 +8,7 @@ import {
   splitFemenilStandings,
   type FemenilStandingGroup,
 } from './ligaMxFemenil';
-import { localizeComment } from './localizeComment';
+import { localizeComment, commentLooksLikeGoal } from './localizeComment';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
 import { smFetch } from './sm/client';
 import { LANE } from './sm/lanes';
@@ -643,7 +644,7 @@ function mapComments(comments: SmComment[] | undefined): CommentaryLine[] {
         clock,
         order: c.order,
         text: localizeComment(raw),
-        isGoal: Boolean(c.is_goal) || /\b(goal|gol)\b/i.test(raw),
+        isGoal: commentLooksLikeGoal(raw, Boolean(c.is_goal)),
       };
     })
     .filter((c) => c.text)

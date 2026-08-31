@@ -9,9 +9,11 @@ import { attachDondeVer } from '@/config/dondeVer';
 import { smTeamIdFromAbbr } from './ligaMxTeams';
 import { mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
 import { enrichMatchWithEspnCommentary } from './espnCommentary';
+import { applyVarNarrative } from './keyEvents';
 import { FRESH, isNearKickoff, looksStillLive } from './freshness';
 import { applyLeaguesCupOfficial, officialLeaguesCupMatch, resolveLeaguesCupSmId } from './leaguesCupBoard';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
+import { commentLooksLikeGoal } from './localizeComment';
 import {
   fetchFixturesByDate,
   fetchLigaMxSeasonFixtures,
@@ -268,7 +270,7 @@ async function fromEspn(league: LeagueKey, id: string): Promise<MatchSnapshot | 
           clock,
           order: c.sequence ?? i,
           text,
-          isGoal: /¡?go+l|\bgol\b|\bgoal\b/i.test(text),
+          isGoal: commentLooksLikeGoal(text),
         };
       })
       .filter((c) => c.text);
@@ -361,7 +363,9 @@ async function getMatchUncached(league: string, id: string): Promise<MatchSnapsh
       if (sm) {
         // SM scores/lineups; Completa uses ESPN Spanish PBP (budgeted so live isn't stalled).
         const enriched =
-          key === 'liga-mx' ? await enrichMatchWithEspnCommentary(sm) : sm;
+          key === 'liga-mx'
+            ? applyVarNarrative(await enrichMatchWithEspnCommentary(sm))
+            : sm;
         return attachDondeVer(enriched) as MatchSnapshot;
       }
       // Token present but fixture missing — do not serve ESPN match content.
@@ -493,6 +497,7 @@ async function getMatchTickUncached(
         budgetMs: FRESH.espnEnrichBudgetMs,
       });
     }
+    if (key === 'liga-mx') sm = applyVarNarrative(sm);
     return attachDondeVer(sm) as MatchSnapshot;
   } catch {
     return null;

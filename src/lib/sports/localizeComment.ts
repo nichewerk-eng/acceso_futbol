@@ -72,14 +72,15 @@ export function localizeComment(text: string): string {
     ],
     [
       new RegExp(
-        `^Attempt (?:missed|saved|blocked)\\.\\s+${PLAYER}\\s+(.+)$`,
+        `^Attempt (?:missed|saved|blocked)\\.\\s+(.+?)\\s+\\(([^)]+)\\)\\s+(.+)$`,
         'i'
       ),
       (m) => {
-        const rest = m[2];
-        if (/saved/i.test(t)) return `Remate atajado · ${shortPlayer(m[1])}. ${rest}`;
-        if (/blocked/i.test(t)) return `Remate bloqueado · ${shortPlayer(m[1])}. ${rest}`;
-        return `Remate desviado · ${shortPlayer(m[1])}. ${rest}`;
+        const rest = m[3];
+        const who = `${shortPlayer(m[1])} (${m[2]})`;
+        if (/saved/i.test(t)) return `Remate atajado · ${who}. ${rest}`;
+        if (/blocked/i.test(t)) return `Remate bloqueado · ${who}. ${rest}`;
+        return `Remate desviado · ${who}. ${rest}`;
       },
     ],
     [
@@ -196,6 +197,7 @@ export function localizeComment(text: string): string {
 
   // Soft replacements when no full-line match
   t = t
+    .replace(/^Goal!/gi, '¡Gol!')
     .replace(/\bAttempt missed\b/gi, 'Remate desviado')
     .replace(/\bAttempt saved\b/gi, 'Remate atajado')
     .replace(/\bAttempt blocked\b/gi, 'Remate bloqueado')
@@ -214,7 +216,92 @@ export function localizeComment(text: string): string {
     .replace(/\bfor a bad foul\b/gi, 'por falta dura')
     .replace(/\bSubstitution,\s*/gi, 'Cambio · ')
     .replace(/\breplaces\b/gi, 'por')
-    .replace(/\bAssisted by\b/gi, 'Asistencia de');
+    .replace(/\bAssisted by\b/gi, 'Asistencia de')
+    .replace(/\bHandball by\b/gi, 'Mano de')
+    .replace(/\bfrom very close range\b/gi, 'de muy cerca')
+    .replace(/\bto the bottom right corner\b/gi, 'al palo bajo derecho')
+    .replace(/\bto the bottom left corner\b/gi, 'al palo bajo izquierdo')
+    .replace(/\bwith a cross\b/gi, 'con un centro');
 
   return t;
+}
+
+/** Sportmonks/ESPN English PBP leftovers — Completa should not keep these over Spanish. */
+export function commentLooksEnglishPbp(text: string): boolean {
+  return /\b(Goal!|Attempt |Assisted by|Handball by|from the |from very close|is saved|wins a free kick|Lineups are announced|right footed shot|left footed shot)\b/i.test(
+    text
+  );
+}
+
+export function pickComments(
+  prev: { text: string }[] | undefined,
+  next: { text: string }[] | undefined
+): { text: string }[] | undefined {
+  if (!next?.length) return prev ?? next;
+  if (!prev?.length) return next;
+  const ratio = (rows: { text: string }[]) =>
+    rows.filter((c) => commentLooksEnglishPbp(c.text)).length / Math.max(rows.length, 1);
+  const prevEn = ratio(prev);
+  const nextEn = ratio(next);
+  if (prevEn < 0.25 && nextEn >= 0.25) return prev;
+  if (next.length >= prev.length) return next;
+  return prev;
+}
+
+/**
+ * Prefer ESPN's Spanish package whenever it has real volume.
+ * English PBP is denser but reads like a wire; we only use it when Spanish is thin.
+ */
+export function preferEspnLang<T>(es: T[], enMx: T[]): T[] {
+  if (es.length >= 3) return es;
+  return es.length >= enMx.length ? es : enMx;
+}
+
+export type CommentStamp = {
+  label: string;
+  kind: 'goal' | 'card' | 'sub' | 'var' | 'play';
+  peak: boolean;
+};
+
+export function commentStamp(text: string, providerIsGoal = false): CommentStamp {
+  const t = text.trim();
+  if (/anulado|no fue gol/i.test(t)) return { label: 'Anulado', kind: 'var', peak: true };
+  if (commentLooksLikeGoal(t, providerIsGoal)) return { label: 'Gol', kind: 'goal', peak: true };
+  if (/\bVAR\b/i.test(t)) return { label: 'VAR', kind: 'var', peak: true };
+  if (/\broja\b|\bred card\b/i.test(t)) return { label: 'Roja', kind: 'card', peak: true };
+  if (/\bamarilla\b|\byellow card\b/i.test(t)) return { label: 'Amarilla', kind: 'card', peak: false };
+  if (/remate parado|tiro a la meta|remate atajado|ataja el remate/i.test(t)) {
+    return { label: 'Tiro', kind: 'play', peak: false };
+  }
+  if (/remate fallado|tiro desviado|remate desviado/i.test(t)) {
+    return { label: 'Desviado', kind: 'play', peak: false };
+  }
+  if (/esquina|\bcorner\b/i.test(t)) return { label: 'Córner', kind: 'play', peak: false };
+  if (/^falta\b|falta de/i.test(t)) return { label: 'Falta', kind: 'play', peak: false };
+  if (/balón mano|^mano de|\bhandball\b/i.test(t)) return { label: 'Mano', kind: 'play', peak: false };
+  if (/\bcambio\b|\bsubstitution\b/i.test(t)) return { label: 'Cambio', kind: 'sub', peak: false };
+  return { label: '', kind: 'play', peak: false };
+}
+
+/**
+ * True only for an actual score. "saved in the centre of the goal" is a
+ * goalmouth, not a gol — that regex used to light every atajada as Gol.
+ */
+export function commentLooksLikeGoal(text: string, providerIsGoal = false): boolean {
+  const t = (text ?? '').trim();
+  if (!t) return false;
+  if (/anulado|no fue gol/i.test(t)) return false;
+  if (
+    /\batajado\b|\bsaved\b|\bblocked\b|\bbloqueado\b|\bdesviado\b|\bmisses\b|\battempt missed\b|\battempt saved\b|\battempt blocked\b|\bshot saved\b|\bheader is saved\b|\bremate parado\b/i.test(
+      t
+    )
+  ) {
+    return false;
+  }
+  if (providerIsGoal) return true;
+  if (/^Goal!/i.test(t)) return true;
+  if (/^¡Go+l/i.test(t) || /^Gol!/i.test(t)) return true;
+  if (/\bGol de\b/i.test(t)) return true;
+  if (/\bown goal\b|\ben propia\b/i.test(t)) return true;
+  return false;
 }

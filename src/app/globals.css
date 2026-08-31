@@ -9772,3 +9772,214 @@ a.lead-team:hover {
     font-size: 1.12rem;
   }
 }
+
+/* AF://SELLO — live share mint */
+.sello-card {
+  --sello-ink: #1e223d;
+  --sello-signal: #f54f1b;
+  --sello-paper: #f6f5f2;
+  display: flex;
+  background: var(--sello-ink);
+  color: var(--sello-paper);
+  overflow: hidden;
+}
+
+.sello-card-rail {
+  width: 10px;
+  flex-shrink: 0;
+  background: var(--sello-signal);
+}
+
+.sello-card-body {
+  flex: 1;
+  padding: 1.25rem 1.15rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.sello-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.sello-card-kicker {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--sello-signal);
+}
+
+.sello-card-stamp {
+  font-family: var(--font-oswald), sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--sello-signal);
+}
+
+.sello-card-board {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sello-card-club {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-oswald), sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sello-card-club.is-away {
+  justify-content: flex-end;
+}
+
+.sello-card-score {
+  font-family: var(--font-oswald), sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  text-align: center;
+}
+
+.sello-card-scorer {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: rgba(246, 245, 242, 0.5);
+  text-align: center;
+}
+
+.sello-card-headline {
+  font-family: var(--font-oswald), sans-serif;
+  font-size: 1.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.05;
+}
+
+.sello-card-line {
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: rgba(246, 245, 242, 0.72);
+}
+
+.sello-card-dv {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sello-signal);
+}
+
+.sello-card.is-compact .sello-card-headline {
+  font-size: 1.2rem;
+}
+
+.sello-page {
+  padding: 2rem 1rem 1rem;
+}
+
+.sello-page-frame {
+  margin: 1.25rem auto 0;
+  max-width: 26rem;
+}
+
+.sello-page-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.25rem;
+}
+
+.sello-share-btn {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--on-signal);
+  background: var(--signal);
+  border: 1px solid var(--signal);
+  padding: 0.7rem 1.2rem;
+  cursor: pointer;
+}
+
+.sello-share-btn:hover {
+  background: var(--brand-orange-dark);
+  border-color: var(--brand-orange-dark);
+}
+
+.sello-share-btn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.sello-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  .sello-overlay {
+    align-items: center;
+  }
+}
+
+.sello-overlay-dim {
+  position: absolute;
+  inset: 0;
+  background: rgba(14, 16, 28, 0.72);
+  border: 0;
+  cursor: pointer;
+}
+
+.sello-overlay-panel {
+  position: relative;
+  width: min(100%, 26rem);
+  z-index: 1;
+}
+
+.sello-overlay-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  margin-top: 0.85rem;
+  justify-content: space-between;
+}
+
+.sello-overlay-link,
+.sello-overlay-dismiss {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #f6f5f2;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.sello-overlay-link:hover,
+.sello-overlay-dismiss:hover {
+  color: var(--signal);
+}

@@ -1,9 +1,14 @@
-import { getCache, setCache } from '@/lib/apiCache';
+import { getCache, peekCache, peekCacheAgeMs, setCache } from '@/lib/apiCache';
 import { espnFetch, scoreboardUrl, summaryUrl, SLUG } from '@/lib/espn';
 import { mexicoDayKey } from '@/lib/radio/phases';
 import { FRESH } from './freshness';
 import { scheduleAbbr } from './ligaMxAbbr';
-import { localizeComment } from './localizeComment';
+import {
+  localizeComment,
+  commentLooksEnglishPbp,
+  commentLooksLikeGoal,
+  preferEspnLang,
+} from './localizeComment';
 import type { CommentaryLine, MatchSnapshot } from './types';
 
 type EspnCommentaryRow = {
@@ -37,11 +42,12 @@ function sleep(ms: number) {
   return new Promise<void>((r) => setTimeout(r, ms));
 }
 
-/** Map ESPN Spanish commentary package → Acceso lines. */
+/** Map ESPN commentary → Acceso lines. Spanish stays as ESPN wrote it. */
 export function mapEspnCommentary(rows: EspnCommentaryRow[] | undefined): CommentaryLine[] {
   return (rows ?? [])
     .map((c, i) => {
-      const text = (c.text ?? '').trim();
+      const raw = (c.text ?? '').trim();
+      const text = commentLooksEnglishPbp(raw) ? localizeComment(raw) : raw;
       const clock = c.time?.displayValue?.trim() || undefined;
       return {
         id: String(c.sequence ?? i),
@@ -49,7 +55,7 @@ export function mapEspnCommentary(rows: EspnCommentaryRow[] | undefined): Commen
         clock,
         order: c.sequence ?? i,
         text,
-        isGoal: /¡?go+l|gol de|goal!/i.test(text),
+        isGoal: commentLooksLikeGoal(text),
       };
     })
     .filter((c) => c.text)
@@ -116,12 +122,24 @@ export async function resolveEspnLigaMxEventId(
 function shouldPreferEspn(comments: CommentaryLine[], match: MatchSnapshot): boolean {
   const smCount = match.comments?.length ?? 0;
   if (comments.length === 0) return false;
+  const espnEnglish = comments.filter((c) => commentLooksEnglishPbp(c.text)).length;
+  const espnSpanish = comments.length - espnEnglish;
+  // Spanish ESPN PBP beats a denser English wire every time.
+  if (espnSpanish >= 3 && espnSpanish > espnEnglish) return true;
   const smEnglish =
     smCount > 0 &&
-    (match.comments ?? [])
-      .slice(0, 8)
-      .filter((c) => /\b(Goal!|Shot |Yellow card|Corner|VAR)\b/i.test(c.text)).length >= 2;
+    (match.comments ?? []).slice(0, 8).filter((c) => commentLooksEnglishPbp(c.text)).length >= 2;
   return comments.length >= smCount || smEnglish || smCount < 12;
+}
+
+const espnWorkInflight = new Map<string, Promise<MatchSnapshot>>();
+
+function runEspnWork(key: string, fn: () => Promise<MatchSnapshot>): Promise<MatchSnapshot> {
+  const existing = espnWorkInflight.get(key);
+  if (existing) return existing;
+  const pending = fn().finally(() => espnWorkInflight.delete(key));
+  espnWorkInflight.set(key, pending);
+  return pending;
 }
 
 async function fetchEspnComments(
@@ -135,68 +153,70 @@ async function fetchEspnComments(
   return mapEspnCommentary(raw.commentary);
 }
 
-/** Spanish package is often thin; English PBP is denser — localize it. */
+/** Spanish ESPN PBP first. English only when the Spanish package is thin. */
 async function bestEspnComments(espnId: string, live: boolean): Promise<CommentaryLine[]> {
-  const [es, en] = await Promise.all([
-    fetchEspnComments(espnId, live, 'es'),
-    fetchEspnComments(espnId, live, 'en'),
-  ]);
-  const enMx = en.map((c) => ({ ...c, text: localizeComment(c.text) }));
-  if (es.length >= 8 && es.length + 3 >= enMx.length) return es;
-  return enMx.length >= es.length ? enMx : es;
+  const es = await fetchEspnComments(espnId, live, 'es');
+  if (es.length >= 3) return es;
+  const en = await fetchEspnComments(espnId, live, 'en');
+  return preferEspnLang(es, en);
 }
 
+const cronicaKey = (id: string) => `espn-cronica-v3-es-${id}`;
+
 /**
- * Prefer ESPN Spanish play-by-play for Completa when Sportmonks commentary is thin/English.
- * Never blocks live scores longer than `budgetMs` — falls back to cached ESPN or SM.
+ * Prefer ESPN Spanish play-by-play for Completa.
+ * Live: never delete last Spanish lines — serve them immediately and
+ * refresh in the background so Completa does not stall or fall back to English.
  */
 export async function enrichMatchWithEspnCommentary(
   match: MatchSnapshot,
   opts?: { budgetMs?: number }
 ): Promise<MatchSnapshot> {
-  const cacheKey = `espn-cronica-v2-${match.id}`;
-  const cached = getCache<CommentaryLine[]>(cacheKey, FRESH.espnCronicaTtlMs);
-  if (cached && shouldPreferEspn(cached, match)) {
-    return { ...match, comments: cached };
+  const cacheKey = cronicaKey(match.id);
+  const ttl = match.state === 'in' ? FRESH.espnCronicaTtlLiveMs : FRESH.espnCronicaTtlMs;
+  const age = peekCacheAgeMs(cacheKey);
+  const held = peekCache<CommentaryLine[]>(cacheKey);
+  const fresh = held != null && age != null && age <= ttl;
+  const usable = held && shouldPreferEspn(held, match) ? held : null;
+
+  const work = () =>
+    runEspnWork(cacheKey, async () => {
+      const espnId = await resolveEspnLigaMxEventId(match);
+      if (!espnId) return usable ? { ...match, comments: usable } : match;
+      const comments = await bestEspnComments(espnId, match.state === 'in');
+      if (!shouldPreferEspn(comments, match)) {
+        return usable ? { ...match, comments: usable } : match;
+      }
+      setCache(cacheKey, comments);
+      return { ...match, comments };
+    });
+
+  if (usable) {
+    if (!fresh) void work().catch(() => undefined);
+    return { ...match, comments: usable };
   }
-  // First Completa load: wait for PBP. Later live polls: keep scores snappy.
+
   const budget =
     opts?.budgetMs ??
-    (cached
-      ? match.state === 'in'
-        ? FRESH.espnEnrichBudgetMs
-        : FRESH.espnEnrichBudgetIdleMs
-      : match.state === 'in'
-        ? FRESH.espnEnrichBudgetFirstMs
-        : FRESH.espnEnrichBudgetIdleMs);
-
-  const work = (async (): Promise<MatchSnapshot> => {
-    const espnId = await resolveEspnLigaMxEventId(match);
-    if (!espnId) return match;
-
-    const comments = await bestEspnComments(espnId, match.state === 'in');
-    if (!shouldPreferEspn(comments, match)) return match;
-
-    setCache(cacheKey, comments);
-    return { ...match, comments };
-  })();
+    (match.state === 'in' ? FRESH.espnEnrichBudgetFirstMs : FRESH.espnEnrichBudgetIdleMs);
 
   try {
     const raced = await Promise.race([
-      work.then((m) => ({ ok: true as const, m })),
+      work().then((m) => ({ ok: true as const, m })),
       sleep(budget).then(() => ({ ok: false as const })),
     ]);
 
     if (raced.ok) return raced.m;
 
-    // Budget exceeded: serve last ESPN cronica if any; keep pulling in background.
-    void work.catch(() => undefined);
-    if (cached && shouldPreferEspn(cached, match)) {
-      return { ...match, comments: cached };
+    void work().catch(() => undefined);
+    const stale = peekCache<CommentaryLine[]>(cacheKey);
+    if (stale && shouldPreferEspn(stale, match)) {
+      return { ...match, comments: stale };
     }
   } catch {
-    if (cached && shouldPreferEspn(cached, match)) {
-      return { ...match, comments: cached };
+    const stale = peekCache<CommentaryLine[]>(cacheKey);
+    if (stale && shouldPreferEspn(stale, match)) {
+      return { ...match, comments: stale };
     }
   }
   return match;

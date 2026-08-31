@@ -37,8 +37,10 @@ export const FRESH = {
   storiesTtlMs: 60_000,
 
   espnCronicaTtlMs: 60_000,
+  /** Live Completa — refresh Spanish PBP often; serve last good lines immediately. */
+  espnCronicaTtlLiveMs: 5_000,
   /** Live polls: don't stall the scoreboard waiting on ESPN. */
-  espnEnrichBudgetMs: 550,
+  espnEnrichBudgetMs: 1_200,
   /** First Completa paint (no cached ESPN yet) — wait longer once. */
   espnEnrichBudgetFirstMs: 2_500,
   espnEnrichBudgetIdleMs: 2_000,

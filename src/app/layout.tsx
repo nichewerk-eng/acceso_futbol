@@ -6,6 +6,7 @@ import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { siteConfig } from "@/config/site";
 import { GravityProvider } from "@/contexts/GravityContext";
 import { TeamProvider } from "@/contexts/TeamContext";
+import { SelloHost } from "@/components/sello/SelloHost";
 import "./globals.css";
 
 const oswald = Oswald({
@@ -84,6 +85,7 @@ export default function RootLayout({
         <TeamProvider>
           <GravityProvider>
             {children}
+            <SelloHost />
           </GravityProvider>
         </TeamProvider>
         <Analytics />

@@ -26,10 +26,14 @@ import { scheduleAbbr } from '@/lib/sports/ligaMxAbbr';
 import { localizeStatus } from '@/lib/sports/localizeEs';
 import { mergeMatchSnapshot } from '@/lib/sports/mergeMatchSnapshot';
 import { MatchChapterSkeleton } from '@/components/partido/MatchChapterSkeleton';
-import { MatchShare } from '@/components/partido/MatchShare';
 import { MatchXiShare } from '@/components/partido/MatchXiShare';
 import { XiPitch } from '@/components/partido/XiPitch';
+import { SelloShare } from '@/components/sello/SelloShare';
+import { useGravity } from '@/contexts/GravityContext';
+import { mintFromFixture } from '@/lib/sello/mint';
 import { matchHasXi } from '@/lib/share/xiShare';
+import { commentStamp } from '@/lib/sports/localizeComment';
+import { applyVarNarrative } from '@/lib/sports/keyEvents';
 
 type Props = { league: string; id: string; initialMatch?: MatchSnapshot | null };
 type TabId = 'contexto' | 'momentos' | 'alineacion' | 'datos' | 'radio';
@@ -88,7 +92,7 @@ const FORM_TITLE: Record<FormResult, string> = {
 };
 
 function buildKeyEvents(match: MatchSnapshot): TimelineRow[] {
-  return (match.events ?? [])
+  return (applyVarNarrative(match).events ?? [])
     .filter((e) => e.kind && e.kind !== 'other')
     .map((e, i) => ({ e, i }))
     .sort((a, b) => {
@@ -110,13 +114,14 @@ function buildKeyEvents(match: MatchSnapshot): TimelineRow[] {
               : e.kind === 'var'
                 ? 'var'
                 : 'play';
+      const anulado = e.type === 'Anulado' || /^gol anulado/i.test(e.text);
       return {
         id: `e-${e.id}`,
         clock: e.clock,
         label: e.type,
         text: e.text,
         teamAbbr: e.teamAbbr,
-        peak: kind === 'goal' || e.kind === 'red',
+        peak: kind === 'goal' || e.kind === 'red' || anulado || e.kind === 'var',
         kind,
       };
     });
@@ -127,18 +132,16 @@ function buildFullCronica(match: MatchSnapshot): TimelineRow[] {
     .filter((c) => c.text?.trim())
     .map((c) => {
       const text = c.text.trim();
-      const isGoal = Boolean(c.isGoal) || /\b(goal|gol)\b/i.test(text);
-      const isRed = /\broja\b|\bred card\b/i.test(text);
-      const isCard = isRed || /\bamarilla\b|\byellow card\b/i.test(text);
+      const stamp = commentStamp(text, c.isGoal);
       return {
         id: `c-${c.id}`,
         clock:
           c.clock?.trim() ||
           (c.minute !== undefined && c.minute !== null ? `${c.minute}'` : ''),
-        label: isGoal ? 'Gol' : isRed ? 'Roja' : isCard ? 'Amarilla' : '',
+        label: stamp.label,
         text,
-        peak: isGoal || isRed,
-        kind: (isGoal ? 'goal' : isCard ? 'card' : 'play') as TimelineRow['kind'],
+        peak: stamp.peak,
+        kind: stamp.kind,
         sort: (c.order ?? 0) * 10 + (c.minute ?? 0),
       };
     })
@@ -533,6 +536,11 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
   );
   const [feed, setFeed] = useState<FeedFilter>('clave');
   const userTz = useDeviceTimeZone();
+  const { clubId, elTri } = useGravity();
+  const sello = useMemo(
+    () => (match ? mintFromFixture(match, { clubId, elTri }) : null),
+    [match, clubId, elTri]
+  );
   const [tabla, setTabla] = useState<LigaMXEntry[] | null>(null);
   const [richReady, setRichReady] = useState(() => hasContexto(initialMatch));
 
@@ -939,7 +947,9 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
                 compact
               />
             </div>
-            <MatchShare match={match} league={league} />
+            {sello ? (
+              <SelloShare mint={sello} className="match-share" testId="match-share" />
+            ) : null}
           </div>
         </div>
       </section>

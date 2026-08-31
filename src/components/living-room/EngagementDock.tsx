@@ -1,9 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ClubLogo } from '@/components/brand/ClubLogo';
+import { SelloShare } from '@/components/sello/SelloShare';
+import { useGravity } from '@/contexts/GravityContext';
 import { useGamesOfDay } from '@/lib/client/useGamesOfDay';
+import { pickLeadMint } from '@/lib/sello/mint';
 import { leaguePath, mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
 
 function dockDayLabel(dayKey: string | undefined, upcoming: boolean, count: number) {
@@ -16,6 +19,7 @@ function dockDayLabel(dayKey: string | undefined, upcoming: boolean, count: numb
 
 export function EngagementDock() {
   const { payload } = useGamesOfDay();
+  const { clubId, elTri } = useGravity();
   const [on, setOn] = useState(false);
 
   const games = payload?.games ?? [];
@@ -25,6 +29,10 @@ export function EngagementDock() {
     games.find((g) => g.state === 'pre') ??
     games[0] ??
     null;
+  const sello = useMemo(
+    () => pickLeadMint(games, { clubId, elTri }),
+    [games, clubId, elTri]
+  );
   const count = games.length;
   const upcoming = Boolean(payload?.upcoming);
 
@@ -88,6 +96,14 @@ export function EngagementDock() {
         <Link href={href} className="hoy-cta shrink-0 !py-2" data-testid="dock-cta-ficha">
           Ficha
         </Link>
+        {sello ? (
+          <SelloShare
+            mint={sello}
+            className="hoy-cta hoy-cta-ghost shrink-0 !py-2"
+            testId="dock-sello"
+            label="Compartir"
+          />
+        ) : null}
         <Link
           href="/#jornada"
           className="hidden shrink-0 font-mono text-[10px] uppercase tracking-[0.16em] text-white/50 sm:inline"
