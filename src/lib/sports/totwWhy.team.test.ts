@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { fallbackTeamPickedWhy, teamWhyLooksWrong } from './totwWhy';
+import {
+  fallbackPlayerWhy,
+  fallbackTeamPickedWhy,
+  playerWhyLooksWrong,
+  teamWhyLooksWrong,
+  type PlayerDossier,
+} from './totwWhy';
 import type { TotwClub } from './totw';
 
 function club(partial: Partial<TotwClub>): TotwClub {
@@ -55,6 +61,45 @@ describe('fallbackTeamPickedWhy', () => {
     assert.doesNotMatch(text, /modelo|retornos|Acceso|portería/);
     assert.equal(teamWhyLooksWrong(text, row), false);
   });
+
+  it('does not sell a 3-1 away as a 6th-vs-4th climb', () => {
+    const row = club({
+      abbr: 'QRO',
+      name: 'Querétaro',
+      score: 9.05,
+      gf: 3,
+      ga: 1,
+      home: false,
+      opponentAbbr: 'ATS',
+      opponentName: 'Atlas',
+      pos: 6,
+      opponentPos: 4,
+    });
+    const text = fallbackTeamPickedWhy(row, [
+      club({
+        abbr: 'ASL',
+        name: 'Atlético de San Luis',
+        gf: 3,
+        ga: 1,
+        home: false,
+        opponentAbbr: 'MTY',
+        opponentName: 'Monterrey',
+      }),
+      club({
+        abbr: 'TOL',
+        name: 'Toluca',
+        gf: 4,
+        ga: 0,
+        home: true,
+        opponentAbbr: 'JUA',
+        opponentName: 'Juárez',
+      }),
+    ]);
+    assert.match(text, /Querétaro es el equipo de la jornada: ganó 3-1 de visita a Atlas/);
+    assert.match(text, /3 de visita pesan más que el 4-0 de Toluca/);
+    assert.doesNotMatch(text, /desde el|ante el|6°|4°/);
+    assert.equal(teamWhyLooksWrong(text, row), false);
+  });
 });
 
 describe('teamWhyLooksWrong', () => {
@@ -74,5 +119,93 @@ describe('teamWhyLooksWrong', () => {
       opponentPos: 6,
     });
     assert.equal(teamWhyLooksWrong(bad, gdl), true);
+  });
+
+  it('rejects 6th-vs-4th table talk', () => {
+    const qro = club({
+      abbr: 'QRO',
+      name: 'Querétaro',
+      gf: 3,
+      ga: 1,
+      pos: 6,
+      opponentPos: 4,
+    });
+    const bad =
+      'Querétaro es el equipo de la jornada: ganó 3-1 de visita a Atlas. Lo hizo desde el 6° ante el 4°.';
+    assert.equal(teamWhyLooksWrong(bad, qro), true);
+  });
+});
+
+function keeper(partial: Partial<PlayerDossier> = {}): PlayerDossier {
+  return {
+    id: 'sanchez',
+    name: 'Andrés Sánchez',
+    rating: 8.22,
+    smRating: 8.3,
+    teamScore: 8.0,
+    accesoIndex: 8.22,
+    rank: 4,
+    position: 'portero',
+    jornada: 6,
+    fixtureId: 'mty-asl',
+    team: 'San Luis',
+    opponent: 'Monterrey',
+    home: false,
+    score: 'MTY 1-3 ASL',
+    gf: 3,
+    ga: 1,
+    result: 'W',
+    cleanSheet: false,
+    goals: [],
+    assists: [],
+    cards: [],
+    notes: [],
+    ...partial,
+  };
+}
+
+describe('playerWhyLooksWrong', () => {
+  it('rejects a clean sheet claim on a 3-1', () => {
+    const text =
+      'Andrés Sánchez mantuvo la portería en cero en la victoria 3-1 de San Luis visitando a Monterrey.';
+    assert.equal(playerWhyLooksWrong(text, keeper()), true);
+  });
+
+  it('rejects clean-sheet language even without ga when the score has both sides scoring', () => {
+    const text =
+      'Andrés Sánchez mantuvo la portería en cero en la victoria 3-1 de San Luis visitando a Monterrey.';
+    assert.equal(playerWhyLooksWrong(text, keeper({ ga: null, gf: null })), true);
+  });
+
+  it('allows a real clean sheet', () => {
+    const d = keeper({ gf: 3, ga: 0, cleanSheet: true, score: 'MTY 0-3 ASL' });
+    const text =
+      'Andrés Sánchez no le metieron en la victoria 3-0 de San Luis visitando a Monterrey.';
+    assert.equal(playerWhyLooksWrong(text, d), false);
+  });
+
+  it('rejects invented save counts', () => {
+    assert.equal(
+      playerWhyLooksWrong('Atajó 7 paradas en la victoria 3-1 de San Luis.', keeper()),
+      true
+    );
+  });
+});
+
+describe('fallbackPlayerWhy', () => {
+  it('does not call a 3-1 a clean sheet', () => {
+    const text = fallbackPlayerWhy(keeper());
+    assert.match(text, /Encajó un gol/);
+    assert.match(text, /victoria 3-1 de San Luis visitando a Monterrey/);
+    assert.doesNotMatch(text, /portería en cero|no le metieron|valla/);
+    assert.equal(playerWhyLooksWrong(text, keeper()), false);
+  });
+
+  it('says they kept a clean sheet only when ga is 0', () => {
+    const d = keeper({ gf: 2, ga: 0, cleanSheet: true, score: 'MTY 0-2 ASL' });
+    const text = fallbackPlayerWhy(d);
+    assert.match(text, /No le metieron/);
+    assert.match(text, /2-0/);
+    assert.equal(playerWhyLooksWrong(text, d), false);
   });
 });
