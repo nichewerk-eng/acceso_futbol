@@ -1,5 +1,6 @@
 import { fixtureChannelLabels, kickoffLabelMx, type FaqItem } from '@/lib/dondeVerCopy';
 import type { HorarioRound } from '@/lib/sports/horariosBoard';
+import { isFixtureHeld, kickHold, kickHoldLabel } from '@/lib/sports/localizeEs';
 import type { Fixture } from '@/lib/sports/types';
 
 /**
@@ -108,7 +109,8 @@ export function groupFixturesByBoardDay(fixtures: Fixture[]) {
 export function horarioStatus(f: Fixture): string {
   if (f.state === 'in') return 'En juego';
   if (f.state === 'post') return 'Final';
-  return 'Por jugar';
+  const hold = kickHoldLabel(kickHold(f.statusLabel));
+  return hold ?? 'Por jugar';
 }
 
 export function horarioScore(f: Fixture): string | null {
@@ -118,7 +120,9 @@ export function horarioScore(f: Fixture): string | null {
 }
 
 function upcomingFrom(rounds: HorarioRound[]): Fixture[] {
-  return rounds.flatMap((r) => r.fixtures).filter((f) => f.state === 'pre' || f.state === 'in');
+  return rounds
+    .flatMap((r) => r.fixtures)
+    .filter((f) => (f.state === 'pre' || f.state === 'in') && !isFixtureHeld(f.statusLabel));
 }
 
 function listUpcomingLine(f: Fixture): string {

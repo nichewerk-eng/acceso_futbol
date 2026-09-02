@@ -10,7 +10,7 @@ import {
 } from '@/lib/radio/phases';
 import type { Fixture, MatchState } from './types';
 import { fetchEspnLigaMxFixtures, fetchLigaMxFixtures } from './espnFallback';
-import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
+import { isFixtureHeld, localizeCity, localizeStatus, localizeVenue } from './localizeEs';
 import { involvesLigaMxClub } from './ligaMxTeams';
 import {
   fetchFixturesByDate,
@@ -148,6 +148,11 @@ function keepLivingRoomFixture(f: Fixture): boolean {
   return true;
 }
 
+function onLivingRoomDay(f: Fixture, dayKey: string): boolean {
+  if (isFixtureHeld(f.statusLabel)) return false;
+  return isMexicoDay(f.date, dayKey) || f.state === 'in';
+}
+
 function livingRoomLc(fixtures: Fixture[]): Fixture[] {
   return fixtures.filter(keepLivingRoomFixture).map(attachDondeVer);
 }
@@ -180,7 +185,7 @@ async function ligaMxDateWindow(
       const liga = board.fixtures.map(attachDondeVer);
       // Official LC board (KO included — Sportmonks has no 2026 knockout ids yet).
       const dated = [...liga, ...(await lcP)];
-      const today = dated.filter((f) => isMexicoDay(f.date, dayKey) || f.state === 'in');
+      const today = dated.filter((f) => onLivingRoomDay(f, dayKey));
       return { today, dated, source: board.source };
     } catch {
       /* Sportmonks down → ESPN below */
@@ -189,7 +194,7 @@ async function ligaMxDateWindow(
 
   const espnBoards = await Promise.all(boardKeys.map((k) => fetchEspnDayBoard(k)));
   const dated = [...espnBoards.flat(), ...(await lcP)];
-  const today = dated.filter((f) => isMexicoDay(f.date, dayKey) || f.state === 'in');
+  const today = dated.filter((f) => onLivingRoomDay(f, dayKey));
   if (espnBoards.flat().length > 0) {
     return { today, dated, source: 'espn' };
   }
@@ -198,7 +203,7 @@ async function ligaMxDateWindow(
   const mapped = fixtures.map(attachDondeVer);
   const withLc = [...mapped, ...(await lcP)];
   return {
-    today: withLc.filter((f) => isMexicoDay(f.date, dayKey) || f.state === 'in'),
+    today: withLc.filter((f) => onLivingRoomDay(f, dayKey)),
     dated: withLc,
     source,
   };
@@ -209,7 +214,7 @@ function firstUpcomingDay(
   nowMs: number
 ): { fixtures: Fixture[]; dayKey: string } | null {
   const future = pool
-    .filter((f) => f.state === 'pre' && +new Date(f.date) > nowMs)
+    .filter((f) => f.state === 'pre' && !isFixtureHeld(f.statusLabel) && +new Date(f.date) > nowMs)
     .sort((a, b) => +new Date(a.date) - +new Date(b.date));
   if (!future.length) return null;
   const dayKey = mexicoDayKey(new Date(future[0].date));
@@ -222,7 +227,12 @@ function firstUpcomingDay(
 function upcomingFromStatic(now: Date): { fixtures: Fixture[]; dayKey?: string } {
   const t = now.getTime();
   const liga = aperturaCalendar()
-    .filter((f) => f.status.state === 'pre' && +new Date(f.date) > t)
+    .filter(
+      (f) =>
+        f.status.state === 'pre' &&
+        !isFixtureHeld(f.status.shortDetail || f.status.description) &&
+        +new Date(f.date) > t
+    )
     .sort((a, b) => +new Date(a.date) - +new Date(b.date))
     .map(staticRowToFixture);
   const lc = livingRoomLc(buildLeaguesCupBoard([]));
@@ -264,7 +274,11 @@ export function seedGamesOfDay(now = new Date()): GamesOfDayPayload {
   const lc = livingRoomLc(buildLeaguesCupBoard([]));
   const todayStatic = [
     ...aperturaCalendar()
-      .filter((f) => isMexicoDay(f.date, dayKey))
+      .filter(
+        (f) =>
+          isMexicoDay(f.date, dayKey) &&
+          !isFixtureHeld(f.status.shortDetail || f.status.description)
+      )
       .map(staticRowToFixture),
     ...lc.filter((f) => isMexicoDay(f.date, dayKey) || f.state === 'in'),
   ];

@@ -124,6 +124,16 @@ export function kickHoldLabel(hold: KickHold): string | null {
   return null;
 }
 
+/** Postponed / cancelled — not a real kickoff this weekend. Delayed still is. */
+export function isFixtureHeld(label?: string | null): boolean {
+  const hold = kickHold(label);
+  return hold === 'postponed' || hold === 'cancelled';
+}
+
+export function isFixturePostponed(label?: string | null): boolean {
+  return kickHold(label) === 'postponed';
+}
+
 export function localizeVenueCity(
   venue?: string | null,
   city?: string | null

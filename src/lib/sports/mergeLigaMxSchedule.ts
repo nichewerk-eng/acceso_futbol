@@ -4,6 +4,7 @@ import {
   rememberOverlaySmIds,
 } from './aperturaSmMap';
 import { dayPairKey, scheduleAbbr } from './ligaMxAbbr';
+import { overlayShouldReplaceSeedSchedule } from './scheduleHold';
 import type { Fixture } from './types';
 
 /** Minimal fixture shape shared by API + Liga MX UI. */
@@ -93,11 +94,19 @@ export function mergeLigaMxSchedule(live: LigaMxScheduleFixture[]): LigaMxSchedu
     const overlay = byDay.get(dayKey) ?? (jk ? byJornada.get(jk) : undefined);
     if (!overlay) return s;
     usedLive.add(overlay.id);
+    const overlayWins = overlayShouldReplaceSeedSchedule(
+      { date: s.date, statusLabel: s.status.shortDetail || s.status.description },
+      {
+        date: overlay.date,
+        state: overlay.status.state,
+        statusLabel: overlay.status.shortDetail || overlay.status.description,
+      }
+    );
     return {
       ...s,
       id: preferSportmonksId(s.id, overlay.id),
-      date: overlay.date,
-      status: overlay.status,
+      date: overlayWins ? overlay.date : s.date,
+      status: overlayWins ? overlay.status : s.status,
       venue: overlay.venue ?? s.venue,
       city: overlay.city ?? s.city,
       home: { ...s.home, score: overlay.home.score },

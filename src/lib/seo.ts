@@ -1,6 +1,7 @@
 import { clubIdentityFromAbbr } from '@/config/clubIdentity';
 import { TV_CHANNELS, type TvChannelId } from '@/config/dondeVer';
 import { siteConfig } from '@/config/site';
+import { isFixtureHeld } from '@/lib/sports/localizeEs';
 import type { Fixture, MatchSnapshot } from '@/lib/sports/types';
 
 export function absoluteUrl(path = '/'): string {
@@ -273,8 +274,9 @@ function sportsEventNode(match: Fixture, league: string) {
   const path = `/partido/${league}/${match.id}`;
   const eventId = `${absoluteUrl(path)}#event`;
   // schema.org has no "in progress" status; live stays Scheduled until final.
-  const eventStatus =
-    match.state === 'post'
+  const eventStatus = isFixtureHeld(match.statusLabel)
+    ? 'https://schema.org/EventPostponed'
+    : match.state === 'post'
       ? 'https://schema.org/EventCompleted'
       : 'https://schema.org/EventScheduled';
   // Approximate final whistle (~115 min) so completed events carry an endDate.

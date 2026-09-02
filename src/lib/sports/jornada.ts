@@ -2,6 +2,7 @@ import { attachDondeVer } from '@/config/dondeVer';
 import { isMexicoDay, mexicoDayKey } from '@/lib/radio/phases';
 import type { Fixture } from './types';
 import { fetchLigaMxFixtures, seedLigaMxFixtures } from './espnFallback';
+import { isFixtureHeld, isFixturePostponed } from './localizeEs';
 
 export type JornadaOverview = {
   label: string;
@@ -11,6 +12,8 @@ export type JornadaOverview = {
   live: Fixture[];
   played: Fixture[];
   upcoming: Fixture[];
+  /** Still this fecha, but no kickoff this weekend (Leagues Cup, etc.). */
+  postponed: Fixture[];
 };
 
 export function jornadaNumber(label: string | null | undefined): number | null {
@@ -19,10 +22,11 @@ export function jornadaNumber(label: string | null | undefined): number | null {
   return m ? Number(m[1]) : null;
 }
 
-/** Live, or pre with kickoff still ahead (ignore abandoned/stale board rows). */
+/** Live, or a real upcoming kickoff (ignore postponed / abandoned / stale). */
 function stillOnBoard(f: Fixture, now: Date): boolean {
   if (f.state === 'in') return true;
   if (f.state !== 'pre') return false;
+  if (isFixtureHeld(f.statusLabel)) return false;
   return +new Date(f.date) >= +now - 2 * 3600_000;
 }
 
@@ -96,7 +100,8 @@ function overviewFrom(
     source,
     live: games.filter((g) => g.state === 'in'),
     played: games.filter((g) => g.state === 'post'),
-    upcoming: games.filter((g) => g.state === 'pre'),
+    upcoming: games.filter((g) => g.state === 'pre' && !isFixtureHeld(g.statusLabel)),
+    postponed: games.filter((g) => g.state === 'pre' && isFixturePostponed(g.statusLabel)),
   };
 }
 

@@ -3,12 +3,13 @@ import { editorialWeather } from '@/config/editorialWeather';
 import { isMexicoDay, mexicoDayKey } from '@/lib/radio/phases';
 import type { Fixture, PulsePayload } from './types';
 import { fetchEspnLigaMxFixtures, fetchLigaMxFixtures } from './espnFallback';
+import { isFixtureHeld } from './localizeEs';
 
 function partition(fixtures: Fixture[], now = new Date()): Pick<PulsePayload, 'live' | 'upcoming' | 'recent'> {
   const dayKey = mexicoDayKey(now);
   const live = fixtures.filter((f) => f.state === 'in');
   const upcoming = fixtures
-    .filter((f) => f.state === 'pre' && isMexicoDay(f.date, dayKey))
+    .filter((f) => f.state === 'pre' && !isFixtureHeld(f.statusLabel) && isMexicoDay(f.date, dayKey))
     .sort((a, b) => +new Date(a.date) - +new Date(b.date))
     .slice(0, 12);
   const recent = fixtures

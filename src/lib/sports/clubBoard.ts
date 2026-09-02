@@ -11,6 +11,7 @@ import { fetchSeleccionSchedule } from '@/lib/sports/seleccion';
 import { espnFetch, standingsUrl, SLUG } from '@/lib/espn';
 import { liguillaPath, type LiguillaPath } from '@/lib/sports/liguillaPath';
 import type { Fixture, FormMatch } from '@/lib/sports/types';
+import { isFixtureHeld } from '@/lib/sports/localizeEs';
 
 export type ClubTableRow = {
   position: number;
@@ -215,10 +216,19 @@ export async function getClubBoard(slug: string): Promise<ClubBoard | null> {
     .filter((f) => f.state === 'post')
     .sort((a, b) => +new Date(b.date) - +new Date(a.date))
     .slice(0, 8);
-  const upcoming = mine
-    .filter((f) => f.state === 'pre' && +new Date(f.date) >= now - 60_000)
+  const scheduled = mine
+    .filter(
+      (f) =>
+        f.state === 'pre' &&
+        !isFixtureHeld(f.statusLabel) &&
+        +new Date(f.date) >= now - 60_000
+    )
     .sort((a, b) => +new Date(a.date) - +new Date(b.date));
-  const next = live ?? upcoming[0] ?? null;
+  const postponed = mine
+    .filter((f) => f.state === 'pre' && isFixtureHeld(f.statusLabel))
+    .sort((a, b) => +new Date(a.date) - +new Date(b.date));
+  const next = live ?? scheduled[0] ?? null;
+  const rest = live ? scheduled : scheduled.slice(1);
 
   return {
     club: {
@@ -236,7 +246,7 @@ export async function getClubBoard(slug: string): Promise<ClubBoard | null> {
     next,
     live,
     recent,
-    upcoming: live ? upcoming : upcoming.slice(1),
+    upcoming: [...rest, ...postponed],
     generatedAt: new Date().toISOString(),
   };
 }

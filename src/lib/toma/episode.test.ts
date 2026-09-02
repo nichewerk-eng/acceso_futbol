@@ -29,6 +29,7 @@ function overview(played: Fixture[], upcoming: Fixture[] = []): JornadaOverview 
     live: [],
     played,
     upcoming,
+    postponed: [],
   };
 }
 

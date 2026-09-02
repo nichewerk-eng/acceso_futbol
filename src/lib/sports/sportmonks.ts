@@ -9,6 +9,7 @@ import {
   type FemenilStandingGroup,
 } from './ligaMxFemenil';
 import { localizeComment, commentLooksLikeGoal } from './localizeComment';
+import { overlayShouldReplaceSeedSchedule } from './scheduleHold';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
 import { smFetch } from './sm/client';
 import { LANE } from './sm/lanes';
@@ -327,13 +328,17 @@ export function overlayLiveFixtures(base: Fixture[], live: Fixture[]): Fixture[]
       );
     if (!l) return f;
     seen.add(l.id);
+    const overlayWins = overlayShouldReplaceSeedSchedule(
+      { date: f.date, statusLabel: f.statusLabel },
+      { date: l.date, state: l.state, statusLabel: l.statusLabel }
+    );
     return {
       ...f,
       id: l.id,
       provider: l.provider,
-      state: l.state,
-      statusLabel: l.statusLabel,
-      clock: l.clock ?? f.clock,
+      state: overlayWins ? l.state : f.state,
+      statusLabel: overlayWins ? l.statusLabel : f.statusLabel,
+      clock: overlayWins ? (l.clock ?? f.clock) : f.clock,
       winnerSide: l.winnerSide ?? f.winnerSide,
       scorers: l.scorers ?? f.scorers,
       assists: l.assists ?? f.assists,

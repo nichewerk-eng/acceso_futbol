@@ -2,6 +2,7 @@ import { isMexicoDay, mexicoDayKey, radioPhase, type RadioPhase } from '@/lib/ra
 import type { DayGame, GamesOfDayPayload } from '@/lib/sports/gamesOfDay';
 import type { JornadaOverview } from '@/lib/sports/jornada';
 import type { Fixture } from '@/lib/sports/types';
+import { isFixtureHeld } from '@/lib/sports/localizeEs';
 
 function radioMeta(
   phase: RadioPhase,
@@ -25,7 +26,7 @@ function firstUpcomingDay(
   nowMs: number
 ): { fixtures: Fixture[]; dayKey: string } | null {
   const future = pool
-    .filter((f) => f.state === 'pre' && +new Date(f.date) > nowMs)
+    .filter((f) => f.state === 'pre' && !isFixtureHeld(f.statusLabel) && +new Date(f.date) > nowMs)
     .sort((a, b) => +new Date(a.date) - +new Date(b.date));
   if (!future.length) return null;
   const dayKey = mexicoDayKey(new Date(future[0].date));
@@ -65,7 +66,9 @@ export function mergeJornadaIntoHeroSlate(
   now = Date.now()
 ): GamesOfDayPayload | null {
   if (!jornada) return payload;
-  const board = [...jornada.live, ...jornada.played, ...jornada.upcoming];
+  const board = [...jornada.live, ...jornada.played, ...jornada.upcoming].filter(
+    (f) => !isFixtureHeld(f.statusLabel)
+  );
   const extrasPool = (payload?.games ?? []).filter((g) => g.league !== 'liga-mx');
   if (!board.length) return payload;
 

@@ -6,6 +6,7 @@ import { LocalKickoff } from '@/components/time/LocalKickoff';
 import { LIGA_MX_CLUBS } from '@/config/clubs';
 import { siteConfig } from '@/config/site';
 import { fixtureChannelLabels } from '@/lib/dondeVerCopy';
+import { kickHold, kickHoldLabel } from '@/lib/sports/localizeEs';
 import {
   organizationJsonLd,
   sportsEventItemListJsonLd,
@@ -40,11 +41,12 @@ export const metadata: Metadata = {
 };
 
 function CrawlKick({ f }: { f: Fixture }) {
+  const hold = kickHoldLabel(kickHold(f.statusLabel));
   const score =
     f.home.score != null && f.away.score != null
       ? `${f.home.score}-${f.away.score}`
       : 'vs';
-  const { mx, us } = fixtureChannelLabels(f);
+  const { mx, us } = hold ? { mx: null, us: null } : fixtureChannelLabels(f);
   const tv = [mx ? `MX: ${mx}` : '', us ? `US: ${us}` : ''].filter(Boolean).join(' · ');
   return (
     <>
@@ -53,6 +55,8 @@ function CrawlKick({ f }: { f: Fixture }) {
         liveStampLabel(f)
       ) : f.state === 'post' ? (
         'Final'
+      ) : hold ? (
+        `${hold} · por reprogramar (Leagues Cup)`
       ) : (
         <LocalKickoff iso={f.date} variant="long" />
       )}
@@ -63,7 +67,7 @@ function CrawlKick({ f }: { f: Fixture }) {
 
 /** Server-rendered, crawlable board of the active jornada. */
 function HomeJornadaCrawl({ jornada }: { jornada: JornadaOverview }) {
-  const all = [...jornada.live, ...jornada.played, ...jornada.upcoming];
+  const all = [...jornada.live, ...jornada.played, ...jornada.upcoming, ...(jornada.postponed ?? [])];
   if (!all.length) return null;
   return (
     <section aria-label={`${jornada.label} — Liga MX`}>
@@ -86,7 +90,7 @@ function HomeJornadaCrawl({ jornada }: { jornada: JornadaOverview }) {
 export default async function RootPage() {
   const jornada = await getJornadaOverview().catch(() => null);
   const fixtures = jornada
-    ? [...jornada.live, ...jornada.played, ...jornada.upcoming]
+    ? [...jornada.live, ...jornada.played, ...jornada.upcoming, ...(jornada.postponed ?? [])]
     : [];
 
   return (

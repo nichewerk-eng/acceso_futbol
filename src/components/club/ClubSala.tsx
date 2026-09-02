@@ -17,6 +17,7 @@ import {
   liguillaRuleLine,
 } from '@/lib/sports/liguillaPath';
 import { scheduleAbbr } from '@/lib/sports/ligaMxAbbr';
+import { kickHold, kickHoldLabel } from '@/lib/sports/localizeEs';
 import type { Fixture } from '@/lib/sports/types';
 
 function kickWhen(iso: string, tz: string) {
@@ -66,6 +67,7 @@ function ClubTapeStamp({
 }
 
 function ClubTapeNext({ f, tz }: { f: Fixture; tz: string }) {
+  const hold = kickHoldLabel(kickHold(f.statusLabel));
   return (
     <Link
       href={partidoHref(f)}
@@ -74,7 +76,7 @@ function ClubTapeNext({ f, tz }: { f: Fixture; tz: string }) {
     >
       <div className="flex items-start justify-between gap-3">
         <p className="jor-next-when">
-          {kickWhen(f.date, tz)}
+          {hold ? `${hold} · por reprogramar` : kickWhen(f.date, tz)}
           {f.jornada ? ` · ${f.jornada}` : ''}
         </p>
       </div>
@@ -188,6 +190,8 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
                 <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted">
                   {next.state === 'in' ? (
                     <span className="text-signal">EN VIVO · {next.clock || next.statusLabel}</span>
+                  ) : kickHoldLabel(kickHold(next.statusLabel)) ? (
+                    `${kickHoldLabel(kickHold(next.statusLabel))} · por reprogramar`
                   ) : (
                     kickWhen(next.date, tz)
                   )}
@@ -223,6 +227,7 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
                     {[next.venue, next.city].filter(Boolean).join(' · ')}
                   </p>
                 )}
+                {!kickHold(next.statusLabel) && (
                 <div className="mt-4">
                   <BroadcastChannels
                     mx={next.dondeVer?.mxChannels}
@@ -232,6 +237,7 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
                     surface="paper"
                   />
                 </div>
+                )}
               </div>
               <Link
                 href={partidoHref(next)}

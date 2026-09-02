@@ -5,6 +5,7 @@ import {
   type ClubIdentity,
 } from '@/config/clubIdentity';
 import { fetchLigaMxFixtures } from './espnFallback';
+import { isFixtureHeld } from './localizeEs';
 import type { Fixture } from './types';
 
 export type TeamBroadcastSchedule = {
@@ -45,7 +46,10 @@ export async function getTeamBroadcastSchedule(
 
   const live = mine.filter((f) => f.state === 'in');
   const upcoming = mine.filter(
-    (f) => f.state === 'pre' && +new Date(f.date) >= +now - 3 * 3600_000
+    (f) =>
+      f.state === 'pre' &&
+      !isFixtureHeld(f.statusLabel) &&
+      +new Date(f.date) >= +now - 3 * 3600_000
   );
   const recent = mine.filter((f) => f.state === 'post').reverse().slice(0, 5);
   const next = live[0] ?? upcoming[0] ?? null;

@@ -10,6 +10,7 @@ import { mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
 import { peekCache, singleFlight } from '@/lib/apiCache';
 import { dayPairKey, scheduleAbbr } from './ligaMxAbbr';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
+import { overlayShouldReplaceSeedSchedule } from './scheduleHold';
 import { apiTtlMsForPace, isNearKickoff, looksStillLive, paceFromFixtures } from './freshness';
 import {
   fetchFixturesByDate,
@@ -213,20 +214,24 @@ function mergeLiveOntoStatic(live: Fixture[]): Fixture[] {
     const overlay = byDay.get(dayKey) ?? (jk ? byJornada.get(jk) : undefined);
     if (!overlay) return s;
     usedLive.add(overlay.id);
+    const overlayWins = overlayShouldReplaceSeedSchedule(
+      { date: s.date, statusLabel: s.statusLabel },
+      { date: overlay.date, state: overlay.state, statusLabel: overlay.statusLabel }
+    );
     return {
       ...s,
       id: preferSportmonksId(s.id, overlay.id),
       provider: overlay.provider,
-      date: overlay.date,
-      state: overlay.state,
-      statusLabel: overlay.statusLabel,
-      clock: overlay.clock,
+      date: overlayWins ? overlay.date : s.date,
+      state: overlayWins ? overlay.state : s.state,
+      statusLabel: overlayWins ? overlay.statusLabel : s.statusLabel,
+      clock: overlayWins ? overlay.clock : s.clock,
       jornada: s.jornada ?? overlay.jornada,
       venue: overlay.venue ?? s.venue,
       city: overlay.city ?? s.city,
-      winnerSide: overlay.winnerSide,
-      scorers: overlay.scorers,
-      assists: overlay.assists,
+      winnerSide: overlayWins ? overlay.winnerSide : s.winnerSide,
+      scorers: overlayWins ? overlay.scorers : s.scorers,
+      assists: overlayWins ? overlay.assists : s.assists,
       home: {
         ...s.home,
         id: overlay.home.id,
@@ -306,7 +311,7 @@ async function fetchDateBoardFixtures(seed: Fixture[], pastMs: number): Promise<
 type LigaMxBoard = { fixtures: Fixture[]; source: 'sportmonks' | 'espn' | 'static' };
 
 /** Canonical Liga MX board key — one merged snapshot shared across every surface (and isolates via KV). */
-const BOARD_KEY = 'liga-mx-board-v2-ht-clock';
+const BOARD_KEY = 'liga-mx-board-v3-j7-hold';
 
 /**
  * Static calendar + season FT scores + nearby date boards / livescores.

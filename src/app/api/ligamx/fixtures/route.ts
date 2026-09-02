@@ -13,7 +13,7 @@ import { aperturaCalendar, refreshAperturaSmMap } from '@/lib/sports/aperturaSmM
 
 // Apertura 2026: July → December 2026
 const DATE_RANGE = '20260701-20261231';
-const CACHE_KEY = 'ligamx-fixtures-v15-live-fast';
+const CACHE_KEY = 'ligamx-fixtures-v16-j7-hold';
 
 type FixturesPayload = { fixtures: LigaMXFixture[]; source: string };
 

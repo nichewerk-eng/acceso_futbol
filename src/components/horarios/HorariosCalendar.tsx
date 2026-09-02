@@ -12,10 +12,12 @@ import {
   horarioTimeIn,
 } from '@/lib/horariosCopy';
 import { fixtureChannelLabels } from '@/lib/dondeVerCopy';
+import { isFixtureHeld, kickHoldLabel, kickHold } from '@/lib/sports/localizeEs';
 import type { HorarioRound } from '@/lib/sports/horariosBoard';
 import type { Fixture } from '@/lib/sports/types';
 
 function tvLine(f: Fixture): string {
+  if (isFixtureHeld(f.statusLabel)) return 'Por reprogramar';
   const { mx, us } = fixtureChannelLabels(f);
   return [mx ? `MX ${mx}` : '', us ? `US ${us}` : ''].filter(Boolean).join(' · ');
 }
@@ -25,6 +27,7 @@ function MatchCard({ f, tz }: { f: Fixture; tz: string }) {
   const tv = tvLine(f);
   const live = f.state === 'in';
   const done = f.state === 'post';
+  const hold = !live && !done ? kickHoldLabel(kickHold(f.statusLabel)) : null;
   return (
     <li>
       <Link
@@ -47,7 +50,7 @@ function MatchCard({ f, tz }: { f: Fixture; tz: string }) {
           ) : done ? (
             'Final'
           ) : (
-            `${horarioTimeIn(f.date, tz)} h`
+            hold ?? `${horarioTimeIn(f.date, tz)} h`
           )}
         </p>
         <div className="af-horarios-pair">
@@ -105,12 +108,17 @@ function RoundBlock({
       ? `${horarioDateIn(first.date, tz)} → ${horarioDateIn(last.date, tz)}`
       : '';
   const live = round.fixtures.some((f) => f.state === 'in');
-  const remaining = round.fixtures.filter((f) => f.state !== 'post').length;
+  const remaining = round.fixtures.filter(
+    (f) => f.state !== 'post' && !isFixtureHeld(f.statusLabel)
+  ).length;
+  const held = round.fixtures.filter((f) => isFixtureHeld(f.statusLabel)).length;
   const note = live
     ? `${remaining} en juego o por jugar`
     : remaining
-      ? `${remaining} por jugar`
-      : 'Sellada';
+      ? `${remaining} por jugar${held ? ` · ${held} aplazados` : ''}`
+      : held
+        ? `${held} aplazados`
+        : 'Sellada';
   const days = groupFixturesByDay(round.fixtures, tz);
 
   return (

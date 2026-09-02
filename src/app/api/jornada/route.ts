@@ -11,10 +11,10 @@ import {
   type JornadaOverview,
 } from '@/lib/sports/jornada';
 
-const CACHE_KEY = 'jornada-overview-v14-live-fast';
+const CACHE_KEY = 'jornada-overview-v15-j7-hold';
 
 function jornadaRows(o: JornadaOverview) {
-  return [...o.live, ...o.played, ...o.upcoming];
+  return [...o.live, ...o.played, ...o.upcoming, ...(o.postponed ?? [])];
 }
 
 type Cached = JornadaOverview | { empty: true };

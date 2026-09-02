@@ -1,6 +1,7 @@
 import { isMexicoDay, mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
 import { jornadaNumber } from '@/lib/sports/jornada';
 import type { Fixture } from '@/lib/sports/types';
+import { isFixtureHeld } from '@/lib/sports/localizeEs';
 
 /**
  * Soft reset: ignore every jornada before this number. History through J5 was
@@ -12,6 +13,7 @@ export const QUINIELA_FROM = 6;
 function stillOnBoard(f: Fixture, now: Date): boolean {
   if (f.state === 'in') return true;
   if (f.state !== 'pre') return false;
+  if (isFixtureHeld(f.statusLabel)) return false;
   return +new Date(f.date) >= +now - 2 * 3600_000;
 }
 

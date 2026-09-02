@@ -2,6 +2,7 @@ import { clubIdentityFromAbbr } from '@/config/clubIdentity';
 import { fetchLigaMxFixtures } from '@/lib/sports/espnFallback';
 import { jornadaNumber } from '@/lib/sports/jornada';
 import type { Fixture } from '@/lib/sports/types';
+import { isFixtureHeld } from '@/lib/sports/localizeEs';
 import { isOutcome, missingOpenPicks } from './card';
 import { pickQuinielaJornada, quinielaHoldActive, QUINIELA_FROM } from './jornada';
 import { sanitizeName } from './name';
@@ -76,7 +77,7 @@ export function boardFromFixtures(
   const n = pickQuinielaJornada(fixtures, now);
   if (n == null) return null;
   const round = fixtures
-    .filter((f) => jornadaNumber(f.jornada) === n)
+    .filter((f) => jornadaNumber(f.jornada) === n && !isFixtureHeld(f.statusLabel))
     .sort((a, b) => +new Date(a.date) - +new Date(b.date));
   if (round.length === 0) return null;
   const ms = now.getTime();

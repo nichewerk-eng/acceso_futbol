@@ -28,12 +28,18 @@ export function JornadaRecap() {
   const played = data?.played ?? [];
   const live = data?.live ?? [];
   const upcoming = data?.upcoming ?? [];
+  const postponed = data?.postponed ?? [];
   const filledCount = live.length + played.length;
   const total = filledCount + upcoming.length || 9;
   const doneCount = played.length;
   const jornadaNum = data?.number;
   const fechaCerrada =
-    !loading && Boolean(data) && live.length === 0 && upcoming.length === 0 && played.length > 0;
+    !loading &&
+    Boolean(data) &&
+    live.length === 0 &&
+    upcoming.length === 0 &&
+    postponed.length === 0 &&
+    played.length > 0;
 
   const local = data && !lcPause ? buildJornadaTake(data) : null;
   const take = local && remote ? mergeJornadaTake(local, remote) : local;
@@ -82,6 +88,7 @@ export function JornadaRecap() {
                       `${doneCount} jugados`,
                       live.length ? `${live.length} en vivo` : '',
                       upcoming.length ? `${upcoming.length} quedan` : '',
+                      postponed.length ? `${postponed.length} aplazados` : '',
                     ]
                       .filter(Boolean)
                       .join(' · ')}
@@ -111,7 +118,9 @@ export function JornadaRecap() {
                 ? 'Liga MX en pausa por Leagues Cup. La siguiente jornada vuelve cuando cierre el torneo binacional.'
                 : fechaCerrada
                   ? 'Fecha sellada. Esperando la siguiente jornada.'
-                  : 'Resultados sellados y lo que todavía falta por patear.'}
+                  : postponed.length
+                    ? `${postponed.length} de la fecha se aplazaron por Leagues Cup. Quedan ${upcoming.length} en la cartelera de este fin.`
+                    : 'Resultados sellados y lo que todavía falta por patear.'}
             </p>
           </div>
 
@@ -157,11 +166,12 @@ export function JornadaRecap() {
           </p>
         ) : (
           <div className="space-y-12" data-testid="jornada-columns">
-            {(live.length > 0 || upcoming.length > 0) && (
+            {(live.length > 0 || upcoming.length > 0 || postponed.length > 0) && (
               <DondeVerGuide
                 jornadaNum={jornadaNum}
                 live={live}
                 upcoming={upcoming}
+                postponed={postponed}
                 tz={userTz}
               />
             )}

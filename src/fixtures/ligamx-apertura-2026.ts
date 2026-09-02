@@ -202,6 +202,36 @@ const RAW: [string, string, string, number][] = [
   ['2026-11-22T19:00:00-06:00', 'QRO', 'NCX', 17],
 ];
 
+/**
+ * J7 pairs parked for Leagues Cup semis / final (América, Monterrey, Toluca, León).
+ * New dates TBA. Sportmonks overlay wins once it actually moves the Mexico day.
+ */
+const EDITORIAL_POSTPONED = new Set([
+  '7|PUE|TOL',
+  '7|QRO|MTY',
+  '7|AME|TIJ',
+  '7|UNAM|LEO',
+]);
+
+function editorialStatus(jornada: number, home: string, away: string): LigaMXFixture['status'] {
+  if (EDITORIAL_POSTPONED.has(`${jornada}|${home}|${away}`)) {
+    return {
+      completed: false,
+      state: 'pre',
+      description: 'Postponed',
+      shortDetail: 'Aplazado',
+      displayClock: '',
+    };
+  }
+  return {
+    completed: false,
+    state: 'pre',
+    description: 'Scheduled',
+    shortDetail: 'Por jugar',
+    displayClock: '',
+  };
+}
+
 /** Sportmonks fixture ids, same order as RAW. Bootstrap seed only — live map refreshes in aperturaSmMap. */
 const SM_IDS: (number | null)[] = [
   19715315, 19715314, 19715313, 19715312, 19715311, 19715310, 19715308, 19715309, 19715307,
@@ -273,7 +303,7 @@ export const APERTURA_2026_FIXTURES: LigaMXFixture[] = RAW.map(
     date,
     league:  'liga-mx' as const,
     jornada: `Jornada ${jornada}`,
-    status:  { completed: false, state: 'pre', description: 'Scheduled', shortDetail: 'Por jugar', displayClock: '' },
+    status:  editorialStatus(jornada, homeAbbr, awayAbbr),
     venue:   null,
     city:    null,
     home: { name: TEAMS[homeAbbr].name, abbreviation: homeAbbr, score: null },

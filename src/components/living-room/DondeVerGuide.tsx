@@ -6,6 +6,7 @@ import { DondeVerAir } from '@/components/living-room/DondeVerAir';
 import { DondeVerShare } from '@/components/living-room/DondeVerShare';
 import { RitualSlot } from '@/components/ritual/RitualSlot';
 import { groupDondeVerByDay, dondeVerGuideRows } from '@/lib/share/dondeVerShare';
+import { kickHold, kickHoldLabel } from '@/lib/sports/localizeEs';
 import type { Fixture } from '@/lib/sports';
 
 function kickClock(iso: string, tz: string) {
@@ -29,8 +30,9 @@ function GuideRow({
 }) {
   const live = f.state === 'in';
   const post = f.state === 'post';
+  const hold = !live && !post ? kickHoldLabel(kickHold(f.statusLabel)) : null;
   const d = f.dondeVer;
-  const confirmed = Boolean(d?.confirmed && (d.mxChannels?.length || d.usChannels?.length));
+  const confirmed = Boolean(!hold && d?.confirmed && (d.mxChannels?.length || d.usChannels?.length));
 
   return (
     <Link
@@ -47,6 +49,8 @@ function GuideRow({
             </>
           ) : post ? (
             'FT'
+          ) : hold ? (
+            hold
           ) : (
             kickClock(f.date, tz)
           )}
@@ -75,7 +79,7 @@ function GuideRow({
           usLabel={d?.us}
         />
       ) : (
-        <p className="dv-pending">Por confirmar · MX ↔ US</p>
+        <p className="dv-pending">{hold ? `${hold} · por reprogramar` : 'Por confirmar · MX ↔ US'}</p>
       )}
     </Link>
   );
@@ -116,6 +120,7 @@ export function DondeVerGuide({
   live,
   upcoming,
   played = [],
+  postponed = [],
   tz,
   asPage = false,
   showRitual = true,
@@ -124,6 +129,7 @@ export function DondeVerGuide({
   live: Fixture[];
   upcoming: Fixture[];
   played?: Fixture[];
+  postponed?: Fixture[];
   tz: string;
   asPage?: boolean;
   showRitual?: boolean;
@@ -132,7 +138,7 @@ export function DondeVerGuide({
   const grouped = groupDondeVerByDay(chrono, tz);
   const Title = asPage ? 'h1' : 'h3';
 
-  if (chrono.length === 0) return null;
+  if (chrono.length === 0 && postponed.length === 0) return null;
 
   return (
     <div
@@ -163,7 +169,7 @@ export function DondeVerGuide({
           </p>
         </div>
         <div className="dv-guide-actions">
-          <p className="af-tele">{chrono.length} partidos</p>
+          <p className="af-tele">{chrono.length} partidos{postponed.length ? ` · ${postponed.length} aplazados` : ''}</p>
           <DondeVerShare fixtures={chrono} jornadaNum={jornadaNum} />
         </div>
       </div>
@@ -172,6 +178,7 @@ export function DondeVerGuide({
       {grouped.days.map((d) => (
         <DayBlock key={d.key} label={d.label} rows={d.rows} tz={tz} />
       ))}
+      <DayBlock label="Aplazados · Leagues Cup" rows={postponed} tz={tz} />
 
       {showRitual ? (
         <div className="dv-ritual">
