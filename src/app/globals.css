@@ -2396,14 +2396,12 @@ a.lc-rail-block:hover {
   .lc-match-tv.tv-inline-desk .tv-channel[data-channel='unimas'],
   .lc-match-tv.tv-inline-desk .tv-channel[data-channel='imagen-tv'],
   .lc-match-tv.tv-inline-desk .tv-channel[data-channel='televisa'],
-  .lc-match-tv.tv-inline-desk .tv-channel[data-channel='nueve'],
   .lc-match-tv.tv-inline-desk .tv-channel[data-channel='tubi'],
   .lc-match-tv.tv-inline-desk .tv-channel[data-channel='youtube'],
   .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='apple-tv'],
   .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='unimas'],
   .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='imagen-tv'],
   .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='televisa'],
-  .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='nueve'],
   .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='tubi'],
   .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='youtube'] {
     height: 0.8rem;
@@ -5680,7 +5678,6 @@ a.lead-team:hover {
   [data-channel='apple-tv'],
   [data-channel='imagen-tv'],
   [data-channel='televisa'],
-  [data-channel='nueve'],
   [data-channel='tubi'],
   [data-channel='youtube'],
   [data-channel='estrella-tv']
@@ -5692,27 +5689,22 @@ a.lead-team:hover {
 .tv-inline .tv-channel[data-channel='unimas'],
 .tv-inline .tv-channel[data-channel='imagen-tv'],
 .tv-inline .tv-channel[data-channel='televisa'],
-.tv-inline .tv-channel[data-channel='nueve'],
 .tv-inline-desk .tv-channel[data-channel='apple-tv'],
 .tv-inline-desk .tv-channel[data-channel='unimas'],
 .tv-inline-desk .tv-channel[data-channel='imagen-tv'],
 .tv-inline-desk .tv-channel[data-channel='televisa'],
-.tv-inline-desk .tv-channel[data-channel='nueve'],
 .lc-match-tv .tv-channel[data-channel='apple-tv'],
 .lc-match-tv .tv-channel[data-channel='unimas'],
 .lc-match-tv .tv-channel[data-channel='imagen-tv'],
 .lc-match-tv .tv-channel[data-channel='televisa'],
-.lc-match-tv .tv-channel[data-channel='nueve'],
 .lc-match-tv.tv-inline-desk .tv-channel[data-channel='apple-tv'],
 .lc-match-tv.tv-inline-desk .tv-channel[data-channel='unimas'],
 .lc-match-tv.tv-inline-desk .tv-channel[data-channel='imagen-tv'],
 .lc-match-tv.tv-inline-desk .tv-channel[data-channel='televisa'],
-.lc-match-tv.tv-inline-desk .tv-channel[data-channel='nueve'],
 .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='apple-tv'],
 .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='unimas'],
 .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='imagen-tv'],
-.lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='televisa'],
-.lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='nueve'] {
+.lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='televisa'] {
   height: 0.8rem;
 }
 
@@ -5740,7 +5732,6 @@ a.lead-team:hover {
     [data-channel='apple-tv'],
     [data-channel='imagen-tv'],
     [data-channel='televisa'],
-    [data-channel='nueve'],
     [data-channel='tubi'],
     [data-channel='youtube'],
     [data-channel='estrella-tv']
@@ -5754,7 +5745,6 @@ a.lead-team:hover {
     [data-channel='apple-tv'],
     [data-channel='imagen-tv'],
     [data-channel='televisa'],
-    [data-channel='nueve'],
     [data-channel='tubi'],
     [data-channel='youtube'],
     [data-channel='estrella-tv']
