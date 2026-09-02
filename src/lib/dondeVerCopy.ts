@@ -104,7 +104,7 @@ export function jornadaDondeVerFaq(overview: JornadaOverview | null): FaqItem[] 
     for (const id of [...new Set(d.mxChannels ?? [])]) {
       const ch = TV_CHANNELS[id];
       if (ch) mxSet.push(ch.label);
-      if (id === 'canal-5' || id === 'azteca-7') freeToAir = true;
+      if (id === 'canal-5' || id === 'azteca-7' || id === 'nueve') freeToAir = true;
     }
     for (const id of [...new Set(d.usChannels ?? [])]) {
       const ch = TV_CHANNELS[id];

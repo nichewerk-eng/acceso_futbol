@@ -105,6 +105,8 @@ const TV_QF_US = ['apple-tv', 'tudn', 'fs1'] as TvChannelId[];
 /** MX: Apple TV + Imagen TV select grid */
 const MX_IMAGEN = ['apple-tv', 'imagen-tv'] as TvChannelId[];
 const MX_QF_TELE = ['apple-tv', 'televisa', 'imagen-tv'] as TvChannelId[];
+/** MX SF: América–Monterrey on Imagen TV, TUDN and Nueve. */
+const MX_SF_AME = ['apple-tv', 'imagen-tv', 'tudn', 'nueve'] as TvChannelId[];
 
 /** All 54 Phase One matches — Aug 4–13, 2026 (official board + US TV from LeaguesCup.com). */
 export const LEAGUES_CUP_PHASE_ONE: LcKick[] = [
@@ -264,6 +266,7 @@ export const LEAGUES_CUP_KNOCKOUT: LcKnockoutSlot[] = [
     localTime: '20:00',
     tz: CT,
     us: TV,
+    mx: MX_IMAGEN,
     feedsFrom: ['lc-qf-2', 'lc-qf-3'],
   },
   {
@@ -281,6 +284,7 @@ export const LEAGUES_CUP_KNOCKOUT: LcKnockoutSlot[] = [
     localTime: '20:30',
     tz: PT,
     us: TV,
+    mx: MX_SF_AME,
     feedsFrom: ['lc-qf-4', 'lc-qf-1'],
   },
   {

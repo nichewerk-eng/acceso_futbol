@@ -21,6 +21,7 @@ export type TvChannelId =
   | 'fox-deportes'
   | 'tsn'
   | 'televisa'
+  | 'nueve'
   | 'prime-video'
   | 'telemundo'
   | 'universo'
@@ -148,6 +149,13 @@ export const TV_CHANNELS: Record<TvChannelId, TvChannel> = {
     label: 'Televisa',
     kind: 'tv',
     src: '/tv_logos/Televisa.png',
+  },
+  nueve: {
+    id: 'nueve',
+    label: 'Nueve',
+    kind: 'tv',
+    src: '/tv_logos/Nueve.svg',
+    srcInk: '/tv_logos/Nueve_onDark.svg',
   },
   'prime-video': {
     id: 'prime-video',

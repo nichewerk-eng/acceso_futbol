@@ -106,6 +106,20 @@ describe('leagues cup knockout board', () => {
     assert.equal(lcOnPartidosCalendar(sf2), true);
   });
 
+  it('lists MX TV for the 2 sep semis', () => {
+    const board = buildLeaguesCupBoard([]);
+    const sf1 = board.find((f) => f.id === 'lc-sf-1');
+    const sf2 = board.find((f) => f.id === 'lc-sf-2');
+    assert.ok(sf1 && sf2);
+    assert.deepEqual(sf1.dondeVer?.mxChannels, ['apple-tv', 'imagen-tv']);
+    assert.deepEqual(sf2.dondeVer?.mxChannels, [
+      'apple-tv',
+      'imagen-tv',
+      'tudn',
+      'nueve',
+    ]);
+  });
+
   it('rewrites a Sportmonks QF snapshot onto the official slot', () => {
     const official = applyLeaguesCupOfficial(smQf1({ venue: 'Wrong venue' }));
     assert.equal(official.id, 'lc-qf-1');
