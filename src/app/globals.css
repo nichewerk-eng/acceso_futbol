@@ -8943,24 +8943,31 @@ a.lead-team:hover {
 }
 
 .once-pitch .xi-bit {
-  width: 60px;
+  width: 76px;
 }
 
 .once-pitch .xi-bit-face {
-  width: 40px;
-  height: 40px;
+  width: 54px;
+  height: 54px;
+  image-rendering: auto;
+}
+
+.once-pitch .xi-bit-face.is-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-oswald), sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #1e223d;
 }
 
 .once-pitch .xi-bit-torso {
-  width: 48px;
-  height: 28px;
-  font-size: 12px;
+  width: 58px;
+  height: 32px;
+  font-size: 13px;
   letter-spacing: -0.05em;
-}
-
-.once-pitch .xi-bit-shorts {
-  width: 48px;
-  height: 12px;
 }
 
 .once-pin {
@@ -8970,7 +8977,7 @@ a.lead-team:hover {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  width: 6.4rem;
+  width: 7.1rem;
   padding: 0.2rem 0 0;
   border: 0;
   background: transparent;
@@ -9018,7 +9025,7 @@ a.lead-team:hover {
 }
 
 .once-pitch .xi-ball {
-  transform: translate(22px, 34px);
+  transform: translate(28px, 32px);
 }
 
 .once-pin.is-mvp .xi-bit-face {
@@ -9053,7 +9060,7 @@ a.lead-team:hover {
   justify-content: center;
   gap: 0.22rem;
   margin-top: 0.18rem;
-  max-width: 6.2rem;
+  max-width: 6.9rem;
 }
 
 .once-pin-crest,
@@ -9083,27 +9090,26 @@ a.lead-team:hover {
   }
 
   .once-pitch .xi-bit {
-    width: 42px;
+    width: 54px;
   }
 
   .once-pitch .xi-bit-face {
-    width: 28px;
-    height: 28px;
+    width: 38px;
+    height: 38px;
+  }
+
+  .once-pitch .xi-bit-face.is-empty {
+    font-size: 12px;
   }
 
   .once-pitch .xi-bit-torso {
-    width: 34px;
-    height: 20px;
-    font-size: 10px;
-  }
-
-  .once-pitch .xi-bit-shorts {
-    width: 34px;
-    height: 8px;
+    width: 44px;
+    height: 24px;
+    font-size: 11px;
   }
 
   .once-pin {
-    width: 4.2rem;
+    width: 4.8rem;
   }
 
   .once-pin-label {
@@ -9122,7 +9128,7 @@ a.lead-team:hover {
   }
 
   .once-pitch .xi-ball {
-    transform: translate(14px, 24px);
+    transform: translate(18px, 22px);
   }
 }
 

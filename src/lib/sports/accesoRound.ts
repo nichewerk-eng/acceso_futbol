@@ -12,6 +12,7 @@ import {
 } from '@/lib/sports/accesoIndex';
 import { scheduleAbbr } from '@/lib/sports/ligaMxAbbr';
 import { LIGA_MX_SM_TEAM_BY_ABBR } from '@/lib/sports/ligaMxTeams';
+import { fillMissingPlayerPhotos, usablePlayerPhoto } from '@/lib/sports/playerFaces';
 import { smFetch } from '@/lib/sports/sm/client';
 import { fetchLigaMxStandings, type SmStandingEntry } from '@/lib/sports/sportmonks';
 import type { LineupPos } from '@/lib/sports/types';
@@ -146,8 +147,7 @@ function mapPosition(positionId?: number): LineupPos {
 }
 
 function playerPhoto(path?: string | null): string | undefined {
-  if (!path || /placeholder/i.test(path)) return undefined;
-  return path;
+  return usablePlayerPhoto(path);
 }
 
 function displayName(row: SmLineup): string {
@@ -388,7 +388,7 @@ async function loadAccesoRound(
   roundId: number,
   jornada: number
 ): Promise<{ xi: AccesoRoundXi | null; teams: AccesoRoundTeam[] }> {
-  return singleFlight(`sm-acceso-pack-v2-omega-${roundId}-${jornada}`, ROUND_XI_TTL_MS, () =>
+  return singleFlight(`sm-acceso-pack-v3-faces-${roundId}-${jornada}`, ROUND_XI_TTL_MS, () =>
     computeAccesoRound(roundId, jornada)
   );
 }
@@ -460,7 +460,8 @@ async function computeAccesoRound(
   const picked = pickAccesoXi(pool);
   if (!picked) return { xi: null, teams };
 
-  const players: AccesoRoundPlayer[] = picked.players.map((p) => ({
+  const withFaces = await fillMissingPlayerPhotos(picked.players);
+  const players: AccesoRoundPlayer[] = withFaces.map((p) => ({
     ...p,
     formation: picked.formation,
     rank: 0,

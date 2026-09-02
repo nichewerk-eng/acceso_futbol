@@ -16,6 +16,7 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'st1.uvnimg.com' },
       { protocol: 'https', hostname: '**.uvnimg.com' },
       { protocol: 'https', hostname: 'cdn.sportmonks.com' },
+      { protocol: 'https', hostname: 'images.fotmob.com' },
     ],
   },
   async redirects() {

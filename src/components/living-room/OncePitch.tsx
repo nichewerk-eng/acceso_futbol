@@ -101,6 +101,39 @@ function formatRating(n: number): string {
   return n.toFixed(1);
 }
 
+function faceInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0] ?? ''}${parts[parts.length - 1][0] ?? ''}`.toUpperCase();
+}
+
+function XiFace({ photo, name }: { photo?: string; name: string }) {
+  const [broken, setBroken] = useState(false);
+  useEffect(() => {
+    setBroken(false);
+  }, [photo]);
+  const showPhoto = Boolean(photo) && !broken;
+  if (showPhoto && photo) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={photo}
+        alt=""
+        className="xi-bit-face"
+        loading="lazy"
+        decoding="async"
+        onError={() => setBroken(true)}
+      />
+    );
+  }
+  return (
+    <span className="xi-bit-face is-empty" aria-hidden>
+      {faceInitials(name)}
+    </span>
+  );
+}
+
 function starterGkId(pins: Pin[]): string | null {
   return pins.find((p) => p.player.slot === 1)?.player.id ?? pins[0]?.player.id ?? null;
 }
@@ -212,20 +245,8 @@ export function OncePitch({
               }}
             >
               <span className="xi-bit" aria-hidden>
-                {totw.photo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={totw.photo}
-                    alt=""
-                    className="xi-bit-face"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                ) : (
-                  <span className="xi-bit-face is-empty" />
-                )}
+                <XiFace photo={totw.photo} name={totw.name} />
                 <span className="xi-bit-torso">{formatRating(totw.rating)}</span>
-                <span className="xi-bit-shorts" />
               </span>
               <span className="once-pin-label">
                 <ClubLogo
