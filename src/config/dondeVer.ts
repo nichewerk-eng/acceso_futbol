@@ -422,6 +422,40 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
     mx: ['vix', 'layvtime'],
     us: ['vix', 'tudn'],
   },
+
+  // Jornada 7 · 4–6 sep 2026
+  '2026-09-04|JUA|PAC': {
+    mx: ['fox', 'fox-one', 'azteca-7'],
+    us: ['fox-deportes', 'universo', 'estrella-tv'],
+  },
+  'j7|JUA|PAC': {
+    mx: ['fox', 'fox-one', 'azteca-7'],
+    us: ['fox-deportes', 'universo', 'estrella-tv'],
+  },
+  '2026-09-05|NCX|UANL': {
+    mx: ['fox', 'fox-one', 'azteca-7'],
+    us: ['fox-deportes', 'universo', 'estrella-tv'],
+  },
+  'j7|NCX|UANL': {
+    mx: ['fox', 'fox-one', 'azteca-7'],
+    us: ['fox-deportes', 'universo', 'estrella-tv'],
+  },
+  '2026-09-05|ATL|ATS': {
+    mx: ['canal-5', 'tudn', 'vix', 'layvtime'],
+    us: ['tudn', 'univision'],
+  },
+  'j7|ATL|ATS': {
+    mx: ['canal-5', 'tudn', 'vix', 'layvtime'],
+    us: ['tudn', 'univision'],
+  },
+  '2026-09-06|CAZ|SAN': {
+    mx: ['vix', 'tudn', 'canal-5', 'layvtime'],
+    us: ['univision', 'tudn'],
+  },
+  'j7|CAZ|SAN': {
+    mx: ['vix', 'tudn', 'canal-5', 'layvtime'],
+    us: ['univision', 'tudn'],
+  },
 };
 
 /**

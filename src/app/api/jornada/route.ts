@@ -11,7 +11,7 @@ import {
   type JornadaOverview,
 } from '@/lib/sports/jornada';
 
-const CACHE_KEY = 'jornada-overview-v16-j7-makeup';
+const CACHE_KEY = 'jornada-overview-v17-j7-tv';
 
 function jornadaRows(o: JornadaOverview) {
   return [...o.live, ...o.played, ...o.upcoming, ...(o.postponed ?? [])];
