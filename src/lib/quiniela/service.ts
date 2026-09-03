@@ -1,6 +1,6 @@
 import { clubIdentityFromAbbr } from '@/config/clubIdentity';
 import { fetchLigaMxFixtures } from '@/lib/sports/espnFallback';
-import { jornadaNumber } from '@/lib/sports/jornada';
+import { jornadaFechaCluster, jornadaNumber } from '@/lib/sports/jornada';
 import type { Fixture } from '@/lib/sports/types';
 import { isFixtureHeld } from '@/lib/sports/localizeEs';
 import { isOutcome, missingOpenPicks } from './card';
@@ -76,9 +76,9 @@ export function boardFromFixtures(
 ): QuinielaBoard | null {
   const n = pickQuinielaJornada(fixtures, now);
   if (n == null) return null;
-  const round = fixtures
-    .filter((f) => jornadaNumber(f.jornada) === n && !isFixtureHeld(f.statusLabel))
-    .sort((a, b) => +new Date(a.date) - +new Date(b.date));
+  const round = jornadaFechaCluster(
+    fixtures.filter((f) => jornadaNumber(f.jornada) === n && !isFixtureHeld(f.statusLabel))
+  ).sort((a, b) => +new Date(a.date) - +new Date(b.date));
   if (round.length === 0) return null;
   const ms = now.getTime();
   const matches = round.map((f) => toMatch(f, ms));
@@ -117,9 +117,9 @@ export interface JornadaResults {
 
 /** Results + kickoff order for a specific jornada number — the season-rollup input. */
 export function jornadaResults(fixtures: Fixture[], n: number): JornadaResults {
-  const round = fixtures
-    .filter((f) => jornadaNumber(f.jornada) === n)
-    .sort((a, b) => +new Date(a.date) - +new Date(b.date));
+  const round = jornadaFechaCluster(fixtures.filter((f) => jornadaNumber(f.jornada) === n)).sort(
+    (a, b) => +new Date(a.date) - +new Date(b.date)
+  );
   const resultById = new Map<string, Outcome>();
   for (const f of round) {
     const o = outcomeOf(f);
@@ -146,7 +146,8 @@ export function sealedJornadaNumbers(fixtures: Fixture[]): number[] {
   }
   const out: number[] = [];
   for (const [n, games] of byNum) {
-    if (games.length > 0 && games.every((g) => g.state === 'post')) out.push(n);
+    const core = jornadaFechaCluster(games);
+    if (core.length > 0 && core.every((g) => g.state === 'post')) out.push(n);
   }
   return out.filter((n) => n >= QUINIELA_FROM).sort((a, b) => a - b);
 }

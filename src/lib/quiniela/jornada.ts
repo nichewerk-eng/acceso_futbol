@@ -1,5 +1,5 @@
 import { isMexicoDay, mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
-import { jornadaNumber } from '@/lib/sports/jornada';
+import { jornadaFechaCluster, jornadaNumber } from '@/lib/sports/jornada';
 import type { Fixture } from '@/lib/sports/types';
 import { isFixtureHeld } from '@/lib/sports/localizeEs';
 
@@ -27,6 +27,10 @@ function groupByJornada(fixtures: Fixture[]): Map<number, Fixture[]> {
     byNum.set(n, list);
   }
   return byNum;
+}
+
+function coreOf(byNum: Map<number, Fixture[]>, n: number): Fixture[] {
+  return jornadaFechaCluster(byNum.get(n) ?? []);
 }
 
 /** Mexico calendar day of the jornada's last kickoff (YYYY-MM-DD). */
@@ -70,32 +74,32 @@ export function pickQuinielaJornada(fixtures: Fixture[], now = new Date()): numb
   const dayKey = mexicoDayKey(now);
 
   for (const n of nums) {
-    if (byNum.get(n)!.some((g) => g.state === 'in')) return n;
+    if (coreOf(byNum, n).some((g) => g.state === 'in')) return n;
   }
 
   for (const n of nums) {
-    if (byNum.get(n)!.some((g) => isMexicoDay(g.date, dayKey))) return n;
+    if (coreOf(byNum, n).some((g) => isMexicoDay(g.date, dayKey))) return n;
   }
 
   for (const n of nums) {
-    const games = byNum.get(n)!;
+    const games = coreOf(byNum, n);
     const hasPost = games.some((g) => g.state === 'post');
     const hasOpen = games.some((g) => stillOnBoard(g, now));
     if (hasPost && hasOpen) return n;
   }
 
   for (const n of [...nums].reverse()) {
-    const games = byNum.get(n)!;
+    const games = coreOf(byNum, n);
     if (!games.some((g) => g.state === 'post')) continue;
     if (games.some((g) => stillOnBoard(g, now))) return n;
     if (quinielaHoldActive(games, now)) return n;
-    const next = nums.find((m) => m > n && byNum.get(m)!.some((g) => stillOnBoard(g, now)));
+    const next = nums.find((m) => m > n && coreOf(byNum, m).some((g) => stillOnBoard(g, now)));
     if (next != null) return next;
     return n;
   }
 
   for (const n of nums) {
-    if (byNum.get(n)!.some((g) => stillOnBoard(g, now))) return n;
+    if (coreOf(byNum, n).some((g) => stillOnBoard(g, now))) return n;
   }
   return nums[0] ?? null;
 }

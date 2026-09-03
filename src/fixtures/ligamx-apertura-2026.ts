@@ -91,14 +91,15 @@ const RAW: [string, string, string, number][] = [
   ['2026-08-30T19:00:00-05:00', 'TOL', 'JUA',  6],
   ['2026-08-30T21:00:00-05:00', 'MTY', 'ASL',  6],
   // ── Jornada 7 ───────────────────────────────────────────────────────────────
-  ['2026-09-04T20:00:00-05:00', 'PUE', 'TOL',  7],
+  // PUE-TOL / QRO-MTY / AME-TIJ / UNAM-LEO moved off this weekend (Leagues Cup).
+  ['2026-09-15T20:00:00-05:00', 'PUE', 'TOL',  7],
   ['2026-09-04T22:00:00-05:00', 'JUA', 'PAC',  7],
   ['2026-09-05T18:00:00-05:00', 'ASL', 'GDL',  7],
-  ['2026-09-05T18:00:00-05:00', 'QRO', 'MTY',  7],
+  ['2026-11-14T17:00:00-06:00', 'QRO', 'MTY',  7],
   ['2026-09-05T20:00:00-05:00', 'UANL', 'NCX',  7],
-  ['2026-09-05T20:00:00-05:00', 'AME', 'TIJ',  7],
+  ['2026-10-28T22:00:00-06:00', 'AME', 'TIJ',  7],
   ['2026-09-05T22:00:00-05:00', 'ATS', 'ATL',  7],
-  ['2026-09-06T13:00:00-05:00', 'UNAM', 'LEO',  7],
+  ['2026-09-10T22:00:00-05:00', 'UNAM', 'LEO',  7],
   ['2026-09-06T21:00:00-05:00', 'CAZ', 'SAN',  7],
   // ── Jornada 8 ───────────────────────────────────────────────────────────────
   ['2026-09-11T20:00:00-05:00', 'NCX', 'PUE',  8],
@@ -202,27 +203,7 @@ const RAW: [string, string, string, number][] = [
   ['2026-11-22T19:00:00-06:00', 'QRO', 'NCX', 17],
 ];
 
-/**
- * J7 pairs parked for Leagues Cup semis / final (América, Monterrey, Toluca, León).
- * New dates TBA. Sportmonks overlay wins once it actually moves the Mexico day.
- */
-const EDITORIAL_POSTPONED = new Set([
-  '7|PUE|TOL',
-  '7|QRO|MTY',
-  '7|AME|TIJ',
-  '7|UNAM|LEO',
-]);
-
-function editorialStatus(jornada: number, home: string, away: string): LigaMXFixture['status'] {
-  if (EDITORIAL_POSTPONED.has(`${jornada}|${home}|${away}`)) {
-    return {
-      completed: false,
-      state: 'pre',
-      description: 'Postponed',
-      shortDetail: 'Aplazado',
-      displayClock: '',
-    };
-  }
+function scheduledStatus(): LigaMXFixture['status'] {
   return {
     completed: false,
     state: 'pre',
@@ -303,7 +284,7 @@ export const APERTURA_2026_FIXTURES: LigaMXFixture[] = RAW.map(
     date,
     league:  'liga-mx' as const,
     jornada: `Jornada ${jornada}`,
-    status:  editorialStatus(jornada, homeAbbr, awayAbbr),
+    status:  scheduledStatus(),
     venue:   null,
     city:    null,
     home: { name: TEAMS[homeAbbr].name, abbreviation: homeAbbr, score: null },

@@ -16,7 +16,7 @@ If `HOME` is not `/Users/jondev`, export it before `git commit` / `git push`. A 
 There is a single source of truth for Liga MX scores: `fetchLigaMxFixtures()` /
 `getLigaMxBoard()` in `src/lib/sports/espnFallback.ts`. It merges the static
 calendar + Sportmonks season + date window and overlays the **shared**
-`/livescores` feed once, cached under `liga-mx-board-v3-j7-hold` (shared across Vercel
+`/livescores` feed once, cached under `liga-mx-board-v4-j7-makeup` (shared across Vercel
 isolates via Upstash KV).
 
 Rules for any new live surface:
