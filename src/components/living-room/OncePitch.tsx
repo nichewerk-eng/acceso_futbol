@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { ClubLogo } from '@/components/brand/ClubLogo';
-import { passDuration, XiBall } from '@/components/partido/XiBall';
+import { passDuration } from '@/components/partido/XiBall';
 import { clubIdentityFromAbbr } from '@/config/clubIdentity';
 import type { TotwPlayer } from '@/lib/sports/totw';
 
@@ -14,56 +14,56 @@ type Pin = Spot & { player: TotwPlayer };
 /** Pitch slots: 1 GK, 2 RB → 5 LB, 7/11 right, 8/10 left. */
 const SPOTS_433: Record<number, Spot> = {
   1: { x: 50, y: 86 },
-  2: { x: 90, y: 68 },
-  3: { x: 68, y: 70 },
-  4: { x: 32, y: 70 },
-  5: { x: 10, y: 68 },
+  2: { x: 88, y: 68 },
+  3: { x: 67, y: 70 },
+  4: { x: 33, y: 70 },
+  5: { x: 12, y: 68 },
   6: { x: 50, y: 48 },
-  7: { x: 84, y: 46 },
-  8: { x: 16, y: 46 },
+  7: { x: 82, y: 46 },
+  8: { x: 18, y: 46 },
   9: { x: 50, y: 18 },
-  10: { x: 16, y: 20 },
-  11: { x: 84, y: 20 },
+  10: { x: 18, y: 20 },
+  11: { x: 82, y: 20 },
 };
 
 const SPOTS_442: Record<number, Spot> = {
   1: { x: 50, y: 86 },
-  2: { x: 90, y: 68 },
-  3: { x: 68, y: 70 },
-  4: { x: 32, y: 70 },
-  5: { x: 10, y: 68 },
-  6: { x: 90, y: 46 },
+  2: { x: 88, y: 68 },
+  3: { x: 67, y: 70 },
+  4: { x: 33, y: 70 },
+  5: { x: 12, y: 68 },
+  6: { x: 88, y: 46 },
   7: { x: 66, y: 48 },
   8: { x: 34, y: 48 },
-  9: { x: 10, y: 46 },
+  9: { x: 12, y: 46 },
   10: { x: 34, y: 18 },
   11: { x: 66, y: 18 },
 };
 
 const SPOTS_4231: Record<number, Spot> = {
   1: { x: 50, y: 86 },
-  2: { x: 90, y: 68 },
-  3: { x: 68, y: 70 },
-  4: { x: 32, y: 70 },
-  5: { x: 10, y: 68 },
-  6: { x: 66, y: 50 },
-  7: { x: 34, y: 50 },
-  8: { x: 88, y: 32 },
+  2: { x: 88, y: 68 },
+  3: { x: 67, y: 70 },
+  4: { x: 33, y: 70 },
+  5: { x: 12, y: 68 },
+  6: { x: 64, y: 50 },
+  7: { x: 36, y: 50 },
+  8: { x: 86, y: 32 },
   9: { x: 50, y: 34 },
-  10: { x: 12, y: 32 },
+  10: { x: 14, y: 32 },
   11: { x: 50, y: 14 },
 };
 
 const SPOTS_352: Record<number, Spot> = {
   1: { x: 50, y: 86 },
-  2: { x: 78, y: 70 },
+  2: { x: 76, y: 70 },
   3: { x: 50, y: 72 },
-  4: { x: 22, y: 70 },
-  5: { x: 92, y: 48 },
+  4: { x: 24, y: 70 },
+  5: { x: 90, y: 48 },
   6: { x: 68, y: 50 },
   7: { x: 50, y: 46 },
   8: { x: 32, y: 50 },
-  9: { x: 8, y: 48 },
+  9: { x: 10, y: 48 },
   10: { x: 34, y: 18 },
   11: { x: 66, y: 18 },
 };
@@ -79,20 +79,23 @@ function spotsFor(formation: string): Record<number, Spot> {
 function PitchLines() {
   return (
     <svg
-      className="xi-pitch-lines"
+      className="once-pitch-lines"
       viewBox="0 0 100 140"
       preserveAspectRatio="none"
       aria-hidden
-      pointerEvents="none"
     >
-      <rect x="3" y="3" width="94" height="134" fill="none" />
-      <line x1="3" y1="70" x2="97" y2="70" />
-      <rect x="40" y="61" width="20" height="18" fill="none" />
-      <rect x="22" y="3" width="56" height="20" fill="none" />
-      <rect x="34" y="3" width="32" height="9" fill="none" />
-      <rect x="22" y="117" width="56" height="20" fill="none" />
-      <rect x="34" y="128" width="32" height="9" fill="none" />
-      <rect className="xi-pitch-dot" x="49" y="69" width="2" height="2" />
+      <rect x="3.2" y="3.2" width="93.6" height="133.6" />
+      <line x1="3.2" y1="70" x2="96.8" y2="70" />
+      <circle cx="50" cy="70" r="11.4" />
+      <circle className="once-pitch-spot" cx="50" cy="70" r="0.85" />
+      <rect x="21.5" y="3.2" width="57" height="18.5" />
+      <rect x="34.5" y="3.2" width="31" height="8.2" />
+      <circle className="once-pitch-spot" cx="50" cy="16.4" r="0.7" />
+      <path d="M 38.6 21.7 A 11.4 11.4 0 0 0 61.4 21.7" />
+      <rect x="21.5" y="118.3" width="57" height="18.5" />
+      <rect x="34.5" y="128.6" width="31" height="8.2" />
+      <circle className="once-pitch-spot" cx="50" cy="123.6" r="0.7" />
+      <path d="M 38.6 118.3 A 11.4 11.4 0 0 1 61.4 118.3" />
     </svg>
   );
 }
@@ -108,7 +111,7 @@ function faceInitials(name: string): string {
   return `${parts[0][0] ?? ''}${parts[parts.length - 1][0] ?? ''}`.toUpperCase();
 }
 
-function XiFace({ photo, name }: { photo?: string; name: string }) {
+function OnceFace({ photo, name }: { photo?: string; name: string }) {
   const [broken, setBroken] = useState(false);
   useEffect(() => {
     setBroken(false);
@@ -120,7 +123,7 @@ function XiFace({ photo, name }: { photo?: string; name: string }) {
       <img
         src={photo}
         alt=""
-        className="xi-bit-face"
+        className="once-disc-photo"
         loading="lazy"
         decoding="async"
         onError={() => setBroken(true)}
@@ -128,14 +131,49 @@ function XiFace({ photo, name }: { photo?: string; name: string }) {
     );
   }
   return (
-    <span className="xi-bit-face is-empty" aria-hidden>
+    <span className="once-disc-photo is-empty" aria-hidden>
       {faceInitials(name)}
     </span>
   );
 }
 
+function OnceBall({
+  pin,
+  passMs,
+  passKey,
+}: {
+  pin: Spot;
+  passMs: number;
+  passKey: number;
+}) {
+  return (
+    <span
+      key={passKey}
+      className="once-ball"
+      aria-hidden
+      style={{
+        left: `${pin.x}%`,
+        top: `${pin.y}%`,
+        ['--once-pass-ms' as string]: `${passMs}ms`,
+      }}
+    />
+  );
+}
+
 function starterGkId(pins: Pin[]): string | null {
   return pins.find((p) => p.player.slot === 1)?.player.id ?? pins[0]?.player.id ?? null;
+}
+
+function usePrefersReducedMotion() {
+  const [reduce, setReduce] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReduce(mq.matches);
+    const onChange = () => setReduce(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return reduce;
 }
 
 export function OncePitch({
@@ -162,6 +200,7 @@ export function OncePitch({
   );
 
   const rosterKey = players.map((p) => p.id).join(',');
+  const reduceMotion = usePrefersReducedMotion();
   const [ballId, setBallId] = useState<string | null>(() => starterGkId(pins));
   const [passKey, setPassKey] = useState(0);
   const [passMs, setPassMs] = useState(0);
@@ -187,12 +226,19 @@ export function OncePitch({
 
   const ballPin = pins.find((pin) => pin.player.id === ballId) ?? null;
 
+  function runPass(from: Pin | undefined, to: Pin) {
+    const ms = reduceMotion || !from ? 0 : passDuration(from, to);
+    setPassMs(ms);
+    setBallId(to.player.id);
+    setPassKey((n) => n + 1);
+  }
+
   function passTo(pin: Pin) {
     if (pin.player.id !== ballId) {
-      const from = pins.find((p) => p.player.id === ballId);
-      setPassMs(passDuration(from, pin));
-      setBallId(pin.player.id);
-      setPassKey((n) => n + 1);
+      runPass(
+        pins.find((p) => p.player.id === ballId),
+        pin
+      );
     }
     onSelect?.(pin.player.id);
   }
@@ -202,15 +248,19 @@ export function OncePitch({
     const pin = pins.find((p) => p.player.id === selectedId);
     if (!pin || pin.player.id === ballId) return;
     const from = pins.find((p) => p.player.id === ballId);
-    setPassMs(passDuration(from, pin));
-    setBallId(pin.player.id);
-    setPassKey((n) => n + 1);
-  }, [selectedId, pins, ballId]);
+    runPass(from, pin);
+    // Kickoff / ranking sync only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, pins, ballId, reduceMotion]);
 
   return (
     <div className="once-pitch" data-testid="once-pitch">
       <div className="once-pitch-board">
-        <PitchLines />
+        <div className="once-pitch-field" aria-hidden>
+          <PitchLines />
+          {formation ? <p className="once-pitch-mark">{formation}</p> : null}
+        </div>
+
         {pins.map((pin) => {
           const totw = pin.player;
           const mvp = mvpId === totw.id;
@@ -244,24 +294,27 @@ export function OncePitch({
                 if (e.animationName === 'once-receive-hop') setHopId(null);
               }}
             >
-              <span className="xi-bit" aria-hidden>
-                <XiFace photo={totw.photo} name={totw.name} />
-                <span className="xi-bit-torso">{formatRating(totw.rating)}</span>
+              <span className="once-disc" aria-hidden>
+                <OnceFace photo={totw.photo} name={totw.name} />
               </span>
-              <span className="once-pin-label">
-                <ClubLogo
-                  abbr={totw.teamAbbr}
-                  clubId={clubIdentityFromAbbr(totw.teamAbbr)?.id}
-                  name={totw.teamName}
-                  size="xs"
-                  className="once-pin-crest"
-                />
-                <span className="once-pin-name">{totw.shortName}</span>
+              <span className="once-pin-meta">
+                {mvp ? <span className="once-pin-figura">Figura</span> : null}
+                <span className="once-pin-who">
+                  <ClubLogo
+                    abbr={totw.teamAbbr}
+                    clubId={clubIdentityFromAbbr(totw.teamAbbr)?.id}
+                    name={totw.teamName}
+                    size="xs"
+                    className="once-pin-crest"
+                  />
+                  <span className="once-pin-name">{totw.shortName}</span>
+                </span>
+                <span className="once-pin-rate">{formatRating(totw.rating)}</span>
               </span>
             </button>
           );
         })}
-        {ballPin ? <XiBall pin={ballPin} passMs={passMs} passKey={passKey} /> : null}
+        {ballPin ? <OnceBall pin={ballPin} passMs={passMs} passKey={passKey} /> : null}
       </div>
     </div>
   );

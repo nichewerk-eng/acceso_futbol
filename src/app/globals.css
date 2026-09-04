@@ -8912,9 +8912,10 @@ a.lead-team:hover {
   width: 100%;
   max-width: 36rem;
   margin: 0;
-  padding: 0.55rem 0.55rem 0.65rem;
+  padding: 0.55rem;
   border: 2px solid var(--foreground);
   background: var(--bg-2);
+  --once-disc: 56px;
 }
 
 .once-pitch-form {
@@ -8928,70 +8929,67 @@ a.lead-team:hover {
   isolation: isolate;
   aspect-ratio: 3 / 4;
   overflow: hidden;
-  color: rgba(246, 245, 242, 0.5);
+  color: rgba(246, 245, 242, 0.42);
+}
+
+.once-pitch-field {
+  position: absolute;
+  inset: 0;
   background-color: #17662a;
   background-image: repeating-linear-gradient(
     to bottom,
-    #1f7a34 0 14px,
-    #17662a 14px 28px
+    #1f7a34 0 20px,
+    #17662a 20px 40px
   );
   box-shadow: inset 0 0 0 2px #1e223d;
 }
 
-.once-pitch-board .xi-pitch-lines {
-  stroke-width: 1.2;
+.once-pitch-lines {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 0.85;
+  pointer-events: none;
 }
 
-.once-pitch .xi-bit {
-  width: 76px;
+.once-pitch-lines .once-pitch-spot {
+  fill: currentColor;
+  stroke: none;
 }
 
-.once-pitch .xi-bit-face {
-  width: 54px;
-  height: 54px;
-  image-rendering: auto;
-}
-
-.once-pitch .xi-bit-face.is-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-oswald), sans-serif;
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: #1e223d;
-}
-
-.once-pitch .xi-bit-torso {
-  width: 58px;
-  height: 32px;
-  font-size: 13px;
-  letter-spacing: -0.05em;
+.once-pitch-mark {
+  position: absolute;
+  left: 0.55rem;
+  top: 0.45rem;
+  z-index: 2;
+  margin: 0;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(246, 245, 242, 0.55);
+  pointer-events: none;
 }
 
 .once-pin {
   position: absolute;
-  z-index: 2;
+  z-index: 4;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  width: 7.1rem;
-  padding: 0.2rem 0 0;
+  width: 6.6rem;
+  padding: 0;
   border: 0;
   background: transparent;
   cursor: pointer;
-  transform: translate(-50%, -42%);
-  --xi-shirt: #1e223d;
-  --xi-number: #f6f5f2;
-  --xi-shorts: #f54f1b;
-}
-
-.once-pin.is-gk {
-  --xi-shirt: #f54f1b;
-  --xi-number: #f6f5f2;
-  --xi-shorts: #1e223d;
+  touch-action: manipulation;
+  transform: translate(-50%, calc(var(--once-disc) / -2));
+  transition: transform 0.2s ease;
 }
 
 .once-pin:hover,
@@ -8999,19 +8997,34 @@ a.lead-team:hover {
 .once-pin:focus-visible,
 .once-pin.is-hot,
 .once-pin.is-on {
-  z-index: 4;
+  z-index: 8;
   outline: none;
+  transform: translate(-50%, calc(var(--once-disc) / -2 - 4px));
 }
 
-.once-pin:hover .xi-bit,
-.once-pin:focus .xi-bit,
-.once-pin.is-hot .xi-bit,
-.once-pin.is-on .xi-bit {
-  transform: translateY(-2px);
+.once-pin:focus-visible .once-disc {
+  box-shadow: 0 0 0 2px #f6f5f2;
 }
 
-.once-pin.is-hop .xi-bit {
-  animation: once-receive-hop 0.22s steps(2);
+.once-disc {
+  width: var(--once-disc);
+  height: var(--once-disc);
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 2px solid #1e223d;
+  border-radius: 50%;
+  background: #1e223d;
+}
+
+.once-pin.is-mvp .once-disc,
+.once-pin.is-hot .once-disc,
+.once-pin.is-on .once-disc,
+.once-pin:hover .once-disc {
+  border-color: var(--signal);
+}
+
+.once-pin.is-hop .once-disc {
+  animation: once-receive-hop 0.22s ease;
 }
 
 @keyframes once-receive-hop {
@@ -9020,101 +9033,153 @@ a.lead-team:hover {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-8px);
+    transform: translateY(-5px);
   }
 }
 
-.once-pitch .xi-ball {
-  transform: translate(28px, 32px);
+.once-disc-photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 14%;
 }
 
-.once-pin.is-mvp .xi-bit-face {
-  border-color: var(--signal);
-  animation: once-figura-pulse 1.6s steps(2) infinite;
+.once-disc-photo.is-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-oswald), sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #f6f5f2;
+  background: #1e223d;
 }
 
-@keyframes once-figura-pulse {
-  0%,
-  100% {
-    border-color: var(--signal);
-  }
-  50% {
-    border-color: #f6f5f2;
-  }
+.once-pin-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.16rem;
+  margin-top: 0.32rem;
+  max-width: 6.6rem;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .once-pin.is-hop .xi-bit,
-  .once-pin.is-mvp .xi-bit-face {
-    animation: none;
-  }
-}
-
-.once-pin.is-mine .once-pin-name {
+.once-pin-figura {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
   color: var(--signal);
 }
 
-.once-pin-label {
+.once-pin-who {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.22rem;
-  margin-top: 0.18rem;
-  max-width: 6.9rem;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .once-pin-crest,
 .once-pin .club-logo-xs {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 
 .once-pin-name {
+  min-width: 0;
   font-family: var(--font-oswald), sans-serif;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   color: #f6f5f2;
-  text-shadow: 0 1px 2px #1e223d;
-  line-height: 1.05;
-  min-width: 0;
+  line-height: 1.1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-shadow: 0 1px 0 #1e223d;
+}
+
+.once-pin-rate {
+  padding: 0.12rem 0.34rem;
+  border: 1px solid #1e223d;
+  background: #1e223d;
+  color: #f6f5f2;
+  font-family: var(--font-oswald), sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.once-pin.is-mvp .once-pin-rate,
+.once-pin.is-on .once-pin-rate,
+.once-pin.is-hot .once-pin-rate {
+  border-color: var(--signal);
+  background: var(--signal);
+  color: var(--on-signal);
+}
+
+.once-ball {
+  position: absolute;
+  z-index: 9;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+  border: 2px solid #1e223d;
+  border-radius: 50%;
+  background: #f6f5f2;
+  transform: translate(22px, 18px);
+  transition:
+    left var(--once-pass-ms, 0.4s) ease,
+    top var(--once-pass-ms, 0.4s) ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .once-pin.is-hop .once-disc {
+    animation: none;
+  }
+
+  .once-pin,
+  .once-ball {
+    transition: none;
+  }
 }
 
 @media (max-width: 639px) {
   .once-pitch {
-    padding: 0.4rem 0.35rem 0.5rem;
-  }
-
-  .once-pitch .xi-bit {
-    width: 54px;
-  }
-
-  .once-pitch .xi-bit-face {
-    width: 38px;
-    height: 38px;
-  }
-
-  .once-pitch .xi-bit-face.is-empty {
-    font-size: 12px;
-  }
-
-  .once-pitch .xi-bit-torso {
-    width: 44px;
-    height: 24px;
-    font-size: 11px;
+    padding: 0.4rem;
+    --once-disc: 44px;
   }
 
   .once-pin {
     width: 4.8rem;
   }
 
-  .once-pin-label {
-    gap: 0.12rem;
-    max-width: 4.1rem;
+  .once-pin-meta {
+    margin-top: 0.22rem;
+    max-width: 4.8rem;
+    gap: 0.1rem;
+  }
+
+  .once-pin-name {
+    font-size: 9px;
+  }
+
+  .once-pin-figura {
+    font-size: 7px;
+  }
+
+  .once-pin-rate {
+    font-size: 11px;
+    padding: 0.08rem 0.26rem;
   }
 
   .once-pin-crest,
@@ -9123,12 +9188,14 @@ a.lead-team:hover {
     height: 13px;
   }
 
-  .once-pin-name {
-    font-size: 9px;
+  .once-disc-photo.is-empty {
+    font-size: 0.78rem;
   }
 
-  .once-pitch .xi-ball {
-    transform: translate(18px, 22px);
+  .once-ball {
+    width: 8px;
+    height: 8px;
+    transform: translate(16px, 14px);
   }
 }
 
