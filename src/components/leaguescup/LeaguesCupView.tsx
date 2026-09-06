@@ -57,6 +57,15 @@ function bandName(name: string, abbr: string) {
 
 const STANDINGS_GRID = 'lc-standings-grid';
 
+function porJugarStageTitle(jornadas: Array<string | null | undefined>): string | null {
+  if (jornadas.includes('Quarterfinals')) return 'Cuartos de final';
+  if (jornadas.includes('Semifinals')) return 'Semifinales';
+  if (jornadas.some((j) => j === 'Final' || j === 'Third Place Match')) {
+    return 'Tercer lugar y Final';
+  }
+  return null;
+}
+
 type Props = {
   initialFixtures: Fixture[];
 };
@@ -96,7 +105,7 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
     [fixtures]
   );
 
-  const { live, porJugarByDay, jugadosByDay, knockout, phaseCount } = useMemo(() => {
+  const { live, porJugarByDay, jugadosByDay, knockout, phaseCount, porJugarTitle } = useMemo(() => {
     const liveRows: Fixture[] = [];
     const phase: Fixture[] = [];
     const ko: Fixture[] = [];
@@ -169,6 +178,9 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
       jugadosByDay,
       knockout: ko,
       phaseCount: phase.length,
+      porJugarTitle: porJugarStageTitle(
+        upcoming.map((f) => f.jornada)
+      ),
     };
   }, [fixtures, userTz, todayKey]);
 
@@ -291,11 +303,9 @@ export default function LeaguesCupView({ initialFixtures }: Props) {
                 <section data-testid="lc-fase-1" className="lc-board">
                   {porJugarByDay.length > 0 && (
                     <div className="lc-section" data-testid="lc-por-jugar">
-                      {porJugarByDay.some((g) =>
-                        g.rows.some((f) => f.jornada === 'Quarterfinals')
-                      ) ? (
+                      {porJugarTitle ? (
                         <div className="lc-section-head">
-                          <h3 className="af-tele text-signal">Cuartos de final</h3>
+                          <h3 className="af-tele text-signal">{porJugarTitle}</h3>
                         </div>
                       ) : null}
                       <LcDayGroups

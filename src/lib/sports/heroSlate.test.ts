@@ -121,4 +121,14 @@ describe('seedGamesOfDay', () => {
     assert.ok(seed.games.some((g) => g.id === 'lc-sf-1'));
     assert.ok(seed.games.some((g) => g.id === 'lc-sf-2'));
   });
+
+  it('surfaces Leagues Cup third and final with Cruz Azul on 6 sep', () => {
+    const seed = seedGamesOfDay(new Date('2026-09-06T12:00:00-06:00'));
+    assert.equal(seed.dayKey, '2026-09-06');
+    assert.ok(
+      seed.games.some((g) => g.home.abbreviation === 'CAZ' && g.away.abbreviation === 'SAN')
+    );
+    assert.ok(seed.games.some((g) => g.id === 'lc-third'));
+    assert.ok(seed.games.some((g) => g.id === 'lc-final'));
+  });
 });

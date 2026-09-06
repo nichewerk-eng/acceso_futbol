@@ -83,9 +83,28 @@ describe('leagues cup knockout board', () => {
     assert.ok(qf);
     assert.equal(qf.statusLabel, 'Próximo');
     assert.equal(lcOnPartidosCalendar(qf), true);
+  });
+
+  it('lists the Houston third-place and final on the partidos calendar', () => {
+    const board = buildLeaguesCupBoard([]);
     const third = board.find((f) => f.id === 'lc-third');
-    assert.ok(third);
-    assert.equal(lcOnPartidosCalendar(third), false);
+    const final = board.find((f) => f.id === 'lc-final');
+    assert.ok(third && final);
+    assert.equal(third.home.abbreviation, 'LEO');
+    assert.equal(third.away.abbreviation, 'AME');
+    assert.equal(third.venue, 'Shell Energy Stadium');
+    assert.equal(third.scheduleDay, '2026-09-06');
+    assert.equal(third.jornada, 'Third Place Match');
+    assert.equal(lcOnPartidosCalendar(third), true);
+    assert.equal(final.home.abbreviation, 'TOL');
+    assert.equal(final.away.abbreviation, 'MTY');
+    assert.equal(final.venue, 'Shell Energy Stadium');
+    assert.equal(final.scheduleDay, '2026-09-06');
+    assert.equal(final.jornada, 'Final');
+    assert.equal(lcOnPartidosCalendar(final), true);
+    assert.deepEqual(third.dondeVer?.mxChannels, ['apple-tv', 'imagen-tv']);
+    assert.deepEqual(final.dondeVer?.usChannels, ['apple-tv', 'univision']);
+    assert.deepEqual(final.dondeVer?.mxChannels, ['apple-tv', 'imagen-tv']);
   });
 
   it('lists the official semis on the partidos calendar', () => {
@@ -157,7 +176,8 @@ describe('leagues cup knockout board', () => {
     assert.equal(sf2.away.abbreviation, 'MTY');
     assert.equal(lcOnPartidosCalendar(sf1), true);
     const final = board.find((f) => f.id === 'lc-final');
-    assert.equal(final?.home.abbreviation, 'TBD');
+    assert.equal(final?.home.abbreviation, 'TOL');
+    assert.equal(final?.away.abbreviation, 'MTY');
   });
 
   it('names both semi sides once every quarterfinal is finished', () => {
@@ -190,6 +210,40 @@ describe('leagues cup knockout board', () => {
     assert.equal(sf1?.away.abbreviation, 'LEO');
     assert.equal(sf2?.home.abbreviation, 'AME');
     assert.equal(sf2?.away.abbreviation, 'MTY');
-    assert.equal(board.find((f) => f.id === 'lc-final')?.home.abbreviation, 'TBD');
+    assert.equal(board.find((f) => f.id === 'lc-final')?.home.abbreviation, 'TOL');
+    assert.equal(board.find((f) => f.id === 'lc-third')?.home.abbreviation, 'LEO');
+  });
+
+  it('fills Houston sides from finished semis', () => {
+    const sf = (
+      id: string,
+      home: string,
+      away: string,
+      hs: string,
+      as: string,
+      winner: 'home' | 'away'
+    ): Fixture => ({
+      id,
+      provider: 'sportmonks',
+      league: 'leagues-cup',
+      date: '2026-09-03T01:00:00.000Z',
+      state: 'post',
+      statusLabel: 'Final',
+      winnerSide: winner,
+      home: team(home, { name: home, score: hs }),
+      away: team(away, { name: away, score: as }),
+    });
+    const board = buildLeaguesCupBoard([
+      sf('lc-sf-1', 'TOL', 'LEO', '2', '0', 'home'),
+      sf('lc-sf-2', 'AME', 'MTY', '2', '2', 'away'),
+    ]);
+    const third = board.find((f) => f.id === 'lc-third');
+    const final = board.find((f) => f.id === 'lc-final');
+    assert.equal(third?.home.abbreviation, 'LEO');
+    assert.equal(third?.away.abbreviation, 'AME');
+    assert.equal(final?.home.abbreviation, 'TOL');
+    assert.equal(final?.away.abbreviation, 'MTY');
+    assert.equal(lcOnPartidosCalendar(third!), true);
+    assert.equal(lcOnPartidosCalendar(final!), true);
   });
 });

@@ -101,6 +101,7 @@ const VAN = 'America/Vancouver';
 /** US board shortcuts — order matches LeaguesCup.com listings. */
 const TV = ['apple-tv'] as TvChannelId[];
 const TV_FS1 = ['apple-tv', 'fs1'] as TvChannelId[];
+const TV_UNI = ['apple-tv', 'univision'] as TvChannelId[];
 const TV_QF_US = ['apple-tv', 'tudn', 'fs1'] as TvChannelId[];
 /** MX: Apple TV + Imagen TV select grid */
 const MX_IMAGEN = ['apple-tv', 'imagen-tv'] as TvChannelId[];
@@ -292,11 +293,15 @@ export const LEAGUES_CUP_KNOCKOUT: LcKnockoutSlot[] = [
     stage: 'Third Place Match',
     boardDate: '2026-09-06',
     boardDateLabel: '6 sep',
-    home: null,
-    away: null,
-    homeLabel: 'Perdedor semifinal 1',
-    awayLabel: 'Perdedor semifinal 2',
-    venueLabel: 'Por anunciar',
+    home: 'LEO',
+    away: 'AME',
+    homeLabel: 'León',
+    awayLabel: 'América',
+    venueLabel: 'Shell Energy Stadium',
+    localTime: '17:00',
+    tz: CT,
+    us: TV,
+    mx: MX_IMAGEN,
     feedsFrom: ['lc-sf-1', 'lc-sf-2'],
   },
   {
@@ -304,11 +309,15 @@ export const LEAGUES_CUP_KNOCKOUT: LcKnockoutSlot[] = [
     stage: 'Final',
     boardDate: '2026-09-06',
     boardDateLabel: '6 sep',
-    home: null,
-    away: null,
-    homeLabel: 'Ganador semifinal 1',
-    awayLabel: 'Ganador semifinal 2',
-    venueLabel: 'Por anunciar',
+    home: 'TOL',
+    away: 'MTY',
+    homeLabel: 'Toluca',
+    awayLabel: 'Monterrey',
+    venueLabel: 'Shell Energy Stadium',
+    localTime: '20:15',
+    tz: CT,
+    us: TV_UNI,
+    mx: MX_IMAGEN,
     feedsFrom: ['lc-sf-1', 'lc-sf-2'],
   },
 ];

@@ -101,7 +101,7 @@ export function LcBracket({
         {live
           ? 'Cuadro en vivo · se actualiza con el marcador'
           : advanced
-            ? 'Ganadores avanzan a la final · semis 2 sep · Houston y Los Ángeles · final 6 sep'
+            ? 'Tercer lugar León–América y Final Toluca–Monterrey · 6 sep · Shell Energy Stadium'
             : 'Emparejamientos oficiales · sedes y horarios por anunciar'}
       </p>
     </div>

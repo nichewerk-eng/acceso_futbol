@@ -8345,6 +8345,14 @@ a.lead-team:hover {
     inset 0 0 0 1px color-mix(in srgb, var(--signal) 35%, transparent);
 }
 
+.club-vitrina-frame + .club-vitrina-frame {
+  margin-top: 1rem;
+}
+
+.club-vitrina.is-embed .club-vitrina-frame + .club-vitrina-frame {
+  margin-top: 0.85rem;
+}
+
 .club-vitrina-plate {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);

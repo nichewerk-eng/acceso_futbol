@@ -1,13 +1,24 @@
 /**
- * National (FMF) honours — professional era only (1943–).
+ * Club honours — professional era only (1943–).
  * Amateur Copas / ligas before Liga Mayor are out of this cabinet.
  *
- * Sources: FMF/Liga MX palmarés, Wikipedia honours table (updated 25 Jul 2026
- * after Cruz Azul won Clausura 2026 + Campeón de Campeones 2026).
- * International cups are not in this file.
+ * National: FMF/Liga MX palmarés (updated 25 Jul 2026 after Cruz Azul
+ * Clausura 2026 + Campeón de Campeones 2026).
+ * International: Wikipedia «Títulos oficiales de clubes del fútbol mexicano»
+ * (aval CONCACAF / CONMEBOL / FIFA; corte 25 jul 2026). Excludes SuperLiga,
+ * Campeones Cup and Leagues Cup.
  */
 
 export type NationalComp = 'liga' | 'copa' | 'cdc' | 'supercopa';
+export type InternationalComp =
+  | 'concacaf'
+  | 'interamericana'
+  | 'gigantes'
+  | 'recopa'
+  | 'sudamericana'
+  | 'fifa-derbi'
+  | 'fifa-challenger';
+export type TitleComp = NationalComp | InternationalComp;
 
 export type NationalWin = {
   name: string;
@@ -15,7 +26,7 @@ export type NationalWin = {
 };
 
 export type TrophyShelf = {
-  comp: NationalComp;
+  comp: TitleComp;
   title: string;
   logo: string;
   wins: NationalWin[];
@@ -42,6 +53,36 @@ const TITLES: Record<NationalComp, string> = {
 };
 
 const SHELF_ORDER: NationalComp[] = ['liga', 'copa', 'cdc', 'supercopa'];
+
+const INT_LOGOS: Record<InternationalComp, string> = {
+  concacaf: '/trophy_logos/concacaf_champions_cup.png',
+  interamericana: '/trophy_logos/copa_interamericana.png',
+  gigantes: '/trophy_logos/copa_gigantes_concacaf.png',
+  recopa: '/trophy_logos/recopa_concacaf.png',
+  sudamericana: '/trophy_logos/copa_sudamericana.png',
+  'fifa-derbi': '/trophy_logos/fifa_intercontinental.png',
+  'fifa-challenger': '/trophy_logos/fifa_intercontinental.png',
+};
+
+const INT_TITLES: Record<InternationalComp, string> = {
+  concacaf: 'Copa de Campeones',
+  interamericana: 'Copa Interamericana',
+  gigantes: 'Copa de Gigantes',
+  recopa: 'Recopa CONCACAF',
+  sudamericana: 'Copa Sudamericana',
+  'fifa-derbi': 'Derbi de las Américas',
+  'fifa-challenger': 'Copa Challenger',
+};
+
+const INT_SHELF_ORDER: InternationalComp[] = [
+  'concacaf',
+  'interamericana',
+  'gigantes',
+  'recopa',
+  'sudamericana',
+  'fifa-derbi',
+  'fifa-challenger',
+];
 
 /** Season / year strings as Mexican press writes them. */
 type ClubWins = Partial<Record<NationalComp, string[]>>;
@@ -223,11 +264,60 @@ const WINS: Record<string, ClubWins> = {
   },
 };
 
+type IntClubWins = Partial<Record<InternationalComp, string[]>>;
+
+const INT_WINS: Record<string, IntClubWins> = {
+  america: {
+    concacaf: ['1977', '1987', '1990', '1992', '2006', '2014-15', '2015-16'],
+    interamericana: ['1978', '1991'],
+    gigantes: ['2001'],
+  },
+  'cruz-azul': {
+    concacaf: ['1969', '1970', '1971', '1996', '1997', '2013-14', '2025'],
+  },
+  chivas: {
+    concacaf: ['1962', '2018'],
+  },
+  toluca: {
+    concacaf: ['1968', '2003', '2026'],
+  },
+  leon: {
+    concacaf: ['2023'],
+  },
+  tigres: {
+    concacaf: ['2020'],
+  },
+  pumas: {
+    concacaf: ['1980', '1982', '1989'],
+    interamericana: ['1981'],
+  },
+  monterrey: {
+    concacaf: ['2010-11', '2011-12', '2012-13', '2019', '2021'],
+    recopa: ['1992-93'],
+  },
+  necaxa: {
+    concacaf: ['1999'],
+    recopa: ['1993-94'],
+  },
+  puebla: {
+    concacaf: ['1991'],
+  },
+  pachuca: {
+    concacaf: ['2002', '2007', '2008', '2009-10', '2016-17', '2024'],
+    sudamericana: ['2006'],
+    'fifa-derbi': ['2024'],
+    'fifa-challenger': ['2024'],
+  },
+  atlante: {
+    concacaf: ['1983', '2008-09'],
+  },
+};
+
 function yy(year: string): string {
   return year.slice(2);
 }
 
-export function shortTorneoLabel(name: string, comp: NationalComp): string {
+export function shortTorneoLabel(name: string, comp: TitleComp): string {
   const ape = name.match(/^Apertura (\d{4})$/i);
   if (ape) return `A${yy(ape[1])}`;
   const cla = name.match(/^Clausura (\d{4})$/i);
@@ -246,37 +336,67 @@ export function shortTorneoLabel(name: string, comp: NationalComp): string {
   if (gua) return `G${yy(gua[1])}`;
   const long = name.match(/^(\d{4})-(\d{2})$/);
   if (long) return `${yy(long[1])}-${long[2]}`;
-  if (comp === 'cdc' && /^\d{4}$/.test(name)) return name;
+  if (
+    (comp === 'cdc' ||
+      comp === 'concacaf' ||
+      comp === 'interamericana' ||
+      comp === 'gigantes' ||
+      comp === 'recopa' ||
+      comp === 'sudamericana' ||
+      comp === 'fifa-derbi' ||
+      comp === 'fifa-challenger') &&
+    /^\d{4}$/.test(name)
+  ) {
+    return name;
+  }
   const sc = name.match(/(\d{4})\s*$/);
   if (comp === 'supercopa' && sc) return sc[1];
   return name;
 }
 
-function displayName(name: string, comp: NationalComp): string {
+function displayName(name: string, comp: TitleComp): string {
   if (comp === 'cdc' && /^\d{4}$/.test(name)) return `Campeón de Campeones ${name}`;
+  if (comp === 'concacaf') return `Copa de Campeones ${name}`;
+  if (comp === 'interamericana') return `Copa Interamericana ${name}`;
+  if (comp === 'gigantes') return `Copa de Gigantes ${name}`;
+  if (comp === 'recopa') return `Recopa CONCACAF ${name}`;
+  if (comp === 'sudamericana') return `Copa Sudamericana ${name}`;
+  if (comp === 'fifa-derbi') return `Derbi de las Américas ${name}`;
+  if (comp === 'fifa-challenger') return `Copa Challenger ${name}`;
   return name;
 }
 
-export function nationalTitlesFor(clubId: string): ClubCabinet | null {
-  const raw = WINS[clubId];
+function cabinetFromWins<C extends TitleComp>(
+  clubId: string,
+  raw: Partial<Record<C, string[]>> | undefined,
+  order: readonly C[],
+  titles: Record<C, string>,
+  logos: Record<C, string>
+): ClubCabinet | null {
   if (!raw) return null;
-
   const shelves: TrophyShelf[] = [];
-  for (const comp of SHELF_ORDER) {
+  for (const comp of order) {
     const list = raw[comp];
     if (!list || list.length === 0) continue;
     shelves.push({
       comp,
-      title: TITLES[comp],
-      logo: LOGOS[comp],
+      title: titles[comp],
+      logo: logos[comp],
       wins: list.map((name) => ({
         name: displayName(name, comp),
         label: shortTorneoLabel(name, comp),
       })),
     });
   }
-
   const total = shelves.reduce((n, s) => n + s.wins.length, 0);
   if (total === 0) return null;
   return { clubId, total, shelves };
+}
+
+export function nationalTitlesFor(clubId: string): ClubCabinet | null {
+  return cabinetFromWins(clubId, WINS[clubId], SHELF_ORDER, TITLES, LOGOS);
+}
+
+export function internationalTitlesFor(clubId: string): ClubCabinet | null {
+  return cabinetFromWins(clubId, INT_WINS[clubId], INT_SHELF_ORDER, INT_TITLES, INT_LOGOS);
 }
