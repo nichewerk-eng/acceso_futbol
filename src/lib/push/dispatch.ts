@@ -10,7 +10,8 @@ import { listSubs, removeSubById, type PushSub } from './store';
  * Server-authoritative push dispatch. Mirrors the client gravity watcher
  * (`useGravityAlerts`) — kickoff + goal deltas — but diffs against a snapshot
  * persisted in KV so pushes fire even when no tab is open. Meant to run on a
- * ~1-minute cron. First run for any fixture only primes the snapshot.
+ * ~5-minute GitHub Action (Hobby Vercel cannot cron every minute).
+ * First run for any fixture only primes the snapshot.
  */
 
 const STATE_KEY = 'push:board-state';

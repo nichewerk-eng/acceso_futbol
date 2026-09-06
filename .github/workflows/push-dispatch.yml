@@ -1,0 +1,40 @@
+# Hobby Vercel cannot run * * * * *. This public-repo Action ticks
+# goal/kickoff pushes every 5 minutes instead.
+name: Push dispatch
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Dispatch board alerts
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          AF_URL: ${{ vars.AF_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CRON_SECRET:-}" ]; then
+            echo "Missing GitHub secret CRON_SECRET"
+            exit 1
+          fi
+          url="${AF_URL:-https://www.accesofutbol.com}"
+          body=$(mktemp)
+          code=$(curl -sS --max-time 55 -o "$body" -w '%{http_code}' \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${url%/}/api/cron/push-dispatch")
+          # 200 = tick ran. 503 + locked = overlapping tick, not a failure.
+          if [ "$code" = "200" ]; then
+            echo "ok $code"
+            exit 0
+          fi
+          if [ "$code" = "503" ] && grep -q '"skipped":"locked"' "$body"; then
+            echo "skipped locked"
+            exit 0
+          fi
+          echo "push-dispatch failed HTTP $code"
+          exit 1

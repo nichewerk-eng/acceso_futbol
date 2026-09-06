@@ -12,7 +12,7 @@ function authorized(req: Request): boolean {
   return false;
 }
 
-/** ~1-minute Vercel cron: diff the shared board and send goal/kickoff pushes. */
+/** Hobby: GitHub Action every 5m. Vercel cron cannot run more than daily. */
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const force = url.searchParams.get('force') === '1';
