@@ -1,6 +1,6 @@
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { PartidoLink } from '@/components/partido/PartidoLink';
-import { ligaMxClubIdFromAbbr } from '@/config/ligaMxLogos';
+import { ligaMxCrestById, ligaMxClubIdFromAbbr, seleccionLogoSrc } from '@/config/ligaMxLogos';
 import type { Fixture, FixtureScorer } from '@/lib/sports/types';
 
 export type SelladoSide = {
@@ -88,6 +88,7 @@ export function SelladoCard({
   clubResult,
   stamp = 'FT',
   live = false,
+  seleccion = false,
 }: {
   href: string;
   testId: string;
@@ -99,6 +100,7 @@ export function SelladoCard({
   clubResult?: 'W' | 'D' | 'L' | null;
   stamp?: string;
   live?: boolean;
+  seleccion?: boolean;
 }) {
   const winner = live ? null : (winnerSide ?? winnerFromScores(home.score, away.score));
   const hs = scoreN(home.score);
@@ -150,7 +152,7 @@ export function SelladoCard({
       </div>
 
       <div className="sellado-board">
-        <SelladoClub team={home} tone={homeTone} align="home" />
+        <SelladoClub team={home} tone={homeTone} align="home" seleccion={seleccion} />
         <p
           className="sellado-score"
           aria-label={`${hs} a ${as}`}
@@ -159,7 +161,7 @@ export function SelladoCard({
           <span className="sellado-dash">–</span>
           <span className={['sellado-n', awayTone].filter(Boolean).join(' ')}>{as}</span>
         </p>
-        <SelladoClub team={away} tone={awayTone} align="away" />
+        <SelladoClub team={away} tone={awayTone} align="away" seleccion={seleccion} />
         {hasGoals ? (
           <>
             <p className="sellado-goals is-home">{homeGoals.join(' · ') || '\u00a0'}</p>
@@ -175,19 +177,30 @@ function SelladoClub({
   team,
   tone,
   align,
+  seleccion = false,
 }: {
   team: SelladoSide;
   tone: string;
   align: 'home' | 'away';
+  seleccion?: boolean;
 }) {
-  const clubId = team.id ?? ligaMxClubIdFromAbbr(team.abbreviation) ?? undefined;
+  const logoUrl =
+    team.logo ?? (seleccion ? seleccionLogoSrc(team.abbreviation) : undefined) ?? undefined;
+  // Prefer sala slugs / numeric SM ids. Never map CHI→Chivas on selección fixtures.
+  const clubId = ligaMxCrestById(team.id)
+    ? team.id
+    : team.id && /^\d+$/.test(String(team.id))
+      ? team.id
+      : seleccion || logoUrl
+        ? undefined
+        : (ligaMxClubIdFromAbbr(team.abbreviation) ?? team.id ?? undefined);
   return (
     <span className={['sellado-club', `is-${align}`, tone].filter(Boolean).join(' ')}>
       <ClubLogo
         abbr={team.abbreviation}
         clubId={clubId}
         name={team.name}
-        logoUrl={team.logo}
+        logoUrl={logoUrl}
         size="md"
       />
       <span className="sellado-name" title={team.name}>
@@ -209,6 +222,7 @@ export function SelladoFromFixture({
   clubResult?: 'W' | 'D' | 'L' | null;
 }) {
   const live = f.state === 'in';
+  const seleccion = f.league === 'seleccion';
   return (
     <SelladoCard
       href={href}
@@ -221,6 +235,7 @@ export function SelladoFromFixture({
       clubResult={clubResult}
       stamp={live ? liveStamp(f.clock, f.statusLabel) : 'FT'}
       live={live}
+      seleccion={seleccion}
     />
   );
 }

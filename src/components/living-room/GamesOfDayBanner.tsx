@@ -106,11 +106,11 @@ export function GamesOfDayBanner() {
               Cabina en espera
             </p>
             <p className="mt-2 max-w-lg font-mono text-[12px] leading-6 text-[var(--hoy-dim)]">
-              Sin partidos hoy para al aire. En ventana Leagues Cup, el tablero MX ↔ MLS está en
-              el canal cup.
+              Sin partidos hoy para al aire. Revisa el calendario de El Tri o la próxima
+              jornada de Liga MX.
             </p>
-            <Link href="/leagues-cup" className="hoy-cta hoy-cta-ghost mt-5 inline-flex">
-              Ver Leagues Cup
+            <Link href="/club/el-tri" className="hoy-cta hoy-cta-ghost mt-5 inline-flex">
+              Ver El Tri
             </Link>
           </div>
         ) : (

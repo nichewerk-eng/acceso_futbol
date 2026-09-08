@@ -41,12 +41,13 @@ function ChannelMark({
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={src}
-        alt={ch.label}
+        alt=""
         className={['tv-channel-logo', invert ? 'tv-channel-logo-invert' : '']
           .filter(Boolean)
           .join(' ')}
         loading="lazy"
         decoding="async"
+        aria-hidden
       />
       <span className="sr-only">{ch.label}</span>
     </>

@@ -1,5 +1,6 @@
 import { espnFetch, SLUG } from '@/lib/espn';
 import { attachDondeVer } from '@/config/dondeVer';
+import { buildElTriBoard } from './elTriBoard';
 import type { Fixture, MatchState } from './types';
 import { isMexicoDay, mexicoDayKey } from '@/lib/radio/phases';
 
@@ -75,21 +76,38 @@ async function fetchSeleccionScheduleRaw(): Promise<Fixture[]> {
   return (raw.events ?? []).map(mapEvent);
 }
 
-/** Full El Tri schedule (WC / friendlies as ESPN lists them). */
+/**
+ * Full El Tri schedule: official friendlies board first, then ESPN rows that
+ * are not already covered by that window.
+ */
 export async function fetchSeleccionSchedule(): Promise<Fixture[]> {
+  let espn: Fixture[] = [];
   try {
-    return await fetchSeleccionScheduleRaw();
+    espn = await fetchSeleccionScheduleRaw();
   } catch {
-    return [];
+    espn = [];
   }
+  const board = buildElTriBoard(espn);
+  const boardDays = new Set(board.map((f) => f.scheduleDay).filter(Boolean));
+  const extras = espn.filter((f) => {
+    const day = new Date(f.date).toLocaleDateString('en-CA', {
+      timeZone: 'America/Mexico_City',
+    });
+    return !boardDays.has(day);
+  });
+  return [...board, ...extras].sort((a, b) => +new Date(a.date) - +new Date(b.date));
 }
 
 /** Mexico national team fixtures for the Mexico City calendar day. */
 export async function fetchSeleccionGamesOfDay(dayKey = mexicoDayKey()): Promise<Fixture[]> {
   try {
-    const all = await fetchSeleccionScheduleRaw();
-    return all.filter((f) => isMexicoDay(f.date, dayKey));
+    const all = await fetchSeleccionSchedule();
+    return all.filter(
+      (f) => isMexicoDay(f.date, dayKey) || f.scheduleDay === dayKey || f.state === 'in'
+    );
   } catch {
-    return [];
+    return buildElTriBoard([]).filter(
+      (f) => isMexicoDay(f.date, dayKey) || f.scheduleDay === dayKey
+    );
   }
 }

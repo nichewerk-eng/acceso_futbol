@@ -27,7 +27,10 @@ export type TvChannelId =
   | 'universo'
   | 'estrella-tv'
   | 'tubi'
-  | 'youtube';
+  | 'youtube'
+  | 'tnt'
+  | 'max'
+  | 'peacock';
 
 export type TvChannel = {
   id: TvChannelId;
@@ -193,6 +196,21 @@ export const TV_CHANNELS: Record<TvChannelId, TvChannel> = {
     kind: 'stream',
     src: '/tv_logos/YouTube.png',
     href: 'https://www.youtube.com/@ligabbvamxfemenil',
+  },
+  tnt: {
+    id: 'tnt',
+    label: 'TNT',
+    kind: 'tv',
+  },
+  max: {
+    id: 'max',
+    label: 'Max',
+    kind: 'stream',
+  },
+  peacock: {
+    id: 'peacock',
+    label: 'Peacock',
+    kind: 'stream',
   },
 };
 

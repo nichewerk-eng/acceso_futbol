@@ -9,7 +9,7 @@ import { absoluteUrl, breadcrumbJsonLd, organizationJsonLd } from '@/lib/seo';
 export const metadata: Metadata = {
   title: 'Quiénes somos',
   description:
-    'Acceso Futbol es media de fútbol mexicano para México y Estados Unidos: Liga MX, Leagues Cup, El Tri, crónica y Acceso Radio.',
+    'Acceso Futbol es media de fútbol mexicano para México y Estados Unidos: Liga MX, El Tri, crónica y Acceso Radio.',
   alternates: { canonical: absoluteUrl('/nosotros') },
   openGraph: {
     title: 'Quiénes somos · Acceso Futbol',
@@ -42,7 +42,7 @@ export default function NosotrosPage() {
         </h1>
         <p className="mt-6 text-[17px] leading-8 text-muted">
           {siteConfig.name} ({siteConfig.legalName}) es media de fútbol mexicano hecha
-          para aficionados en México y Estados Unidos. Cubrimos Liga MX, Leagues Cup y
+          para aficionados en México y Estados Unidos. Cubrimos Liga MX, El Tri y
           la Selección Mexicana con marcadores, crónica, dónde ver y Acceso Radio —
           narrativa con urgencia, no cable de agencia.
         </p>
@@ -71,11 +71,11 @@ export default function NosotrosPage() {
               jornada, resultados y tabla en tiempo real.
             </li>
             <li>
-              <Link href="/leagues-cup" className="text-signal hover:text-foreground">
-                Leagues Cup
+              <Link href="/club/el-tri" className="text-signal hover:text-foreground">
+                El Tri
               </Link>
               {' — '}
-              fixtures y standings con foco en clubs mexicanos.
+              calendario de amistosos internacionales y dónde ver.
             </li>
             <li>
               <Link href="/tabla" className="text-signal hover:text-foreground">

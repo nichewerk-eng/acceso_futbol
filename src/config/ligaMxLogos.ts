@@ -24,8 +24,29 @@ const BY_ID: Record<string, string> = {
   toluca: `${LOGO_DIR}/toluca-logo.png`,
   // Present on disk but not in Apertura 2026 gravity set
   mazatlan: `${LOGO_DIR}/mazatlan-fc-logo.png`,
-  'el-tri': `${SELECCION_DIR}/mexico-national-team-logo.png`,
+  'el-tri': `${SELECCION_DIR}/mexico.png`,
 };
+
+/** National team crests for El Tri calendar (do not collide with MLS CHI/COL). */
+const SELECCION_BY_ABBR: Record<string, string> = {
+  MEX: `${SELECCION_DIR}/mexico.png`,
+  COL: `${SELECCION_DIR}/colombia.png`,
+  PER: `${SELECCION_DIR}/peru.png`,
+  USA: `${SELECCION_DIR}/usa.png`,
+  CHI: `${SELECCION_DIR}/chile.png`,
+  ECU: `${SELECCION_DIR}/ecuador.png`,
+};
+
+/** Crest by sala slug only (`america`, `el-tri`) — never treat abbr codes as ids. */
+export function ligaMxCrestById(id?: string | null): string | null {
+  if (!id) return null;
+  return BY_ID[id.trim()] ?? null;
+}
+
+export function seleccionLogoSrc(abbr?: string | null): string | null {
+  if (!abbr) return null;
+  return SELECCION_BY_ABBR[abbr.trim().toUpperCase()] ?? null;
+}
 
 /** ESPN Apertura 2026 abbreviations (+ a few legacy aliases). */
 const ABBR_TO_ID: Record<string, string> = {

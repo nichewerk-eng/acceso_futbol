@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import { seedLigaMxFixtures } from './espnFallback';
 import { seedGamesOfDay } from './gamesOfDay';
 import { overlayShouldReplaceSeedSchedule } from './scheduleHold';
-import { mergeLigaMxSchedule } from './mergeLigaMxSchedule';
+import { mergeLigaMxSchedule, type LigaMxScheduleFixture } from './mergeLigaMxSchedule';
 import {
   jornadaFechaCluster,
   jornadaNumber,
@@ -66,10 +66,12 @@ describe('J7 Leagues Cup makeups', () => {
       (f) => f.home.abbreviation === 'AME' && f.away.abbreviation === 'TIJ'
     );
     assert.ok(seed);
-    const live = [
+    const live: LigaMxScheduleFixture[] = [
       {
-        ...seed,
+        id: seed.id,
         date: '2026-10-28T22:00:00-06:00',
+        league: 'liga-mx',
+        jornada: seed.jornada ?? null,
         status: {
           completed: false,
           state: 'pre',
@@ -77,6 +79,8 @@ describe('J7 Leagues Cup makeups', () => {
           shortDetail: 'Próximo',
           displayClock: '',
         },
+        venue: seed.venue ?? null,
+        city: seed.city ?? null,
         home: { name: seed.home.name, abbreviation: seed.home.abbreviation, score: null },
         away: { name: seed.away.name, abbreviation: seed.away.abbreviation, score: null },
       },

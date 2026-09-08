@@ -9,7 +9,7 @@ const NAV_LINKS = [
   { href: '/', label: 'Pulso' },
   { href: '/liga-mx', label: 'Liga MX' },
   { href: '/liga-mx-femenil', label: 'Femenil' },
-  { href: '/leagues-cup', label: 'Leagues Cup' },
+  { href: '/club/el-tri', label: 'El Tri' },
 ];
 
 export default function SiteNav() {

@@ -698,18 +698,20 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
   }, [league]);
 
   const back =
-    league === 'leagues-cup'
-      ? '/leagues-cup'
-      : league === 'liga-mx-femenil'
-        ? '/liga-mx-femenil'
-        : league === 'liga-mx' || league === 'seleccion'
-          ? '/#jornada'
-          : '/';
+    league === 'seleccion'
+      ? '/club/el-tri'
+      : league === 'leagues-cup'
+        ? '/club/el-tri'
+        : league === 'liga-mx-femenil'
+          ? '/liga-mx-femenil'
+          : league === 'liga-mx'
+            ? '/#jornada'
+            : '/';
   const backLabel =
     league === 'seleccion'
       ? 'El Tri'
       : league === 'leagues-cup'
-        ? 'Leagues Cup'
+        ? 'El Tri'
         : league === 'liga-mx-femenil'
           ? 'Liga MX Femenil'
           : league === 'liga-mx'

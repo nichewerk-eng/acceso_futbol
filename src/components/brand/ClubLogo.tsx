@@ -1,4 +1,4 @@
-import { ligaMxLogoSrc } from '@/config/ligaMxLogos';
+import { ligaMxCrestById, ligaMxLogoSrc, seleccionLogoSrc } from '@/config/ligaMxLogos';
 import { mlsLogoSrc } from '@/config/mlsLogos';
 
 type Size = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -21,15 +21,21 @@ type Props = {
   className?: string;
 };
 
-/** Local Liga MX / MLS crest, then remote logo, then abbreviation text. */
+/**
+ * Resolve crest without CHI/COL collisions between selección and MLS.
+ * Explicit logoUrl (El Tri board) and numeric SM ids win; MLS abbr before
+ * selección abbr so Chicago Fire / Columbus keep their crests.
+ */
 export function ClubLogo({ abbr, clubId, name, logoUrl, size = 'sm', className = '' }: Props) {
-  // MLS SM ids / CHI (Chicago Fire) before Liga MX abbr aliases (CHI→Chivas on ESPN only).
+  const smId = clubId && /^\d+$/.test(clubId.trim()) ? clubId.trim() : null;
   const src =
-    mlsLogoSrc(clubId) ??
-    ligaMxLogoSrc(clubId) ??
-    mlsLogoSrc(abbr) ??
-    ligaMxLogoSrc(abbr) ??
+    ligaMxCrestById(clubId) ??
+    (smId ? mlsLogoSrc(smId) : null) ??
     logoUrl ??
+    mlsLogoSrc(clubId) ??
+    mlsLogoSrc(abbr) ??
+    seleccionLogoSrc(abbr) ??
+    ligaMxLogoSrc(abbr) ??
     null;
   const px = PX[size];
   const label = name || abbr || 'Club';

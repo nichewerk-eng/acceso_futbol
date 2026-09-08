@@ -4148,11 +4148,28 @@ a.lc-rail-block:hover {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  gap: 0.35rem 0.85rem;
+  gap: 0.45rem 0.55rem;
+  align-items: center;
 }
 
-.af-footer-club-list a {
-  font-size: 0.8rem;
+.af-footer-club-list a.af-footer-club-crest {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  opacity: 0.88;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.af-footer-club-list a.af-footer-club-crest:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.af-footer-club-list a.af-footer-club-crest img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
 }
 
 .af-footer-legal {
@@ -4272,13 +4289,14 @@ a.af-club-btn {
 
 @media (min-width: 640px) {
   .clubs-nav .af-club-pad {
-    grid-template-columns: repeat(9, minmax(0, 1fr));
+    grid-template-columns: repeat(10, minmax(0, 1fr));
   }
 }
 
 @media (min-width: 768px) {
+  /* El Tri + 18 Liga MX on one row */
   .clubs-nav .af-club-pad {
-    grid-template-columns: repeat(18, minmax(0, 1fr));
+    grid-template-columns: repeat(19, minmax(0, 1fr));
   }
 
   .clubs-nav .af-club-btn {

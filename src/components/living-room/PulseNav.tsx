@@ -11,7 +11,7 @@ const LINKS = [
   { href: '/liga-mx', label: 'Liga MX' },
   { href: '/liga-mx-femenil', label: 'Femenil' },
   { href: '/quiniela', label: 'Quiniela' },
-  { href: '/leagues-cup', label: 'Leagues Cup' },
+  { href: '/club/el-tri', label: 'El Tri' },
 ];
 
 function linkActive(pathname: string, href: string) {

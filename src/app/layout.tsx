@@ -31,7 +31,7 @@ const googleVerification = process.env.GOOGLE_SITE_VERIFICATION;
 
 export const metadata: Metadata = {
   title: {
-    default: "Acceso Futbol | Liga MX, Leagues Cup y El Tri",
+    default: "Acceso Futbol | Liga MX y El Tri",
     template: `%s | Acceso Futbol`,
   },
   description: siteConfig.description,
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     apple: [{ url: "/logo-dark.png", type: "image/png" }],
   },
   openGraph: {
-    title: "Acceso Futbol | Liga MX, Leagues Cup y El Tri",
+    title: "Acceso Futbol | Liga MX y El Tri",
     description: siteConfig.description,
     url: siteConfig.url,
     siteName: siteConfig.name,

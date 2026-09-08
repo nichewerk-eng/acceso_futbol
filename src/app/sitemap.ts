@@ -4,6 +4,7 @@ import { allClubIdentities } from '@/config/clubIdentity';
 import { MOMENTS } from '@/config/moments';
 import { siteConfig } from '@/config/site';
 import { seedLigaMxFixtures } from '@/lib/sports/espnFallback';
+import { buildElTriBoard } from '@/lib/sports/elTriBoard';
 import {
   buildLeaguesCupBoard,
   fetchLeaguesCupSeasonFixtures,
@@ -78,7 +79,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.88,
     },
     {
-      url: `${siteConfig.url}/leagues-cup`,
+      url: `${siteConfig.url}/el-tri`,
       lastModified: now,
       changeFrequency: 'hourly',
       priority: 0.9,
@@ -153,6 +154,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Apertura calendar is always in the sitemap so Google can discover match URLs
   // even when Sportmonks is down or unset on a cold isolate.
   for (const f of seedLigaMxFixtures()) pushPartido('liga-mx', f);
+  for (const f of buildElTriBoard([])) pushPartido('seleccion', f);
   for (const f of buildLeaguesCupBoard([])) {
     if (f.home.abbreviation === 'TBD' || f.away.abbreviation === 'TBD') continue;
     if (!involvesLigaMxClub(f.home, f.away)) continue;

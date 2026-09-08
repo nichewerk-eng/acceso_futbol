@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Acceso Futbol',
     short_name: 'AccesoFutbol',
-    description: 'Liga MX, Leagues Cup y fútbol mexicano en tiempo real',
+    description: 'Liga MX, El Tri y fútbol mexicano en tiempo real',
     start_url: '/',
     display: 'standalone',
     background_color: '#f6f5f2',
@@ -32,10 +32,10 @@ export default function manifest(): MetadataRoute.Manifest {
         description: 'Tabla y jornada Liga MX Femenil',
       },
       {
-        name: 'Leagues Cup',
-        short_name: 'Cup',
-        url: '/leagues-cup',
-        description: 'MLS × Liga MX',
+        name: 'El Tri',
+        short_name: 'El Tri',
+        url: '/club/el-tri',
+        description: 'Sala de la Selección',
       },
     ],
   };

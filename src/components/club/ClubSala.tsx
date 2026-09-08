@@ -18,6 +18,7 @@ import {
 } from '@/lib/sports/liguillaPath';
 import { scheduleAbbr } from '@/lib/sports/ligaMxAbbr';
 import { kickHold, kickHoldLabel } from '@/lib/sports/localizeEs';
+import { seleccionLogoSrc } from '@/config/ligaMxLogos';
 import type { Fixture } from '@/lib/sports/types';
 
 function kickWhen(iso: string, tz: string) {
@@ -49,6 +50,16 @@ function partidoHref(f: Fixture) {
   return `/partido/${f.league}/${f.id}`;
 }
 
+function sideCrest(team: Fixture['home'], seleccion: boolean) {
+  return {
+    abbr: team.abbreviation,
+    // On El Tri sala, never pass MLS/Liga-colliding ids (CHI/COL).
+    clubId: seleccion ? undefined : team.id,
+    name: team.name,
+    logoUrl: team.logo ?? (seleccion ? seleccionLogoSrc(team.abbreviation) : undefined),
+  };
+}
+
 function ClubTapeStamp({
   f,
   clubAbbr,
@@ -66,8 +77,18 @@ function ClubTapeStamp({
   );
 }
 
-function ClubTapeNext({ f, tz }: { f: Fixture; tz: string }) {
+function ClubTapeNext({
+  f,
+  tz,
+  seleccion = false,
+}: {
+  f: Fixture;
+  tz: string;
+  seleccion?: boolean;
+}) {
   const hold = kickHoldLabel(kickHold(f.statusLabel));
+  const home = sideCrest(f.home, seleccion);
+  const away = sideCrest(f.away, seleccion);
   return (
     <Link
       href={partidoHref(f)}
@@ -82,24 +103,12 @@ function ClubTapeNext({ f, tz }: { f: Fixture; tz: string }) {
       </div>
       <div className="jor-next-vs">
         <span className="jor-next-side jor-next-home">
-          <ClubLogo
-            abbr={f.home.abbreviation}
-            clubId={f.home.id}
-            name={f.home.name}
-            logoUrl={f.home.logo}
-            size="sm"
-          />
+          <ClubLogo {...home} size="sm" />
           <span className="jor-next-abbr">{f.home.abbreviation}</span>
         </span>
         <span className="jor-next-mid">VS</span>
         <span className="jor-next-side jor-next-away">
-          <ClubLogo
-            abbr={f.away.abbreviation}
-            clubId={f.away.id}
-            name={f.away.name}
-            logoUrl={f.away.logo}
-            size="sm"
-          />
+          <ClubLogo {...away} size="sm" />
           <span className="jor-next-abbr">{f.away.abbreviation}</span>
         </span>
       </div>
@@ -113,6 +122,7 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
   const tz = useDeviceTimeZone();
 
   const { club, next, live, table, liguilla, form, recent, upcoming, accesoLine } = board;
+  const seleccion = club.league === 'seleccion';
   const style = {
     ['--club-ink' as string]: club.palette.ink,
     ['--club-signal' as string]: club.palette.signal,
@@ -198,13 +208,7 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
                   {next.jornada ? ` · ${next.jornada}` : ''}
                 </p>
                 <div className="club-next-pair mt-3">
-                  <ClubLogo
-                    abbr={next.home.abbreviation}
-                    clubId={next.home.id}
-                    name={next.home.name}
-                    logoUrl={next.home.logo}
-                    size="lg"
-                  />
+                  <ClubLogo {...sideCrest(next.home, seleccion)} size="lg" />
                   <p className="club-word club-word-lg">
                     {next.home.abbreviation}
                     <span className="mx-2 text-muted">
@@ -214,13 +218,7 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
                     </span>
                     {next.away.abbreviation}
                   </p>
-                  <ClubLogo
-                    abbr={next.away.abbreviation}
-                    clubId={next.away.id}
-                    name={next.away.name}
-                    logoUrl={next.away.logo}
-                    size="lg"
-                  />
+                  <ClubLogo {...sideCrest(next.away, seleccion)} size="lg" />
                 </div>
                 {(next.venue || next.city) && (
                   <p className="mt-2 font-mono text-[11px] text-muted">
@@ -375,7 +373,7 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
               </p>
               <div className="jor-mosaic mt-3">
                 {(upcoming.length > 0 ? upcoming : next ? [next] : []).map((f) => (
-                  <ClubTapeNext key={`up-${f.id}`} f={f} tz={tz} />
+                  <ClubTapeNext key={`up-${f.id}`} f={f} tz={tz} seleccion={seleccion} />
                 ))}
               </div>
             </div>

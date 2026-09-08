@@ -56,7 +56,7 @@ function CrawlKick({ f }: { f: Fixture }) {
       ) : f.state === 'post' ? (
         'Final'
       ) : hold ? (
-        `${hold} · por reprogramar (Leagues Cup)`
+        `${hold} · por reprogramar`
       ) : (
         <LocalKickoff iso={f.date} variant="long" />
       )}
@@ -119,7 +119,7 @@ export default async function RootPage() {
           <Link href="/liga-mx-femenil">Liga MX Femenil</Link>
           <Link href="/donde-ver">Dónde ver la Liga MX hoy</Link>
           <Link href="/quiniela">Quiniela Liga MX</Link>
-          <Link href="/leagues-cup">Leagues Cup — fixtures y standings</Link>
+          <Link href="/club/el-tri">El Tri — calendario y amistosos</Link>
           <Link href="/once">Once de la jornada</Link>
           <Link href="/tabla">Tabla de posiciones Liga MX</Link>
           <Link href="/toma">Toma — el show del día</Link>

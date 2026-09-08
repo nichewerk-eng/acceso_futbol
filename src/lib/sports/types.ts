@@ -116,6 +116,9 @@ export interface Fixture {
       | 'estrella-tv'
       | 'tubi'
       | 'youtube'
+      | 'tnt'
+      | 'max'
+      | 'peacock'
     >;
     usChannels?: Array<
       | 'tudn'
@@ -142,6 +145,9 @@ export interface Fixture {
       | 'estrella-tv'
       | 'tubi'
       | 'youtube'
+      | 'tnt'
+      | 'max'
+      | 'peacock'
     >;
     /** True when MX/US marks come from a confirmed guide, not a guess. */
     confirmed?: boolean;

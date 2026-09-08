@@ -16,7 +16,7 @@ export const siteConfig = {
   tagline: "Tu acceso al fútbol mexicano.",
   taglineEn: "Mexican soccer media. Unfiltered. On your feed.",
   description:
-    "Acceso Futbol: noticias, resultados, horarios, tabla, análisis y contenido de Liga MX, Selección Mexicana y Leagues Cup para aficionados en México y Estados Unidos.",
+    "Acceso Futbol: noticias, resultados, horarios, tabla, análisis y contenido de Liga MX y Selección Mexicana para aficionados en México y Estados Unidos.",
   /** Primary host on Vercel is www. Apex must 308 → www (not 307). Keep canonicals aligned. */
   url: "https://www.accesofutbol.com",
   email: "hello@accesofutbol.com",
@@ -44,9 +44,9 @@ export const siteConfig = {
     "Liga MX en vivo",
     "Liga MX tabla",
     "Liga MX jornada",
-    "Leagues Cup",
-    "Leagues Cup 2026",
-    "dónde ver Leagues Cup",
+    "calendario El Tri",
+    "amistosos El Tri",
+    "dónde ver El Tri",
     "Selección Mexicana",
     "El Tri",
     "Mundial 2026 México",

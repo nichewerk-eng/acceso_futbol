@@ -11,6 +11,7 @@ import { mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
 import { enrichMatchWithEspnCommentary } from './espnCommentary';
 import { applyVarNarrative } from './keyEvents';
 import { FRESH, isNearKickoff, looksStillLive } from './freshness';
+import { officialElTriMatch } from './elTriBoard';
 import { applyLeaguesCupOfficial, officialLeaguesCupMatch, resolveLeaguesCupSmId } from './leaguesCupBoard';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
 import { commentLooksLikeGoal } from './localizeComment';
@@ -336,6 +337,11 @@ async function getMatchUncached(league: string, id: string): Promise<MatchSnapsh
 
   if (key === 'leagues-cup') {
     return getLeaguesCupMatch(id);
+  }
+
+  if (key === 'seleccion' && id.startsWith('el-tri-')) {
+    const official = officialElTriMatch(id);
+    if (official) return attachDondeVer(official) as MatchSnapshot;
   }
 
   // Liga MX / Femenil: Sportmonks while the token is present.

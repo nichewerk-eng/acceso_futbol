@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { ClubLogo } from '@/components/brand/ClubLogo';
 import { LIGA_MX_CLUBS } from '@/config/clubs';
 import { SOCIAL_CHANNELS, siteConfig } from '@/config/site';
 
@@ -64,8 +65,8 @@ export function SiteFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/leagues-cup" data-testid="footer-leagues-cup">
-                  Leagues Cup
+                <Link href="/club/el-tri" data-testid="footer-el-tri">
+                  El Tri
                 </Link>
               </li>
               <li>
@@ -114,8 +115,14 @@ export function SiteFooter() {
             <ul className="af-footer-club-list">
               {LIGA_MX_CLUBS.map((c) => (
                 <li key={c.id}>
-                  <Link href={`/club/${c.id}`} data-testid={`footer-club-${c.id}`}>
-                    {c.abbreviation}
+                  <Link
+                    href={`/club/${c.id}`}
+                    data-testid={`footer-club-${c.id}`}
+                    aria-label={c.name}
+                    title={c.name}
+                    className="af-footer-club-crest"
+                  >
+                    <ClubLogo abbr={c.abbreviation} clubId={c.id} name={c.name} size="xs" />
                   </Link>
                 </li>
               ))}

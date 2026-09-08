@@ -178,7 +178,7 @@ export function DondeVerGuide({
       {grouped.days.map((d) => (
         <DayBlock key={d.key} label={d.label} rows={d.rows} tz={tz} />
       ))}
-      <DayBlock label="Aplazados · Leagues Cup" rows={postponed} tz={tz} />
+      <DayBlock label="Aplazados" rows={postponed} tz={tz} />
 
       {showRitual ? (
         <div className="dv-ritual">

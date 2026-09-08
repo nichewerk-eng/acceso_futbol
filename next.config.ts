@@ -25,6 +25,8 @@ const nextConfig: NextConfig = {
       { source: '/calendario', destination: '/horarios', permanent: true },
       { source: '/liga-mx/calendario', destination: '/horarios', permanent: true },
       { source: '/liga-mx/horarios', destination: '/horarios', permanent: true },
+      { source: '/leagues-cup', destination: '/club/el-tri', permanent: true },
+      { source: '/leagues-cup/:path*', destination: '/club/el-tri', permanent: true },
     ];
   },
   async headers() {

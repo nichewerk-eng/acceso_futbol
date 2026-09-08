@@ -293,11 +293,11 @@ export function PulseHero({ leadStory }: Props) {
               Cancha en silencio
             </p>
             <p className="af-tele mt-3 text-muted">
-              Sin partidos próximos en Liga MX o Leagues Cup.
+              Sin partidos próximos en Liga MX o El Tri.
             </p>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              <Link href="/leagues-cup" className="af-cta inline-flex" data-testid="hero-cta-cup">
-                Leagues Cup
+              <Link href="/club/el-tri" className="af-cta inline-flex" data-testid="hero-cta-el-tri">
+                Calendario El Tri
               </Link>
               <a href="#noticias" className="af-cta af-cta-ghost inline-flex" data-testid="hero-cta-cable">
                 Ver noticias

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ClubLogo } from '@/components/brand/ClubLogo';
-import { LIGA_MX_CLUBS } from '@/config/clubs';
+import { EL_TRI, LIGA_MX_CLUBS } from '@/config/clubs';
 
 type Props = {
   activeSlug?: string;
@@ -9,13 +9,15 @@ type Props = {
   dek?: string | null;
 };
 
-/** Directory of Liga MX salas. Browse-only — does not claim gravity. */
+/** Directory of Liga MX salas + El Tri. Browse-only — does not claim gravity. */
 export function ClubsNav({
   activeSlug,
   className = '',
   title = 'Salas',
-  dek = 'Partidos, pulso y cobertura de cada club de Liga MX.',
+  dek = 'Partidos, pulso y cobertura de cada club de Liga MX y El Tri.',
 }: Props) {
+  const clubs = [EL_TRI, ...LIGA_MX_CLUBS];
+
   return (
     <section
       id="clubes"
@@ -35,7 +37,7 @@ export function ClubsNav({
       ) : null}
 
       <div className="af-club-pad mt-6" data-testid="clubs-nav-pad">
-        {LIGA_MX_CLUBS.map((c) => {
+        {clubs.map((c) => {
           const active = activeSlug === c.id;
           return (
             <Link
