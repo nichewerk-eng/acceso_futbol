@@ -10,7 +10,7 @@ const BY_ID: Record<string, string> = {
   chivas: `${LOGO_DIR}/cd-guadalajara-logo.png`,
   'cruz-azul': `${LOGO_DIR}/cruz-azul-logo.png`,
   juarez: `${LOGO_DIR}/fc-juarez-logo.png`,
-  leon: `${LOGO_DIR}/club-leon-logo.png`,
+  leon: 'https://cdn.sportmonks.com/images/soccer/teams/20/10836.png',
   monterrey: `${LOGO_DIR}/monterrey-logo.png`,
   necaxa: `${LOGO_DIR}/necaxa-logo.png`,
   pachuca: `${LOGO_DIR}/pachuca-logo.png`,

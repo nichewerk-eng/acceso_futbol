@@ -14,11 +14,12 @@ export const revalidate = 60;
 type Props = { params: Promise<{ league: string; id: string }> };
 
 async function crestSrc(abbr: string, remote?: string): Promise<string | null> {
-  const local = ligaMxLogoSrc(abbr);
-  if (local) {
+  const mapped = ligaMxLogoSrc(abbr);
+  if (mapped && /^https?:\/\//i.test(mapped)) return mapped;
+  if (mapped) {
     try {
-      const bytes = await readFile(join(process.cwd(), 'public', local.replace(/^\//, '')));
-      const ext = local.toLowerCase().endsWith('.svg') ? 'svg+xml' : 'png';
+      const bytes = await readFile(join(process.cwd(), 'public', mapped.replace(/^\//, '')));
+      const ext = mapped.toLowerCase().endsWith('.svg') ? 'svg+xml' : 'png';
       return `data:image/${ext};base64,${Buffer.from(bytes).toString('base64')}`;
     } catch {
       /* fall through */
