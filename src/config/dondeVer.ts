@@ -474,6 +474,64 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
     mx: ['vix', 'tudn', 'canal-5', 'layvtime'],
     us: ['univision', 'tudn'],
   },
+
+  // Jornada 8 · 11–13 sep 2026
+  '2026-09-11|ATL|PAC': {
+    mx: ['azteca-7', 'espn', 'disney-plus'],
+    us: ['vix'],
+  },
+  'j8|ATL|PAC': {
+    mx: ['azteca-7', 'espn', 'disney-plus'],
+    us: ['vix'],
+  },
+  '2026-09-11|QRO|TIJ': {
+    mx: ['fox', 'fox-one'],
+    us: ['tudn', 'unimas'],
+  },
+  'j8|QRO|TIJ': {
+    mx: ['fox', 'fox-one'],
+    us: ['tudn', 'unimas'],
+  },
+  '2026-09-12|ATS|TOL': {
+    mx: ['canal-5', 'tudn', 'vix'],
+    us: ['vix'],
+  },
+  'j8|ATS|TOL': {
+    mx: ['canal-5', 'tudn', 'vix'],
+    us: ['vix'],
+  },
+  '2026-09-12|AME|CAZ': {
+    mx: ['vix', 'tudn', 'canal-5', 'layvtime'],
+    us: ['vix', 'univision', 'tudn'],
+  },
+  'j8|AME|CAZ': {
+    mx: ['vix', 'tudn', 'canal-5', 'layvtime'],
+    us: ['vix', 'univision', 'tudn'],
+  },
+  '2026-09-13|GDL|UNAM': {
+    mx: ['prime-video'],
+    us: ['telemundo', 'universo'],
+  },
+  'j8|GDL|UNAM': {
+    mx: ['prime-video'],
+    us: ['telemundo', 'universo'],
+  },
+  '2026-09-13|JUA|SAN': {
+    mx: ['canal-5', 'tudn', 'vix'],
+    us: ['tudn'],
+  },
+  'j8|JUA|SAN': {
+    mx: ['canal-5', 'tudn', 'vix'],
+    us: ['tudn'],
+  },
+  '2026-09-13|MTY|UANL': {
+    mx: ['canal-5', 'tudn', 'vix', 'layvtime'],
+    us: ['tudn', 'univision', 'vix'],
+  },
+  'j8|MTY|UANL': {
+    mx: ['canal-5', 'tudn', 'vix', 'layvtime'],
+    us: ['tudn', 'univision', 'vix'],
+  },
 };
 
 /**
