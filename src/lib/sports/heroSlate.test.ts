@@ -102,6 +102,32 @@ describe('mergeJornadaIntoHeroSlate', () => {
       ['atl-leo', 'lc-qf-x']
     );
   });
+
+  it('keeps a midweek makeup on the hero when it is earlier than the jornada fecha', () => {
+    const makeup = fx('unam-leo', '2026-09-10T22:00:00-05:00', 'liga-mx', 'Jornada 7');
+    const j8Fri = fx('ncx-pue', '2026-09-11T20:00:00-05:00', 'liga-mx', 'Jornada 8');
+    const wed = Date.parse('2026-09-09T20:00:00-05:00');
+    const merged = mergeJornadaIntoHeroSlate(
+      payload([makeup], '2026-09-10'),
+      {
+        label: 'Jornada 8',
+        number: 8,
+        generatedAt: '2026-09-09T00:00:00.000Z',
+        source: 'static',
+        live: [],
+        played: [],
+        upcoming: [j8Fri],
+        postponed: [],
+      },
+      wed
+    );
+    assert.equal(merged?.dayKey, '2026-09-10');
+    assert.equal(merged?.upcoming, true);
+    assert.deepEqual(
+      merged?.games.map((g) => g.id),
+      ['unam-leo']
+    );
+  });
 });
 
 describe('seedGamesOfDay', () => {

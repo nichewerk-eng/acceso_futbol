@@ -52,10 +52,12 @@ function sortDayGames(games: DayGame[]): DayGame[] {
 }
 
 /**
- * Liga MX hero rows come from the jornada board (same dates as Dónde ver).
- * Leagues Cup / Selección come from games-of-day. The slate *day* is the
- * soonest living-room day — not the next Liga MX jornada when a cup match
- * is earlier (e.g. LC cuartos martes vs Liga MX viernes).
+ * Liga MX hero rows prefer the jornada board (same pairs as Dónde ver).
+ * Midweek makeups left off that fecha cluster still come from games-of-day
+ * so the cartelera can show e.g. J7 Pumas–León before J8 viernes.
+ * Leagues Cup / Selección also come from games-of-day. The slate *day* is
+ * the soonest living-room day — not the next Liga MX jornada when a cup
+ * match is earlier (e.g. LC cuartos martes vs Liga MX viernes).
  *
  * The games-of-day route can flash a static-calendar seed (wrong Friday pairs
  * after Sportmonks moved kickoffs). Overlaying only scores left that stale slate.
@@ -69,11 +71,17 @@ export function mergeJornadaIntoHeroSlate(
   const board = [...jornada.live, ...jornada.played, ...jornada.upcoming].filter(
     (f) => !isFixtureHeld(f.statusLabel)
   );
+  const boardIds = new Set(board.map((f) => f.id));
+  const makeupLiga = (payload?.games ?? []).filter(
+    (g) =>
+      g.league === 'liga-mx' && !boardIds.has(g.id) && !isFixtureHeld(g.statusLabel)
+  );
+  const ligaPool: Fixture[] = [...board, ...makeupLiga];
   const extrasPool = (payload?.games ?? []).filter((g) => g.league !== 'liga-mx');
-  if (!board.length) return payload;
+  if (!ligaPool.length) return payload;
 
   const todayKey = mexicoDayKey(new Date(now));
-  const ligaToday = board.filter((f) => isMexicoDay(f.date, todayKey) || f.state === 'in');
+  const ligaToday = ligaPool.filter((f) => isMexicoDay(f.date, todayKey) || f.state === 'in');
   const extrasToday = extrasPool.filter(
     (g) => isMexicoDay(g.date, todayKey) || g.state === 'in'
   );
@@ -87,7 +95,7 @@ export function mergeJornadaIntoHeroSlate(
     liga = ligaToday;
     extras = extrasToday;
   } else {
-    const nextLiga = firstUpcomingDay(board, now);
+    const nextLiga = firstUpcomingDay(ligaPool, now);
     const nextExtra = firstUpcomingDay(extrasPool, now);
     const days = [nextLiga?.dayKey, nextExtra?.dayKey].filter(
       (d): d is string => Boolean(d)
@@ -95,7 +103,7 @@ export function mergeJornadaIntoHeroSlate(
     if (days.length === 0) return payload;
     dayKey = days.sort()[0]!;
     upcoming = dayKey !== todayKey;
-    liga = board.filter((f) => isMexicoDay(f.date, dayKey));
+    liga = ligaPool.filter((f) => isMexicoDay(f.date, dayKey));
     extras = extrasPool.filter((g) => isMexicoDay(g.date, dayKey) || g.state === 'in');
   }
 

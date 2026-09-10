@@ -76,44 +76,6 @@ function stillOnBoard(f: Fixture, now: Date): boolean {
   return +new Date(f.date) >= +now - 2 * 3600_000;
 }
 
-/**
- * Open kickoffs that sit outside the active fecha cluster (Leagues Cup makeups,
- * etc.) but land in the living-room window from today through the last core day.
- * Quiniela keeps using the cluster alone; jornada / Dónde ver / hero show these.
- */
-export function jornadaWindowStragglers(
-  fixtures: Fixture[],
-  core: Fixture[],
-  now: Date
-): Fixture[] {
-  if (!core.length) return [];
-  const coreIds = new Set(core.map((f) => f.id));
-  const today = mexicoDayKey(now);
-  const coreDays = core
-    .map((f) => {
-      try {
-        return mexicoDayKey(new Date(f.date));
-      } catch {
-        return null;
-      }
-    })
-    .filter((d): d is string => Boolean(d))
-    .sort();
-  const windowEnd = coreDays[coreDays.length - 1]!;
-
-  return fixtures.filter((f) => {
-    if (coreIds.has(f.id)) return false;
-    if (!stillOnBoard(f, now)) return false;
-    try {
-      const d = mexicoDayKey(new Date(f.date));
-      if (f.state === 'in') return d <= windowEnd;
-      return d >= today && d <= windowEnd;
-    } catch {
-      return false;
-    }
-  });
-}
-
 function pickActiveJornada(fixtures: Fixture[], now = new Date()): number | null {
   const dayKey = mexicoDayKey(now);
   const withNum = fixtures
@@ -173,8 +135,7 @@ function overviewFrom(
   if (n === null) return null;
 
   const label = `Jornada ${n}`;
-  const core = fixturesOnJornadaFecha(fixtures, n);
-  const games = [...core, ...jornadaWindowStragglers(fixtures, core, now)]
+  const games = fixturesOnJornadaFecha(fixtures, n)
     .map(attachDondeVer)
     .sort((a, b) => +new Date(a.date) - +new Date(b.date));
 
