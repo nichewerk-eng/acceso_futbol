@@ -474,6 +474,15 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
     mx: ['vix', 'tudn', 'canal-5', 'layvtime'],
     us: ['univision', 'tudn'],
   },
+  // J7 makeup · jueves 10 sep 2026
+  '2026-09-10|LEO|UNAM': {
+    mx: ['vix', 'tudn', 'canal-5'],
+    us: ['vix', 'univision'],
+  },
+  'j7|LEO|UNAM': {
+    mx: ['vix', 'tudn', 'canal-5'],
+    us: ['vix', 'univision'],
+  },
 
   // Jornada 8 · 11–13 sep 2026
   '2026-09-11|ATL|PAC': {
