@@ -25,9 +25,11 @@ import type { FreshPace } from '@/lib/sports/freshness';
 import { scheduleAbbr } from '@/lib/sports/ligaMxAbbr';
 import { localizeStatus } from '@/lib/sports/localizeEs';
 import { mergeMatchSnapshot } from '@/lib/sports/mergeMatchSnapshot';
+import { recordFromTabla } from '@/lib/sports/standingsRecord';
 import { MatchChapterSkeleton } from '@/components/partido/MatchChapterSkeleton';
 import { MatchXiShare } from '@/components/partido/MatchXiShare';
 import { XiPitch } from '@/components/partido/XiPitch';
+import { KalshiMatchOddsLine } from '@/components/kalshi/KalshiMatchOdds';
 import { SelloShare } from '@/components/sello/SelloShare';
 import { useGravity } from '@/contexts/GravityContext';
 import { mintFromFixture } from '@/lib/sello/mint';
@@ -767,6 +769,8 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
   const feedRows = feed === 'clave' ? keyEvents : fullCronica;
   const homeForm = match.form?.home ?? [];
   const awayForm = match.form?.away ?? [];
+  const homeRecord = recordFromTabla(tabla, match.home.abbreviation);
+  const awayRecord = recordFromTabla(tabla, match.away.abbreviation);
   const h2h = match.headToHead;
 
   return (
@@ -836,6 +840,11 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
                   {match.home.name}
                 </p>
               </ClubLink>
+              {homeRecord ? (
+                <p className="match-record" title="Ganados-Empatados-Perdidos">
+                  {homeRecord}
+                </p>
+              ) : null}
               {!pre && homeLines.length > 0 && (
                 <ul className="match-scorers">
                   {homeLines.map((s) => (
@@ -868,6 +877,14 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
               {(match.venue || match.city) && (
                 <p className="match-venue">{[match.venue, match.city].filter(Boolean).join(' · ')}</p>
               )}
+              {league === 'liga-mx' && (pre || live) ? (
+                <KalshiMatchOddsLine
+                  date={match.date}
+                  homeAbbr={match.home.abbreviation}
+                  awayAbbr={match.away.abbreviation}
+                  className="match-kalshi-odds"
+                />
+              ) : null}
             </div>
 
             <div className="match-side match-side-away">
@@ -889,6 +906,11 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
                   {match.away.name}
                 </p>
               </ClubLink>
+              {awayRecord ? (
+                <p className="match-record" title="Ganados-Empatados-Perdidos">
+                  {awayRecord}
+                </p>
+              ) : null}
               {!pre && awayLines.length > 0 && (
                 <ul className="match-scorers">
                   {awayLines.map((s) => (

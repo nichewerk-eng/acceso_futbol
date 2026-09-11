@@ -34,6 +34,10 @@ export const FRESH = {
   standingsSMaxAge: 45,
   standingsClientMs: 45_000,
 
+  /** Kalshi champion markets — public, slow-moving */
+  kalshiTtlMs: 60_000,
+  kalshiSMaxAge: 60,
+
   storiesTtlMs: 60_000,
 
   espnCronicaTtlMs: 60_000,

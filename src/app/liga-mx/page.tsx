@@ -7,6 +7,7 @@ import type { LigaMXTable } from '@/app/api/ligamx/standings/route';
 import { absoluteUrl, breadcrumbJsonLd, personItemListJsonLd } from '@/lib/seo';
 import { fetchLigaMxFixtures } from '@/lib/sports/espnFallback';
 import { fetchLigaMxLeaders } from '@/lib/sports/leaders';
+import { fetchLigaMxChampionBoard } from '@/lib/kalshi/ligaMxChampion';
 import { fixtureToLigaMxSchedule, mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
 
 export const metadata: Metadata = {
@@ -90,10 +91,11 @@ export default async function LigaMXPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const params = await searchParams;
-  const [table, fixtures, goleo] = await Promise.all([
+  const [table, fixtures, goleo, kalshi] = await Promise.all([
     fetchTable(),
     fetchFixtures(),
     fetchLigaMxLeaders().catch(() => null),
+    fetchLigaMxChampionBoard().catch(() => null),
   ]);
   const season = goleo?.seasonLabel ?? table?.season ?? 'Apertura 2026';
   return (
@@ -125,6 +127,7 @@ export default async function LigaMXPage({
             initialTable={table}
             initialFixtures={fixtures}
             initialGoleo={goleo}
+            initialKalshi={kalshi}
             initialTab={parseTab(params.tab)}
           />
         </main>

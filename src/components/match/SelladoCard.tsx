@@ -1,7 +1,9 @@
 import { ClubLogo } from '@/components/brand/ClubLogo';
+import { KalshiMatchOddsLine } from '@/components/kalshi/KalshiMatchOdds';
 import { PartidoLink } from '@/components/partido/PartidoLink';
 import { ligaMxCrestById, ligaMxClubIdFromAbbr, seleccionLogoSrc } from '@/config/ligaMxLogos';
 import type { Fixture, FixtureScorer } from '@/lib/sports/types';
+import type { ReactNode } from 'react';
 
 export type SelladoSide = {
   id?: string;
@@ -89,6 +91,7 @@ export function SelladoCard({
   stamp = 'FT',
   live = false,
   seleccion = false,
+  oddsSlot = null,
 }: {
   href: string;
   testId: string;
@@ -101,6 +104,7 @@ export function SelladoCard({
   stamp?: string;
   live?: boolean;
   seleccion?: boolean;
+  oddsSlot?: ReactNode;
 }) {
   const winner = live ? null : (winnerSide ?? winnerFromScores(home.score, away.score));
   const hs = scoreN(home.score);
@@ -169,6 +173,7 @@ export function SelladoCard({
           </>
         ) : null}
       </div>
+      {oddsSlot ? <div className="sellado-odds">{oddsSlot}</div> : null}
     </PartidoLink>
   );
 }
@@ -223,6 +228,7 @@ export function SelladoFromFixture({
 }) {
   const live = f.state === 'in';
   const seleccion = f.league === 'seleccion';
+  const showOdds = f.league === 'liga-mx' && (f.state === 'pre' || f.state === 'in');
   return (
     <SelladoCard
       href={href}
@@ -236,6 +242,16 @@ export function SelladoFromFixture({
       stamp={live ? liveStamp(f.clock, f.statusLabel) : 'FT'}
       live={live}
       seleccion={seleccion}
+      oddsSlot={
+        showOdds ? (
+          <KalshiMatchOddsLine
+            date={f.date}
+            homeAbbr={f.home.abbreviation}
+            awayAbbr={f.away.abbreviation}
+            compact
+          />
+        ) : null
+      }
     />
   );
 }

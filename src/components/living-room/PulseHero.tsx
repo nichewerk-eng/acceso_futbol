@@ -4,8 +4,10 @@ import Link from 'next/link';
 import { useMemo } from 'react';
 import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { ClubLogo } from '@/components/brand/ClubLogo';
+import { KalshiMatchOddsLine } from '@/components/kalshi/KalshiMatchOdds';
 import { useGamesOfDay } from '@/lib/client/useGamesOfDay';
 import { useJornadaOverview } from '@/lib/client/useJornadaOverview';
+import { useLigaMxRecords } from '@/lib/client/useLigaMxRecords';
 import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
 import { HeroTablero } from './HeroTablero';
 import { competitionBandTag, leaguePath, mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
@@ -135,6 +137,7 @@ function bandMeta(
 export function PulseHero({ leadStory }: Props) {
   const { payload, loading } = useGamesOfDay();
   const { payload: jornada } = useJornadaOverview();
+  const { recordFor } = useLigaMxRecords();
   const userTz = useDeviceTimeZone();
 
   const games = useMemo(() => {
@@ -230,10 +233,28 @@ export function PulseHero({ leadStory }: Props) {
                       className="hero-stage-crest"
                     />
                     <p className="hero-stage-name">{stage.home.name}</p>
+                    {stage.league === 'liga-mx' && recordFor(stage.home.abbreviation) ? (
+                      <p
+                        className="hero-record hero-stage-record-crest"
+                        title="Ganados-Empatados-Perdidos"
+                      >
+                        {recordFor(stage.home.abbreviation)}
+                      </p>
+                    ) : null}
                   </div>
-                  <p className="hero-stage-abbr group-hover:text-signal">
-                    {stage.home.abbreviation}
-                  </p>
+                  <div className="hero-stage-mark">
+                    <p className="hero-stage-abbr group-hover:text-signal">
+                      {stage.home.abbreviation}
+                    </p>
+                    {stage.league === 'liga-mx' && recordFor(stage.home.abbreviation) ? (
+                      <p
+                        className="hero-record hero-stage-record-abbr"
+                        title="Ganados-Empatados-Perdidos"
+                      >
+                        {recordFor(stage.home.abbreviation)}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
               </div>
               <div className="hero-stage-score" data-testid="hero-stage-score">
@@ -251,10 +272,28 @@ export function PulseHero({ leadStory }: Props) {
                       className="hero-stage-crest"
                     />
                     <p className="hero-stage-name">{stage.away.name}</p>
+                    {stage.league === 'liga-mx' && recordFor(stage.away.abbreviation) ? (
+                      <p
+                        className="hero-record hero-stage-record-crest"
+                        title="Ganados-Empatados-Perdidos"
+                      >
+                        {recordFor(stage.away.abbreviation)}
+                      </p>
+                    ) : null}
                   </div>
-                  <p className="hero-stage-abbr group-hover:text-signal">
-                    {stage.away.abbreviation}
-                  </p>
+                  <div className="hero-stage-mark">
+                    <p className="hero-stage-abbr group-hover:text-signal">
+                      {stage.away.abbreviation}
+                    </p>
+                    {stage.league === 'liga-mx' && recordFor(stage.away.abbreviation) ? (
+                      <p
+                        className="hero-record hero-stage-record-abbr"
+                        title="Ganados-Empatados-Perdidos"
+                      >
+                        {recordFor(stage.away.abbreviation)}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
               </div>
             </div>
@@ -281,6 +320,14 @@ export function PulseHero({ leadStory }: Props) {
                 />
               ) : null}
             </div>
+            {stage.league === 'liga-mx' && stage.state !== 'post' ? (
+              <KalshiMatchOddsLine
+                date={stage.date}
+                homeAbbr={stage.home.abbreviation}
+                awayAbbr={stage.away.abbreviation}
+                className="hero-stage-kalshi mt-3"
+              />
+            ) : null}
           </Link>
         )}
 
@@ -332,15 +379,24 @@ export function PulseHero({ leadStory }: Props) {
                         {meta.stamp}
                       </span>
                     ) : null}
-                    <span className="hero-band-home inline-flex items-center gap-2">
-                      <ClubLogo
-                        abbr={g.home.abbreviation}
-                        clubId={g.home.id}
-                        name={g.home.name}
-                        logoUrl={g.home.logo}
-                        size="sm"
-                      />
-                      {g.home.abbreviation}
+                    <span className="hero-band-home">
+                      <span className="hero-band-club">
+                        <span className="hero-band-crest">
+                          <ClubLogo
+                            abbr={g.home.abbreviation}
+                            clubId={g.home.id}
+                            name={g.home.name}
+                            logoUrl={g.home.logo}
+                            size="sm"
+                          />
+                          {g.league === 'liga-mx' && recordFor(g.home.abbreviation) ? (
+                            <span className="hero-record" title="Ganados-Empatados-Perdidos">
+                              {recordFor(g.home.abbreviation)}
+                            </span>
+                          ) : null}
+                        </span>
+                        <span className="hero-band-abbr">{g.home.abbreviation}</span>
+                      </span>
                     </span>
                     <span
                       className={[
@@ -364,15 +420,24 @@ export function PulseHero({ leadStory }: Props) {
                         </span>
                       ) : null}
                     </span>
-                    <span className="hero-band-away inline-flex items-center justify-end gap-2">
-                      {g.away.abbreviation}
-                      <ClubLogo
-                        abbr={g.away.abbreviation}
-                        clubId={g.away.id}
-                        name={g.away.name}
-                        logoUrl={g.away.logo}
-                        size="sm"
-                      />
+                    <span className="hero-band-away">
+                      <span className="hero-band-club is-away">
+                        <span className="hero-band-abbr">{g.away.abbreviation}</span>
+                        <span className="hero-band-crest">
+                          <ClubLogo
+                            abbr={g.away.abbreviation}
+                            clubId={g.away.id}
+                            name={g.away.name}
+                            logoUrl={g.away.logo}
+                            size="sm"
+                          />
+                          {g.league === 'liga-mx' && recordFor(g.away.abbreviation) ? (
+                            <span className="hero-record" title="Ganados-Empatados-Perdidos">
+                              {recordFor(g.away.abbreviation)}
+                            </span>
+                          ) : null}
+                        </span>
+                      </span>
                     </span>
                     {showDondeVer(g) ? (
                       <span className="hero-band-tv">
@@ -384,6 +449,16 @@ export function PulseHero({ leadStory }: Props) {
                           usLabel={g.dondeVer?.us}
                           compact
                           inline
+                        />
+                      </span>
+                    ) : null}
+                    {g.league === 'liga-mx' && g.state !== 'post' ? (
+                      <span className="hero-band-kalshi">
+                        <KalshiMatchOddsLine
+                          date={g.date}
+                          homeAbbr={g.home.abbreviation}
+                          awayAbbr={g.away.abbreviation}
+                          compact
                         />
                       </span>
                     ) : null}

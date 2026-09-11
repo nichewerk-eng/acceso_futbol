@@ -23,9 +23,12 @@ import { mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
 import { LIGUILLA_SPOTS } from '@/lib/sports/liguillaPath';
 import { FEMENIL_LIGUILLA_SPOTS } from '@/lib/sports/ligaMxFemenil';
 import { GoleoRailCard, GoleoTabla } from '@/components/ligamx/GoleoTabla';
+import { KalshiChampionBoard } from '@/components/ligamx/KalshiChampionBoard';
+import { KalshiMatchOddsLine } from '@/components/kalshi/KalshiMatchOdds';
 import { OnceRoom } from '@/components/living-room/OnceRoom';
 import { SelladoCard } from '@/components/match/SelladoCard';
 import type { GoleoBoard } from '@/lib/sports/leaders';
+import type { KalshiChampionBoard as KalshiChampionBoardData } from '@/lib/kalshi/ligaMxChampion';
 
 /** Shared header + row shell — tracks live in `.lm-standings-grid` (globals.css). */
 const STANDINGS_GRID = 'lm-standings-grid';
@@ -100,6 +103,7 @@ interface Props {
   initialTable: LigaMXTable | null;
   initialFixtures: LigaMXFixture[];
   initialGoleo?: GoleoBoard | null;
+  initialKalshi?: KalshiChampionBoardData | null;
   initialTab?: LigaMxTab;
   league?: LigaMxBoardLeague;
 }
@@ -108,6 +112,7 @@ export default function LigaMXView({
   initialTable,
   initialFixtures,
   initialGoleo = null,
+  initialKalshi = null,
   initialTab = 'jornada',
   league = 'liga-mx',
 }: Props) {
@@ -401,6 +406,12 @@ export default function LigaMXView({
                 )}
               </>
             )}
+
+            {league === 'liga-mx' ? (
+              <div className={isEmpty ? 'mt-10' : 'mt-14'}>
+                <KalshiChampionBoard initial={initialKalshi} />
+              </div>
+            ) : null}
           </section>
         )}
 
@@ -1020,6 +1031,16 @@ function KickRow({
             mxLabel={tv.mx}
             usLabel={tv.us}
             inline
+          />
+        ) : null}
+
+        {league === 'liga-mx' && !done ? (
+          <KalshiMatchOddsLine
+            date={f.date}
+            homeAbbr={f.home.abbreviation}
+            awayAbbr={f.away.abbreviation}
+            className="lc-match-kalshi"
+            compact
           />
         ) : null}
       </PartidoLink>

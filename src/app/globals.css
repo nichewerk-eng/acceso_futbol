@@ -835,6 +835,18 @@ body {
   padding-top: 0.15rem;
 }
 
+.hero-stage-mark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.hero-stage-record-abbr {
+  display: none;
+}
+
 .hero-stage-name {
   font-family: var(--font-plex-mono), ui-monospace, monospace;
   font-size: 11px;
@@ -842,6 +854,24 @@ body {
   color: var(--muted);
   text-align: center;
   max-width: 7.5rem;
+}
+
+.hero-record {
+  margin: 0;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  line-height: 1.2;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.hero-stage-crest-col .hero-record {
+  align-self: center;
+  width: 100%;
 }
 
 .hero-stage-score {
@@ -924,6 +954,9 @@ body {
 
 .hero-band-home,
 .hero-band-away {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
   font-family: var(--font-oswald), sans-serif;
   font-weight: 700;
   font-size: clamp(1.35rem, 4vw, 1.75rem);
@@ -938,6 +971,7 @@ body {
   grid-row: 2;
   text-align: left;
   justify-self: start;
+  align-items: flex-start;
 }
 
 .hero-band-away {
@@ -945,6 +979,40 @@ body {
   grid-row: 2;
   text-align: right;
   justify-self: end;
+  align-items: flex-end;
+}
+
+.hero-band-club {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.hero-band-club.is-away {
+  flex-direction: row;
+}
+
+.hero-band-crest {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.hero-band-abbr {
+  min-width: 0;
+  padding-top: 0.15rem;
+}
+
+.hero-band-home .hero-record,
+.hero-band-away .hero-record {
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  font-weight: 600;
+  text-align: center;
 }
 
 .hero-band-center {
@@ -2289,6 +2357,15 @@ a.lc-rail-block:hover {
   .hero-stage-abbr {
     font-size: clamp(1.85rem, 8vw, 2.15rem); /* ~crest when stacked */
     line-height: 1;
+    padding-top: 0;
+  }
+
+  .hero-stage-record-crest {
+    display: none;
+  }
+
+  .hero-stage-record-abbr {
+    display: block;
   }
 
   .hero-stage-score {
@@ -3056,6 +3133,119 @@ a.lc-rail-block:hover {
 .sellado-goals.is-away {
   grid-area: ag;
   text-align: center;
+}
+
+.sellado-odds {
+  margin-top: 0.55rem;
+  display: flex;
+  justify-content: center;
+}
+
+.kalshi-odds {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.32rem 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.kalshi-odds:hover,
+.kalshi-odds:focus-visible {
+  color: var(--foreground);
+  outline: none;
+}
+
+.kalshi-odds-side,
+.kalshi-odds-draw {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.28rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.kalshi-odds-abbr {
+  color: var(--muted);
+}
+
+.kalshi-odds-pct {
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.kalshi-odds.is-compact {
+  gap: 0.45rem;
+  padding: 0.22rem 0;
+  font-size: 9px;
+}
+
+.lc-match-kalshi {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  justify-self: center;
+  margin-top: 0.05rem;
+}
+
+.hero-band-kalshi {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  padding-bottom: 0.45rem;
+}
+
+.hero-stage-kalshi {
+  display: flex;
+  justify-content: center;
+}
+
+.match-kalshi-odds {
+  margin-top: 0.85rem;
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.match-score-center .kalshi-odds {
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 0.45rem;
+  max-width: 100%;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: rgba(246, 245, 242, 0.72);
+  white-space: nowrap;
+}
+
+.match-score-center .kalshi-odds-abbr {
+  color: rgba(246, 245, 242, 0.55);
+}
+
+.match-score-center .kalshi-odds-pct {
+  color: #f6f5f2;
+  font-size: 1.05em;
+}
+
+.match-score-center .kalshi-odds:hover,
+.match-score-center .kalshi-odds:focus-visible {
+  color: #f6f5f2;
+}
+
+.match-score-center .kalshi-odds:hover .kalshi-odds-abbr,
+.match-score-center .kalshi-odds:focus-visible .kalshi-odds-abbr {
+  color: rgba(246, 245, 242, 0.8);
+}
+
+@media (min-width: 640px) {
+  .match-score-center .kalshi-odds {
+    gap: 0.85rem 1.15rem;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+  }
 }
 
 @media (max-width: 640px) {
@@ -3980,6 +4170,31 @@ a.lc-rail-block:hover {
   }
 }
 
+.lm-kalshi-grid {
+  display: grid;
+  align-items: center;
+  gap: 0 0.35rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  grid-template-columns: 2rem minmax(0, 1fr) 3.5rem;
+}
+
+.lm-kalshi-grid > .lm-col-desktop {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .lm-kalshi-grid {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    grid-template-columns: 2.5rem minmax(0, 1fr) 4rem minmax(8rem, 14rem);
+  }
+
+  .lm-kalshi-grid > .lm-col-desktop {
+    display: block;
+  }
+}
+
 /* Leagues Cup Phase One — official cols: # Club Pts PJ PG Dif Clave (+ PP PKW PKL TG GA desktop) */
 .lc-standings-grid {
   display: grid;
@@ -4285,6 +4500,89 @@ a.af-club-btn {
 .clubs-nav .af-club-btn {
   min-width: 0;
   padding: 0.4rem 0.15rem;
+}
+
+.clubs-nav-focus {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 1.25rem;
+  text-align: center;
+}
+
+.clubs-nav-focus-name {
+  font-family: var(--font-oswald), sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--foreground);
+}
+
+.clubs-nav-focus-hint {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Carousel only when JS adds .clubs-nav-pad--carousel (mobile MQ) */
+.clubs-nav-pad--carousel.af-club-pad {
+  display: flex;
+  align-items: center;
+  grid-template-columns: none;
+  gap: 1rem;
+  background: transparent;
+  border: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: calc(50% - 2.25rem);
+  padding-inline: calc(50% - 2.25rem);
+  padding-block: 0.85rem 0.45rem;
+  margin-inline: -1rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.clubs-nav-pad--carousel.af-club-pad::-webkit-scrollbar {
+  display: none;
+}
+
+.clubs-nav-pad--carousel .af-club-btn {
+  box-sizing: border-box;
+  flex: 0 0 4.5rem;
+  width: 4.5rem;
+  height: 4.5rem;
+  min-width: 4.5rem;
+  scroll-snap-align: center;
+  gap: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  opacity: 0.38;
+  transform: scale(0.82);
+  transform-origin: center center;
+  will-change: transform, opacity;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.clubs-nav-pad--carousel .af-club-btn:hover,
+.clubs-nav-pad--carousel .af-club-btn.is-focus,
+.clubs-nav-pad--carousel .af-club-btn.is-on {
+  background: transparent;
+  border: 0;
+  color: var(--foreground);
+  opacity: 1;
+  transform: scale(1.12);
+}
+
+.clubs-nav-pad--carousel .af-club-btn .clubs-nav-crest {
+  width: 56px;
+  height: 56px;
 }
 
 @media (min-width: 640px) {
@@ -6202,6 +6500,23 @@ a.lead-team:hover {
 @media (max-width: 639px) {
   .match-club {
     display: none;
+  }
+}
+
+.match-record {
+  margin: 0;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+  color: rgba(246, 245, 242, 0.72);
+}
+
+@media (min-width: 640px) {
+  .match-record {
+    font-size: 12px;
+    letter-spacing: 0.1em;
   }
 }
 
