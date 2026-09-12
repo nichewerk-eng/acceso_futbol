@@ -14,11 +14,24 @@ type Props = {
   episodeId: string;
 };
 
+/** Remotion Chrome render only works on a machine with the CLI — not on Vercel. */
+function canRenderInBrowser(): boolean {
+  if (typeof window === 'undefined') return false;
+  const host = window.location.hostname;
+  return host === 'localhost' || host === '127.0.0.1';
+}
+
 export function TomaVideoPanel({ episodeId }: Props) {
   const [rec, setRec] = useState<TomaVideoRecord | null>(null);
   const [busy, setBusy] = useState(false);
   const [renderBusy, setRenderBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [localRender, setLocalRender] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    setLocalRender(canRenderInBrowser());
+  }, []);
 
   const load = useCallback(async () => {
     setError(null);
@@ -83,6 +96,18 @@ export function TomaVideoPanel({ episodeId }: Props) {
     }
   }
 
+  const cli = `npm run render:toma -- ${episodeId}`;
+
+  async function copyCli() {
+    try {
+      await navigator.clipboard.writeText(cli);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch {
+      setError('No se pudo copiar. Corre el comando en la terminal del repo.');
+    }
+  }
+
   const plan: TomaVideoPlan | null = rec?.plan ?? null;
   const fileUrl = `/api/toma/video/${encodeURIComponent(episodeId)}/file`;
   const downloadUrl = `${fileUrl}?download=1`;
@@ -98,8 +123,8 @@ export function TomaVideoPanel({ episodeId }: Props) {
         Video para redes
       </h2>
       <p className="mt-2 text-sm leading-6 text-muted">
-        Gráficos sincronizados con el audio. Previsualiza aquí; exporta MP4 para TikTok / Reels /
-        Shorts.
+        Previsualiza aquí. El MP4 se exporta en tu máquina (Remotion + Chrome), no en el sitio
+        publicado.
       </p>
 
       {error ? (
@@ -115,17 +140,16 @@ export function TomaVideoPanel({ episodeId }: Props) {
           disabled={busy}
           onClick={() => void generate(true)}
         >
-          {busy ? 'Armando plan…' : 'Generar video'}
+          {busy ? 'Armando plan…' : 'Generar plan'}
         </button>
-        {plan ? (
+        {plan && localRender ? (
           <button
             type="button"
             className="af-cta-ghost !py-2"
             disabled={renderBusy}
             onClick={() => void renderMp4()}
-            title="Requiere Remotion + Chrome en este entorno (dev/worker)"
           >
-            {renderBusy ? 'Renderizando MP4…' : 'Exportar MP4'}
+            {renderBusy ? 'Renderizando MP4…' : 'Exportar MP4 (local)'}
           </button>
         ) : null}
         {hasVideo ? (
@@ -133,7 +157,28 @@ export function TomaVideoPanel({ episodeId }: Props) {
             Bajar MP4
           </a>
         ) : null}
+        {plan && !localRender ? (
+          <button type="button" className="af-cta-ghost !py-2" onClick={() => void copyCli()}>
+            {copied ? 'Comando copiado' : 'Copiar comando de export'}
+          </button>
+        ) : null}
       </div>
+
+      {plan && !hasVideo ? (
+        <div className="mt-4 rounded-sm border border-line bg-bg-3 px-4 py-3 text-sm text-muted">
+          <p className="font-medium text-foreground">Para bajar el MP4:</p>
+          <ol className="mt-2 list-decimal space-y-1 pl-5">
+            <li>En la carpeta del repo, corre:</li>
+          </ol>
+          <pre className="mt-2 overflow-x-auto bg-brand-blue px-3 py-2 font-mono text-[12px] text-brand-yellow">
+            {cli}
+          </pre>
+          <p className="mt-2">
+            El archivo queda en{' '}
+            <code className="font-mono text-[12px]">.toma-local/{episodeId}.mp4</code>
+          </p>
+        </div>
+      ) : null}
 
       {plan ? (
         <div className="mt-8 overflow-hidden rounded-sm bg-brand-blue">
@@ -158,15 +203,9 @@ export function TomaVideoPanel({ episodeId }: Props) {
         </div>
       ) : (
         <p className="mt-6 text-sm text-muted">
-          Pulsa Generar video para armar el timeline de gráficos.
+          Pulsa Generar plan para armar el timeline de gráficos.
         </p>
       )}
-
-      {!hasVideo && plan ? (
-        <p className="mt-4 text-xs text-muted">
-          CLI: <code className="font-mono">npm run render:toma -- {episodeId}</code>
-        </p>
-      ) : null}
     </section>
   );
 }
