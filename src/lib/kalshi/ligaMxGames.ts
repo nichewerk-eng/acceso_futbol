@@ -1,5 +1,5 @@
 import { ligaMxClubIdFromAbbr } from '@/config/ligaMxLogos';
-import { mexicoDayKey } from '@/lib/radio/phases';
+import { mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
 import {
   fetchKalshiMarkets,
   impliedYesProb,
@@ -47,6 +47,9 @@ const MONTHS = [
   'DEC',
 ] as const;
 
+/** Prefer exact Mexico day, then +1 / −1 (Kalshi often labels late kickoffs on the UTC date). */
+const DAY_LOOKUP_OFFSETS = [0, 1, -1] as const;
+
 function pctLabel(prob: number): string {
   const pct = prob * 100;
   if (pct > 0 && pct < 10) return `${pct.toFixed(1)}%`;
@@ -60,14 +63,18 @@ export function kalshiCodeFromAbbr(abbr?: string | null): string | null {
   return CLUB_ID_TO_KALSHI[clubId] ?? null;
 }
 
+/** `YYYY-MM-DD` → Kalshi day token like `26SEP12`. */
+export function kalshiDayTokenFromKey(dayKey: string): string | null {
+  const [y, m, d] = dayKey.split('-');
+  if (!y || !m || !d) return null;
+  const mon = MONTHS[Number(m) - 1];
+  if (!mon) return null;
+  return `${y.slice(2)}${mon}${d}`;
+}
+
 export function kalshiDayToken(dateIso: string): string | null {
   try {
-    const day = mexicoDayKey(new Date(dateIso));
-    const [y, m, d] = day.split('-');
-    if (!y || !m || !d) return null;
-    const mon = MONTHS[Number(m) - 1];
-    if (!mon) return null;
-    return `${y.slice(2)}${mon}${d}`;
+    return kalshiDayTokenFromKey(mexicoDayKey(new Date(dateIso)));
   } catch {
     return null;
   }
@@ -178,6 +185,19 @@ export function buildLigaMxGamesBoard(
   };
 }
 
+function pickPairOdds(
+  board: KalshiGamesBoard,
+  dayToken: string,
+  home: string,
+  away: string
+): KalshiMatchOdds | null {
+  return (
+    board.byPair[pairKey(dayToken, home, away)] ??
+    board.byEvent[expectedEventTicker(dayToken, home, away)] ??
+    null
+  );
+}
+
 export function lookupKalshiMatchOdds(
   board: KalshiGamesBoard | null | undefined,
   dateIso: string,
@@ -187,14 +207,22 @@ export function lookupKalshiMatchOdds(
   if (!board) return null;
   const home = kalshiCodeFromAbbr(homeAbbr);
   const away = kalshiCodeFromAbbr(awayAbbr);
-  const day = kalshiDayToken(dateIso);
-  if (!home || !away || !day) return null;
+  if (!home || !away) return null;
 
-  const direct = board.byPair[pairKey(day, home, away)];
-  if (direct) return direct;
+  let mexicoDay: string;
+  try {
+    mexicoDay = mexicoDayKey(new Date(dateIso));
+  } catch {
+    return null;
+  }
 
-  const et = expectedEventTicker(day, home, away);
-  return board.byEvent[et] ?? null;
+  for (const offset of DAY_LOOKUP_OFFSETS) {
+    const day = kalshiDayTokenFromKey(shiftDayKey(mexicoDay, offset));
+    if (!day) continue;
+    const hit = pickPairOdds(board, day, home, away);
+    if (hit) return hit;
+  }
+  return null;
 }
 
 export async function fetchLigaMxGamesBoard(): Promise<KalshiGamesBoard> {

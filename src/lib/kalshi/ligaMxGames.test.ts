@@ -62,4 +62,44 @@ describe('ligaMxGames', () => {
     assert.equal(odds.awayPct, '28%');
     assert.equal(odds.drawPct, '26%');
   });
+
+  it('falls back ±1 day when Kalshi labels the event on the UTC date', () => {
+    const event = 'KXLIGAMXGAME-26SEP13MONTIG';
+    const board = buildLigaMxGamesBoard([
+      m({
+        ticker: `${event}-MON`,
+        event_ticker: event,
+        yes_sub_title: 'Monterrey',
+        last_price_dollars: '0.42',
+        yes_bid_dollars: '0.41',
+        yes_ask_dollars: '0.43',
+      }),
+      m({
+        ticker: `${event}-TIG`,
+        event_ticker: event,
+        yes_sub_title: 'Tigres',
+        last_price_dollars: '0.31',
+        yes_bid_dollars: '0.30',
+        yes_ask_dollars: '0.32',
+      }),
+      m({
+        ticker: `${event}-TIE`,
+        event_ticker: event,
+        yes_sub_title: 'Tie',
+        last_price_dollars: '0.27',
+        yes_bid_dollars: '0.26',
+        yes_ask_dollars: '0.28',
+      }),
+    ]);
+
+    // Mexico kickoff Sat Sep 12 8:10pm → we key 26SEP12; Kalshi filed 26SEP13.
+    const odds = lookupKalshiMatchOdds(board, '2026-09-13T02:10:00.000Z', 'MTY', 'UANL');
+    assert.ok(odds);
+    assert.equal(odds.eventTicker, event);
+    assert.equal(odds.homeCode, 'MON');
+    assert.equal(odds.awayCode, 'TIG');
+    assert.equal(odds.homePct, '42%');
+    assert.equal(odds.awayPct, '31%');
+    assert.equal(odds.drawPct, '27%');
+  });
 });
