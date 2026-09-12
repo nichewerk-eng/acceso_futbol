@@ -42,7 +42,15 @@ export async function anthropicChat(
     });
     const out = text?.trim();
     return out && out.length > 0 ? out : null;
-  } catch {
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const cause =
+      err instanceof Error && err.cause instanceof Error
+        ? err.cause.message
+        : err instanceof Error && err.cause && typeof err.cause === 'object' && 'code' in err.cause
+          ? String((err.cause as { code?: string }).code)
+          : '';
+    console.error('anthropic_chat', msg.slice(0, 240), cause.slice(0, 120));
     return null;
   }
 }

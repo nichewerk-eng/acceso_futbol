@@ -9,6 +9,9 @@ import {
   tryBriefLock,
   type NewsBriefEpisode,
 } from '@/lib/radio/briefEpisode';
+import { setAudio } from '@/lib/radio/cache';
+import { templateCableBrief } from '@/lib/radio/cableBrief';
+import { NEWS_OUTRO, withSpokenOutro } from '@/lib/radio/signOff';
 import { elevenLabsConfigured, synthesizeBytes } from '@/lib/radio/tts';
 import {
   briefingStories,
@@ -21,6 +24,7 @@ import {
   generateBriefSlot,
   playableBriefSlot,
 } from '@/lib/radio/voiceSchedule';
+import type { Story } from '@/lib/news/types';
 
 export type BriefGenerateSkip =
   | 'no_voice'
@@ -35,6 +39,7 @@ export type BriefGenerateSkip =
 export type BriefGenerateResult = {
   episode: NewsBriefEpisode | null;
   skip?: BriefGenerateSkip;
+  detail?: string;
 };
 
 function blobEnabled(): boolean {
@@ -43,12 +48,25 @@ function blobEnabled(): boolean {
   );
 }
 
+/** Offline spoken cut when Anthropic is down / out of credits. */
+function templateBriefTranscript(stories: Story[], slot: 'am' | 'pm'): string {
+  const desk = briefDeskTitle(slot);
+  const segs = templateCableBrief(stories, null, 'caliente');
+  const body = segs.map((s) => s.text).join(' ');
+  return withSpokenOutro(`${desk}. ${body}`, NEWS_OUTRO);
+}
+
 async function storeBriefAudio(
   id: string,
   bytes: Buffer,
   contentType: string
 ): Promise<{ audioUrl: string; blobPath?: string } | null> {
-  if (!blobEnabled()) return null;
+  const audioUrl = `/api/radio/brief-audio/${encodeURIComponent(id)}`;
+  // Local / no-Blob: keep MP3 in process memory so ▶ still works in `next dev`.
+  if (!blobEnabled()) {
+    setAudio(id, bytes, contentType);
+    return { audioUrl };
+  }
   try {
     const blobPath = briefBlobPath(id, contentType);
     await put(blobPath, bytes, {
@@ -58,18 +76,18 @@ async function storeBriefAudio(
       allowOverwrite: true,
       multipart: bytes.length > 4_000_000,
     });
-    return {
-      blobPath,
-      audioUrl: `/api/radio/brief-audio/${encodeURIComponent(id)}`,
-    };
-  } catch {
+    setAudio(id, bytes, contentType);
+    return { blobPath, audioUrl };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'blob_put';
+    console.error('news-brief-blob', msg.slice(0, 200));
     return null;
   }
 }
 
 /**
  * Stories on the NEWS rail → one spoken script → one ElevenLabs MP3.
- * Play is Blob-only.
+ * Play prefers Blob; falls back to in-memory audio on the same isolate.
  */
 export async function maybeGenerateNewsBrief(opts?: {
   force?: boolean;
@@ -104,20 +122,43 @@ export async function maybeGenerateNewsBrief(opts?: {
         result = { episode: existing, skip: existing?.audioUrl ? 'exists' : 'locked' };
         return existing;
       }
-      const transcript = await writeNewsBriefNarration(stories, ref.slot);
+      let scriptSource: 'anthropic' | 'template' = 'anthropic';
+      let transcript = await writeNewsBriefNarration(stories, ref.slot);
       if (!transcript) {
-        result = { episode: existing, skip: 'no_script' };
+        transcript = templateBriefTranscript(stories, ref.slot);
+        scriptSource = 'template';
+        console.warn('news-brief-script-fallback', { id: storeKey, reason: 'anthropic_null' });
+      }
+      if (!transcript || transcript.length < 80) {
+        result = {
+          episode: existing,
+          skip: 'no_script',
+          detail: 'anthropic_and_template_failed',
+        };
         return existing;
       }
-      console.log('news-brief-tts', { id: storeKey, chars: transcript.length, stories: stories.length });
+      console.log('news-brief-tts', {
+        id: storeKey,
+        chars: transcript.length,
+        stories: stories.length,
+        scriptSource,
+      });
       const audio = await synthesizeBytes(transcript, 'caliente');
       if (!audio) {
-        result = { episode: existing, skip: 'no_tts' };
+        result = {
+          episode: existing,
+          skip: 'no_tts',
+          detail: 'elevenlabs_failed — check key, voice id, credits',
+        };
         return existing;
       }
       const stored = await storeBriefAudio(storeKey, audio.bytes, audio.contentType);
       if (!stored) {
-        result = { episode: existing, skip: 'no_store' };
+        result = {
+          episode: existing,
+          skip: 'no_store',
+          detail: 'blob_required_or_put_failed — set BLOB_READ_WRITE_TOKEN on Vercel',
+        };
         return existing;
       }
       const episode: NewsBriefEpisode = {
@@ -134,7 +175,10 @@ export async function maybeGenerateNewsBrief(opts?: {
         sources: [...new Set(stories.map((s) => s.sourceLabel))],
       };
       await putStoredBrief(episode);
-      result = { episode };
+      result = {
+        episode,
+        detail: scriptSource === 'template' ? 'script_via_template_fallback' : undefined,
+      };
       return episode;
     })()
   );

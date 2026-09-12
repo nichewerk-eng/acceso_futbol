@@ -1,6 +1,7 @@
 import { get } from '@vercel/blob';
 import { NextResponse } from 'next/server';
 import { briefBlobPath } from '@/lib/radio/briefEpisode';
+import { getAudio } from '@/lib/radio/cache';
 import { parseNewsBriefId, recordingAudioHeaders, recordingFileName } from '@/lib/share/recordingShare';
 
 export const maxDuration = 60;
@@ -16,6 +17,17 @@ export async function GET(
   }
 
   const download = new URL(req.url).searchParams.get('download') === '1';
+  const mem = getAudio(decoded);
+  if (mem) {
+    return new NextResponse(new Uint8Array(mem.bytes), {
+      headers: recordingAudioHeaders({
+        contentType: mem.contentType,
+        fileName: recordingFileName('news', decoded, mem.contentType),
+        download,
+      }),
+    });
+  }
+
   const paths = [
     briefBlobPath(decoded, 'audio/mpeg'),
     briefBlobPath(decoded, 'audio/wav'),

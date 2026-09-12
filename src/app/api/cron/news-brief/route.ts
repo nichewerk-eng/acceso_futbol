@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { maybeGenerateNewsBrief } from '@/lib/radio/generateBrief';
+import { newsBriefDeskStatus } from '@/lib/radio/newsBriefDesk';
 
 export const maxDuration = 120;
 
@@ -30,8 +31,9 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   const headers = { 'Cache-Control': 'no-store' };
+  const desk = newsBriefDeskStatus();
   try {
-    const { episode, skip } = await maybeGenerateNewsBrief({ force });
+    const { episode, skip, detail } = await maybeGenerateNewsBrief({ force });
     const body = {
       ok: true,
       generated: Boolean(episode?.audioUrl),
@@ -39,11 +41,18 @@ export async function GET(req: Request) {
       audioUrl: episode?.audioUrl ?? null,
       slot: episode?.slot ?? null,
       skip: skip ?? null,
+      detail: detail ?? null,
       forced: force,
+      desk,
     };
     console.log('news-brief', body);
     return NextResponse.json(body, { headers });
-  } catch {
-    return NextResponse.json({ ok: false, generated: false }, { status: 502, headers });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'unknown';
+    console.error('news-brief-crash', msg.slice(0, 200));
+    return NextResponse.json(
+      { ok: false, generated: false, skip: null, detail: msg.slice(0, 200), desk },
+      { status: 502, headers }
+    );
   }
 }

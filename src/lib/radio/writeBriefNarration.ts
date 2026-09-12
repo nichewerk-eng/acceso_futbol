@@ -85,6 +85,9 @@ Formato:
   });
   if (!raw) return null;
   const text = cleanNarration(raw);
-  if (text.length < 120) return null;
+  if (text.length < 120) {
+    console.error('news-brief-script-short', text.length);
+    return null;
+  }
   return withSpokenOutro(text, NEWS_OUTRO);
 }
