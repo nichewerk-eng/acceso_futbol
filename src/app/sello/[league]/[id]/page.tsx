@@ -21,13 +21,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!fixture) return { title: 'Sello' };
   const mint = mintFromFixture(fixture);
   const copy = selloShareCopy(mint);
+  const description =
+    mint.kind === 'pre'
+      ? `${mint.home.abbreviation} vs ${mint.away.abbreviation} · Acceso Futbol`
+      : `${mint.home.abbreviation} ${mint.home.score}-${mint.away.score} ${mint.away.abbreviation} · Acceso Futbol`;
   return {
     title: copy.title,
-    description: copy.text,
+    description,
     alternates: { canonical: absoluteUrl(path) },
     openGraph: {
       title: copy.title,
-      description: copy.text,
+      description,
       url: absoluteUrl(path),
       type: 'website',
       locale: 'es_MX',
@@ -35,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     twitter: {
       card: 'summary_large_image',
       title: copy.title,
-      description: copy.text,
+      description,
     },
   };
 }

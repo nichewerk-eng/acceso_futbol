@@ -58,7 +58,7 @@ export function SelloShare({
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const url = `${origin}${mint.href}`;
     const copy = selloShareCopy(mint);
-    const caption = `${copy.text}\n${url}`.trim();
+    const caption = url;
     const cardUrl = `${origin}${selloCardPath(mint.league, mint.fixtureId, mint.gravityClubId)}`;
     setBusy(true);
     trackClient('Sello share', { kind: mint.kind, league: mint.league });
@@ -77,14 +77,14 @@ export function SelloShare({
       }
       if (typeof navigator.share === 'function') {
         try {
-          await navigator.share({ title: copy.title, text: copy.text, url });
+          await navigator.share({ title: copy.title, url });
           return;
         } catch (err) {
           if (isAbort(err)) return;
         }
       }
       if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(`${copy.title}\n${caption}`);
+        await navigator.clipboard.writeText(`${copy.title}\n${url}`);
       }
     } finally {
       setBusy(false);

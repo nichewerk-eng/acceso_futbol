@@ -56,10 +56,8 @@ export function selloCopy(opts: {
         ? 'Clásico nacional. El país se detiene.'
         : lockNick
           ? `Hoy sale ${lockNick}.`
-          : `${home} contra ${away}.`,
-      line: lockNick
-        ? 'Tu club. Horario y canal en Acceso.'
-        : '¿Vas a verlo sin contexto?',
+          : '',
+      line: lockNick ? 'Tu club. Horario y canal en Acceso.' : '',
     };
   }
 

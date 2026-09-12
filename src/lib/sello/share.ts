@@ -33,6 +33,6 @@ export function selloShareCopy(mint: SelloMint): { title: string; text: string }
     mint.kind === 'pre'
       ? `${mint.home.abbreviation} vs ${mint.away.abbreviation} · Acceso Futbol`
       : `${pair} · Acceso Futbol`;
-  const text = [mint.headline, mint.line].filter(Boolean).join(' ');
-  return { title, text };
+  // Caption stays empty — the share PNG already carries the matchup; skip the poster line.
+  return { title, text: '' };
 }
