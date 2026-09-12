@@ -1,12 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { leaguePath } from '@/lib/radio/phases';
 import type { Fixture, FixtureScorer } from '@/lib/sports/types';
 
 const HOLD_MS = 4800;
+/** Keep marquee speed steady as we add copies for wide viewports. */
+const TAPE_PX_PER_SEC = 48;
 
 function scoreN(score: string | null | undefined) {
   const n = Number(score);
@@ -74,6 +76,9 @@ export function HeroTablero({
   const ids = board.map((f) => f.id).join(',');
   const [paused, setPaused] = useState(false);
   const [index, setIndex] = useState(0);
+  const [tapeCopies, setTapeCopies] = useState(2);
+  const [tickerDuration, setTickerDuration] = useState('28s');
+  const ribbonRef = useRef<HTMLDivElement>(null);
   const cycling = board.length > 1 && !reduce;
 
   useEffect(() => {
@@ -92,10 +97,38 @@ export function HeroTablero({
     return () => document.removeEventListener('visibilitychange', onVis);
   }, []);
 
+  // Duplicate the chip tape until each half of the track is ≥ the ribbon width,
+  // so translateX(-50%) never reveals an empty gap on wide screens.
+  useLayoutEffect(() => {
+    if (reduce || board.length === 0) return;
+    const ribbon = ribbonRef.current;
+    if (!ribbon) return;
+
+    const measure = () => {
+      const tape = ribbon.querySelector<HTMLElement>('.hero-tablero-tape');
+      if (!tape) return;
+      const tapeW = tape.scrollWidth;
+      const viewW = ribbon.clientWidth;
+      if (tapeW <= 0 || viewW <= 0) return;
+      const perHalf = Math.max(1, Math.ceil(viewW / tapeW));
+      const nextCopies = perHalf * 2;
+      setTapeCopies((c) => (c === nextCopies ? c : nextCopies));
+      const secs = Math.max(12, (tapeW * perHalf) / TAPE_PX_PER_SEC);
+      const nextDur = `${secs.toFixed(1)}s`;
+      setTickerDuration((d) => (d === nextDur ? d : nextDur));
+    };
+
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(ribbon);
+    return () => ro.disconnect();
+  }, [reduce, ids, board.length]);
+
   if (board.length === 0) return null;
 
   const featured = board[Math.min(index, board.length - 1)]!;
   const go = (dir: -1 | 1) => setIndex((i) => (i + dir + board.length) % board.length);
+  const ribbonCopies = reduce ? [0] : Array.from({ length: tapeCopies }, (_, i) => i);
 
   return (
     <div
@@ -170,16 +203,25 @@ export function HeroTablero({
         ) : null}
       </div>
 
-      <div className="hero-tablero-ribbon" aria-label="Cinta de marcadores">
+      <div
+        ref={ribbonRef}
+        className="hero-tablero-ribbon"
+        aria-label="Cinta de marcadores"
+      >
         <div
           className={[
             'hero-tablero-track',
             reduce ? 'is-static' : 'ticker-scroll',
             paused && !reduce ? 'is-paused' : '',
           ].join(' ')}
+          style={
+            reduce
+              ? undefined
+              : ({ '--ticker-duration': tickerDuration } as CSSProperties)
+          }
         >
-          {(reduce ? [0] : [0, 1]).map((copy) => (
-            <p key={copy} className="hero-tablero-tape" aria-hidden={copy === 1}>
+          {ribbonCopies.map((copy) => (
+            <p key={copy} className="hero-tablero-tape" aria-hidden={copy > 0}>
               {board.map((f) => (
                 <span key={`${copy}-${f.id}`} className="hero-tablero-chip-wrap">
                   <Link href={`/partido/${leaguePath(f.league)}/${f.id}`} className="hero-tablero-chip">

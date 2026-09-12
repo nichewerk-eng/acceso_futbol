@@ -8295,7 +8295,7 @@ a.lead-team:hover {
 }
 
 .ticker-scroll {
-  animation: ticker 28s linear infinite;
+  animation: ticker var(--ticker-duration, 28s) linear infinite;
 }
 
 @keyframes ticker {
