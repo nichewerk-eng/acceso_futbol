@@ -1,14 +1,16 @@
 'use client';
 
+import { ShareIcon } from '@/components/sello/SelloShare';
 import { xiShareCopy } from '@/lib/share/xiShare';
 import type { MatchSnapshot } from '@/lib/sports/types';
 
 type Props = {
   match: MatchSnapshot;
   league: string;
+  className?: string;
 };
 
-export function MatchXiShare({ match, league }: Props) {
+export function MatchXiShare({ match, league, className = 'af-share-icon' }: Props) {
   const copy = xiShareCopy(match);
 
   async function share() {
@@ -33,11 +35,13 @@ export function MatchXiShare({ match, league }: Props) {
   return (
     <button
       type="button"
-      className="xi-share"
+      className={className}
       data-testid="match-xi-share"
+      aria-label="Compartir XI"
+      title="Compartir XI"
       onClick={() => void share()}
     >
-      Compartir XI
+      <ShareIcon />
     </button>
   );
 }

@@ -28,7 +28,7 @@ import { mergeMatchSnapshot } from '@/lib/sports/mergeMatchSnapshot';
 import { recordFromTabla } from '@/lib/sports/standingsRecord';
 import { MatchChapterSkeleton } from '@/components/partido/MatchChapterSkeleton';
 import { MatchXiShare } from '@/components/partido/MatchXiShare';
-import { XiPitch } from '@/components/partido/XiPitch';
+import { XiLineupSwitch } from '@/components/partido/XiLineupSwitch';
 import { KalshiMatchOddsLine } from '@/components/kalshi/KalshiMatchOdds';
 import { SelloShare } from '@/components/sello/SelloShare';
 import { useGravity } from '@/contexts/GravityContext';
@@ -534,7 +534,7 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
   const [match, setMatch] = useState<MatchSnapshot | null>(initialMatch);
   const [error, setError] = useState(false);
   const [tab, setTab] = useState<TabId | null>(
-    initialMatch ? (initialMatch.state === 'pre' ? 'contexto' : 'momentos') : null
+    initialMatch ? (initialMatch.state === 'pre' ? 'alineacion' : 'momentos') : null
   );
   const [feed, setFeed] = useState<FeedFilter>('clave');
   const userTz = useDeviceTimeZone();
@@ -563,7 +563,7 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
     setRichReady(hasContexto(initialMatch));
     setTab(
       tabFromQuery ??
-        (initialMatch ? (initialMatch.state === 'pre' ? 'contexto' : 'momentos') : null)
+        (initialMatch ? (initialMatch.state === 'pre' ? 'alineacion' : 'momentos') : null)
     );
 
     let pendingCtx: {
@@ -585,7 +585,7 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
       setError(false);
       setTab((prev) => {
         if (prev) return prev;
-        return d.state === 'pre' ? 'contexto' : 'momentos';
+        return d.state === 'pre' ? 'alineacion' : 'momentos';
       });
     };
 
@@ -724,14 +724,14 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
     if (!match) return [] as { id: TabId; label: string }[];
     if (match.state === 'pre') {
       return [
-        { id: 'contexto' as const, label: 'Contexto' },
         { id: 'alineacion' as const, label: 'Alineación' },
+        { id: 'contexto' as const, label: 'Contexto' },
       ];
     }
     return [
       { id: 'momentos' as const, label: 'Momentos' },
-      { id: 'contexto' as const, label: 'Contexto' },
       { id: 'alineacion' as const, label: 'Alineación' },
+      { id: 'contexto' as const, label: 'Contexto' },
       { id: 'datos' as const, label: 'Datos' },
     ];
   }, [match]);
@@ -750,8 +750,7 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
     );
   }
 
-  const waitingForChapter =
-    !match || !tab || (match.state === 'pre' && !richReady);
+  const waitingForChapter = !match || !tab;
 
   if (waitingForChapter || !match || !tab) {
     return <MatchChapterSkeleton />;
@@ -816,9 +815,19 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
                     ? ' · El Tri'
                     : ''}
           </h1>
-          <p className="match-chapter-kicker" aria-hidden>
-            {chapterKicker(match)}
-          </p>
+          <div className="match-chapter-kicker-row">
+            <p className="match-chapter-kicker" aria-hidden>
+              {chapterKicker(match)}
+            </p>
+            {sello ? (
+              <SelloShare
+                mint={sello}
+                className="af-share-icon match-share-icon"
+                testId="match-share"
+                iconOnly
+              />
+            ) : null}
+          </div>
 
           <div className="match-scoreboard">
             <div className="match-side">
@@ -947,7 +956,6 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
                     {match.home.abbreviation} {h2h.homeWins} · {h2h.draws}E · {h2h.awayWins}{' '}
                     {match.away.abbreviation}
                   </span>
-                  <span className="match-h2h-tease-more">Ver historial →</span>
                 </button>
               )}
             </div>
@@ -971,9 +979,6 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
                 compact
               />
             </div>
-            {sello ? (
-              <SelloShare mint={sello} className="match-share" testId="match-share" />
-            ) : null}
           </div>
         </div>
       </section>
@@ -1122,17 +1127,20 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
 
           {tab === 'alineacion' && (
             <section className="match-lineups">
-              <div className="match-lineups-head">
-                <p className="af-kicker">
-                  <span className="af-tele">Alineaciones</span>
-                </p>
-                {matchHasXi(match) ? <MatchXiShare match={match} league={league} /> : null}
-              </div>
-              {match.referee && (
-                <p className="match-referee-inline">
-                  Árbitro · <strong>{match.referee}</strong>
-                </p>
-              )}
+              {match.referee || matchHasXi(match) ? (
+                <div className="match-lineups-meta">
+                  {match.referee ? (
+                    <p className="match-referee-inline">
+                      Árbitro · <strong>{match.referee}</strong>
+                    </p>
+                  ) : (
+                    <span className="match-referee-inline is-empty" aria-hidden />
+                  )}
+                  {matchHasXi(match) ? (
+                    <MatchXiShare match={match} league={league} />
+                  ) : null}
+                </div>
+              ) : null}
               {(match.lineups ?? []).length === 0 ? (
                 <p className="match-empty">
                   {pre
@@ -1140,18 +1148,10 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
                     : 'Alineaciones no disponibles.'}
                 </p>
               ) : (
-                <>
-                  <div className="xi-poster-grid">
-                    {(match.lineups ?? []).map((t) => (
-                      <XiPitch key={t.side} team={t} />
-                    ))}
-                  </div>
-                  <div className="match-lineup-grid">
-                    {(match.lineups ?? []).map((t) => (
-                      <LineupSide key={t.side} team={t} />
-                    ))}
-                  </div>
-                </>
+                <XiLineupSwitch
+                  teams={match.lineups ?? []}
+                  list={(t) => <LineupSide key={t.side} team={t} />}
+                />
               )}
             </section>
           )}

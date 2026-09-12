@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { PulseNav } from '@/components/living-room/PulseNav';
 import { MatchXiShare } from '@/components/partido/MatchXiShare';
-import { XiPitch } from '@/components/partido/XiPitch';
+import { XiLineupSwitch } from '@/components/partido/XiLineupSwitch';
 import { matchHasXi } from '@/lib/share/xiShare';
 import type { MatchSnapshot } from '@/lib/sports/types';
 
@@ -39,10 +39,8 @@ export function XiPoster({
         </div>
 
         {has ? (
-          <div className="xi-poster-grid mt-8">
-            {(match.lineups ?? []).map((t) => (
-              <XiPitch key={t.side} team={t} />
-            ))}
+          <div className="mt-8">
+            <XiLineupSwitch teams={match.lineups ?? []} />
           </div>
         ) : (
           <p className="mt-8 max-w-lg font-mono text-[13px] leading-6 text-muted">

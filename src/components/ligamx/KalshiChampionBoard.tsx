@@ -12,19 +12,9 @@ function Board({ board }: { board: KalshiChampionBoard }) {
   return (
     <div data-testid="ligamx-kalshi-champion">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3 border-b border-line pb-3">
-        <div>
-          <p className="af-tele text-foreground">
-            <span className="text-signal">AF</span>
-            ://MERCADO
-          </p>
-          <h3 className="mt-1 font-display text-xl font-bold uppercase tracking-wide sm:text-2xl">
-            {board.label}
-          </h3>
-          <p className="mt-2 max-w-xl text-sm text-muted">
-            Probabilidad implícita en Kalshi (mercado de predicción). No es cuota de casa de
-            apuestas.
-          </p>
-        </div>
+        <h3 className="font-display text-xl font-bold uppercase tracking-wide sm:text-2xl">
+          Probabilidades de Kalshi
+        </h3>
         <a
           href={board.kalshiHref}
           target="_blank"

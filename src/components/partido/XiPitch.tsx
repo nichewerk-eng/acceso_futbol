@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { ClubLogo } from '@/components/brand/ClubLogo';
 import { passDuration, XiBall } from '@/components/partido/XiBall';
-import { xiConfirmed, xiKit, xiPins, type XiPin } from '@/lib/share/xiShare';
+import { xiKit, xiPins, type XiPin } from '@/lib/share/xiShare';
 import type { LineupPlayer, TeamLineup } from '@/lib/sports/types';
 
 function PitchLines() {
@@ -56,6 +55,12 @@ function BitSprite({ player }: { player: LineupPlayer }) {
   );
 }
 
+function playerLastName(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length <= 1) return name.trim();
+  return parts[parts.length - 1] ?? name;
+}
+
 function playerLabel(player: LineupPlayer): string {
   return player.jersey != null ? `${player.jersey} · ${player.name}` : player.name;
 }
@@ -66,7 +71,6 @@ function starterGkId(pins: XiPin[]): string | null {
 
 export function XiPitch({ team }: { team: TeamLineup }) {
   const pins = xiPins(team);
-  const confirmed = xiConfirmed(team);
   const [hoverId, setHoverId] = useState<string | null>(null);
   const [ballId, setBallId] = useState<string | null>(() => starterGkId(pins));
   const [passKey, setPassKey] = useState(0);
@@ -86,16 +90,6 @@ export function XiPitch({ team }: { team: TeamLineup }) {
 
   return (
     <div className="xi-pitch" data-testid={`xi-pitch-${team.side}`}>
-      <div className="xi-pitch-head">
-        <ClubLogo abbr={team.abbreviation} name={team.teamName} size="sm" />
-        <p className="xi-pitch-title">{team.abbreviation}</p>
-        <p className="af-tele">
-          {team.side === 'home' ? '1P' : '2P'}
-          {' · '}
-          {team.formation ? `${team.formation} · ` : ''}
-          {confirmed ? 'XI confirmado' : 'XI parcial'}
-        </p>
-      </div>
       <div className="xi-pitch-board" onPointerLeave={() => setHoverId(null)}>
         <PitchLines />
         {pins.map((pin) => {
@@ -125,6 +119,7 @@ export function XiPitch({ team }: { team: TeamLineup }) {
               onClick={() => passTo(pin)}
             >
               <BitSprite player={pin.player} />
+              <span className="xi-pin-name">{playerLastName(pin.player.name)}</span>
             </button>
           );
         })}
