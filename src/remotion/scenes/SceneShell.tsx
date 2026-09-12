@@ -5,12 +5,17 @@ import { AF, fontDisplay, fontMono } from '../theme';
 export function SceneShell({
   children,
   accent,
+  product = 'toma',
+  rightLabel = 'LIGA MX',
 }: {
   children: React.ReactNode;
   accent?: string;
+  product?: 'toma' | 'news';
+  rightLabel?: string;
 }) {
   const frame = useCurrentFrame();
   const scan = interpolate(frame % 90, [0, 90], [0, 100]);
+  const tag = product === 'news' ? 'NEWS' : 'TOMA';
 
   return (
     <AbsoluteFill
@@ -66,9 +71,9 @@ export function SceneShell({
       >
         <span>
           <span style={{ color: AF.orange }}>AF</span>
-          ://TOMA
+          ://{tag}
         </span>
-        <span>LIGA MX</span>
+        <span>{rightLabel}</span>
       </div>
       <AbsoluteFill style={{ padding: '140px 56px 220px' }}>{children}</AbsoluteFill>
     </AbsoluteFill>

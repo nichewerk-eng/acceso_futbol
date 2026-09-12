@@ -4,12 +4,18 @@ import type { SceneHeadline } from '@/lib/toma/video/types';
 import { AF, fontDisplay, fontMono } from '../theme';
 import { SceneShell, useSceneEnter } from './SceneShell';
 
-export function HeadlineScene({ scene }: { scene: SceneHeadline }) {
+export function HeadlineScene({
+  scene,
+  product = 'toma',
+}: {
+  scene: SceneHeadline;
+  product?: 'toma' | 'news';
+}) {
   const frame = useCurrentFrame();
   const enter = useSceneEnter(frame);
 
   return (
-    <SceneShell>
+    <SceneShell product={product} rightLabel={product === 'news' ? 'NOTICIAS' : 'LIGA MX'}>
       <div style={{ ...enter, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         {scene.kicker ? (
           <p style={{ margin: 0, fontFamily: fontMono, letterSpacing: '0.18em', color: AF.orange, fontSize: 26 }}>

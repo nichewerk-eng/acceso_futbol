@@ -12,7 +12,8 @@ import {
 import { setAudio } from '@/lib/radio/cache';
 import { templateCableBrief } from '@/lib/radio/cableBrief';
 import { NEWS_OUTRO, withSpokenOutro } from '@/lib/radio/signOff';
-import { elevenLabsConfigured, synthesizeBytes } from '@/lib/radio/tts';
+import { elevenLabsConfigured, synthesizeBytes, synthesizeBytesWithTimestamps } from '@/lib/radio/tts';
+import { storyBeatsFromStories } from '@/lib/news/video/storyAssets';
 import {
   briefingStories,
   storiesSourceHash,
@@ -143,7 +144,9 @@ export async function maybeGenerateNewsBrief(opts?: {
         stories: stories.length,
         scriptSource,
       });
-      const audio = await synthesizeBytes(transcript, 'caliente');
+      const audio =
+        (await synthesizeBytesWithTimestamps(transcript, 'caliente')) ??
+        (await synthesizeBytes(transcript, 'caliente'));
       if (!audio) {
         result = {
           episode: existing,
@@ -161,6 +164,12 @@ export async function maybeGenerateNewsBrief(opts?: {
         };
         return existing;
       }
+      const storySnap = storyBeatsFromStories(stories).map((s) => ({
+        title: s.title,
+        sourceLabel: s.sourceLabel,
+        summary: s.summary,
+        accesoLine: s.accesoLine,
+      }));
       const episode: NewsBriefEpisode = {
         id: storeKey,
         dayKey: ref.dayKey,
@@ -173,8 +182,22 @@ export async function maybeGenerateNewsBrief(opts?: {
         contentType: audio.contentType,
         generatedAt: new Date().toISOString(),
         sources: [...new Set(stories.map((s) => s.sourceLabel))],
+        stories: storySnap,
+        alignment: audio.alignment,
       };
       await putStoredBrief(episode);
+      void import('@/lib/news/video/buildPlan')
+        .then(({ buildNewsVideoPlan }) =>
+          buildNewsVideoPlan({
+            episodeId: episode.id,
+            force: true,
+            alignment: audio.alignment,
+            stories: storyBeatsFromStories(stories),
+          })
+        )
+        .catch((err) =>
+          console.error('news-video-plan', err instanceof Error ? err.message : err)
+        );
       result = {
         episode,
         detail: scriptSource === 'template' ? 'script_via_template_fallback' : undefined,

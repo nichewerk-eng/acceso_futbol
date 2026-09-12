@@ -15,6 +15,19 @@ export type NewsBriefEpisode = {
   contentType: string;
   generatedAt: string;
   sources: string[];
+  /** Snapshot of on-screen notes for video scene planning. */
+  stories?: {
+    title: string;
+    sourceLabel: string;
+    summary?: string;
+    accesoLine?: string;
+  }[];
+  /** ElevenLabs character alignment when TTS used with-timestamps. */
+  alignment?: {
+    characters: string[];
+    character_start_times_seconds: number[];
+    character_end_times_seconds: number[];
+  };
 };
 
 const EPISODE_TTL_MS = 4 * 24 * 60 * 60_000;

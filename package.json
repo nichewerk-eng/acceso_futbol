@@ -13,7 +13,8 @@
     "test:sello": "npx tsx --test src/lib/sello/mint.test.ts",
     "process-logo": "node scripts/process-logo.mjs",
     "remotion": "remotion studio src/remotion/index.ts --port=3333",
-    "render:toma": "npx tsx scripts/render-toma.ts"
+    "render:toma": "npx tsx scripts/render-toma.ts",
+    "render:news": "npx tsx scripts/render-news.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.36",

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { PulseNav } from '@/components/living-room/PulseNav';
 import { RecordingListen } from '@/components/living-room/RecordingListen';
+import { NewsVideoPanel } from '@/components/living-room/NewsVideoPanel';
 import { SiteFooter } from '@/components/home/SiteFooter';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { getStoredBriefById } from '@/lib/radio/briefEpisode';
@@ -99,6 +100,9 @@ export default async function NewsListenPage({ params }: Props) {
           backHref="/#noticias"
           backLabel="Lo que prende"
         />
+        <div className="mx-auto max-w-3xl px-4 pb-16 sm:px-6">
+          <NewsVideoPanel episodeId={ep.id} />
+        </div>
       </main>
       <SiteFooter />
     </div>
