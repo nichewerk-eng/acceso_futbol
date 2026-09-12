@@ -6801,10 +6801,6 @@ a.lead-team:hover {
   max-width: 40rem;
 }
 
-.match-contexto.has-tabla {
-  max-width: none;
-}
-
 .match-contexto-main {
   display: grid;
   gap: 2rem;
@@ -6812,28 +6808,12 @@ a.lead-team:hover {
   max-width: 40rem;
 }
 
-.match-contexto.has-tabla .match-tabla {
-  padding-top: 1.25rem;
-  border-top: 1px solid var(--line);
+.match-tabla-panel {
+  max-width: 28rem;
 }
 
-@media (min-width: 960px) {
-  .match-contexto.has-tabla {
-    grid-template-columns: minmax(0, 1fr) minmax(15.5rem, 19rem);
-    gap: 2.25rem 2.75rem;
-    align-items: start;
-  }
-
-  .match-contexto.has-tabla .match-contexto-main {
-    max-width: none;
-  }
-
-  .match-contexto.has-tabla .match-tabla {
-    position: sticky;
-    top: 1rem;
-    padding-top: 0;
-    border-top: 0;
-  }
+.match-tabla-panel .match-tabla {
+  width: 100%;
 }
 
 .match-contexto-label {

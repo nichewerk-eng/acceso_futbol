@@ -38,7 +38,7 @@ import { commentStamp } from '@/lib/sports/localizeComment';
 import { applyVarNarrative } from '@/lib/sports/keyEvents';
 
 type Props = { league: string; id: string; initialMatch?: MatchSnapshot | null };
-type TabId = 'contexto' | 'momentos' | 'alineacion' | 'datos' | 'radio';
+type TabId = 'contexto' | 'tabla' | 'momentos' | 'alineacion' | 'datos' | 'radio';
 type FeedFilter = 'clave' | 'completa';
 
 type TimelineRow = {
@@ -555,7 +555,11 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
         ? new URLSearchParams(window.location.search).get('tab')
         : null;
     const tabFromQuery =
-      q === 'momentos' || q === 'contexto' || q === 'alineacion' || q === 'datos'
+      q === 'momentos' ||
+      q === 'contexto' ||
+      q === 'tabla' ||
+      q === 'alineacion' ||
+      q === 'datos'
         ? q
         : null;
     setMatch(initialMatch);
@@ -722,19 +726,25 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
 
   const tabs = useMemo(() => {
     if (!match) return [] as { id: TabId; label: string }[];
+    const tablaTab =
+      league === 'liga-mx' || league === 'liga-mx-femenil'
+        ? [{ id: 'tabla' as const, label: 'Tabla' }]
+        : [];
     if (match.state === 'pre') {
       return [
         { id: 'alineacion' as const, label: 'Alineación' },
         { id: 'contexto' as const, label: 'Contexto' },
+        ...tablaTab,
       ];
     }
     return [
       { id: 'momentos' as const, label: 'Momentos' },
       { id: 'alineacion' as const, label: 'Alineación' },
       { id: 'contexto' as const, label: 'Contexto' },
+      ...tablaTab,
       { id: 'datos' as const, label: 'Datos' },
     ];
-  }, [match]);
+  }, [match, league]);
 
   if (error && !match) {
     return (
@@ -1024,7 +1034,7 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
 
         <div className="match-panel">
           {tab === 'contexto' && (
-            <div className={['match-contexto', tabla?.length ? 'has-tabla' : ''].filter(Boolean).join(' ')}>
+            <div className="match-contexto">
               <div className="match-contexto-main">
                 {h2h && h2h.meetings.length > 0 && (
                   <H2HBlock
@@ -1053,16 +1063,22 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
                   </p>
                 )}
               </div>
+            </div>
+          )}
 
-              {tabla && tabla.length > 0 && (
+          {tab === 'tabla' && (
+            <section className="match-tabla-panel" data-testid="match-tabla-tab">
+              {tabla && tabla.length > 0 ? (
                 <MatchTabla
                   entries={tabla}
                   homeAbbr={match.home.abbreviation}
                   awayAbbr={match.away.abbreviation}
                   hubPath={back.startsWith('/liga-mx') ? back : '/liga-mx'}
                 />
+              ) : (
+                <p className="match-empty">Cargando tabla…</p>
               )}
-            </div>
+            </section>
           )}
 
           {tab === 'momentos' && (
