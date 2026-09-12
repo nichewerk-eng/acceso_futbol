@@ -14,8 +14,7 @@ type Props = {
   episodeId: string;
 };
 
-/** Remotion Chrome render only works on a machine with the CLI — not on Vercel. */
-function canRenderInBrowser(): boolean {
+function isLocalHost(): boolean {
   if (typeof window === 'undefined') return false;
   const host = window.location.hostname;
   return host === 'localhost' || host === '127.0.0.1';
@@ -26,11 +25,10 @@ export function TomaVideoPanel({ episodeId }: Props) {
   const [busy, setBusy] = useState(false);
   const [renderBusy, setRenderBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [localRender, setLocalRender] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [desk, setDesk] = useState(false);
 
   useEffect(() => {
-    setLocalRender(canRenderInBrowser());
+    setDesk(isLocalHost());
   }, []);
 
   const load = useCallback(async () => {
@@ -96,35 +94,55 @@ export function TomaVideoPanel({ episodeId }: Props) {
     }
   }
 
-  const cli = `npm run render:toma -- ${episodeId}`;
-
-  async function copyCli() {
-    try {
-      await navigator.clipboard.writeText(cli);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
-    } catch {
-      setError('No se pudo copiar. Corre el comando en la terminal del repo.');
-    }
-  }
-
   const plan: TomaVideoPlan | null = rec?.plan ?? null;
   const fileUrl = `/api/toma/video/${encodeURIComponent(episodeId)}/file`;
   const downloadUrl = `${fileUrl}?download=1`;
   const hasVideo = Boolean(rec?.videoUrl || rec?.renderedAt);
 
+  // Live/prod: preview only — no export/desk chrome.
+  if (!desk) {
+    if (!plan) return null;
+    return (
+      <section className="mt-12 border-t border-line pt-10" data-testid="toma-video">
+        <p className="af-tele text-foreground">
+          <span className="text-signal">AF</span>
+          ://TOMA · VIDEO 9:16
+        </p>
+        <h2 className="mt-2 font-display text-2xl font-semibold uppercase tracking-wide">
+          Video para redes
+        </h2>
+        <div className="mt-8 overflow-hidden rounded-sm bg-brand-blue">
+          <div className="mx-auto w-full max-w-[320px]">
+            <Player
+              component={TomaVideo}
+              inputProps={{ plan }}
+              durationInFrames={Math.max(1, Math.round(plan.durationSeconds * TOMA_VIDEO_FPS))}
+              compositionWidth={TOMA_VIDEO_WIDTH}
+              compositionHeight={TOMA_VIDEO_HEIGHT}
+              fps={plan.fps || TOMA_VIDEO_FPS}
+              style={{ width: '100%', aspectRatio: '9 / 16' }}
+              controls
+              loop
+              autoPlay={false}
+              acknowledgeRemotionLicense
+            />
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="mt-12 border-t border-line pt-10" data-testid="toma-video">
       <p className="af-tele text-foreground">
         <span className="text-signal">AF</span>
-        ://TOMA · VIDEO 9:16
+        ://TOMA · VIDEO 9:16 · DESK
       </p>
       <h2 className="mt-2 font-display text-2xl font-semibold uppercase tracking-wide">
         Video para redes
       </h2>
       <p className="mt-2 text-sm leading-6 text-muted">
-        Previsualiza aquí. El MP4 se exporta en tu máquina (Remotion + Chrome), no en el sitio
-        publicado.
+        Desk local: arma el plan y exporta MP4. En producción solo se ve el preview.
       </p>
 
       {error ? (
@@ -142,14 +160,14 @@ export function TomaVideoPanel({ episodeId }: Props) {
         >
           {busy ? 'Armando plan…' : 'Generar plan'}
         </button>
-        {plan && localRender ? (
+        {plan ? (
           <button
             type="button"
             className="af-cta-ghost !py-2"
             disabled={renderBusy}
             onClick={() => void renderMp4()}
           >
-            {renderBusy ? 'Renderizando MP4…' : 'Exportar MP4 (local)'}
+            {renderBusy ? 'Renderizando MP4…' : 'Exportar MP4'}
           </button>
         ) : null}
         {hasVideo ? (
@@ -157,27 +175,12 @@ export function TomaVideoPanel({ episodeId }: Props) {
             Bajar MP4
           </a>
         ) : null}
-        {plan && !localRender ? (
-          <button type="button" className="af-cta-ghost !py-2" onClick={() => void copyCli()}>
-            {copied ? 'Comando copiado' : 'Copiar comando de export'}
-          </button>
-        ) : null}
       </div>
 
       {plan && !hasVideo ? (
-        <div className="mt-4 rounded-sm border border-line bg-bg-3 px-4 py-3 text-sm text-muted">
-          <p className="font-medium text-foreground">Para bajar el MP4:</p>
-          <ol className="mt-2 list-decimal space-y-1 pl-5">
-            <li>En la carpeta del repo, corre:</li>
-          </ol>
-          <pre className="mt-2 overflow-x-auto bg-brand-blue px-3 py-2 font-mono text-[12px] text-brand-yellow">
-            {cli}
-          </pre>
-          <p className="mt-2">
-            El archivo queda en{' '}
-            <code className="font-mono text-[12px]">.toma-local/{episodeId}.mp4</code>
-          </p>
-        </div>
+        <p className="mt-4 text-xs text-muted">
+          CLI: <code className="font-mono">npm run render:toma -- {episodeId}</code>
+        </p>
       ) : null}
 
       {plan ? (
