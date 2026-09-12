@@ -3,11 +3,16 @@ import path from 'path';
 import { bundle } from '@remotion/bundler';
 import { renderMedia, selectComposition } from '@remotion/renderer';
 import { j8HandPlan, J8_EPISODE_ID } from '../src/lib/toma/video/plans/j8-2026-09-11';
-import type { TomaVideoPlan } from '../src/lib/toma/video/types';
+import type { TomaVideoPlan, TomaVideoRecord } from '../src/lib/toma/video/types';
 
 const episodeId = process.argv[2] || J8_EPISODE_ID;
 const audioFlag = process.argv.find((a) => a.startsWith('--audio='));
+const originFlag = process.argv.find((a) => a.startsWith('--origin='));
 const audioOverride = audioFlag?.slice('--audio='.length);
+const origin = (originFlag?.slice('--origin='.length) || 'https://www.accesofutbol.com').replace(
+  /\/$/,
+  ''
+);
 
 const root = process.cwd();
 const localDir = path.join(root, '.toma-local');
@@ -15,16 +20,44 @@ const planPath = path.join(localDir, `${episodeId}.video.json`);
 const outPath = path.join(localDir, `${episodeId}.mp4`);
 const entry = path.join(root, 'src/remotion/index.ts');
 
+async function fetchRemotePlan(): Promise<TomaVideoPlan | null> {
+  const url = `${origin}/api/toma/video/${encodeURIComponent(episodeId)}`;
+  console.log('fetching plan', url);
+  const res = await fetch(url);
+  if (!res.ok) {
+    console.error('remote plan', res.status, (await res.text().catch(() => '')).slice(0, 200));
+    return null;
+  }
+  const rec = (await res.json()) as TomaVideoRecord;
+  if (!rec?.plan?.scenes?.length) return null;
+  if (rec.plan.audioSrc?.startsWith('/')) {
+    rec.plan.audioSrc = `${origin}${rec.plan.audioSrc}`;
+  } else if (!rec.plan.audioSrc && rec.plan.audioUrl) {
+    rec.plan.audioSrc = rec.plan.audioUrl.startsWith('http')
+      ? rec.plan.audioUrl
+      : `${origin}${rec.plan.audioUrl}`;
+  }
+  await writeFile(planPath, JSON.stringify(rec, null, 2));
+  return rec.plan;
+}
+
 async function loadPlan(): Promise<TomaVideoPlan> {
   try {
     const rec = JSON.parse(await readFile(planPath, 'utf8')) as { plan?: TomaVideoPlan };
-    if (rec?.plan) return rec.plan;
+    if (rec?.plan?.scenes) return rec.plan;
   } catch {
-    /* seed j8 */
+    /* remote / hand */
   }
-  if (episodeId === J8_EPISODE_ID) return j8HandPlan(audioOverride);
+  if (episodeId === J8_EPISODE_ID) {
+    const hand = j8HandPlan(
+      audioOverride || `${origin}/api/toma/audio/${encodeURIComponent(J8_EPISODE_ID)}`
+    );
+    return hand;
+  }
+  const remote = await fetchRemotePlan();
+  if (remote) return remote;
   throw new Error(
-    `No plan at ${planPath}. POST /api/toma/video/${episodeId} first, or open the episode page.`
+    `No plan for ${episodeId}. Tried ${planPath} and ${origin}/api/toma/video/${episodeId}`
   );
 }
 
@@ -32,6 +65,7 @@ async function main() {
   await mkdir(localDir, { recursive: true });
   const plan = await loadPlan();
   if (audioOverride) plan.audioSrc = audioOverride;
+  else if (plan.audioSrc?.startsWith('/')) plan.audioSrc = `${origin}${plan.audioSrc}`;
 
   console.log('toma-render', {
     episodeId,
