@@ -3069,10 +3069,6 @@ a.lc-rail-block:hover {
   color: var(--foreground);
 }
 
-.sellado-club.is-lose {
-  opacity: 0.42;
-}
-
 .sellado-club.is-draw .sellado-name {
   opacity: 0.88;
 }
@@ -3101,10 +3097,6 @@ a.lc-rail-block:hover {
 
 .sellado-n.is-win {
   color: var(--signal);
-}
-
-.sellado-n.is-lose {
-  opacity: 0.38;
 }
 
 .sellado-n.is-draw {
