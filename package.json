@@ -8,14 +8,22 @@
     "start": "next start",
     "lint": "eslint",
     "test:acceso": "npx tsx --test src/lib/sports/accesoIndex.test.ts src/lib/sports/accesoRound.test.ts src/lib/sports/playerFaces.test.ts src/lib/sports/totwWhy.team.test.ts",
-    "test:toma": "npx tsx --test src/lib/toma/episode.test.ts",
+    "test:toma": "npx tsx --test src/lib/toma/episode.test.ts src/lib/toma/video/timing.test.ts",
     "test:voice": "npx tsx --test src/lib/radio/voiceSchedule.test.ts",
     "test:sello": "npx tsx --test src/lib/sello/mint.test.ts",
-    "process-logo": "node scripts/process-logo.mjs"
+    "process-logo": "node scripts/process-logo.mjs",
+    "remotion": "remotion studio src/remotion/index.ts --port=3333",
+    "render:toma": "npx tsx scripts/render-toma.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.36",
     "@next/third-parties": "^16.3.2",
+    "@remotion/bundler": "^4.0.524",
+    "@remotion/cli": "^4.0.524",
+    "@remotion/google-fonts": "^4.0.524",
+    "@remotion/media-utils": "^4.0.524",
+    "@remotion/player": "^4.0.524",
+    "@remotion/renderer": "^4.0.524",
     "@vercel/analytics": "^2.0.1",
     "@vercel/blob": "^2.8.0",
     "ai": "^7.0.58",
@@ -23,6 +31,7 @@
     "next": "16.2.6",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "remotion": "^4.0.524",
     "web-push": "^3.6.7"
   },
   "devDependencies": {

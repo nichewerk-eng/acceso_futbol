@@ -22,7 +22,7 @@ import {
   type TomaEpisode,
   type TomaShowKind,
 } from '@/lib/toma/episode';
-import { elevenLabsConfigured, synthesizeBytes } from '@/lib/radio/tts';
+import { elevenLabsConfigured, synthesizeBytes, synthesizeBytesWithTimestamps } from '@/lib/radio/tts';
 import { sourceHash, writeTomaNarration } from '@/lib/toma/writeDialogue';
 
 export type TomaGenerateSkip =
@@ -102,7 +102,9 @@ async function runGenerate(
   const transcript = await writeTomaNarration(take, closed.fixtures, kind);
   if (!transcript) return { episode: existing, skip: 'no_script' };
   console.log('toma-tts', { id: storeKey, chars: transcript.length });
-  const audio = await synthesizeBytes(transcript, 'caliente');
+  const audio =
+    (await synthesizeBytesWithTimestamps(transcript, 'caliente')) ??
+    (await synthesizeBytes(transcript, 'caliente'));
   if (!audio) return { episode: existing, skip: 'no_tts' };
   const stored = await storeAudio(storeKey, audio.bytes, audio.contentType, localOnly);
   if (!stored) return { episode: existing, skip: 'no_store' };
@@ -118,9 +120,22 @@ async function runGenerate(
     blobPath: stored.blobPath,
     contentType: audio.contentType,
     generatedAt: new Date().toISOString(),
+    alignment: audio.alignment,
   };
   await putStoredEpisode(episode, { localOnly });
   if (localOnly) await saveLocalEpisode(episode, audio.bytes).catch(() => {});
+  // Fire-and-forget video plan so /toma/[id] has a timeline ready.
+  void import('@/lib/toma/video/buildPlan')
+    .then(({ buildTomaVideoPlan }) =>
+      buildTomaVideoPlan({
+        episodeId: episode.id,
+        force: true,
+        alignment: audio.alignment,
+      })
+    )
+    .catch((err) =>
+      console.error('toma-video-plan', err instanceof Error ? err.message : err)
+    );
   return { episode };
 }
 

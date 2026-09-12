@@ -15,6 +15,12 @@ export const EPISODE_CIERRE = 'cierre';
 /** Bump when the Toma voice or delivery changes so stored episodes regenerate. */
 export const TOMA_VOICE_REV = 'v6-signoff';
 
+export type TomaEpisodeAlignment = {
+  characters: string[];
+  character_start_times_seconds: number[];
+  character_end_times_seconds: number[];
+};
+
 export type TomaEpisode = {
   id: string;
   jornadaNum: number;
@@ -27,6 +33,8 @@ export type TomaEpisode = {
   blobPath?: string;
   contentType: string;
   generatedAt: string;
+  /** ElevenLabs character alignment when TTS used with-timestamps. */
+  alignment?: TomaEpisodeAlignment;
 };
 
 const EPISODE_TTL_MS = 21 * 24 * 60 * 60_000;

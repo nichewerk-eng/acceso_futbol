@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { PulseNav } from '@/components/living-room/PulseNav';
 import { RecordingListen } from '@/components/living-room/RecordingListen';
+import { TomaVideoPanel } from '@/components/living-room/TomaVideoPanel';
 import { SiteFooter } from '@/components/home/SiteFooter';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { audioObjectJsonLd, absoluteUrl, breadcrumbJsonLd } from '@/lib/seo';
@@ -101,6 +102,9 @@ export default async function TomaListenPage({ params }: Props) {
           backHref="/toma"
           backLabel="Toma de la jornada"
         />
+        <div className="mx-auto max-w-3xl px-4 pb-16 sm:px-6">
+          <TomaVideoPanel episodeId={ep.id} />
+        </div>
       </main>
       <SiteFooter />
     </div>
