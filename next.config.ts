@@ -1,15 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: [
-    '@remotion/renderer',
-    '@remotion/bundler',
-    '@remotion/compositor-darwin-arm64',
-    '@remotion/compositor-darwin-x64',
-    '@remotion/compositor-linux-x64-gnu',
-    '@remotion/compositor-linux-x64-musl',
-    'remotion',
-  ],
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'a.espncdn.com' },
