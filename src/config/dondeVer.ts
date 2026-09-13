@@ -6,6 +6,7 @@ import type { Fixture } from '@/lib/sports/types';
 export type TvChannelId =
   | 'tudn'
   | 'vix'
+  | 'vix-premium'
   | 'canal-5'
   | 'layvtime'
   | 'univision'
@@ -16,6 +17,7 @@ export type TvChannelId =
   | 'azteca-7'
   | 'espn'
   | 'disney-plus'
+  | 'disney-plus-premium'
   | 'fox'
   | 'fox-one'
   | 'fox-deportes'
@@ -57,6 +59,12 @@ export const TV_CHANNELS: Record<TvChannelId, TvChannel> = {
   vix: {
     id: 'vix',
     label: 'ViX',
+    kind: 'stream',
+    src: '/tv_logos/vix-seeklogo.png',
+  },
+  'vix-premium': {
+    id: 'vix-premium',
+    label: 'ViX Premium',
     kind: 'stream',
     src: '/tv_logos/vix-seeklogo.png',
   },
@@ -119,6 +127,12 @@ export const TV_CHANNELS: Record<TvChannelId, TvChannel> = {
   'disney-plus': {
     id: 'disney-plus',
     label: 'Disney+',
+    kind: 'stream',
+    src: '/tv_logos/disney-plus.svg',
+  },
+  'disney-plus-premium': {
+    id: 'disney-plus-premium',
+    label: 'Disney+ Premium',
     kind: 'stream',
     src: '/tv_logos/disney-plus.svg',
   },
@@ -526,11 +540,11 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
     us: ['telemundo', 'universo'],
   },
   '2026-09-13|JUA|SAN': {
-    mx: ['canal-5', 'tudn', 'vix'],
+    mx: ['espn', 'disney-plus-premium', 'vix-premium'],
     us: ['tudn'],
   },
   'j8|JUA|SAN': {
-    mx: ['canal-5', 'tudn', 'vix'],
+    mx: ['espn', 'disney-plus-premium', 'vix-premium'],
     us: ['tudn'],
   },
   '2026-09-13|MTY|UANL': {
