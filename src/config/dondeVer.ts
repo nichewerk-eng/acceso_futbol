@@ -580,7 +580,7 @@ const CLUB_HOME_TV: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
   LEO: { mx: ['fox', 'fox-one'], us: ['vix'] },
   ASL: { mx: ['vix', 'espn', 'disney-plus'], us: ['vix'] },
   UANL: { mx: ['fox', 'fox-one', 'azteca-7'], us: ['fox-deportes', 'universo'] },
-  SAN: { mx: ['canal-5', 'tudn', 'vix'], us: ['tudn', 'vix'] },
+  SAN: { mx: ['espn', 'disney-plus-premium', 'vix-premium'], us: ['tudn', 'vix'] },
   JUA: { mx: ['fox', 'fox-one', 'azteca-7'], us: ['fox-deportes', 'universo'] },
 };
 
