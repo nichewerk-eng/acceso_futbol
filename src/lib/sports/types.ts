@@ -94,7 +94,6 @@ export interface Fixture {
     mxChannels?: Array<
       | 'tudn'
       | 'vix'
-      | 'vix-premium'
       | 'canal-5'
       | 'layvtime'
       | 'univision'
@@ -105,7 +104,6 @@ export interface Fixture {
       | 'azteca-7'
       | 'espn'
       | 'disney-plus'
-      | 'disney-plus-premium'
       | 'fox'
       | 'fox-one'
       | 'fox-deportes'
@@ -125,7 +123,6 @@ export interface Fixture {
     usChannels?: Array<
       | 'tudn'
       | 'vix'
-      | 'vix-premium'
       | 'canal-5'
       | 'layvtime'
       | 'univision'
@@ -136,7 +133,6 @@ export interface Fixture {
       | 'azteca-7'
       | 'espn'
       | 'disney-plus'
-      | 'disney-plus-premium'
       | 'fox'
       | 'fox-one'
       | 'fox-deportes'

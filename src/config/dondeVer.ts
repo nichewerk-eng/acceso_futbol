@@ -6,7 +6,6 @@ import type { Fixture } from '@/lib/sports/types';
 export type TvChannelId =
   | 'tudn'
   | 'vix'
-  | 'vix-premium'
   | 'canal-5'
   | 'layvtime'
   | 'univision'
@@ -17,7 +16,6 @@ export type TvChannelId =
   | 'azteca-7'
   | 'espn'
   | 'disney-plus'
-  | 'disney-plus-premium'
   | 'fox'
   | 'fox-one'
   | 'fox-deportes'
@@ -59,12 +57,6 @@ export const TV_CHANNELS: Record<TvChannelId, TvChannel> = {
   vix: {
     id: 'vix',
     label: 'ViX',
-    kind: 'stream',
-    src: '/tv_logos/vix-seeklogo.png',
-  },
-  'vix-premium': {
-    id: 'vix-premium',
-    label: 'ViX Premium',
     kind: 'stream',
     src: '/tv_logos/vix-seeklogo.png',
   },
@@ -127,12 +119,6 @@ export const TV_CHANNELS: Record<TvChannelId, TvChannel> = {
   'disney-plus': {
     id: 'disney-plus',
     label: 'Disney+',
-    kind: 'stream',
-    src: '/tv_logos/disney-plus.svg',
-  },
-  'disney-plus-premium': {
-    id: 'disney-plus-premium',
-    label: 'Disney+ Premium',
     kind: 'stream',
     src: '/tv_logos/disney-plus.svg',
   },
@@ -540,11 +526,11 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
     us: ['telemundo', 'universo'],
   },
   '2026-09-13|JUA|SAN': {
-    mx: ['espn', 'disney-plus-premium', 'vix-premium'],
+    mx: ['espn', 'disney-plus', 'vix'],
     us: ['tudn', 'vix'],
   },
   'j8|JUA|SAN': {
-    mx: ['espn', 'disney-plus-premium', 'vix-premium'],
+    mx: ['espn', 'disney-plus', 'vix'],
     us: ['tudn', 'vix'],
   },
   '2026-09-13|MTY|UANL': {
@@ -580,7 +566,7 @@ const CLUB_HOME_TV: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
   LEO: { mx: ['fox', 'fox-one'], us: ['vix'] },
   ASL: { mx: ['vix', 'espn', 'disney-plus'], us: ['vix'] },
   UANL: { mx: ['fox', 'fox-one', 'azteca-7'], us: ['fox-deportes', 'universo'] },
-  SAN: { mx: ['espn', 'disney-plus-premium', 'vix-premium'], us: ['tudn', 'vix'] },
+  SAN: { mx: ['espn', 'disney-plus', 'vix'], us: ['tudn', 'vix'] },
   JUA: { mx: ['fox', 'fox-one', 'azteca-7'], us: ['fox-deportes', 'universo'] },
 };
 
