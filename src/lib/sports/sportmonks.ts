@@ -1009,7 +1009,7 @@ async function fetchHeadToHead(homeId: string, awayId: string): Promise<HeadToHe
       .map(meetingFromSm)
       .filter((m): m is HeadToHeadMeeting => Boolean(m))
       .sort((a, b) => +new Date(b.date) - +new Date(a.date))
-      .slice(0, 6);
+      .slice(0, 10);
 
     if (!meetings.length) return null;
 
@@ -1136,7 +1136,7 @@ async function loadContexto(
   form: { home: FormMatch[]; away: FormMatch[] };
   headToHead: HeadToHeadSummary | null;
 }> {
-  const h2hKey = `sm-h2h-v1-${[homeId, awayId].sort().join('-')}`;
+  const h2hKey = `sm-h2h-v2-10-${[homeId, awayId].sort().join('-')}`;
   // Form is Team (own bucket); H2H is one Fixture call, coalesced 30 min.
   // Skipping this while live left Contexto empty on cold isolates.
   const [homeForm, awayForm, h2hRaw] = await Promise.all([

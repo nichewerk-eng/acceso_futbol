@@ -338,7 +338,7 @@ function H2HBlock({
         <i className="is-away" style={{ width: `${(h2h.awayWins / total) * 100}%` }} />
       </div>
       <ul className="match-h2h-list">
-        {h2h.meetings.slice(0, 4).map((m) => {
+        {h2h.meetings.slice(0, 10).map((m) => {
           const hs = Number(m.homeScore);
           const as = Number(m.awayScore);
           const tip =
