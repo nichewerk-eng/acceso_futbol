@@ -541,11 +541,11 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
   },
   '2026-09-13|JUA|SAN': {
     mx: ['espn', 'disney-plus-premium', 'vix-premium'],
-    us: ['tudn'],
+    us: ['tudn', 'vix'],
   },
   'j8|JUA|SAN': {
     mx: ['espn', 'disney-plus-premium', 'vix-premium'],
-    us: ['tudn'],
+    us: ['tudn', 'vix'],
   },
   '2026-09-13|MTY|UANL': {
     mx: ['canal-5', 'tudn', 'vix', 'layvtime'],
