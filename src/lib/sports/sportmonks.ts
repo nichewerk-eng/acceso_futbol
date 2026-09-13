@@ -994,18 +994,18 @@ function meetingFromSm(f: SmFixture): HeadToHeadMeeting | null {
 
 async function fetchHeadToHead(homeId: string, awayId: string): Promise<HeadToHeadSummary | null> {
   try {
-    const leagueId = ligaMxLeagueId();
     const data = await smFetch<{ data?: SmFixture[] }>(
       `/fixtures/head-to-head/${homeId}/${awayId}`,
       {
         include: 'participants;scores;state;league',
-        per_page: '25',
+        // Pull a wide window so we can keep the 10 most recent finished meetings
+        // across competitions (Liga MX alone is often fewer than 10).
+        per_page: '50',
       },
       'catalog'
     );
     const raw = data.data ?? [];
-    const ligaRaw = raw.filter((f) => !f.league?.id || f.league.id === leagueId);
-    const meetings = (ligaRaw.length ? ligaRaw : raw)
+    const meetings = raw
       .map(meetingFromSm)
       .filter((m): m is HeadToHeadMeeting => Boolean(m))
       .sort((a, b) => +new Date(b.date) - +new Date(a.date))
@@ -1019,8 +1019,6 @@ async function fetchHeadToHead(homeId: string, awayId: string): Promise<HeadToHe
     for (const m of meetings) {
       const hs = Number(m.homeScore);
       const as = Number(m.awayScore);
-      // Wins from perspective of current fixture's home/away clubs (by abbr match later in UI).
-      // Here we store raw home/away of each historical meeting; summary counts for current pair computed in enrich.
       if (hs === as) draws += 1;
       else if (hs > as) homeWins += 1;
       else awayWins += 1;
@@ -1136,7 +1134,7 @@ async function loadContexto(
   form: { home: FormMatch[]; away: FormMatch[] };
   headToHead: HeadToHeadSummary | null;
 }> {
-  const h2hKey = `sm-h2h-v2-10-${[homeId, awayId].sort().join('-')}`;
+  const h2hKey = `sm-h2h-v3-10-allcomp-${[homeId, awayId].sort().join('-')}`;
   // Form is Team (own bucket); H2H is one Fixture call, coalesced 30 min.
   // Skipping this while live left Contexto empty on cold isolates.
   const [homeForm, awayForm, h2hRaw] = await Promise.all([

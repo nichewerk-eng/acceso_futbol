@@ -317,7 +317,14 @@ function H2HBlock({
   const total = h2h.homeWins + h2h.draws + h2h.awayWins || 1;
   return (
     <section className="match-h2h">
-      <p className="af-tele match-contexto-label">Cara a cara · últimos {h2h.played}</p>
+      <p className="af-tele match-contexto-label">
+        Cara a cara
+        {h2h.played >= 10
+          ? ' · últimos 10'
+          : h2h.played > 0
+            ? ` · ${h2h.played} enfrentamientos`
+            : ''}
+      </p>
       <div className="match-h2h-board" aria-label={`${homeAbbr} ${h2h.homeWins}, ${h2h.draws} empates, ${awayAbbr} ${h2h.awayWins}`}>
         <div className="match-h2h-stat">
           <strong>{h2h.homeWins}</strong>
