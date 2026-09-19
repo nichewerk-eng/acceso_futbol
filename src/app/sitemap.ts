@@ -43,6 +43,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.95,
     },
     {
+      url: `${siteConfig.url}/leagues-cup`,
+      lastModified: now,
+      changeFrequency: 'hourly',
+      priority: 0.88,
+    },
+    {
       url: `${siteConfig.url}/horarios`,
       lastModified: now,
       changeFrequency: 'hourly',
@@ -151,14 +157,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entries.push(partidoEntry(league, f));
   };
 
-  // Apertura calendar is always in the sitemap so Google can discover match URLs
+  // Crawl-budget guard: only list partidos near kickoff/recent results.
+  // Dumping the full season (~350 URLs) left hubs as "Discovered – not indexed".
+  const partidoFrom = now.getTime() - 10 * 24 * 60 * 60 * 1000;
+  const partidoTo = now.getTime() + 21 * 24 * 60 * 60 * 1000;
+  const partidoInWindow = (f: Pick<Fixture, 'date' | 'state'>) => {
+    if (f.state === 'in') return true;
+    const t = +new Date(f.date);
+    return Number.isFinite(t) && t >= partidoFrom && t <= partidoTo;
+  };
+
+  // Apertura calendar is always consulted so Google can discover match URLs
   // even when Sportmonks is down or unset on a cold isolate.
-  for (const f of seedLigaMxFixtures()) pushPartido('liga-mx', f);
-  for (const f of buildElTriBoard([])) pushPartido('seleccion', f);
+  for (const f of seedLigaMxFixtures()) {
+    if (partidoInWindow(f)) pushPartido('liga-mx', f);
+  }
+  for (const f of buildElTriBoard([])) {
+    if (partidoInWindow(f)) pushPartido('seleccion', f);
+  }
   for (const f of buildLeaguesCupBoard([])) {
     if (f.home.abbreviation === 'TBD' || f.away.abbreviation === 'TBD') continue;
     if (!involvesLigaMxClub(f.home, f.away)) continue;
-    pushPartido('leagues-cup', f);
+    if (partidoInWindow(f)) pushPartido('leagues-cup', f);
   }
 
   if (!sportmonksEnabled()) return entries;
@@ -170,11 +190,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       fetchLeaguesCupSeasonFixtures().catch(() => []),
     ]);
 
-    for (const f of liga) pushPartido('liga-mx', f);
-    for (const f of femenil) pushPartido('liga-mx-femenil', f);
+    for (const f of liga) {
+      if (partidoInWindow(f)) pushPartido('liga-mx', f);
+    }
+    for (const f of femenil) {
+      if (partidoInWindow(f)) pushPartido('liga-mx-femenil', f);
+    }
     for (const f of cup) {
       if (!involvesLigaMxClub(f.home, f.away)) continue;
-      pushPartido('leagues-cup', f);
+      if (partidoInWindow(f)) pushPartido('leagues-cup', f);
     }
   } catch {
     /* static routes + Apertura calendar already listed */
