@@ -268,61 +268,83 @@ function broadcastSubEvents(match: Fixture, eventId: string) {
   return out;
 }
 
+function eventEndIso(startIso: string): string | undefined {
+  const t = +new Date(startIso);
+  if (!Number.isFinite(t)) return undefined;
+  return new Date(t + 115 * 60_000).toISOString();
+}
+
+function eventLocation(match: Fixture) {
+  const locality = match.city?.trim();
+  return {
+    '@type': 'Place',
+    name: match.venue?.trim() || 'Estadio por confirmar',
+    address: {
+      '@type': 'PostalAddress',
+      ...(locality ? { addressLocality: locality } : {}),
+      addressCountry: 'MX',
+    },
+  };
+}
+
 /** SportsEvent object without `@context` — safe to nest inside an ItemList. */
 function sportsEventNode(match: Fixture, league: string) {
   const name = `${match.home.name} vs ${match.away.name}`;
   const path = `/partido/${league}/${match.id}`;
-  const eventId = `${absoluteUrl(path)}#event`;
+  const pageUrl = absoluteUrl(path);
+  const eventId = `${pageUrl}#event`;
   // schema.org has no "in progress" status; live stays Scheduled until final.
   const eventStatus = isFixtureHeld(match.statusLabel)
     ? 'https://schema.org/EventPostponed'
     : match.state === 'post'
       ? 'https://schema.org/EventCompleted'
       : 'https://schema.org/EventScheduled';
-  // Approximate final whistle (~115 min) so completed events carry an endDate.
-  const endDate =
-    match.state === 'post' && match.date
-      ? new Date(+new Date(match.date) + 115 * 60_000).toISOString()
-      : undefined;
   const homeUrl = clubUrlFromAbbr(match.home.abbreviation);
   const awayUrl = clubUrlFromAbbr(match.away.abbreviation);
   const broadcast = broadcastSubEvents(match, eventId);
+  const homeTeam = {
+    '@type': 'SportsTeam',
+    name: match.home.name,
+    sport: 'Soccer',
+    ...(homeUrl ? { url: homeUrl } : {}),
+  };
+  const awayTeam = {
+    '@type': 'SportsTeam',
+    name: match.away.name,
+    sport: 'Soccer',
+    ...(awayUrl ? { url: awayUrl } : {}),
+  };
+
+  const endDate = match.date ? eventEndIso(match.date) : undefined;
 
   return {
     '@type': 'SportsEvent',
     '@id': eventId,
     name,
+    url: pageUrl,
     description: `${name} · ${leagueLabel(league)}. Crónica, alineación, dónde ver y Acceso Radio.`,
     sport: 'Soccer',
     startDate: match.date,
     ...(endDate ? { endDate } : {}),
     eventStatus,
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-    location: match.venue
-      ? {
-          '@type': 'Place',
-          name: match.venue,
-          address: match.city ?? undefined,
-        }
-      : undefined,
-    homeTeam: {
-      '@type': 'SportsTeam',
-      name: match.home.name,
-      sport: 'Soccer',
-      ...(homeUrl ? { url: homeUrl } : {}),
-    },
-    awayTeam: {
-      '@type': 'SportsTeam',
-      name: match.away.name,
-      sport: 'Soccer',
-      ...(awayUrl ? { url: awayUrl } : {}),
-    },
+    location: eventLocation(match),
+    homeTeam,
+    awayTeam,
+    performer: [homeTeam, awayTeam],
     organizer: {
       '@type': 'Organization',
       name: leagueLabel(league),
     },
+    offers: {
+      '@type': 'Offer',
+      name: 'Dónde ver el partido',
+      url: pageUrl,
+      availability: 'https://schema.org/InStock',
+      price: '0',
+      priceCurrency: 'MXN',
+    },
     ...(broadcast.length ? { subEvent: broadcast } : {}),
-    url: absoluteUrl(path),
     image: absoluteUrl(`${path}/opengraph-image`),
     inLanguage: 'es-MX',
   };
@@ -342,11 +364,15 @@ export function sportsEventItemListJsonLd(
     '@context': 'https://schema.org',
     '@type': 'ItemList',
     name: opts.name,
-    itemListElement: fixtures.map((f, i) => ({
-      '@type': 'ListItem',
-      position: i + 1,
-      item: sportsEventNode(f, league),
-    })),
+    itemListElement: fixtures.map((f, i) => {
+      const event = sportsEventNode(f, league);
+      return {
+        '@type': 'ListItem',
+        position: i + 1,
+        url: event.url,
+        item: event,
+      };
+    }),
   };
 }
 

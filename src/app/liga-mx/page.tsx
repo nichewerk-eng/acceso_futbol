@@ -4,27 +4,28 @@ import LigaMXView from '@/components/ligamx/LigaMXView';
 import { PulseNav } from '@/components/living-room/PulseNav';
 import { JsonLd } from '@/components/seo/JsonLd';
 import type { LigaMXTable } from '@/app/api/ligamx/standings/route';
-import { absoluteUrl, breadcrumbJsonLd, personItemListJsonLd } from '@/lib/seo';
+import { absoluteUrl, breadcrumbJsonLd, personItemListJsonLd, sportsEventItemListJsonLd } from '@/lib/seo';
 import { fetchLigaMxFixtures } from '@/lib/sports/espnFallback';
 import { fetchLigaMxLeaders } from '@/lib/sports/leaders';
 import { fetchLigaMxChampionBoard } from '@/lib/kalshi/ligaMxChampion';
 import { fixtureToLigaMxSchedule, mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
+import { getJornadaOverview } from '@/lib/sports/jornada';
 
 export const metadata: Metadata = {
-  title: 'Liga MX Apertura 2026 · Horarios, jornada, tabla y goleo',
+  title: 'Liga MX Apertura 2026 · Quién juega, tabla y goleo',
   description:
-    'Horarios, jornada en vivo, tabla de posiciones, goleo y once de la Liga MX Apertura 2026.',
+    'Quién juega hoy en Liga MX: jornada en vivo, resultados, tabla de posiciones, goleo y once de la fecha. Apertura 2026.',
   alternates: { canonical: absoluteUrl('/liga-mx') },
   openGraph: {
-    title: 'Liga MX Apertura 2026 · Horarios, jornada, tabla y goleo',
-    description: 'Posiciones, resultados, goleo, once de la fecha y camino a Liguilla.',
+    title: 'Liga MX Apertura 2026 · Quién juega, tabla y goleo',
+    description: 'Jornada en vivo, posiciones, goleo, once de la fecha y camino a Liguilla.',
     url: absoluteUrl('/liga-mx'),
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Liga MX Apertura 2026 · Horarios, jornada, tabla y goleo',
-    description: 'Horarios, posiciones, resultados, goleo y camino a Liguilla.',
+    title: 'Liga MX Apertura 2026 · Quién juega, tabla y goleo',
+    description: 'Quién juega hoy, resultados, tabla, goleo y camino a Liguilla.',
   },
 };
 
@@ -91,13 +92,17 @@ export default async function LigaMXPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const params = await searchParams;
-  const [table, fixtures, goleo, kalshi] = await Promise.all([
+  const [table, fixtures, goleo, kalshi, jornada] = await Promise.all([
     fetchTable(),
     fetchFixtures(),
     fetchLigaMxLeaders().catch(() => null),
     fetchLigaMxChampionBoard().catch(() => null),
+    getJornadaOverview().catch(() => null),
   ]);
   const season = goleo?.seasonLabel ?? table?.season ?? 'Apertura 2026';
+  const jornadaFixtures = jornada
+    ? [...jornada.live, ...jornada.played, ...jornada.upcoming, ...(jornada.postponed ?? [])]
+    : [];
   return (
     <>
       <JsonLd
@@ -106,6 +111,13 @@ export default async function LigaMXPage({
             { name: 'Pulso', path: '/' },
             { name: 'Liga MX', path: '/liga-mx' },
           ]),
+          ...(jornadaFixtures.length
+            ? [
+                sportsEventItemListJsonLd(jornadaFixtures, {
+                  name: `${jornada?.label ?? 'Jornada'} — Liga MX`,
+                }),
+              ]
+            : []),
           ...(goleo?.goals.length
             ? [
                 personItemListJsonLd(

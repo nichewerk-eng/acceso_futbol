@@ -25,7 +25,7 @@ export function DondeVerRoom({ initial = null }: { initial?: JornadaOverview | n
           ://DONDE-VER
         </p>
         <h1 className="mt-2 font-display text-2xl font-bold uppercase tracking-wide sm:text-3xl">
-          Dónde ver{data.number ? ` · Jornada ${data.number}` : ''}
+          Dónde ver el partido{data.number ? ` · Jornada ${data.number}` : ''}
         </h1>
         <p className="mt-3 max-w-lg font-mono text-[12px] leading-6 text-muted">
           Fecha sellada. La siguiente guía llega con la próxima jornada.

@@ -256,18 +256,18 @@ export default function LigaMXView({
                 <span className="text-signal">AF</span>
                 ://{league === 'liga-mx-femenil' ? 'LIGA MX FEMENIL' : 'LIGA MX'}
               </p>
-              <h1 className="sr-only" data-testid="ligamx-title">
-                {league === 'liga-mx-femenil' ? 'Liga MX Femenil' : 'Liga MX'} ·{' '}
-                {table?.season ?? 'Apertura 2026'}
-              </h1>
               {league === 'liga-mx-femenil' ? (
                 <LigaMxFemenilMark size="lg" priority className="lm-femenil-hero-mark mt-4" />
               ) : (
                 <LigaMxMark size="lg" priority className="lm-hero-mark mt-4" />
               )}
-              <p className="mt-3 font-display text-2xl font-bold uppercase tracking-wide text-foreground sm:text-3xl">
+              <h1
+                className="mt-3 font-display text-2xl font-bold uppercase tracking-wide text-foreground sm:text-3xl"
+                data-testid="ligamx-title"
+              >
+                {league === 'liga-mx-femenil' ? 'Liga MX Femenil' : 'Liga MX'} ·{' '}
                 {table?.season ?? 'Apertura 2026'}
-              </p>
+              </h1>
               <p className="mt-3 max-w-lg text-sm leading-6 text-muted">
                 {league === 'liga-mx-femenil'
                   ? 'Jornada, tabla y goleo en una sola sala. Camino a Liguilla (top 8).'

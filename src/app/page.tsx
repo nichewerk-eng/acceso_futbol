@@ -21,13 +21,15 @@ export const revalidate = 30;
 
 export const metadata: Metadata = {
   title: {
-    absolute: 'Acceso Futbol | Horarios, resultados y cobertura de Liga MX',
+    absolute: 'Acceso Futbol | Quién juega, resultados y dónde ver Liga MX',
   },
-  description: siteConfig.description,
+  description:
+    'Quién juega hoy, resultados en vivo, horarios y dónde ver cada partido de Liga MX en México y Estados Unidos.',
   alternates: { canonical: siteConfig.url },
   openGraph: {
-    title: 'Acceso Futbol | Horarios, resultados y cobertura de Liga MX',
-    description: siteConfig.description,
+    title: 'Acceso Futbol | Quién juega, resultados y dónde ver Liga MX',
+    description:
+      'Quién juega hoy, resultados en vivo, horarios y dónde ver cada partido de Liga MX en México y Estados Unidos.',
     url: siteConfig.url,
     type: 'website',
     siteName: siteConfig.name,
@@ -35,8 +37,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Acceso Futbol | Horarios, resultados y cobertura de Liga MX',
-    description: siteConfig.description,
+    title: 'Acceso Futbol | Quién juega, resultados y dónde ver Liga MX',
+    description:
+      'Quién juega hoy, resultados en vivo, horarios y dónde ver cada partido de Liga MX en México y Estados Unidos.',
   },
 };
 
@@ -110,8 +113,11 @@ export default async function RootPage() {
       />
       {/* Crawlable SSR shell — PulseHome is client-hydrated for the live experience. */}
       <section className="sr-only" aria-label="Acceso Futbol">
-        <h1>Acceso Futbol</h1>
-        <p>{siteConfig.description}</p>
+        <h1>Acceso Futbol — quién juega, resultados y dónde ver Liga MX</h1>
+        <p>
+          Quién juega hoy, quién va ganando, horarios y dónde ver cada partido de Liga MX en
+          México y Estados Unidos.
+        </p>
         <nav aria-label="Secciones principales">
           <Link href="/horarios">Horarios Liga MX — calendario Apertura 2026</Link>
           <Link href="/liga-mx">Liga MX — resultados, jornada y tabla</Link>

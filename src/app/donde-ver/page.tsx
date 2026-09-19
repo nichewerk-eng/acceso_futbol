@@ -12,19 +12,20 @@ import { getJornadaOverview } from '@/lib/sports/jornada';
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: 'Dónde ver Liga MX hoy · Canales MX y US',
+  title: 'Dónde ver el partido de Liga MX hoy · Canales MX y US',
   description:
-    'Guía de transmisión de la Liga MX: en qué canal y a qué hora ver cada partido de la jornada en México (TUDN, ViX, Canal 5, Azteca 7, FOX) y Estados Unidos (TUDN, Univision, ViX).',
+    'Dónde ver el partido de hoy: canal en México (TUDN, ViX, Canal 5, Azteca 7, FOX) y Estados Unidos (TUDN, Univision, ViX), con horario en tu zona.',
   alternates: { canonical: absoluteUrl('/donde-ver') },
   openGraph: {
-    title: 'Dónde ver Liga MX · MX ↔ US',
-    description: 'Cada partido de la jornada, con canal en México y Estados Unidos. Acceso Futbol.',
+    title: 'Dónde ver el partido de Liga MX hoy · MX ↔ US',
+    description:
+      'Cada partido de la jornada: en qué canal verlo en México y Estados Unidos. Acceso Futbol.',
     url: absoluteUrl('/donde-ver'),
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Dónde ver Liga MX · MX ↔ US',
+    title: 'Dónde ver el partido de Liga MX hoy · MX ↔ US',
     description: 'Cada partido de la jornada, con canal en México y Estados Unidos.',
   },
 };
@@ -42,7 +43,7 @@ export default async function DondeVerPage() {
             { name: 'Dónde ver', path: '/donde-ver' },
           ]),
           webPageJsonLd({
-            name: 'Dónde ver Liga MX hoy',
+            name: 'Dónde ver el partido de Liga MX hoy',
             path: '/donde-ver',
             description:
               'En qué canal y a qué hora ver cada partido de la Liga MX en México y Estados Unidos. Horarios completos en /horarios.',

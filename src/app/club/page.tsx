@@ -60,8 +60,7 @@ export default function ClubesPage() {
       />
       <PulseNav />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6 sm:py-14">
-        <h1 className="sr-only">Clubes Liga MX</h1>
-        <ClubsNav />
+        <ClubsNav heading="h1" title="Clubes Liga MX" />
       </main>
       <SiteFooter />
     </div>

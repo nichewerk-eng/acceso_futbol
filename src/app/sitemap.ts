@@ -43,12 +43,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.95,
     },
     {
-      url: `${siteConfig.url}/leagues-cup`,
-      lastModified: now,
-      changeFrequency: 'hourly',
-      priority: 0.88,
-    },
-    {
       url: `${siteConfig.url}/horarios`,
       lastModified: now,
       changeFrequency: 'hourly',

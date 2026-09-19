@@ -153,7 +153,7 @@ export function DondeVerGuide({
             ://DONDE-VER
           </p>
           <Title className="mt-2 font-display text-2xl font-bold uppercase tracking-wide sm:text-3xl">
-            Dónde ver{jornadaNum ? ` · Jornada ${jornadaNum}` : ''}
+            Dónde ver el partido{jornadaNum ? ` · Jornada ${jornadaNum}` : ''}
           </Title>
           <p className="mt-2 max-w-xl font-mono text-[12px] leading-6 text-muted">
             Cada partido con su canal en México y en Estados Unidos. Horario en tu zona.
