@@ -541,6 +541,72 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
     mx: ['canal-5', 'tudn', 'vix', 'layvtime'],
     us: ['tudn', 'univision', 'vix'],
   },
+
+  // Jornada 9 · 18–20 sep 2026
+  '2026-09-18|ATL|PUE': {
+    mx: ['azteca-7', 'espn', 'disney-plus'],
+    us: ['tudn'],
+  },
+  'j9|ATL|PUE': {
+    mx: ['azteca-7', 'espn', 'disney-plus'],
+    us: ['tudn'],
+  },
+  '2026-09-18|JUA|UANL': {
+    mx: ['fox', 'fox-one', 'azteca-7'],
+    us: ['fox-deportes', 'universo', 'estrella-tv'],
+  },
+  'j9|JUA|UANL': {
+    mx: ['fox', 'fox-one', 'azteca-7'],
+    us: ['fox-deportes', 'universo', 'estrella-tv'],
+  },
+  '2026-09-19|ATS|UNAM': {
+    mx: ['canal-5', 'tudn', 'vix', 'layvtime'],
+    us: ['tudn', 'univision'],
+  },
+  'j9|ATS|UNAM': {
+    mx: ['canal-5', 'tudn', 'vix', 'layvtime'],
+    us: ['tudn', 'univision'],
+  },
+  '2026-09-19|CAZ|MTY': {
+    mx: ['canal-5', 'tudn', 'vix', 'layvtime'],
+    us: ['tudn', 'univision', 'vix'],
+  },
+  'j9|CAZ|MTY': {
+    mx: ['canal-5', 'tudn', 'vix', 'layvtime'],
+    us: ['tudn', 'univision', 'vix'],
+  },
+  '2026-09-19|AME|GDL': {
+    mx: ['canal-5', 'tudn', 'vix', 'layvtime'],
+    us: ['tudn', 'univision', 'vix'],
+  },
+  'j9|AME|GDL': {
+    mx: ['canal-5', 'tudn', 'vix', 'layvtime'],
+    us: ['tudn', 'univision', 'vix'],
+  },
+  '2026-09-20|SAN|TOL': {
+    mx: ['vix'],
+    us: ['tudn'],
+  },
+  'j9|SAN|TOL': {
+    mx: ['vix'],
+    us: ['tudn'],
+  },
+  '2026-09-20|PAC|TIJ': {
+    mx: ['fox', 'fox-one'],
+    us: ['vix'],
+  },
+  'j9|PAC|TIJ': {
+    mx: ['fox', 'fox-one'],
+    us: ['vix'],
+  },
+  '2026-09-20|LEO|QRO': {
+    mx: ['fox', 'fox-one'],
+    us: ['tudn'],
+  },
+  'j9|LEO|QRO': {
+    mx: ['fox', 'fox-one'],
+    us: ['tudn'],
+  },
 };
 
 /**
@@ -552,22 +618,22 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
 const CLUB_HOME_TV: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
   TIJ: { mx: ['fox-one'], us: ['tudn'] },
   UNAM: { mx: ['vix'], us: ['univision', 'vix'] },
-  MTY: { mx: ['canal-5', 'tudn', 'vix'], us: ['tudn', 'univision', 'vix'] },
+  MTY: { mx: ['canal-5', 'tudn', 'vix', 'layvtime'], us: ['tudn', 'univision', 'vix'] },
   NCX: { mx: ['fox', 'fox-one'], us: ['fox-deportes'] },
   CAZ: { mx: ['vix', 'tudn', 'canal-5'], us: ['vix', 'univision', 'tudn'] },
-  QRO: { mx: ['fox', 'fox-one'], us: ['univision', 'tudn'] },
-  ATS: { mx: ['canal-5', 'tudn', 'vix'], us: ['tudn', 'univision', 'vix'] },
-  AME: { mx: ['canal-5', 'tudn', 'vix', 'layvtime'], us: ['tudn', 'vix'] },
+  QRO: { mx: ['fox', 'fox-one'], us: ['tudn'] },
+  ATS: { mx: ['canal-5', 'tudn', 'vix', 'layvtime'], us: ['tudn', 'univision'] },
+  AME: { mx: ['canal-5', 'tudn', 'vix', 'layvtime'], us: ['tudn', 'univision', 'vix'] },
   ATL: { mx: ['azteca-7', 'espn', 'disney-plus'], us: ['tudn', 'univision'] },
-  PUE: { mx: ['fox', 'fox-one', 'azteca-7'], us: ['vix'] },
+  PUE: { mx: ['azteca-7', 'espn', 'disney-plus'], us: ['tudn'] },
   GDL: { mx: ['prime-video'], us: ['telemundo', 'universo', 'fox-deportes'] },
-  PAC: { mx: ['fox', 'fox-one'], us: ['tudn'] },
-  TOL: { mx: ['canal-5', 'tudn', 'vix'], us: ['tudn', 'vix'] },
+  PAC: { mx: ['fox', 'fox-one'], us: ['vix'] },
+  TOL: { mx: ['vix'], us: ['tudn'] },
   LEO: { mx: ['fox', 'fox-one'], us: ['vix'] },
   ASL: { mx: ['vix', 'espn', 'disney-plus'], us: ['vix'] },
   UANL: { mx: ['fox', 'fox-one', 'azteca-7'], us: ['fox-deportes', 'universo'] },
   SAN: { mx: ['espn', 'disney-plus', 'vix'], us: ['tudn', 'vix'] },
-  JUA: { mx: ['fox', 'fox-one', 'azteca-7'], us: ['fox-deportes', 'universo'] },
+  JUA: { mx: ['fox', 'fox-one', 'azteca-7'], us: ['fox-deportes', 'universo', 'estrella-tv'] },
 };
 
 /** Liga MX Femenil MX rights follow the home club. No US grid yet. */
