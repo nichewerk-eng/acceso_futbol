@@ -607,6 +607,24 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
     mx: ['fox', 'fox-one'],
     us: ['tudn'],
   },
+
+  // Jornada 10 · 25–27 sep 2026
+  '2026-09-25|ATL|MTY': {
+    mx: ['azteca-7', 'espn', 'disney-plus'],
+    us: ['tudn', 'vix'],
+  },
+  'j10|ATL|MTY': {
+    mx: ['azteca-7', 'espn', 'disney-plus'],
+    us: ['tudn', 'vix'],
+  },
+  '2026-09-25|ATS|TIJ': {
+    mx: ['fox', 'fox-one'],
+    us: ['tudn', 'unimas'],
+  },
+  'j10|ATS|TIJ': {
+    mx: ['fox', 'fox-one'],
+    us: ['tudn', 'unimas'],
+  },
 };
 
 /**
