@@ -21,9 +21,19 @@ import { kickHold, kickHoldLabel } from '@/lib/sports/localizeEs';
 import { seleccionLogoSrc } from '@/config/ligaMxLogos';
 import type { Fixture } from '@/lib/sports/types';
 
-function kickWhen(iso: string, tz: string) {
+function kickWhen(f: Fixture, tz: string) {
+  const tba = f.statusLabel === 'Por anunciar';
   try {
-    return new Date(iso).toLocaleString('es-MX', {
+    if (tba) {
+      const day = new Date(f.date).toLocaleDateString('es-MX', {
+        timeZone: f.venueTz ?? tz,
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+      });
+      return `${day} · hora por confirmar`;
+    }
+    return new Date(f.date).toLocaleString('es-MX', {
       timeZone: tz,
       weekday: 'short',
       day: 'numeric',
@@ -32,7 +42,7 @@ function kickWhen(iso: string, tz: string) {
       minute: '2-digit',
     });
   } catch {
-    return iso;
+    return f.date;
   }
 }
 
@@ -97,7 +107,7 @@ function ClubTapeNext({
     >
       <div className="flex items-start justify-between gap-3">
         <p className="jor-next-when">
-          {hold ? `${hold} · por reprogramar` : kickWhen(f.date, tz)}
+          {hold ? `${hold} · por reprogramar` : kickWhen(f, tz)}
           {f.jornada ? ` · ${f.jornada}` : ''}
         </p>
       </div>
@@ -203,7 +213,7 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
                   ) : kickHoldLabel(kickHold(next.statusLabel)) ? (
                     `${kickHoldLabel(kickHold(next.statusLabel))} · por reprogramar`
                   ) : (
-                    kickWhen(next.date, tz)
+                    kickWhen(next, tz)
                   )}
                   {next.jornada ? ` · ${next.jornada}` : ''}
                 </p>

@@ -23,6 +23,8 @@ export type ElTriKick = {
 
 const ET = 'America/New_York';
 const MX = 'America/Mexico_City';
+const AZ = 'America/Phoenix';
+const PT = 'America/Los_Angeles';
 
 /** US listing for USA–México (TNT / Max / Telemundo / Universo / Peacock). */
 const USA_MEX_TV = ['tnt', 'max', 'telemundo', 'universo', 'peacock'] as TvChannelId[];
@@ -79,46 +81,50 @@ export const EL_TRI_FRIENDLIES: ElTriKick[] = [
   {
     id: 'el-tri-2026-09-26-col',
     boardDate: '2026-09-26',
-    localTime: null,
-    tz: MX,
+    localTime: '21:00',
+    tz: ET,
     home: 'MEX',
     away: 'COL',
     homeName: 'México',
     awayName: 'Colombia',
     competition: 'Amistosos internacionales',
+    venue: 'M&T Bank Stadium · Baltimore, MD',
   },
   {
     id: 'el-tri-2026-09-29-per',
     boardDate: '2026-09-29',
     localTime: null,
-    tz: MX,
+    tz: ET,
     home: 'MEX',
     away: 'PER',
     homeName: 'México',
     awayName: 'Perú',
     competition: 'Amistosos internacionales',
+    venue: 'Sports Illustrated Stadium · Harrison, NJ',
   },
   {
     id: 'el-tri-2026-10-03-usa',
     boardDate: '2026-10-03',
-    localTime: '21:00',
-    tz: ET,
+    localTime: '19:00',
+    tz: AZ,
     home: 'USA',
     away: 'MEX',
     homeName: 'Estados Unidos',
     awayName: 'México',
     competition: 'Amistosos internacionales',
+    venue: 'State Farm Stadium · Glendale, AZ',
     us: USA_MEX_TV,
   },
   {
     id: 'el-tri-2026-10-06-chi',
     boardDate: '2026-10-06',
     localTime: null,
-    tz: MX,
+    tz: PT,
     home: 'MEX',
     away: 'CHI',
     homeName: 'México',
     awayName: 'Chile',
     competition: 'Amistosos internacionales',
+    venue: 'Los Angeles Memorial Coliseum · Los Angeles, CA',
   },
 ];
