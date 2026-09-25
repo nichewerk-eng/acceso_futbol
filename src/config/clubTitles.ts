@@ -5,8 +5,8 @@
  * National: FMF/Liga MX palmarés (updated 25 Jul 2026 after Cruz Azul
  * Clausura 2026 + Campeón de Campeones 2026).
  * International: Wikipedia «Títulos oficiales de clubes del fútbol mexicano»
- * (aval CONCACAF / CONMEBOL / FIFA; corte 25 jul 2026). Excludes SuperLiga,
- * Campeones Cup and Leagues Cup.
+ * (aval CONCACAF / CONMEBOL / FIFA; corte 25 jul 2026), plus Leagues Cup
+ * (Toluca 2026). Excludes SuperLiga and Campeones Cup.
  */
 
 export type NationalComp = 'liga' | 'copa' | 'cdc' | 'supercopa';
@@ -17,7 +17,8 @@ export type InternationalComp =
   | 'recopa'
   | 'sudamericana'
   | 'fifa-derbi'
-  | 'fifa-challenger';
+  | 'fifa-challenger'
+  | 'leagues-cup';
 export type TitleComp = NationalComp | InternationalComp;
 
 export type NationalWin = {
@@ -62,6 +63,7 @@ const INT_LOGOS: Record<InternationalComp, string> = {
   sudamericana: '/trophy_logos/copa_sudamericana.png',
   'fifa-derbi': '/trophy_logos/fifa_intercontinental.png',
   'fifa-challenger': '/trophy_logos/fifa_intercontinental.png',
+  'leagues-cup': '/trophy_logos/leagues_cup.png',
 };
 
 const INT_TITLES: Record<InternationalComp, string> = {
@@ -72,6 +74,7 @@ const INT_TITLES: Record<InternationalComp, string> = {
   sudamericana: 'Copa Sudamericana',
   'fifa-derbi': 'Derbi de las Américas',
   'fifa-challenger': 'Copa Challenger',
+  'leagues-cup': 'Leagues Cup',
 };
 
 const INT_SHELF_ORDER: InternationalComp[] = [
@@ -82,6 +85,7 @@ const INT_SHELF_ORDER: InternationalComp[] = [
   'sudamericana',
   'fifa-derbi',
   'fifa-challenger',
+  'leagues-cup',
 ];
 
 /** Season / year strings as Mexican press writes them. */
@@ -280,6 +284,7 @@ const INT_WINS: Record<string, IntClubWins> = {
   },
   toluca: {
     concacaf: ['1968', '2003', '2026'],
+    'leagues-cup': ['2026'],
   },
   leon: {
     concacaf: ['2023'],
@@ -344,7 +349,8 @@ export function shortTorneoLabel(name: string, comp: TitleComp): string {
       comp === 'recopa' ||
       comp === 'sudamericana' ||
       comp === 'fifa-derbi' ||
-      comp === 'fifa-challenger') &&
+      comp === 'fifa-challenger' ||
+      comp === 'leagues-cup') &&
     /^\d{4}$/.test(name)
   ) {
     return name;
@@ -363,6 +369,7 @@ function displayName(name: string, comp: TitleComp): string {
   if (comp === 'sudamericana') return `Copa Sudamericana ${name}`;
   if (comp === 'fifa-derbi') return `Derbi de las Américas ${name}`;
   if (comp === 'fifa-challenger') return `Copa Challenger ${name}`;
+  if (comp === 'leagues-cup') return `Leagues Cup ${name}`;
   return name;
 }
 
