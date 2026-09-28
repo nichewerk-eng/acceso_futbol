@@ -73,6 +73,8 @@ export interface Fixture {
    * When set, UI should show kickoff in this zone to match ESPN venue-local listings.
    */
   venueTz?: string;
+  /** ESPN event id behind a board row whose own id is not an ESPN id (El Tri `el-tri-…`). */
+  espnEventId?: string;
   jornada?: string | null;
   state: MatchState;
   statusLabel: string;

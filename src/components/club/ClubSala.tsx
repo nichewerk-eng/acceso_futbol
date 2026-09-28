@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useRef, useState } from 'react';
 import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { ClubPulseWall } from '@/components/club/ClubPulseWall';
@@ -8,6 +9,7 @@ import { ClubTrophyCase } from '@/components/club/ClubTrophyCase';
 import { ClubsNav } from '@/components/club/ClubsNav';
 import { LiguillaPathShare } from '@/components/ligamx/LiguillaPathShare';
 import { SelladoFromFixture } from '@/components/match/SelladoCard';
+import { startLivePoll } from '@/lib/client/livePoll';
 import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
 import type { ClubBoard } from '@/lib/sports/clubBoard';
 import {
@@ -127,9 +129,41 @@ function ClubTapeNext({
   );
 }
 
+const BOARD_POLL_MS = 60_000;
+const BOARD_POLL_LIVE_MS = 20_000;
+
 export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
-  const board = initialBoard;
+  const [board, setBoard] = useState(initialBoard);
   const tz = useDeviceTimeZone();
+  const slug = initialBoard.club.id;
+  const liveRef = useRef(Boolean(initialBoard.live));
+  useEffect(() => {
+    liveRef.current = Boolean(board.live);
+  }, [board.live]);
+
+  // ISR HTML can be minutes old; the API board is what the visitor should see.
+  useEffect(() => {
+    let alive = true;
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/club/${slug}`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const next = (await res.json()) as ClubBoard;
+        if (alive && next?.club?.id === slug) setBoard(next);
+      } catch {
+        /* keep the last good board */
+      }
+    };
+    const stop = startLivePoll(() => void load(), {
+      get intervalMs() {
+        return liveRef.current ? BOARD_POLL_LIVE_MS : BOARD_POLL_MS;
+      },
+    });
+    return () => {
+      alive = false;
+      stop();
+    };
+  }, [slug]);
 
   const { club, next, live, table, liguilla, form, recent, upcoming, accesoLine } = board;
   const seleccion = club.league === 'seleccion';
@@ -363,27 +397,27 @@ export function ClubSala({ initialBoard }: { initialBoard: ClubBoard }) {
             )}
           </div>
 
-          {recent.length > 0 && (
-            <div className="mt-8" data-testid="club-recent">
-              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
-                Recientes
-              </p>
-              <div className="jor-mosaic mt-3">
-                {recent.map((f) => (
-                  <ClubTapeStamp key={f.id} f={f} clubAbbr={club.abbreviation} />
-                ))}
-              </div>
-            </div>
-          )}
-
           {(upcoming.length > 0 || (next && next.state === 'pre' && upcoming.length === 0)) && (
-            <div className="mt-10" data-testid="club-upcoming">
+            <div className="mt-8" data-testid="club-upcoming">
               <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
                 Próximos
               </p>
               <div className="jor-mosaic mt-3">
                 {(upcoming.length > 0 ? upcoming : next ? [next] : []).map((f) => (
                   <ClubTapeNext key={`up-${f.id}`} f={f} tz={tz} seleccion={seleccion} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {recent.length > 0 && (
+            <div className="mt-10" data-testid="club-recent">
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
+                Recientes
+              </p>
+              <div className="jor-mosaic mt-3">
+                {recent.map((f) => (
+                  <ClubTapeStamp key={f.id} f={f} clubAbbr={club.abbreviation} />
                 ))}
               </div>
             </div>

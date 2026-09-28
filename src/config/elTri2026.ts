@@ -89,11 +89,13 @@ export const EL_TRI_FRIENDLIES: ElTriKick[] = [
     awayName: 'Colombia',
     competition: 'Amistosos internacionales',
     venue: 'M&T Bank Stadium · Baltimore, MD',
+    mx: ['tudn', 'azteca-7', 'canal-5'],
+    us: ['vix', 'tudn'],
   },
   {
     id: 'el-tri-2026-09-29-per',
     boardDate: '2026-09-29',
-    localTime: null,
+    localTime: '22:30',
     tz: ET,
     home: 'MEX',
     away: 'PER',
@@ -101,6 +103,8 @@ export const EL_TRI_FRIENDLIES: ElTriKick[] = [
     awayName: 'Perú',
     competition: 'Amistosos internacionales',
     venue: 'Sports Illustrated Stadium · Harrison, NJ',
+    mx: ['tudn', 'azteca-7', 'canal-5'],
+    us: ['tudn'],
   },
   {
     id: 'el-tri-2026-10-03-usa',
@@ -118,7 +122,7 @@ export const EL_TRI_FRIENDLIES: ElTriKick[] = [
   {
     id: 'el-tri-2026-10-06-chi',
     boardDate: '2026-10-06',
-    localTime: null,
+    localTime: '19:30',
     tz: PT,
     home: 'MEX',
     away: 'CHI',

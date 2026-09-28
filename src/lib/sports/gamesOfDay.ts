@@ -17,7 +17,8 @@ import {
   livingRoomLeagueIds,
   sportmonksEnabled,
 } from './sportmonks';
-import { fetchSeleccionGamesOfDay } from './seleccion';
+import { buildElTriBoard } from './elTriBoard';
+import { fetchSeleccionSchedule } from './seleccion';
 import { buildLeaguesCupBoard, fetchLeaguesCupLiveBoard } from './leaguesCupBoard';
 
 export type DayGame = Fixture & {
@@ -153,6 +154,10 @@ function onLivingRoomDay(f: Fixture, dayKey: string): boolean {
   return isMexicoDay(f.date, dayKey) || f.state === 'in';
 }
 
+function onSeleccionDay(f: Fixture, dayKey: string): boolean {
+  return isMexicoDay(f.date, dayKey) || f.scheduleDay === dayKey || f.state === 'in';
+}
+
 function livingRoomLc(fixtures: Fixture[]): Fixture[] {
   return fixtures.filter(keepLivingRoomFixture).map(attachDondeVer);
 }
@@ -236,7 +241,7 @@ function upcomingFromStatic(now: Date): { fixtures: Fixture[]; dayKey?: string }
     .sort((a, b) => +new Date(a.date) - +new Date(b.date))
     .map(staticRowToFixture);
   const lc = livingRoomLc(buildLeaguesCupBoard([]));
-  return firstUpcomingDay([...liga, ...lc], t) ?? { fixtures: [] };
+  return firstUpcomingDay([...liga, ...lc, ...buildElTriBoard([])], t) ?? { fixtures: [] };
 }
 
 function staticRowToFixture(f: ReturnType<typeof aperturaCalendar>[number]): Fixture {
@@ -281,6 +286,7 @@ export function seedGamesOfDay(now = new Date()): GamesOfDayPayload {
       )
       .map(staticRowToFixture),
     ...lc.filter((f) => isMexicoDay(f.date, dayKey) || f.state === 'in'),
+    ...buildElTriBoard([]).filter((f) => onSeleccionDay(f, dayKey)),
   ];
 
   if (todayStatic.length > 0) {
@@ -310,13 +316,14 @@ function sleep(ms: number) {
 export async function getGamesOfDay(now = new Date()): Promise<GamesOfDayPayload> {
   refreshAperturaSmMap();
   const dayKey = mexicoDayKey(now);
-  const seleccionP = fetchSeleccionGamesOfDay(dayKey).catch(() => [] as Fixture[]);
+  const seleccionAllP = fetchSeleccionSchedule().catch(() => buildElTriBoard([]));
   const window = await ligaMxDateWindow(dayKey);
   // El Tri schedule is ESPN — don't stall the Liga MX slate on it.
-  const seleccion = await Promise.race([
-    seleccionP,
-    sleep(800).then(() => [] as Fixture[]),
+  const seleccionAll = await Promise.race([
+    seleccionAllP,
+    sleep(800).then(() => null),
   ]);
+  const seleccion = (seleccionAll ?? []).filter((f) => onSeleccionDay(f, dayKey));
 
   const byId = new Map<string, Fixture>();
   for (const f of window.today) byId.set(`liga-${f.id}`, f);
@@ -329,7 +336,11 @@ export async function getGamesOfDay(now = new Date()): Promise<GamesOfDayPayload
   let slateDay = dayKey;
 
   if (games.length === 0) {
-    const fromWindow = firstUpcomingDay(window.dated, now.getTime());
+    // FIFA windows: El Tri is often the next thing on, days before Liga MX returns.
+    const tri =
+      seleccionAll ??
+      (await Promise.race([seleccionAllP, sleep(2_500).then(() => buildElTriBoard([]))]));
+    const fromWindow = firstUpcomingDay([...window.dated, ...tri], now.getTime());
     let next = fromWindow;
     if (!next) {
       const planned = upcomingFromStatic(now);

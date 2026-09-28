@@ -27,7 +27,7 @@ function teamFrom(abbr: string, name: string, score: string | null = null): Team
   };
 }
 
-function channelsFor(listing: { us?: TvChannelId[]; mx?: TvChannelId[] }): Fixture['dondeVer'] {
+export function channelsFor(listing: { us?: TvChannelId[]; mx?: TvChannelId[] }): Fixture['dondeVer'] {
   const us = listing.us ?? [];
   const mx = listing.mx ?? [];
   if (!us.length && !mx.length) {
@@ -49,26 +49,35 @@ function channelsFor(listing: { us?: TvChannelId[]; mx?: TvChannelId[] }): Fixtu
 }
 
 function fixtureFromKick(kick: ElTriKick, live?: Fixture): Fixture {
-  const scheduled = Boolean(kick.localTime);
-  const date = scheduled
-    ? elTriLocalToIso(kick.boardDate, kick.localTime!, kick.tz)
-    : elTriTbaIso(kick.boardDate);
+  // ESPN publishes the kickoff before the federation board is edited.
+  const scheduled = Boolean(kick.localTime) || Boolean(live);
+  const date = live
+    ? live.date
+    : kick.localTime
+      ? elTriLocalToIso(kick.boardDate, kick.localTime, kick.tz)
+      : elTriTbaIso(kick.boardDate);
   const home = teamFrom(kick.home, kick.homeName, live?.home.score ?? null);
   const away = teamFrom(kick.away, kick.awayName, live?.away.score ?? null);
+  const statusLabel =
+    live && live.state !== 'pre'
+      ? live.statusLabel
+      : scheduled
+        ? 'Programado'
+        : 'Por anunciar';
   return {
     id: kick.id,
     provider: live?.provider ?? 'espn',
+    espnEventId: live?.id,
     league: 'seleccion',
     date,
     scheduleDay: kick.boardDate,
     venueTz: kick.tz,
     jornada: kick.competition,
     state: live?.state ?? 'pre',
-    statusLabel:
-      live?.statusLabel ?? (scheduled ? 'Programado' : 'Por anunciar'),
+    statusLabel,
     clock: live?.clock,
     venue: kick.venue ?? live?.venue ?? null,
-    city: live?.city ?? null,
+    city: kick.venue ? null : (live?.city ?? null),
     home: live?.home
       ? { ...home, score: live.home.score, logo: home.logo ?? live.home.logo }
       : home,

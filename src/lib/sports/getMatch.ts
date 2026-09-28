@@ -12,6 +12,7 @@ import { enrichMatchWithEspnCommentary } from './espnCommentary';
 import { applyVarNarrative } from './keyEvents';
 import { FRESH, isNearKickoff, looksStillLive } from './freshness';
 import { officialElTriMatch } from './elTriBoard';
+import { findSeleccionFixture } from './seleccion';
 import { applyLeaguesCupOfficial, officialLeaguesCupMatch, resolveLeaguesCupSmId } from './leaguesCupBoard';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
 import { commentLooksLikeGoal } from './localizeComment';
@@ -31,6 +32,8 @@ import type {
   CommentaryLine,
   FormMatch,
   HeadToHeadSummary,
+  LiveEvent,
+  LiveEventKind,
   MatchSnapshot,
 } from './types';
 
@@ -38,7 +41,7 @@ type LeagueKey = 'liga-mx' | 'liga-mx-femenil' | 'mundial' | 'seleccion' | 'leag
 
 /** Shared with `/api/sports/match` + radio so both surfaces coalesce. */
 export function sportsMatchCacheKey(league: string, id: string) {
-  return `sports-match-v16-lc-ko-${league}-${id}`;
+  return `sports-match-v17-espn-keyevents-${league}-${id}`;
 }
 
 export function sportsMatchTickCacheKey(league: string, id: string) {
@@ -81,6 +84,18 @@ function looksLikeEspnEventId(id: string): boolean {
 
 function looksLikeSmFixtureId(id: string): boolean {
   return /^\d{6,}$/.test(id) && !looksLikeEspnEventId(id);
+}
+
+function espnKeyEventKind(typeText: string, scoringPlay?: boolean): LiveEventKind {
+  const t = typeText.toLowerCase();
+  if (/autogol|own goal/.test(t)) return 'own_goal';
+  if (/penal/.test(t) && (scoringPlay || /gol|goal/.test(t))) return 'penalty';
+  if (scoringPlay || /\bgol\b|goal/.test(t)) return 'goal';
+  if (/amarilla|yellow/.test(t)) return 'yellow';
+  if (/roja|red card/.test(t)) return 'red';
+  if (/sustituci|substitution/.test(t)) return 'sub';
+  if (/\bvar\b/.test(t)) return 'var';
+  return 'other';
 }
 
 function parseClockMinute(display?: string): number | undefined {
@@ -228,6 +243,15 @@ async function fromEspn(league: LeagueKey, id: string): Promise<MatchSnapshot | 
         time?: { value?: number; displayValue?: string };
         text?: string;
       }[];
+      keyEvents?: {
+        id?: string | number;
+        period?: { number?: number };
+        clock?: { displayValue?: string };
+        text?: string;
+        type?: { text?: string; type?: string };
+        team?: { id?: string; displayName?: string };
+        scoringPlay?: boolean;
+      }[];
       boxscore?: {
         teams?: {
           homeAway?: 'home' | 'away';
@@ -252,7 +276,7 @@ async function fromEspn(league: LeagueKey, id: string): Promise<MatchSnapshot | 
     const stateRaw = status?.type?.state ?? 'pre';
     const state = stateRaw === 'in' ? 'in' : stateRaw === 'post' ? 'post' : 'pre';
 
-    const plays = (raw.keyPlays ?? raw.plays ?? []).slice(0, 50).map((p, i) => ({
+    const legacyPlays: LiveEvent[] = (raw.keyPlays ?? raw.plays ?? []).slice(0, 50).map((p, i) => ({
       id: String(p.id ?? i),
       period: p.period?.number ?? 0,
       clock: p.clock?.displayValue ?? '',
@@ -260,6 +284,37 @@ async function fromEspn(league: LeagueKey, id: string): Promise<MatchSnapshot | 
       text: p.text ?? '',
       teamAbbr: p.team?.abbreviation,
     }));
+    // Soccer summaries ship `keyEvents`; `keyPlays` / `plays` are the older shape.
+    const keyEvents: LiveEvent[] = (raw.keyEvents ?? [])
+      .filter((e) => (e.team?.id || e.team?.displayName) && e.text?.trim())
+      .map((e, i) => {
+        const clock = e.clock?.displayValue ?? '';
+        const typeText = e.type?.text ?? '';
+        const side =
+          e.team?.id && e.team.id === home?.team?.id
+            ? 'home'
+            : e.team?.id && e.team.id === away?.team?.id
+              ? 'away'
+              : undefined;
+        return {
+          id: String(e.id ?? i),
+          period: e.period?.number ?? 0,
+          clock,
+          minute: parseClockMinute(clock),
+          extraMinute: Number(clock.match(/\+\s*(\d+)/)?.[1]) || undefined,
+          type: typeText,
+          kind: espnKeyEventKind(typeText, e.scoringPlay),
+          text: e.text ?? '',
+          side,
+          teamAbbr:
+            side === 'home'
+              ? home?.team?.abbreviation
+              : side === 'away'
+                ? away?.team?.abbreviation
+                : undefined,
+        };
+      });
+    const plays = keyEvents.length ? keyEvents : legacyPlays;
 
     const comments: CommentaryLine[] = (raw.commentary ?? [])
       .map((c, i) => {
@@ -339,9 +394,29 @@ async function getMatchUncached(league: string, id: string): Promise<MatchSnapsh
     return getLeaguesCupMatch(id);
   }
 
-  if (key === 'seleccion' && id.startsWith('el-tri-')) {
+  if (key === 'seleccion') {
+    const row = await findSeleccionFixture(id);
+    const espnId = row?.espnEventId ?? (looksLikeEspnEventId(id) ? id : null);
+    const espn = espnId ? await fromEspn(key, espnId) : null;
+    if (espn && row) {
+      return {
+        ...espn,
+        id: row.id,
+        espnEventId: espnId ?? undefined,
+        jornada: row.jornada,
+        scheduleDay: row.scheduleDay,
+        venueTz: row.venueTz,
+        venue: row.venue ?? espn.venue,
+        city: row.venue ? row.city : espn.city,
+        home: { ...espn.home, name: row.home.name, logo: row.home.logo ?? espn.home.logo },
+        away: { ...espn.away, name: row.away.name, logo: row.away.logo ?? espn.away.logo },
+        dondeVer: row.dondeVer,
+      };
+    }
+    if (espn) return espn;
+    if (row) return { ...row, events: [], comments: [] } as MatchSnapshot;
     const official = officialElTriMatch(id);
-    if (official) return attachDondeVer(official) as MatchSnapshot;
+    return official ? (attachDondeVer(official) as MatchSnapshot) : null;
   }
 
   // Liga MX / Femenil: Sportmonks while the token is present.

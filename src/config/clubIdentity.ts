@@ -63,6 +63,7 @@ const SM_ID: Record<string, number> = {
   leon: 10836,
   tijuana: 11023,
   'san-luis': 15522,
+  'el-tri': 18576,
 };
 
 const NICKS: Record<string, string[]> = {
