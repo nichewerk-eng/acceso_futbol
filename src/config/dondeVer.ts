@@ -30,7 +30,8 @@ export type TvChannelId =
   | 'youtube'
   | 'tnt'
   | 'max'
-  | 'peacock';
+  | 'peacock'
+  | 'claro-sports';
 
 export type TvChannel = {
   id: TvChannelId;
@@ -211,6 +212,15 @@ export const TV_CHANNELS: Record<TvChannelId, TvChannel> = {
     id: 'peacock',
     label: 'Peacock',
     kind: 'stream',
+    src: '/tv_logos/PEACOCK.svg',
+    srcInk: '/tv_logos/PEACOCK_onDark.svg',
+  },
+  'claro-sports': {
+    id: 'claro-sports',
+    label: 'Claro Sports',
+    kind: 'stream',
+    src: '/tv_logos/ClaroSports.png',
+    srcInk: '/tv_logos/ClaroSports_onDark.png',
   },
 };
 

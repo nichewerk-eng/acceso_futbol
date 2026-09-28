@@ -2466,7 +2466,7 @@ a.lc-rail-block:hover {
   .lc-match-tv.tv-inline-desk .tv-channel,
   .lc-match-tv.tv-inline-desk .tv-channel-compact {
     width: auto;
-    height: 0.55rem;
+    height: 0.6875rem;
   }
 
   .lc-match-tv.tv-inline-desk .tv-channel[data-channel='apple-tv'],
@@ -2481,7 +2481,7 @@ a.lc-rail-block:hover {
   .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='televisa'],
   .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='tubi'],
   .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='youtube'] {
-    height: 0.8rem;
+    height: 1rem;
   }
 }
 
@@ -4688,7 +4688,7 @@ a.af-club-btn {
   justify-content: center;
   flex-shrink: 0;
   width: auto;
-  height: 0.55rem;
+  height: 0.6875rem;
   overflow: visible;
   padding: 0;
   border: none;
@@ -4700,7 +4700,7 @@ a.af-club-btn {
 }
 
 .tv-channel-compact {
-  height: 0.55rem;
+  height: 0.6875rem;
 }
 
 .tv-channel-logo {
@@ -4946,6 +4946,17 @@ a.af-club-btn {
 
 .dv-chip.is-invert img {
   filter: invert(1);
+}
+
+@media (max-width: 767px) {
+  [data-testid='section-donde-ver'] .dv-chip {
+    height: 0.885rem;
+  }
+
+  [data-testid='section-donde-ver'] .dv-chip img {
+    height: 0.615rem;
+    max-width: 2.55rem;
+  }
 }
 
 .dv-chip-text {
@@ -5948,13 +5959,13 @@ a.lead-team:hover {
 .tv-inline .tv-channel,
 .tv-inline .tv-channel-compact {
   width: auto;
-  height: 0.55rem;
+  height: 0.6875rem;
 }
 
 .tv-inline-desk .tv-channel,
 .tv-inline-desk .tv-channel-compact {
   width: auto;
-  height: 0.55rem;
+  height: 0.6875rem;
 }
 
 .hero-band-tv .tv-inline .tv-channel,
@@ -5963,7 +5974,7 @@ a.lead-team:hover {
 .hero-stage-tv .tv-channel-compact {
   width: auto;
   min-width: 0;
-  height: 0.55rem;
+  height: 0.6875rem;
 }
 
 :is(
@@ -5990,7 +6001,37 @@ a.lead-team:hover {
   [data-channel='youtube'],
   [data-channel='estrella-tv']
 ) {
-  height: 0.8rem;
+  height: 1rem;
+}
+
+:is(
+  .tv-channel,
+  .tv-inline .tv-channel,
+  .tv-inline .tv-channel-compact,
+  .tv-inline-desk .tv-channel,
+  .tv-inline-desk .tv-channel-compact,
+  .hero-band-tv .tv-inline .tv-channel,
+  .hero-band-tv .tv-inline .tv-channel-compact,
+  .hero-stage-tv .tv-channel,
+  .lc-match-tv.tv-inline-desk .tv-channel,
+  .lc-match-tv.tv-inline-desk .tv-channel-compact
+)[data-channel='prime-video'] {
+  height: 0.875rem;
+}
+
+:is(
+  .tv-channel,
+  .tv-inline .tv-channel,
+  .tv-inline .tv-channel-compact,
+  .tv-inline-desk .tv-channel,
+  .tv-inline-desk .tv-channel-compact,
+  .hero-band-tv .tv-inline .tv-channel,
+  .hero-band-tv .tv-inline .tv-channel-compact,
+  .hero-stage-tv .tv-channel,
+  .lc-match-tv.tv-inline-desk .tv-channel,
+  .lc-match-tv.tv-inline-desk .tv-channel-compact
+)[data-channel='claro-sports'] {
+  height: 1.125rem;
 }
 
 .tv-inline .tv-channel[data-channel='apple-tv'],
@@ -6013,7 +6054,7 @@ a.lead-team:hover {
 .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='unimas'],
 .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='imagen-tv'],
 .lc-match-tv.tv-inline-desk .tv-channel-compact[data-channel='televisa'] {
-  height: 0.8rem;
+  height: 1rem;
 }
 
 @media (min-width: 768px) {
@@ -6028,7 +6069,7 @@ a.lead-team:hover {
   .hero-band-tv .tv-channel-compact,
   .hero-stage-tv .tv-channel,
   .hero-stage-tv .tv-channel-compact {
-    height: 0.4rem;
+    height: 0.5rem;
   }
 
   .hero-band-tv .tv-channel:is(
@@ -6057,7 +6098,19 @@ a.lead-team:hover {
     [data-channel='youtube'],
     [data-channel='estrella-tv']
   ) {
-    height: 0.55rem;
+    height: 0.6875rem;
+  }
+
+  .hero-band-tv .tv-inline .tv-channel[data-channel='prime-video'],
+  .hero-band-tv .tv-inline-desk .tv-channel[data-channel='prime-video'],
+  .hero-stage-tv.tv-inline .tv-channel[data-channel='prime-video'] {
+    height: 0.65rem;
+  }
+
+  .hero-band-tv .tv-inline .tv-channel[data-channel='claro-sports'],
+  .hero-band-tv .tv-inline-desk .tv-channel[data-channel='claro-sports'],
+  .hero-stage-tv.tv-inline .tv-channel[data-channel='claro-sports'] {
+    height: 0.875rem;
   }
 }
 

@@ -13,7 +13,7 @@ const SM_MEXICO_TEAM_ID = 18576;
 const SM_COUNTRY_MX = 458;
 const SM_COUNTRY_US = 3483;
 
-const SCHEDULE_CACHE_KEY = 'seleccion-schedule-v4-live-tv-es';
+const SCHEDULE_CACHE_KEY = 'seleccion-schedule-v5-curated-tv';
 const SCHEDULE_TTL_MS = 30_000;
 /** Two El Tri fixtures are never this close, so it safely pairs rows across providers. */
 const SAME_MATCH_WINDOW_MS = 36 * 3_600_000;
@@ -82,6 +82,7 @@ const STATION_RULES: [RegExp, TvChannelId][] = [
   [/^layv/i, 'layvtime'],
   [/^estrella/i, 'estrella-tv'],
   [/^televisa$/i, 'televisa'],
+  [/^claro\s*sports?/i, 'claro-sports'],
 ];
 
 function stationChannel(name?: string | null): TvChannelId | null {
@@ -249,7 +250,7 @@ function nearest<T extends { at: number }>(rows: T[], iso: string): T | undefine
   return best;
 }
 
-/** Live listings win; the curated board only fills a side nobody has published yet. */
+/** Curated board listings win; provider listings fill a side the board leaves empty. */
 function withTv(f: Fixture, espnUs: TvChannelId[], sm?: SmTvListing): Fixture {
   const curMx = (f.dondeVer?.mxChannels ?? []) as TvChannelId[];
   const curUs = (f.dondeVer?.usChannels ?? []) as TvChannelId[];
@@ -257,8 +258,8 @@ function withTv(f: Fixture, espnUs: TvChannelId[], sm?: SmTvListing): Fixture {
   return {
     ...f,
     dondeVer: channelsFor({
-      mx: sm?.mx.length ? sm.mx : curMx,
-      us: liveUs.length ? liveUs : curUs,
+      mx: curMx.length ? curMx : (sm?.mx ?? []),
+      us: curUs.length ? curUs : liveUs,
     }),
   };
 }

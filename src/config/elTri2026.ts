@@ -103,7 +103,7 @@ export const EL_TRI_FRIENDLIES: ElTriKick[] = [
     awayName: 'Perú',
     competition: 'Amistosos internacionales',
     venue: 'Sports Illustrated Stadium · Harrison, NJ',
-    mx: ['tudn', 'azteca-7', 'canal-5'],
+    mx: ['canal-5', 'tudn', 'azteca-7', 'claro-sports', 'prime-video'],
     us: ['tudn'],
   },
   {

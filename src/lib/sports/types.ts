@@ -121,6 +121,7 @@ export interface Fixture {
       | 'tnt'
       | 'max'
       | 'peacock'
+      | 'claro-sports'
     >;
     usChannels?: Array<
       | 'tudn'
@@ -150,6 +151,7 @@ export interface Fixture {
       | 'tnt'
       | 'max'
       | 'peacock'
+      | 'claro-sports'
     >;
     /** True when MX/US marks come from a confirmed guide, not a guess. */
     confirmed?: boolean;
