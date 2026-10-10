@@ -635,6 +635,16 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
     mx: ['fox', 'fox-one'],
     us: ['tudn', 'unimas'],
   },
+
+  // Jornada 11 · 9–11 oct 2026
+  '2026-10-10|JUA|TIJ': {
+    mx: ['fox-one', 'azteca-7'],
+    us: ['fox-deportes', 'universo', 'estrella-tv'],
+  },
+  'j11|JUA|TIJ': {
+    mx: ['fox-one', 'azteca-7'],
+    us: ['fox-deportes', 'universo', 'estrella-tv'],
+  },
 };
 
 /**
