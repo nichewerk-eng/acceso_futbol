@@ -645,6 +645,80 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
     mx: ['fox-one', 'azteca-7'],
     us: ['fox-deportes', 'universo', 'estrella-tv'],
   },
+
+  // Jornada 12 · 16–18 oct 2026
+  // Necaxa–Atlas
+  '2026-10-16|ATS|NCX': {
+    mx: ['fox', 'fox-one'],
+    us: ['fox-deportes'],
+  },
+  'j12|ATS|NCX': {
+    mx: ['fox', 'fox-one'],
+    us: ['fox-deportes'],
+  },
+  // Tijuana–Puebla
+  '2026-10-16|PUE|TIJ': {
+    mx: ['fox', 'fox-one'],
+    us: ['tudn'],
+  },
+  'j12|PUE|TIJ': {
+    mx: ['fox', 'fox-one'],
+    us: ['tudn'],
+  },
+  // Atlante–Pumas
+  '2026-10-16|ATL|UNAM': {
+    mx: ['azteca-7', 'espn', 'disney-plus'],
+    us: ['vix'],
+  },
+  'j12|ATL|UNAM': {
+    mx: ['azteca-7', 'espn', 'disney-plus'],
+    us: ['vix'],
+  },
+  // Santos–Querétaro
+  '2026-10-17|QRO|SAN': {
+    mx: ['espn', 'disney-plus', 'vix', 'layvtime'],
+    us: ['vix'],
+  },
+  'j12|QRO|SAN': {
+    mx: ['espn', 'disney-plus', 'vix', 'layvtime'],
+    us: ['vix'],
+  },
+  // León–América
+  '2026-10-17|AME|LEO': {
+    mx: ['fox', 'fox-one'],
+    us: ['tudn', 'univision', 'vix'],
+  },
+  'j12|AME|LEO': {
+    mx: ['fox', 'fox-one'],
+    us: ['tudn', 'univision', 'vix'],
+  },
+  // Toluca–San Luis
+  '2026-10-17|ASL|TOL': {
+    mx: ['vix', 'tudn', 'canal-5'],
+    us: ['tudn'],
+  },
+  'j12|ASL|TOL': {
+    mx: ['vix', 'tudn', 'canal-5'],
+    us: ['tudn'],
+  },
+  // Cruz Azul–Juárez
+  '2026-10-17|CAZ|JUA': {
+    mx: ['vix', 'tudn', 'canal-5', 'layvtime'],
+    us: ['univision', 'tudn'],
+  },
+  'j12|CAZ|JUA': {
+    mx: ['vix', 'tudn', 'canal-5', 'layvtime'],
+    us: ['univision', 'tudn'],
+  },
+  // Monterrey–Pachuca
+  '2026-10-18|MTY|PAC': {
+    mx: ['vix', 'layvtime'],
+    us: ['tudn', 'vix'],
+  },
+  'j12|MTY|PAC': {
+    mx: ['vix', 'layvtime'],
+    us: ['tudn', 'vix'],
+  },
 };
 
 /**
