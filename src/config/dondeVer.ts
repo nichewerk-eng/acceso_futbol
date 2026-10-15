@@ -695,11 +695,11 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
   // Toluca–San Luis
   '2026-10-17|ASL|TOL': {
     mx: ['vix', 'tudn', 'canal-5'],
-    us: ['tudn'],
+    us: ['vix'],
   },
   'j12|ASL|TOL': {
     mx: ['vix', 'tudn', 'canal-5'],
-    us: ['tudn'],
+    us: ['vix'],
   },
   // Cruz Azul–Juárez
   '2026-10-17|CAZ|JUA': {
