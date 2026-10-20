@@ -719,6 +719,80 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
     mx: ['vix', 'layvtime'],
     us: ['tudn', 'vix'],
   },
+
+  // Jornada 13 · 20–21 oct 2026
+  // Juárez–Atlante
+  '2026-10-20|ATL|JUA': {
+    mx: ['fox', 'fox-one', 'azteca-7'],
+    us: ['fox-deportes', 'universo'],
+  },
+  'j13|ATL|JUA': {
+    mx: ['fox', 'fox-one', 'azteca-7'],
+    us: ['fox-deportes', 'universo'],
+  },
+  // Chivas–Necaxa
+  '2026-10-20|GDL|NCX': {
+    mx: ['prime-video'],
+    us: ['universo'],
+  },
+  'j13|GDL|NCX': {
+    mx: ['prime-video'],
+    us: ['universo'],
+  },
+  // Tigres–León
+  '2026-10-20|LEO|UANL': {
+    mx: ['fox', 'fox-one', 'azteca-7'],
+    us: ['fox-deportes', 'universo'],
+  },
+  'j13|LEO|UANL': {
+    mx: ['fox', 'fox-one', 'azteca-7'],
+    us: ['fox-deportes', 'universo'],
+  },
+  // Puebla–Monterrey
+  '2026-10-21|MTY|PUE': {
+    mx: ['espn', 'disney-plus'],
+    us: ['tudn'],
+  },
+  'j13|MTY|PUE': {
+    mx: ['espn', 'disney-plus'],
+    us: ['tudn'],
+  },
+  // Atlas–América
+  '2026-10-21|AME|ATS': {
+    mx: ['canal-5', 'tudn', 'vix', 'layvtime'],
+    us: ['tudn', 'vix'],
+  },
+  'j13|AME|ATS': {
+    mx: ['canal-5', 'tudn', 'vix', 'layvtime'],
+    us: ['tudn', 'vix'],
+  },
+  // Toluca–Tijuana
+  '2026-10-21|TIJ|TOL': {
+    mx: ['fox', 'fox-one', 'azteca-7'],
+    us: ['vix'],
+  },
+  'j13|TIJ|TOL': {
+    mx: ['fox', 'fox-one', 'azteca-7'],
+    us: ['vix'],
+  },
+  // Pachuca–Cruz Azul
+  '2026-10-21|CAZ|PAC': {
+    mx: ['fox', 'fox-one'],
+    us: ['vix'],
+  },
+  'j13|CAZ|PAC': {
+    mx: ['fox', 'fox-one'],
+    us: ['vix'],
+  },
+  // Santos–Pumas
+  '2026-10-21|SAN|UNAM': {
+    mx: ['vix', 'tudn', 'canal-5', 'layvtime'],
+    us: ['tudn'],
+  },
+  'j13|SAN|UNAM': {
+    mx: ['vix', 'tudn', 'canal-5', 'layvtime'],
+    us: ['tudn'],
+  },
 };
 
 /**
