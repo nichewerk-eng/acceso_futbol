@@ -2,36 +2,40 @@ import type { Metadata } from 'next';
 import MediaKitView from '@/components/mediakit/MediaKitView';
 import { absoluteUrl } from '@/lib/seo';
 
-const spanishMetadata: Metadata = {
-  title: 'Patrocinios de fútbol mexicano · Media Kit',
-  description: 'Conecta tu marca con fans de Liga MX y El Tri en México y Estados Unidos. Consulta resultados, formatos y escríbenos para recibir una propuesta de patrocinio.',
-  alternates: { canonical: absoluteUrl('/mediakit') },
-  robots: { index: true, follow: true },
-  openGraph: {
-    title: 'Patrocinios de fútbol mexicano | Acceso Futbol',
-    description: 'Campañas en español, cuatro plataformas y resultados por pieza. Escríbenos para recibir una propuesta para tu marca.',
-    url: absoluteUrl('/mediakit'),
-    images: [{ url: '/logo.png', width: 512, height: 331, alt: 'Acceso Futbol · Patrocinios' }],
-  },
-  twitter: { card: 'summary_large_image', title: 'Patrocinios | Acceso Futbol', images: ['/logo.png'] },
-};
-
 type Query = { searchParams: Promise<{ lang?: string }> };
 
 export async function generateMetadata({ searchParams }: Query): Promise<Metadata> {
   const english = (await searchParams).lang === 'en';
+  const title = english ? 'Acceso Futbol · Sponsorship Media Kit' : 'Acceso Futbol · Media kit para marcas';
+  const description = english
+    ? 'Connect your brand with Mexican football fans in Mexico and the U.S. Explore Spanish-language content, campaign formats and sponsorship options.'
+    : 'Conecta tu marca con la afición del fútbol mexicano en México y Estados Unidos. Descubre contenido en español, formatos y opciones de patrocinio.';
+  const image = {
+    // Explicit version gives social crawlers a fresh image URL after publication.
+    url: absoluteUrl(english ? '/mediakit/share-image?lang=en&v=1' : '/mediakit/share-image?v=1'),
+    width: 1200,
+    height: 630,
+    type: 'image/png',
+    alt: english
+      ? 'Acceso Futbol Media Kit. Bold editorial cover with an AF presenter, for brands reaching Mexican football fans.'
+      : 'Media Kit de Acceso Futbol. Portada editorial con un presentador de AF, para marcas que buscan conectar con la afición del fútbol mexicano.',
+  };
+  const url = absoluteUrl(english ? '/mediakit?lang=en' : '/mediakit');
+
   return {
-    ...spanishMetadata,
-    ...(english ? {
-      title: 'Mexican football sponsorships · Media Kit',
-      description: 'Connect your brand with Liga MX and El Tri fans in Mexico and the U.S. Explore results, formats and request a sponsorship proposal.',
-      openGraph: { ...spanishMetadata.openGraph, title: 'Mexican football sponsorships | Acceso Futbol', description: 'Spanish-language campaigns across four platforms, with reporting by asset.', locale: 'en_US', url: absoluteUrl('/mediakit?lang=en') },
-      twitter: { card: 'summary_large_image', title: 'Sponsorships | Acceso Futbol', images: ['/logo.png'] },
-    } : {}),
+    title: english ? 'Sponsorship Media Kit' : 'Media kit y patrocinios',
+    description,
+    robots: { index: true, follow: true },
     alternates: {
-      canonical: absoluteUrl(english ? '/mediakit?lang=en' : '/mediakit'),
+      canonical: url,
       languages: { es: absoluteUrl('/mediakit'), en: absoluteUrl('/mediakit?lang=en') },
     },
+    openGraph: {
+      title, description, url, type: 'website', siteName: 'Acceso Futbol',
+      locale: english ? 'en_US' : 'es_MX', alternateLocale: english ? 'es_MX' : 'en_US',
+      images: [image],
+    },
+    twitter: { card: 'summary_large_image', title, description, images: [image] },
   };
 }
 
