@@ -1,6 +1,15 @@
 export const TOMA_OUTRO = 'Esto fue La Toma de Acceso Futbol.';
 export const NEWS_OUTRO = 'Estas fueron las noticias de Acceso Futbol.';
 
+/** Toma sign-off plus a follow line that fits where the fecha is. */
+export function tomaOutro(kind: 'antes' | 'dia' | 'cierre'): string {
+  const follow =
+    kind === 'cierre'
+      ? 'Síguenos para la siguiente jornada.'
+      : 'Síguenos para lo que viene en la jornada.';
+  return `${TOMA_OUTRO} ${follow}`;
+}
+
 /** Last line of the VO. Dedupes if the model already closed that way. */
 export function withSpokenOutro(body: string, outro: string): string {
   const text = body.trim();

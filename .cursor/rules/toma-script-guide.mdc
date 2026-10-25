@@ -1,6 +1,6 @@
 ---
-description: Acceso Toma / jornada copy follows the script guide (website recap)
-globs: src/lib/sports/jornadaTake*.ts,src/components/living-room/JornadaTake.tsx,src/components/living-room/Toma*.tsx,src/app/toma/**,src/app/api/toma/**
+description: Acceso Toma / jornada copy follows the script guide (website recap) and the audio narration rules
+globs: src/lib/sports/jornadaTake*.ts,src/components/living-room/JornadaTake.tsx,src/components/living-room/Toma*.tsx,src/app/toma/**,src/app/api/toma/**,src/lib/toma/**
 alwaysApply: false
 ---
 
@@ -28,3 +28,15 @@ Use **Section 4** (website J4 recap) plus **Section 0** with the website excepti
 - `Preparense que arrancamos`
 - Stripping vowel accents
 - TikTok runtime / hashtag packaging
+
+# Audio Toma episodes (`src/lib/toma/`)
+
+The ElevenLabs episode is a different format from the column above. `writeTomaNarration` writes from `buildTomaNarrationFacts` (live tabla, jornadas restantes, 2–3 "qué ver" picks with derby name, MX + US Central kickoff, venue, TV, H2H, form). The column is tone only.
+- Hook = a number plus a consequence. Never open with "Mira" or an abstract line.
+- Every number comes from the facts pack. Gaps, places and streaks are pre-worded (`frase`, `tabla`, `forma`, `siGana`) so the model never does table math. Unverified point totals trigger a retry, then no episode.
+- Fan names and derbies: Chivas, Rayados, Xolos; Clásico Tapatío / Nacional / Joven / Capitalino / Regio (`narrationFacts.ts`).
+- Picks name day, spoken time in Mexico and US Central, one or two facts and one consequence. Not the full slate.
+- Filler blocklist lives in `FILLER` in `writeDialogue.ts`; extend it rather than loosening the prompt.
+- Close: "¿Quién se lleva X? A o B, comenta." then `tomaOutro(kind)` (sign-off + follow line), appended in code.
+- The model also returns a page `headline` + `subhead`; the episode page uses those, never the transcript's first lines.
+- Bump `TOMA_VOICE_REV` when the voice or format changes so stored episodes regenerate.

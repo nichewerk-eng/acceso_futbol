@@ -58,10 +58,15 @@ export function tomaShareCopy(ep: {
   title: string;
   cue?: string;
   jornadaNum?: number;
+  subhead?: string | null;
   transcript?: string | null;
 }): { title: string; text: string } {
   const title = `AF://TOMA · ${ep.title}`;
-  const lead = clipShareText(ep.transcript) || ep.cue?.trim() || 'La toma de Acceso Futbol.';
+  const lead =
+    ep.subhead?.trim() ||
+    clipShareText(ep.transcript) ||
+    ep.cue?.trim() ||
+    'La toma de Acceso Futbol.';
   const jornada = ep.jornadaNum != null ? `J${ep.jornadaNum}` : '';
   const text = [jornada, lead].filter(Boolean).join(' · ');
   return { title, text };

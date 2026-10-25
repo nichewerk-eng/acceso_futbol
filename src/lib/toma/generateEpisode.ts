@@ -23,6 +23,7 @@ import {
   type TomaShowKind,
 } from '@/lib/toma/episode';
 import { elevenLabsConfigured, synthesizeBytes } from '@/lib/radio/tts';
+import { buildTomaNarrationFacts } from '@/lib/toma/narrationFacts';
 import { sourceHash, writeTomaNarration } from '@/lib/toma/writeDialogue';
 
 export type TomaGenerateSkip =
@@ -99,8 +100,10 @@ async function runGenerate(
   if (!locked) return { episode: existing, skip: existing?.audioUrl ? 'exists' : 'locked' };
 
   const kind = showKindFromDayKey(closed.dayKey);
-  const transcript = await writeTomaNarration(take, closed.fixtures, kind);
-  if (!transcript) return { episode: existing, skip: 'no_script' };
+  const facts = await buildTomaNarrationFacts(jornada, kind);
+  const narration = await writeTomaNarration(take, closed.fixtures, kind, facts);
+  if (!narration) return { episode: existing, skip: 'no_script' };
+  const { transcript } = narration;
   console.log('toma-tts', { id: storeKey, chars: transcript.length });
   const audio = await synthesizeBytes(transcript, 'caliente');
   if (!audio) return { episode: existing, skip: 'no_tts' };
@@ -112,6 +115,8 @@ async function runGenerate(
     dayKey: closed.dayKey,
     kind,
     title: episodeShowCopy({ jornadaNum: jornada.number, dayKey: closed.dayKey, kind }).title,
+    headline: narration.headline,
+    subhead: narration.subhead || undefined,
     transcript,
     sourceHash: hash,
     audioUrl: stored.audioUrl,

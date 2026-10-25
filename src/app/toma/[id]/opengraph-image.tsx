@@ -23,14 +23,14 @@ export default async function OgImage({ params }: Props) {
 
   const show = ep ? episodeShowCopy(ep) : null;
   const dek = ep
-    ? clipShareText(ep.transcript, 180) || show?.cue || 'La toma de Acceso Futbol.'
+    ? ep.subhead || clipShareText(ep.transcript, 180) || show?.cue || 'La toma de Acceso Futbol.'
     : 'La toma de Acceso Futbol.';
 
   return new ImageResponse(
     recordingOgTree({
       kicker: 'AF://TOMA',
       meta: ep ? `J${ep.jornadaNum}` : 'LIGA MX',
-      title: show?.title ?? 'Toma de la jornada',
+      title: ep?.headline || show?.title || 'Toma de la jornada',
       dek,
     }),
     {

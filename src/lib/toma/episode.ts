@@ -13,7 +13,7 @@ export const EPISODE_ANTES = 'antes';
 export const EPISODE_CIERRE = 'cierre';
 
 /** Bump when the Toma voice or delivery changes so stored episodes regenerate. */
-export const TOMA_VOICE_REV = 'v6-signoff';
+export const TOMA_VOICE_REV = 'v7-facts-voice';
 
 export type TomaEpisode = {
   id: string;
@@ -21,6 +21,9 @@ export type TomaEpisode = {
   dayKey: string;
   kind?: TomaShowKind;
   title: string;
+  /** Written headline + one-line subhead for the page. Older episodes fall back to the show copy. */
+  headline?: string;
+  subhead?: string;
   transcript: string;
   sourceHash: string;
   audioUrl: string;
@@ -296,12 +299,12 @@ export function toEpisodeCut(ep: TomaEpisode): TomaEpisodeCut {
     jornadaNum: ep.jornadaNum,
     dayKey: ep.dayKey,
     kind: ep.kind ?? showKindFromDayKey(ep.dayKey),
-    title: show.title,
-    cue: show.cue,
+    title: ep.headline || show.title,
+    cue: ep.subhead || show.cue,
     audioUrl: ep.audioUrl,
     generatedAt: ep.generatedAt,
     label: episodeDeskLabel(ep),
-    shareText: clipShareText(ep.transcript) || show.cue,
+    shareText: ep.subhead || clipShareText(ep.transcript) || show.cue,
   };
 }
 

@@ -24,20 +24,22 @@ async function loadEpisode(raw: string) {
   const show = episodeShowCopy(ep);
   const path = tomaSharePath(ep.id);
   const audioPath = `/api/toma/audio/${encodeURIComponent(ep.id)}?v=${encodeURIComponent(TOMA_VOICE_REV)}`;
+  const title = ep.headline || show.title;
   const copy = tomaShareCopy({
-    title: show.title,
+    title,
     cue: show.cue,
     jornadaNum: ep.jornadaNum,
+    subhead: ep.subhead,
     transcript: ep.transcript,
   });
-  return { ep, show, path, audioPath, copy };
+  return { ep, show, title, path, audioPath, copy };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const loaded = await loadEpisode(id);
   if (!loaded) return { title: 'Toma' };
-  const { show, path, copy, ep, audioPath } = loaded;
+  const { path, copy, ep, audioPath } = loaded;
   const description = copy.text;
   return {
     title: copy.title,
@@ -63,9 +65,9 @@ export default async function TomaListenPage({ params }: Props) {
   const { id } = await params;
   const loaded = await loadEpisode(id);
   if (!loaded) notFound();
-  const { ep, show, path, audioPath, copy } = loaded;
+  const { ep, show, title, path, audioPath, copy } = loaded;
   const fileName = recordingFileName('toma', ep.id, ep.contentType);
-  const dek = clipShareText(ep.transcript, 180) || show.cue;
+  const dek = ep.subhead || clipShareText(ep.transcript, 180) || show.cue;
 
   return (
     <div className="flex min-h-screen flex-col bg-bg-1 text-foreground">
@@ -81,7 +83,7 @@ export default async function TomaListenPage({ params }: Props) {
           breadcrumbJsonLd([
             { name: 'Pulso', path: '/' },
             { name: 'Toma', path: '/toma' },
-            { name: show.title, path },
+            { name: title, path },
           ]),
         ]}
       />
@@ -89,7 +91,7 @@ export default async function TomaListenPage({ params }: Props) {
       <main className="flex-1">
         <RecordingListen
           kicker="://TOMA"
-          title={show.title}
+          title={title}
           dek={dek}
           audioUrl={audioPath}
           downloadUrl={`${audioPath}${audioPath.includes('?') ? '&' : '?'}download=1`}
