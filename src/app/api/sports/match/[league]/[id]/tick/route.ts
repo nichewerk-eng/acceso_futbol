@@ -8,6 +8,7 @@ import {
 import { getMatchTick, sportsMatchTickCacheKey } from '@/lib/sports/getMatch';
 import { mergeMatchSnapshot } from '@/lib/sports/mergeMatchSnapshot';
 import { peekCache, setCache } from '@/lib/apiCache';
+import { paintDondeVer } from '@/lib/dondeVer/sheet';
 import type { MatchSnapshot } from '@/lib/sports';
 
 function matchPace(m: MatchSnapshot): FreshPace {
@@ -39,6 +40,7 @@ export async function GET(
       return merged;
     },
     notFound: (m) => m == null,
+    map: (m) => paintDondeVer(m),
     headers: (m, { stale }) => {
       if (!m) return undefined;
       const pace = matchPace(m);

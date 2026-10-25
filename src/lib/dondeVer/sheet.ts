@@ -12,22 +12,24 @@
  *
  * Env: DONDE_VER_SHEET_ID overrides the public Acceso sheet. Set empty to use code tables only.
  */
-import { peekCache, peekCacheAgeMs, setCache, singleFlight } from '@/lib/apiCache';
-import { kvSetJson, sharedKvEnabled } from '@/lib/sharedKv';
+import { getCache, peekCache, peekCacheAgeMs, setCache, singleFlight } from '@/lib/apiCache';
+import { kvGetJson, kvSetJson, sharedKvEnabled } from '@/lib/sharedKv';
 import {
+  attachDondeVer,
   setDondeVerOverlay,
   TV_CHANNELS,
   type DondeVerOverlay,
   type DondeVerSides,
   type TvChannelId,
 } from '@/config/dondeVer';
+import type { Fixture } from '@/lib/sports/types';
 import { APERTURA_2026_FIXTURES } from '@/fixtures/ligamx-apertura-2026';
 import { scheduleAbbr } from '@/lib/sports/ligaMxAbbr';
 
-const CACHE_KEY = 'donde-ver-sheet-v1';
-/** Memory/KV coalesce; Next data cache adds up to `FETCH_REVALIDATE_S` on top. */
+const CACHE_KEY = 'donde-ver-sheet-v2';
+const LOAD_LOCK = 'donde-ver-sheet-v2-load';
+/** Shared overlay TTL. All isolates read the same KV copy so a sheet edit cannot flicker. */
 const TTL_MS = 30_000;
-const FETCH_REVALIDATE_S = 30;
 const FETCH_TIMEOUT_MS = 4_000;
 
 export type DondeVerSheetSnapshot = DondeVerOverlay & {
@@ -303,15 +305,15 @@ function tabUrl(sheetId: string, tab: string): string {
   return `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&headers=1&sheet=${encodeURIComponent(tab)}`;
 }
 
-async function fetchTab(sheetId: string, tab: string, fresh = false): Promise<string> {
+async function fetchTab(sheetId: string, tab: string): Promise<string> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
+    // Never use Next's Data Cache here — a stale CSV on one isolate was
+    // getting written back to KV and flipping channels on every refresh.
     const res = await fetch(tabUrl(sheetId, tab), {
       signal: controller.signal,
-      ...(fresh
-        ? { cache: 'no-store' as const }
-        : { next: { revalidate: FETCH_REVALIDATE_S } }),
+      cache: 'no-store',
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text();
@@ -323,20 +325,21 @@ async function fetchTab(sheetId: string, tab: string, fresh = false): Promise<st
   }
 }
 
-async function loadSnapshot(fresh = false): Promise<DondeVerSheetSnapshot | null> {
+function isFreshGoogleSnap(snap: DondeVerSheetSnapshot | null): snap is DondeVerSheetSnapshot {
+  return Boolean(snap?.ok && !snap.errors.some((e) => e.startsWith('fetch:')));
+}
+
+async function loadSnapshot(): Promise<DondeVerSheetSnapshot | null> {
   const sheetId = dondeVerSheetId();
   if (!sheetId) return null;
-  const prev = peekCache<DondeVerSheetSnapshot>(CACHE_KEY);
   try {
     const [partidos, clubes] = await Promise.all([
-      fetchTab(sheetId, 'Partidos', fresh),
-      fetchTab(sheetId, 'Clubes', fresh).catch(() => ''),
+      fetchTab(sheetId, 'Partidos'),
+      fetchTab(sheetId, 'Clubes').catch(() => ''),
     ]);
     return buildSnapshot(partidos, clubes);
   } catch (err) {
     const reason = err instanceof Error ? err.message : String(err);
-    // Keep serving the last good list; never blank the channels on a Google hiccup.
-    if (prev?.ok) return { ...prev, errors: [`fetch: ${reason}`, ...prev.errors.slice(0, 20)] };
     return {
       ok: false,
       fetchedAt: Date.now(),
@@ -349,6 +352,12 @@ async function loadSnapshot(fresh = false): Promise<DondeVerSheetSnapshot | null
   }
 }
 
+function remember(snap: DondeVerSheetSnapshot, shared: boolean): void {
+  setCache(CACHE_KEY, snap);
+  if (shared && sharedKvEnabled()) void kvSetJson(CACHE_KEY, snap, TTL_MS);
+  install(snap);
+}
+
 function install(snap: DondeVerSheetSnapshot | null): void {
   setDondeVerOverlay(
     snap?.ok ? { matches: snap.matches, clubs: snap.clubs, pairJornada: snap.pairJornada } : null
@@ -358,27 +367,75 @@ function install(snap: DondeVerSheetSnapshot | null): void {
 /**
  * Load (≤ every 30s, shared via KV) and install the sheet overlay. Await before
  * building anything that caches Liga MX channels. Never throws.
+ *
+ * KV is the only shared copy. A Google miss keeps the last good list in memory
+ * and does not rewrite KV, so one stale isolate cannot flip the board.
  */
 export async function ensureDondeVerSheet(): Promise<DondeVerSheetSnapshot | null> {
-  if (!dondeVerSheetId()) return null;
+  if (!dondeVerSheetId()) {
+    setDondeVerOverlay(null);
+    return null;
+  }
+  const mem = getCache<DondeVerSheetSnapshot>(CACHE_KEY, TTL_MS);
+  if (mem?.ok) {
+    install(mem);
+    return mem;
+  }
   try {
-    const snap = await singleFlight(CACHE_KEY, TTL_MS, loadSnapshot);
-    install(snap);
-    return snap;
+    return await singleFlight(LOAD_LOCK, 8_000, async () => {
+      const again = getCache<DondeVerSheetSnapshot>(CACHE_KEY, TTL_MS);
+      if (again?.ok) {
+        install(again);
+        return again;
+      }
+
+      let staleKv: DondeVerSheetSnapshot | null = null;
+      if (sharedKvEnabled()) {
+        const remote = await kvGetJson<DondeVerSheetSnapshot>(CACHE_KEY);
+        if (remote?.data?.ok) {
+          const age = Date.now() - remote.ts;
+          if (age <= TTL_MS) {
+            remember(remote.data, false);
+            return remote.data;
+          }
+          staleKv = remote.data;
+        }
+      }
+
+      const snap = await loadSnapshot();
+      if (isFreshGoogleSnap(snap)) {
+        remember(snap, true);
+        return snap;
+      }
+
+      const fallback = staleKv ?? peekCache<DondeVerSheetSnapshot>(CACHE_KEY);
+      if (fallback?.ok) {
+        remember(fallback, false);
+        return fallback;
+      }
+      install(null);
+      return snap;
+    });
   } catch {
-    return peekCache<DondeVerSheetSnapshot>(CACHE_KEY);
+    const prev = peekCache<DondeVerSheetSnapshot>(CACHE_KEY);
+    if (prev?.ok) install(prev);
+    return prev ?? null;
   }
 }
 
 /** Bypass caches (ops). */
 export async function refreshDondeVerSheet(): Promise<DondeVerSheetSnapshot | null> {
-  const snap = await loadSnapshot(true);
-  if (snap) {
-    setCache(CACHE_KEY, snap);
-    if (sharedKvEnabled()) void kvSetJson(CACHE_KEY, snap, TTL_MS * 3);
-  }
-  install(snap);
+  const snap = await loadSnapshot();
+  if (isFreshGoogleSnap(snap)) remember(snap, true);
+  else install(snap);
   return snap;
+}
+
+/** Re-resolve channels from the shared overlay. Use on every match/board response. */
+export async function paintDondeVer<T extends Fixture>(fixture: T | null | undefined): Promise<T | null> {
+  if (!fixture) return null;
+  await ensureDondeVerSheet();
+  return attachDondeVer(fixture) as T;
 }
 
 export function dondeVerSheetStatus() {

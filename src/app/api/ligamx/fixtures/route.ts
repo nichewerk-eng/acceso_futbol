@@ -77,6 +77,16 @@ export async function GET() {
       prefetchCurrentJornadaContexto(fixtures);
       return { fixtures, source: live.length ? 'sportmonks' : 'static' };
     },
+    map: async (payload) => {
+      await ensureDondeVerSheet();
+      return {
+        ...payload,
+        fixtures: payload.fixtures.map((f) => ({
+          ...f,
+          dondeVer: resolveDondeVer(asDondeVerFixture(f)),
+        })),
+      };
+    },
     headers: (payload, { stale }) => {
       const pace = paceFromFixtures(
         payload.fixtures.map((f) => ({

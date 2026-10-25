@@ -20,6 +20,8 @@ export async function serveSwr<T>(opts: {
    * Live scoreboards should pass false so a goal is not held for an extra poll.
    */
   staleOk?: boolean | ((data: T) => boolean);
+  /** Run on every returned payload (cache hit included). Channels, not scores. */
+  map?: (data: T) => T | Promise<T>;
 }): Promise<NextResponse> {
   const cached = peekCache<T>(opts.key);
   const age = peekCacheAgeMs(opts.key);
@@ -37,6 +39,7 @@ export async function serveSwr<T>(opts: {
     typeof opts.ttlMs === 'function' ? opts.ttlMs(data) : opts.ttlMs;
   const allowStale = (data: T) =>
     typeof opts.staleOk === 'function' ? opts.staleOk(data) : (opts.staleOk ?? true);
+  const paint = async (data: T) => (opts.map ? await opts.map(data) : data);
 
   if (cached != null && !opts.notFound?.(cached)) {
     const stale = age == null || age > ttlOf(cached);
@@ -45,13 +48,15 @@ export async function serveSwr<T>(opts: {
       if (data == null || opts.notFound?.(data)) {
         return NextResponse.json({ error: 'not_found' }, { status: 404 });
       }
-      return NextResponse.json(data, {
-        headers: opts.headers?.(data, { stale: false, seeded: false }),
+      const fresh = await paint(data);
+      return NextResponse.json(fresh, {
+        headers: opts.headers?.(fresh, { stale: false, seeded: false }),
       });
     }
     if (stale) refresh();
-    return NextResponse.json(cached, {
-      headers: opts.headers?.(cached, { stale, seeded: false }),
+    const hit = await paint(cached);
+    return NextResponse.json(hit, {
+      headers: opts.headers?.(hit, { stale, seeded: false }),
     });
   }
 
@@ -68,13 +73,15 @@ export async function serveSwr<T>(opts: {
         if (data == null || opts.notFound?.(data)) {
           return NextResponse.json({ error: 'not_found' }, { status: 404 });
         }
-        return NextResponse.json(data, {
-          headers: opts.headers?.(data, { stale: false, seeded: false }),
+        const fresh = await paint(data);
+        return NextResponse.json(fresh, {
+          headers: opts.headers?.(fresh, { stale: false, seeded: false }),
         });
       }
       if (stale) refresh();
-      return NextResponse.json(remote.data, {
-        headers: opts.headers?.(remote.data, { stale, seeded: false }),
+      const hit = await paint(remote.data);
+      return NextResponse.json(hit, {
+        headers: opts.headers?.(hit, { stale, seeded: false }),
       });
     }
   }
@@ -83,9 +90,10 @@ export async function serveSwr<T>(opts: {
     const seed = opts.seed();
     if (seed != null && !opts.notFound?.(seed)) {
       refresh();
-      return NextResponse.json(seed, {
+      const painted = await paint(seed);
+      return NextResponse.json(painted, {
         headers: {
-          ...(opts.headers?.(seed, { stale: false, seeded: true }) ?? {}),
+          ...(opts.headers?.(painted, { stale: false, seeded: true }) ?? {}),
           'X-AF-Seed': '1',
         },
       });
@@ -96,7 +104,8 @@ export async function serveSwr<T>(opts: {
   if (data == null || opts.notFound?.(data)) {
     return NextResponse.json({ error: 'not_found' }, { status: 404 });
   }
-  return NextResponse.json(data, {
-    headers: opts.headers?.(data, { stale: false, seeded: false }),
+  const fresh = await paint(data);
+  return NextResponse.json(fresh, {
+    headers: opts.headers?.(fresh, { stale: false, seeded: false }),
   });
 }
