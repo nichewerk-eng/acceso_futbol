@@ -1,5 +1,6 @@
 /** Sportmonks fixtures, livescores, and match snapshots. */
 import { getCache, peekCacheAgeMs, setCache, singleFlight } from '@/lib/apiCache';
+import { kvGetJson, kvSetJson, sharedKvEnabled } from '@/lib/sharedKv';
 import { FRESH } from './freshness';
 import { dayPairKey, scheduleAbbr } from './ligaMxAbbr';
 import {
@@ -12,7 +13,7 @@ import { localizeComment, commentLooksLikeGoal } from './localizeComment';
 import { overlayShouldReplaceSeedSchedule } from './scheduleHold';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
 import { smFetch } from './sm/client';
-import { LANE } from './sm/lanes';
+import { LANE, type SmLane } from './sm/lanes';
 import { ensureSmRefs, matchStateFromBlob, matchStateFromId } from './sm/refs';
 import type {
   CommentaryLine,
@@ -130,6 +131,8 @@ interface SmEvent {
   player_name?: string | null;
   related_player_name?: string | null;
   section?: string | null;
+  period_id?: number | null;
+  sub_type_id?: number | null;
   participant_id?: number;
   type?: { id?: number; name?: string; code?: string; developer_name?: string };
   player?: {
@@ -447,7 +450,7 @@ export function mapFixture(f: SmFixture): Fixture {
     jornada = /jornada/i.test(roundName) ? roundName : `Jornada ${roundName}`;
   }
 
-  const events = mapEvents(f.events, homeId, awayId, homeAbbr, awayAbbr);
+  const events = mapEvents(f.events, homeId, awayId, homeAbbr, awayAbbr, f.periods);
   const scorers = scorersFromEvents(events);
   const assists = assistsFromEvents(events);
 
@@ -498,10 +501,12 @@ const EVENT_KIND_BY_TYPE_ID: Record<number, LiveEventKind> = {
   14: 'goal',
   15: 'own_goal',
   16: 'penalty',
+  17: 'penalty_missed',
   18: 'sub',
   19: 'yellow',
   20: 'red',
   21: 'red', // yellowredcard — second yellow → red
+  1697: 'var', // VAR_CARD — red cancelled / card adjusted
 };
 
 function eventKind(dev?: string, code?: string, typeId?: number): LiveEventKind {
@@ -510,7 +515,7 @@ function eventKind(dev?: string, code?: string, typeId?: number): LiveEventKind 
   }
   const key = (dev || code || '').toUpperCase();
   if (key.includes('OWN') && key.includes('GOAL')) return 'own_goal';
-  if (key.includes('PENALTY') && key.includes('MISS')) return 'other';
+  if (key.includes('PENALTY') && key.includes('MISS')) return 'penalty_missed';
   if (key.includes('PENALTY')) return 'penalty';
   if (key === 'GOAL' || key === 'GOALS') return 'goal';
   if (key.includes('YELLOWRED') || key === 'YELLOWREDCARD') return 'red';
@@ -529,6 +534,8 @@ function eventTypeLabel(kind: LiveEventKind, fallback?: string | null): string {
       return 'Autogol';
     case 'penalty':
       return 'Penal';
+    case 'penalty_missed':
+      return 'Penal fallado';
     case 'yellow':
       return 'Amarilla';
     case 'red':
@@ -542,17 +549,49 @@ function eventTypeLabel(kind: LiveEventKind, fallback?: string | null): string {
   }
 }
 
+/** SM VAR `addition` (e.g. "Goal disallowed") → Clave label + Spanish decision. */
+function varDecision(e: SmEvent): { type: string; lead: string } {
+  const blob = `${e.addition ?? ''} ${e.info ?? ''}`;
+  if (/goal (disallowed|cancel)|no goal/i.test(blob)) return { type: 'Anulado', lead: 'Gol anulado' };
+  if (/goal awarded/i.test(blob)) return { type: 'VAR', lead: 'Gol validado' };
+  if (/goal confirmed/i.test(blob)) return { type: 'VAR', lead: 'Gol confirmado' };
+  if (/penalty (disallowed|cancel|overturned)/i.test(blob)) return { type: 'VAR', lead: 'Penal anulado' };
+  if (/penalty awarded/i.test(blob)) return { type: 'VAR', lead: 'Penal marcado' };
+  if (/penalty confirmed/i.test(blob)) return { type: 'VAR', lead: 'Penal confirmado' };
+  if (/red card cancel/i.test(blob)) return { type: 'VAR', lead: 'Roja anulada' };
+  if (/card/i.test(blob)) return { type: 'VAR', lead: 'Tarjeta corregida' };
+  return { type: 'VAR', lead: 'Revisión VAR' };
+}
+
+/** SM `period_id` → 1/2 (3/4 extra time); minute fallback when periods aren't included. */
+function eventPeriod(e: SmEvent, order: Map<number, number>): number {
+  const fromId = e.period_id != null ? order.get(e.period_id) : undefined;
+  if (fromId) return fromId;
+  const m = e.minute ?? 0;
+  if (m > 105) return 4;
+  if (m > 90) return 3;
+  return m > 45 ? 2 : 1;
+}
+
 function mapEvents(
   events: SmEvent[] | undefined,
   homeId?: string,
   awayId?: string,
   homeAbbr?: string,
-  awayAbbr?: string
+  awayAbbr?: string,
+  periods?: SmPeriod[]
 ): LiveEvent[] {
+  const periodOrder = new Map<number, number>();
+  [...(periods ?? [])]
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    .forEach((p, i) => {
+      if (p.id != null) periodOrder.set(p.id, i + 1);
+    });
   return (events ?? [])
     .map((e) => {
       const kind = eventKind(e.type?.developer_name, e.type?.code, e.type_id);
-      const type = eventTypeLabel(kind, e.type?.name || e.info);
+      const varCall = kind === 'var' ? varDecision(e) : null;
+      const type = varCall?.type ?? eventTypeLabel(kind, e.type?.name || e.info);
       const player = shortName(
         e.player_name || e.player?.display_name || e.player?.name || e.player?.common_name
       );
@@ -560,9 +599,14 @@ function mapEvents(
       let text = player || type;
       if (kind === 'sub' && player && related) text = `${player} entra por ${related}`;
       else if (kind === 'goal' && related) text = `${player} · asistencia ${related}`;
-      else if (kind === 'goal' && player) text = player;
+      else if ((kind === 'goal' || kind === 'penalty' || kind === 'own_goal') && player) text = player;
       else if ((kind === 'yellow' || kind === 'red') && player) text = player;
-      else if (player && e.info) text = `${player}: ${e.info}`;
+      else if (varCall) text = player ? `${varCall.lead} · ${player}` : varCall.lead;
+      else if (kind === 'penalty_missed') {
+        const add = e.addition ?? '';
+        const how = /save/i.test(add) ? 'atajado' : /woodwork/i.test(add) ? 'al poste' : 'fallado';
+        text = player ? `${player} · ${how}` : `Penal ${how}`;
+      } else if (player && e.info) text = `${player}: ${e.info}`;
       else if (player) text = player;
 
       const pid = e.participant_id !== undefined ? String(e.participant_id) : '';
@@ -583,7 +627,7 @@ function mapEvents(
 
       return {
         id: String(e.id),
-        period: e.section === '2nd' ? 2 : 1,
+        period: eventPeriod(e, periodOrder),
         clock,
         minute: e.minute ?? undefined,
         extraMinute: e.extra_minute ?? undefined,
@@ -791,7 +835,8 @@ export async function fetchLivescores(
       { include, filters },
       'live'
     );
-    const fresh = (latest.data ?? []).map(mapFixture);
+    const freshRaw = latest.data ?? [];
+    const fresh = freshRaw.map(mapFixture);
     const prev = getCache<Fixture[]>(stickyKey, LIVE_STICKY_TTL_MS) ?? [];
     const stickyAge = peekCacheAgeMs(stickyKey);
     const staleSticky =
@@ -806,6 +851,7 @@ export async function fetchLivescores(
       );
       const hydrated = (full.data ?? []).map(mapFixture).filter((f) => f.state === 'in');
       setCache(stickyKey, hydrated);
+      storeLiveTicks(key, full.data ?? [], hydrated, true);
       return hydrated;
     }
 
@@ -817,8 +863,65 @@ export async function fetchLivescores(
     for (const f of fresh) byId.set(f.id, f);
     const merged = [...byId.values()].filter((f) => f.state === 'in');
     setCache(stickyKey, merged);
+    storeLiveTicks(key, freshRaw, merged, false);
     return merged;
   });
+}
+
+type LiveTickMap = Record<string, MatchSnapshot>;
+
+const liveTicksKey = (boardKey: string) => `${boardKey}-ticks`;
+
+/**
+ * Match-page ticks ride the shared livescores call (same include as
+ * `/fixtures/{id}` tick), so a live capítulo costs zero extra Fixture calls.
+ */
+function storeLiveTicks(
+  boardKey: string,
+  raw: SmFixture[],
+  board: Fixture[],
+  replace: boolean
+): void {
+  const ticksKey = liveTicksKey(boardKey);
+  const prev = replace ? {} : (getCache<LiveTickMap>(ticksKey, LIVE_STICKY_TTL_MS) ?? {});
+  const liveIds = new Set(board.map((f) => f.id));
+  const next: LiveTickMap = {};
+  for (const [id, tick] of Object.entries(prev)) {
+    if (liveIds.has(id)) next[id] = tick;
+  }
+  for (const row of raw) {
+    const id = String(row.id);
+    if (liveIds.has(id)) next[id] = tickFromRaw(row);
+  }
+  setCache(ticksKey, next);
+  if (sharedKvEnabled()) void kvSetJson(ticksKey, next, LIVE_STICKY_TTL_MS);
+}
+
+/**
+ * Live tick for one fixture from the shared livescores board, or null when
+ * the fixture isn't in play (caller falls back to `/fixtures/{id}`).
+ */
+export async function fetchLiveTickFromBoard(
+  fixtureId: string,
+  leagueIds: number[] = livingRoomLeagueIds()
+): Promise<MatchSnapshot | null> {
+  const boardKey = `${LIVE_CACHE_KEY}-${leagueIds.slice().sort().join(',')}`;
+  const board = await fetchLivescores(leagueIds);
+  const row = board.find((f) => f.id === fixtureId);
+  if (!row) return null;
+  const ticksKey = liveTicksKey(boardKey);
+  let ticks = getCache<LiveTickMap>(ticksKey, LIVE_STICKY_TTL_MS);
+  if (!ticks?.[fixtureId] && sharedKvEnabled()) {
+    const remote = await kvGetJson<LiveTickMap>(ticksKey);
+    if (remote) {
+      setCache(ticksKey, remote.data);
+      ticks = remote.data;
+    }
+  }
+  const tick = ticks?.[fixtureId];
+  if (!tick) return null;
+  // Board row carries the freshest score/clock; tick carries the events.
+  return { ...tick, ...row, scorers: tick.scorers ?? row.scorers, events: tick.events, comments: [] };
 }
 
 export async function fetchFixturesByDate(
@@ -1086,7 +1189,19 @@ async function fetchTeamForm(teamId: string, limit = 5): Promise<FormMatch[]> {
   }
 }
 
-export async function fetchMatchSnapshot(fixtureId: string): Promise<MatchSnapshot | null> {
+/**
+ * Full match chapter. `live` swaps the 5-min catalog copy for a 30s uncached
+ * one so stats, lineups and Completa move during the match.
+ */
+export async function fetchMatchSnapshot(
+  fixtureId: string,
+  opts: { live?: boolean } = {}
+): Promise<MatchSnapshot | null> {
+  if (opts.live) {
+    return singleFlight(`sm-match-snap-live-v1-${fixtureId}`, LANE.liveDetail.memTtlMs, () =>
+      loadMatchSnapshot(fixtureId, 'liveDetail')
+    );
+  }
   const cacheKey = `sm-match-snap-v5-lanes-${fixtureId}`;
   return singleFlight(cacheKey, LANE.catalog.memTtlMs, () => loadMatchSnapshot(fixtureId));
 }
@@ -1097,6 +1212,24 @@ export async function fetchMatchTick(fixtureId: string): Promise<MatchSnapshot |
   return singleFlight(cacheKey, LANE.live.memTtlMs, () => loadMatchTick(fixtureId));
 }
 
+function tickFromRaw(raw: SmFixture): MatchSnapshot {
+  const base = mapFixture(raw);
+  const events = mapEvents(
+    raw.events,
+    base.home.id,
+    base.away.id,
+    base.home.abbreviation,
+    base.away.abbreviation,
+    raw.periods
+  );
+  return {
+    ...base,
+    scorers: scorersFromEvents(events),
+    events,
+    comments: [],
+  };
+}
+
 async function loadMatchTick(fixtureId: string): Promise<MatchSnapshot | null> {
   try {
     ensureSmRefs();
@@ -1105,21 +1238,7 @@ async function loadMatchTick(fixtureId: string): Promise<MatchSnapshot | null> {
       { include: MATCH_TICK_INCLUDE },
       'live'
     );
-    if (!data.data) return null;
-    const base = mapFixture(data.data);
-    const events = mapEvents(
-      data.data.events,
-      base.home.id,
-      base.away.id,
-      base.home.abbreviation,
-      base.away.abbreviation
-    );
-    return {
-      ...base,
-      scorers: scorersFromEvents(events),
-      events,
-      comments: [],
-    };
+    return data.data ? tickFromRaw(data.data) : null;
   } catch {
     return null;
   }
@@ -1157,12 +1276,15 @@ export async function fetchMatchContexto(
   return loadContexto(homeId, awayId, homeAbbr, awayAbbr);
 }
 
-async function loadMatchSnapshot(fixtureId: string): Promise<MatchSnapshot | null> {
+async function loadMatchSnapshot(
+  fixtureId: string,
+  lane: SmLane = 'catalog'
+): Promise<MatchSnapshot | null> {
   try {
     const data = await smFetch<{ data?: SmFixture }>(
       `/fixtures/${fixtureId}`,
       { include: MATCH_DETAIL_INCLUDE },
-      'catalog'
+      lane
     );
     if (!data.data) return null;
     const base = mapFixture(data.data);
@@ -1171,7 +1293,8 @@ async function loadMatchSnapshot(fixtureId: string): Promise<MatchSnapshot | nul
       base.home.id,
       base.away.id,
       base.home.abbreviation,
-      base.away.abbreviation
+      base.away.abbreviation,
+      data.data.periods
     );
 
     return {

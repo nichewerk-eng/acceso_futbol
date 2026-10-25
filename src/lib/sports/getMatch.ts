@@ -1,6 +1,7 @@
 import { cache } from 'react';
 import { espnFetch, summaryUrl, SLUG } from '@/lib/espn';
-import { peekCache } from '@/lib/apiCache';
+import { getCache, peekCache, peekCacheAgeMs } from '@/lib/apiCache';
+import { mergeMatchSnapshot } from './mergeMatchSnapshot';
 import {
   getCurrentJornada,
 } from '@/fixtures/ligamx-apertura-2026';
@@ -19,6 +20,7 @@ import { commentLooksLikeGoal } from './localizeComment';
 import {
   fetchFixturesByDate,
   fetchLigaMxSeasonFixtures,
+  fetchLiveTickFromBoard,
   fetchMatchContexto,
   fetchMatchSnapshot,
   fetchMatchTick,
@@ -65,6 +67,32 @@ export function peekMatch(league: string, id: string): MatchSnapshot | null {
   );
 }
 
+/**
+ * In play or inside the kickoff window (-45 min … +3.5 h). Picks the 30s
+ * detail lane so a stale catalog copy can't resurface right after FT.
+ */
+function matchMayBeLive(league: string, id: string, now = Date.now()): boolean {
+  const prev = peekMatch(league, id);
+  if (prev) return looksStillLive(prev) || isNearKickoff(prev.date, now);
+  const kickoff = findAperturaFixture(id)?.date;
+  return kickoff ? isNearKickoff(kickoff, now) : false;
+}
+
+/**
+ * Page render: warm detail only while fresh enough, with the latest tick's
+ * score/clock on top. Null → caller loads via `getMatch`.
+ */
+export function peekMatchForRender(league: string, id: string): MatchSnapshot | null {
+  const detailKey = sportsMatchCacheKey(league, id);
+  const detail = peekCache<MatchSnapshot>(detailKey);
+  const age = peekCacheAgeMs(detailKey);
+  const maxAge = detail?.state === 'post' ? 30 * 60_000 : 60_000;
+  const base = detail && age != null && age <= maxAge ? detail : null;
+  const tick = getCache<MatchSnapshot>(sportsMatchTickCacheKey(league, id), 15_000);
+  if (base && tick) return mergeMatchSnapshot(base, tick);
+  return base ?? tick;
+}
+
 function espnSlug(league: LeagueKey) {
   return league === 'liga-mx' ? SLUG.LIGA_MX : SLUG.WORLD_CUP;
 }
@@ -89,6 +117,7 @@ function looksLikeSmFixtureId(id: string): boolean {
 function espnKeyEventKind(typeText: string, scoringPlay?: boolean): LiveEventKind {
   const t = typeText.toLowerCase();
   if (/autogol|own goal/.test(t)) return 'own_goal';
+  if (/penal/.test(t) && /fall|atajad|miss|saved/.test(t) && !scoringPlay) return 'penalty_missed';
   if (/penal/.test(t) && (scoringPlay || /gol|goal/.test(t))) return 'penalty';
   if (scoringPlay || /\bgol\b|goal/.test(t)) return 'goal';
   if (/amarilla|yellow/.test(t)) return 'yellow';
@@ -431,15 +460,16 @@ async function getMatchUncached(league: string, id: string): Promise<MatchSnapsh
         if (resolved) fixtureId = resolved;
       }
 
-      let sm = await fetchMatchSnapshot(fixtureId);
-      if (!sm && fixtureId !== id) sm = await fetchMatchSnapshot(id);
+      const snapOpts = { live: matchMayBeLive(league, id) };
+      let sm = await fetchMatchSnapshot(fixtureId, snapOpts);
+      if (!sm && fixtureId !== id) sm = await fetchMatchSnapshot(id, snapOpts);
       if (
         !sm &&
         key === 'liga-mx' &&
         (looksLikeEspnEventId(id) || id.startsWith('static-'))
       ) {
         const resolved = await resolveSportmonksFixtureId(id);
-        if (resolved) sm = await fetchMatchSnapshot(resolved);
+        if (resolved) sm = await fetchMatchSnapshot(resolved, snapOpts);
       }
       if (sm) {
         // SM scores/lineups; Completa uses ESPN Spanish PBP (budgeted so live isn't stalled).
@@ -480,11 +510,12 @@ async function getLeaguesCupMatch(id: string): Promise<MatchSnapshot | null> {
     const resolved = resolveLeaguesCupSmId(id);
     const fixtureId = resolved ?? id;
     let sm: MatchSnapshot | null = null;
+    const snapOpts = { live: matchMayBeLive('leagues-cup', id) };
     if (looksLikeSmFixtureId(fixtureId)) {
-      sm = await fetchMatchSnapshot(fixtureId);
+      sm = await fetchMatchSnapshot(fixtureId, snapOpts);
     }
     if (!sm && fixtureId !== id && looksLikeSmFixtureId(id)) {
-      sm = await fetchMatchSnapshot(id);
+      sm = await fetchMatchSnapshot(id, snapOpts);
     }
     if (sm) {
       return attachDondeVer(stampLeaguesCupOfficial(sm)) as MatchSnapshot;
@@ -520,9 +551,18 @@ async function getMatchTickUncached(
         !isNearKickoff(dated.date, Date.now(), dated.state) &&
         !looksStillLive(dated);
 
+      const lcMayBeLive =
+        (dated != null && (looksStillLive(dated) || isNearKickoff(dated.date))) ||
+        matchMayBeLive(league, id);
+      const boardTick =
+        !datedIsQuietPre && lcMayBeLive && looksLikeSmFixtureId(fixtureId)
+          ? await fetchLiveTickFromBoard(fixtureId).catch(() => null)
+          : null;
       let sm = datedIsQuietPre
         ? dated
-        : looksLikeSmFixtureId(fixtureId)
+        : boardTick
+          ? boardTick
+          : looksLikeSmFixtureId(fixtureId)
           ? ((await fetchMatchTick(fixtureId)) ??
             (fixtureId !== id && looksLikeSmFixtureId(id)
               ? await fetchMatchTick(id)
@@ -566,11 +606,30 @@ async function getMatchTickUncached(
       !isNearKickoff(dated.date, Date.now(), dated.state) &&
       !looksStillLive(dated);
 
-    let sm = datedIsQuietPre
+    const now = Date.now();
+    const mayBeLive =
+      (dated != null && (looksStillLive(dated) || isNearKickoff(dated.date, now))) ||
+      matchMayBeLive(league, id, now);
+    const prev = peekMatch(league, id);
+    // Long finished: the cached detail already has the final — no live-lane GET per poll.
+    const settled =
+      !mayBeLive && (dated ?? prev)?.state === 'post'
+        ? await fetchMatchSnapshot(fixtureId).catch(() => null)
+        : null;
+
+    let sm: MatchSnapshot | null = datedIsQuietPre
       ? dated
-      : (await fetchMatchTick(fixtureId)) ??
-        (fixtureId !== id ? await fetchMatchTick(id) : null) ??
-        dated;
+      : settled?.state === 'post'
+        ? { ...settled, comments: [], lineups: undefined, stats: undefined }
+        : null;
+    if (!sm && mayBeLive && key === 'liga-mx') {
+      // Shared livescores board — no per-fixture Fixture call while in play.
+      sm = await fetchLiveTickFromBoard(fixtureId).catch(() => null);
+    }
+    sm ??=
+      (await fetchMatchTick(fixtureId)) ??
+      (fixtureId !== id ? await fetchMatchTick(id) : null) ??
+      dated;
     if (!sm) return null;
 
     if (key === 'liga-mx' && sm.state === 'in') {

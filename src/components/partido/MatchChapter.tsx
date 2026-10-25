@@ -41,6 +41,10 @@ type Props = { league: string; id: string; initialMatch?: MatchSnapshot | null }
 type TabId = 'contexto' | 'tabla' | 'momentos' | 'alineacion' | 'datos' | 'radio';
 type FeedFilter = 'clave' | 'completa';
 
+/** Matches the server's 30s live-detail lane; faster polls would only hit cache. */
+const LIVE_DETAIL_REFRESH_MS = 30_000;
+const SSE_MAX_FAILURES = 3;
+
 type TimelineRow = {
   id: string;
   clock: string;
@@ -123,7 +127,12 @@ function buildKeyEvents(match: MatchSnapshot): TimelineRow[] {
         label: e.type,
         text: e.text,
         teamAbbr: e.teamAbbr,
-        peak: kind === 'goal' || e.kind === 'red' || anulado || e.kind === 'var',
+        peak:
+          kind === 'goal' ||
+          e.kind === 'red' ||
+          anulado ||
+          e.kind === 'var' ||
+          e.kind === 'penalty_missed',
         kind,
       };
     });
@@ -260,7 +269,7 @@ function FormRow({
             <span
               key={f.id}
               className={`match-form-mark is-${f.result.toLowerCase()}`}
-              title={`${FORM_TITLE[f.result]} · ${f.playedHome ? 'Local' : 'Visita'} vs ${f.opponentAbbr} ${f.homeScore}-${f.awayScore}`}
+              title={`${FORM_TITLE[f.result]} · ${f.playedHome ? 'Local' : 'Visita'} vs ${f.opponentAbbr} ${f.playedHome ? `${f.homeScore}-${f.awayScore}` : `${f.awayScore}-${f.homeScore}`}`}
             >
               {FORM_LETTER[f.result]}
             </span>
@@ -269,6 +278,20 @@ function FormRow({
       </div>
     </div>
   );
+}
+
+/** Form is cached up to 30 min; this match's own row must match the scoreboard. */
+function formWithThisMatch(form: FormMatch[], match: MatchSnapshot): FormMatch[] {
+  const hs = match.home.score;
+  const as = match.away.score;
+  if (match.state !== 'post' || hs == null || as == null) return form;
+  return form.map((f) => {
+    if (f.id !== match.id) return f;
+    const mine = Number(f.playedHome ? hs : as);
+    const theirs = Number(f.playedHome ? as : hs);
+    const result: FormResult = mine === theirs ? 'D' : mine > theirs ? 'W' : 'L';
+    return { ...f, homeScore: String(hs), awayScore: String(as), result };
+  });
 }
 
 function FormDetail({ side, form }: { side: string; form: FormMatch[] }) {
@@ -294,7 +317,7 @@ function FormDetail({ side, form }: { side: string; form: FormMatch[] }) {
             </span>
             <span className="match-form-detail-opp">vs {f.opponentAbbr}</span>
             <span className="match-form-detail-score tabular-nums">
-              {f.homeScore}–{f.awayScore}
+              {f.playedHome ? `${f.homeScore}–${f.awayScore}` : `${f.awayScore}–${f.homeScore}`}
             </span>
           </li>
         ))}
@@ -555,8 +578,11 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    let pace: FreshPace = 'near';
+    let pace: FreshPace =
+      initialMatch?.state === 'in' ? 'live' : initialMatch?.state === 'post' ? 'idle' : 'near';
     let es: EventSource | null = null;
+    let sseFailures = 0;
+    let detailAt = 0;
     const q =
       typeof window !== 'undefined'
         ? new URLSearchParams(window.location.search).get('tab')
@@ -600,10 +626,16 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
       });
     };
 
-    const loadDetail = () =>
-      liveFetch(`/api/sports/match/${league}/${id}`)
+    const loadDetail = () => {
+      detailAt = Date.now();
+      return liveFetch(`/api/sports/match/${league}/${id}`)
         .then((r) => (r.ok ? r.json() : Promise.reject()))
         .then((d: MatchSnapshot) => apply(d));
+    };
+    // Ticks carry score/clock/events only; stats, lineups and Completa ride the detail.
+    const refreshLiveDetail = () => {
+      if (Date.now() - detailAt >= LIVE_DETAIL_REFRESH_MS) void loadDetail().catch(() => {});
+    };
 
     const loadTick = () =>
       liveFetch(`/api/sports/match/${league}/${id}/tick`)
@@ -623,7 +655,15 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
         .then((d: NonNullable<typeof pendingCtx>) => applyContexto(d));
 
     const startSse = () => {
-      if (cancelled || pace !== 'live' || typeof EventSource === 'undefined' || es) return;
+      if (
+        cancelled ||
+        pace !== 'live' ||
+        typeof EventSource === 'undefined' ||
+        es ||
+        sseFailures >= SSE_MAX_FAILURES
+      ) {
+        return;
+      }
       es = new EventSource(`/api/sports/match/${league}/${id}/stream`);
       es.onmessage = (ev) => {
         try {
@@ -633,6 +673,7 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
         }
       };
       es.onerror = () => {
+        sseFailures += 1;
         es?.close();
         es = null;
       };
@@ -663,7 +704,13 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
       if (!cancelled) setRichReady(true);
     };
 
-    const tickP = loadTick().then(() => startSse());
+    // Server-rendered as live: the stream's first frame is the tick.
+    startSse();
+    // Finished: the detail already has the final score; a tick would duplicate it.
+    const tickP =
+      es || initialMatch?.state === 'post'
+        ? Promise.resolve()
+        : loadTick().then(() => startSse());
     const detailP = loadDetailRetry();
     void loadContextoRetry();
     void Promise.allSettled([tickP, detailP]).then((results) => {
@@ -673,13 +720,25 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
 
     const stop = startLivePoll(
       () => {
-        if (es && pace === 'live') return; // SSE owns live updates
-        if (pace === 'live') void loadTick().catch(() => loadDetail());
-        else void loadDetail().catch(() => {
+        if (pace === 'live') {
+          refreshLiveDetail();
+          if (!es) startSse();
+          if (es) return; // SSE owns live score updates
+          void loadTick().catch(() => loadDetail());
+          return;
+        }
+        es?.close();
+        es = null;
+        if (pace === 'near') {
+          refreshLiveDetail();
+          void loadTick().catch(() => {});
+          return;
+        }
+        void loadDetail().catch(() => {
           if (!cancelled) setError(true);
         });
       },
-      { getPace: () => pace }
+      { getPace: () => pace, immediate: false }
     );
 
     return () => {
@@ -783,8 +842,8 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
   const keyEvents = buildKeyEvents(match);
   const fullCronica = buildFullCronica(match);
   const feedRows = feed === 'clave' ? keyEvents : fullCronica;
-  const homeForm = match.form?.home ?? [];
-  const awayForm = match.form?.away ?? [];
+  const homeForm = formWithThisMatch(match.form?.home ?? [], match);
+  const awayForm = formWithThisMatch(match.form?.away ?? [], match);
   const homeRecord = recordFromTabla(tabla, match.home.abbreviation);
   const awayRecord = recordFromTabla(tabla, match.away.abbreviation);
   const h2h = match.headToHead;

@@ -1,6 +1,6 @@
 /** Sportmonks fetch lanes — every HTTP call must pick one. No implicit 12s no-store. */
 
-export type SmLane = 'live' | 'board' | 'catalog';
+export type SmLane = 'live' | 'liveDetail' | 'board' | 'catalog';
 
 export const LANE = {
   /** Scores that move. Never cache at the HTTP layer. */
@@ -9,6 +9,13 @@ export const LANE = {
     retries: 0,
     revalidate: false as const,
     memTtlMs: 2_000,
+  },
+  /** Fat match detail while in play (stats, lineups, comments). ~120 Fixture/hr per live match. */
+  liveDetail: {
+    timeoutMs: 6_000,
+    retries: 0,
+    revalidate: false as const,
+    memTtlMs: 30_000,
   },
   /** Date slates / pre-match boards. */
   board: {

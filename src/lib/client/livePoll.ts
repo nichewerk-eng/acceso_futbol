@@ -7,6 +7,8 @@ export type LivePollOptions = {
   intervalMs?: number;
   /** Adaptive pace from latest data (preferred) */
   getPace?: () => FreshPace;
+  /** Run `load` right away (default). Off when the caller already fired its first load. */
+  immediate?: boolean;
 };
 
 /**
@@ -59,7 +61,7 @@ export function startLivePoll(
 
   // Immediate first load only when visible.
   if (typeof document === 'undefined' || document.visibilityState === 'visible') {
-    load();
+    if (opts.immediate !== false) load();
     schedule();
   }
 

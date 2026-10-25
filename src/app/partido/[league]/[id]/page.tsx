@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { MatchChapter } from '@/components/partido/MatchChapter';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { LocalKickoff } from '@/components/time/LocalKickoff';
-import { getMatch, peekMatch } from '@/lib/sports/getMatch';
+import { getMatch, peekMatchForRender } from '@/lib/sports/getMatch';
 import type { MatchSnapshot } from '@/lib/sports/types';
 import {
   absoluteUrl,
@@ -77,7 +77,7 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
   const { league, id } = await params;
   const label = leagueLabel(league);
   const path = `/partido/${league}/${id}`;
-  const match = peekMatch(league, id) ?? (await getMatch(league, id).catch(() => null));
+  const match = peekMatchForRender(league, id) ?? (await getMatch(league, id).catch(() => null));
 
   if (match) {
     const title = matchSeoTitle(match, league);
@@ -111,7 +111,7 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
 export default async function PartidoPage({ params }: PageParams) {
   const { league, id } = await params;
   const hub = leagueHubPath(league);
-  const match = peekMatch(league, id) ?? (await getMatch(league, id).catch(() => null));
+  const match = peekMatchForRender(league, id) ?? (await getMatch(league, id).catch(() => null));
   const schemas: Record<string, unknown>[] = match
     ? [
         sportsEventJsonLd(match, league),

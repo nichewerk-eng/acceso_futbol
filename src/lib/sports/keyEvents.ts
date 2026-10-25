@@ -73,12 +73,13 @@ function commentFitsEvent(c: CommentaryLine, e: LiveEvent): number {
 
 function pickDisallowedFor(
   event: LiveEvent,
-  rows: CommentaryLine[]
+  rows: CommentaryLine[],
+  minScore = 2
 ): CommentaryLine | undefined {
   let best: { c: CommentaryLine; score: number } | undefined;
   for (const c of rows) {
     const score = commentFitsEvent(c, event);
-    if (score < 2) continue;
+    if (score < minScore) continue;
     if (!best || score > best.score) best = { c, score };
   }
   return best?.c;
@@ -156,10 +157,13 @@ export function applyVarNarrative(match: MatchSnapshot): MatchSnapshot {
     if (e.kind === 'goal' || e.kind === 'penalty' || e.kind === 'own_goal') {
       // SM sometimes leaves the gol up after VAR kills it. Drop it;
       // the VAR row (or a synthetic Anulado) carries the decision.
-      if (pickDisallowedFor(e, disallowed)) continue;
+      // Name must match — a nearby minute alone could drop a different, valid gol.
+      if (pickDisallowedFor(e, disallowed, 3)) continue;
     }
 
-    if (e.kind === 'var') {
+    // SM already named a non-goal decision (penal, tarjeta, gol validado).
+    const decided = e.kind === 'var' && e.type !== 'Anulado' && /^(Gol|Penal|Roja|Tarjeta) /.test(e.text);
+    if (e.kind === 'var' && !decided) {
       const hit = pickDisallowedFor(e, disallowed);
       if (hit) {
         used.add(hit.id);

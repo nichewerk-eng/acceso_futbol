@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { peekCache, peekCacheAgeMs, setCache, singleFlight } from '@/lib/apiCache';
 import { kvGetJson, sharedKvEnabled } from '@/lib/sharedKv';
 
@@ -24,8 +24,14 @@ export async function serveSwr<T>(opts: {
   const cached = peekCache<T>(opts.key);
   const age = peekCacheAgeMs(opts.key);
   const coalesce = opts.coalesceMs ?? 2_000;
+  // Serverless freezes after the response; `after` keeps the stale refresh alive.
   const refresh = () => {
-    void singleFlight(opts.key, coalesce, opts.loader).catch(() => {});
+    const run = () => singleFlight(opts.key, coalesce, opts.loader).catch(() => {});
+    try {
+      after(run);
+    } catch {
+      void run();
+    }
   };
   const ttlOf = (data: T) =>
     typeof opts.ttlMs === 'function' ? opts.ttlMs(data) : opts.ttlMs;

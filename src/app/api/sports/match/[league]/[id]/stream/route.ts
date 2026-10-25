@@ -28,14 +28,16 @@ export async function GET(
   const tickKey = sportsMatchTickCacheKey(league, id);
   const detailKey = sportsMatchCacheKey(league, id);
   let closed = false;
+  let lastSent = '';
 
   const stream = new ReadableStream({
     async start(controller) {
       const send = (payload: MatchSnapshot) => {
         if (closed) return;
-        controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify(payload)}\n\n`)
-        );
+        const body = JSON.stringify(payload);
+        if (body === lastSent) return;
+        lastSent = body;
+        controller.enqueue(encoder.encode(`data: ${body}\n\n`));
       };
 
       const pull = async () => {

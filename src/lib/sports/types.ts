@@ -14,6 +14,7 @@ export type LiveEventKind =
   | 'goal'
   | 'own_goal'
   | 'penalty'
+  | 'penalty_missed'
   | 'yellow'
   | 'red'
   | 'sub'
