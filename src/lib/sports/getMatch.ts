@@ -38,6 +38,7 @@ import type {
   LiveEventKind,
   MatchSnapshot,
 } from './types';
+import { ensureDondeVerSheet } from '@/lib/dondeVer/sheet';
 
 type LeagueKey = 'liga-mx' | 'liga-mx-femenil' | 'mundial' | 'seleccion' | 'leagues-cup';
 
@@ -417,6 +418,7 @@ async function fromEspn(league: LeagueKey, id: string): Promise<MatchSnapshot | 
 }
 
 async function getMatchUncached(league: string, id: string): Promise<MatchSnapshot | null> {
+  await ensureDondeVerSheet();
   const key = normalizeLeague(league);
 
   if (key === 'leagues-cup') {
@@ -531,6 +533,9 @@ async function getMatchTickUncached(
   league: string,
   id: string
 ): Promise<MatchSnapshot | null> {
+  // Don't stall a live score on Google. Overlay from a prior board/detail load,
+  // or the code tables, is enough for channels on a tick.
+  void ensureDondeVerSheet();
   const key = normalizeLeague(league);
   if (key === 'leagues-cup') {
     const official = officialLeaguesCupMatch(id);

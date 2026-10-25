@@ -22,6 +22,7 @@ import {
   sportmonksEnabled,
 } from './sportmonks';
 import type { Fixture, FixtureScorer, MatchState } from './types';
+import { ensureDondeVerSheet } from '@/lib/dondeVer/sheet';
 
 const DATE_RANGE = '20260701-20261231';
 
@@ -322,6 +323,7 @@ const BOARD_KEY = 'liga-mx-board-v4-j7-makeup';
  * living-room `/livescores` sticky board (same one games-of-day overlays).
  */
 export async function fetchLigaMxFixtures(): Promise<LigaMxBoard> {
+  await ensureDondeVerSheet();
   const prev = peekCache<LigaMxBoard>(BOARD_KEY);
   const pace = prev ? paceFromFixtures(prev.fixtures) : 'near';
   return singleFlight(BOARD_KEY, apiTtlMsForPace(pace), buildLigaMxBoard);

@@ -849,6 +849,33 @@ const FEMENIL_CLUB_HOME_TV: Record<string, TvChannelId[]> = {
   UNAM: TELE_YT,
 };
 
+/** One side may be omitted in the sheet → fall through to the next source for that side. */
+export type DondeVerSides = { mx?: TvChannelId[]; us?: TvChannelId[] };
+
+/**
+ * Liga MX master list from the Google Sheet (server-only; installed by
+ * `lib/dondeVer/sheet.ts`). Precedence: sheet match → GUIDE → sheet club → CLUB_HOME_TV.
+ */
+export type DondeVerOverlay = {
+  /** `j{N}|AAA|BBB` (sorted schedule abbrs) */
+  matches: Record<string, DondeVerSides>;
+  /** Schedule home abbr → defaults */
+  clubs: Record<string, DondeVerSides>;
+  /** Sorted pair → jornada number, for fixtures that arrive without a round. */
+  pairJornada: Record<string, number>;
+};
+
+let overlay: DondeVerOverlay | null = null;
+
+export function setDondeVerOverlay(next: DondeVerOverlay | null): void {
+  overlay = next;
+}
+
+/** Code tables, for seeding the sheet. */
+export function codeDondeVerTables() {
+  return { guide: GUIDE, clubs: CLUB_HOME_TV };
+}
+
 function normAbbr(abbr: string): string {
   return scheduleAbbr(abbr);
 }
@@ -905,6 +932,28 @@ export function resolveDondeVer(
     fixture.away.abbreviation
   );
   const known = GUIDE[dateKey] ?? (jornadaKey ? GUIDE[jornadaKey] : undefined);
+
+  if (fixture.league === 'liga-mx' && overlay) {
+    const pair = sortedPair(fixture.home.abbreviation, fixture.away.abbreviation);
+    const n =
+      Number(String(fixture.jornada ?? '').match(/(\d+)/)?.[1]) || overlay.pairJornada[pair];
+    const sheetMatch = n ? overlay.matches[`j${n}|${pair}`] : undefined;
+    const home = normAbbr(fixture.home.abbreviation);
+    const sheetClub = overlay.clubs[home];
+    const codeClub = CLUB_HOME_TV[home];
+    const mx = sheetMatch?.mx ?? known?.mx ?? sheetClub?.mx ?? codeClub?.mx;
+    const us = sheetMatch?.us ?? known?.us ?? sheetClub?.us ?? codeClub?.us;
+    if (mx || us) {
+      return {
+        mx: labelList(mx ?? []),
+        us: labelList(us ?? []),
+        mxChannels: mx ?? [],
+        usChannels: us ?? [],
+        confirmed: true,
+      };
+    }
+  }
+
   if (known) {
     return {
       mx: labelList(known.mx),
@@ -987,8 +1036,12 @@ export function attachDondeVer(fixture: Fixture): Fixture {
     }
   }
 
-  // Keep other curated boards that already carry channel ids.
-  if (fixture.dondeVer?.usChannels?.length || fixture.dondeVer?.mxChannels?.length) {
+  // Keep other curated boards that already carry channel ids. Liga MX always
+  // re-resolves so a sheet edit reaches rows cached in boards.
+  if (
+    fixture.league !== 'liga-mx' &&
+    (fixture.dondeVer?.usChannels?.length || fixture.dondeVer?.mxChannels?.length)
+  ) {
     if (fixture.dondeVer.confirmed) return fixture;
     return {
       ...fixture,

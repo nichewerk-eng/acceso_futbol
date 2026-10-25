@@ -12,6 +12,7 @@ import { espnFetch, standingsUrl, SLUG } from '@/lib/espn';
 import { liguillaPath, type LiguillaPath } from '@/lib/sports/liguillaPath';
 import type { Fixture, FormMatch } from '@/lib/sports/types';
 import { isFixtureHeld } from '@/lib/sports/localizeEs';
+import { ensureDondeVerSheet } from '@/lib/dondeVer/sheet';
 
 export type ClubTableRow = {
   position: number;
@@ -192,6 +193,7 @@ type EspnEntry = {
 };
 
 export async function getClubBoard(slug: string): Promise<ClubBoard | null> {
+  await ensureDondeVerSheet();
   const club = getClubIdentity(slug);
   if (!club) return null;
 

@@ -1,0 +1,154 @@
+Jornada,Fecha,Local,Visita,MX 1,MX 2,MX 3,MX 4,MX 5,MX 6,US 1,US 2,US 3,US 4,US 5,US 6,Nota
+1,2026-07-16,NCX,ATL,FOX One,,,,,,Fox Deportes,,,,,,default local
+1,2026-07-16,TIJ,UANL,FOX One,,,,,,TUDN,,,,,,default local
+1,2026-07-17,ASL,CAZ,ViX,ESPN,Disney+,,,,ViX,,,,,,default local
+1,2026-07-17,LEO,ATS,FOX One,,,,,,TUDN,Univision,,,,,default local
+1,2026-07-17,JUA,PUE,FOX One,,,,,,Fox Deportes,Universo,Estrella TV,,,,default local
+1,2026-07-18,UNAM,PAC,ViX,TUDN,Canal 5,,,,TUDN,ViX,,,,,default local
+1,2026-07-18,MTY,SAN,Canal 5,TUDN,ViX,LayVTime,,,TUDN,Univision,ViX,,,,default local
+1,2026-07-18,GDL,TOL,Prime Video,,,,,,Telemundo,Universo,,,,,default local
+1,2026-07-18,QRO,AME,FOX,FOX One,,,,,ViX,,,,,,default local
+2,2026-07-21,CAZ,PUE,ViX,TUDN,Canal 5,LayVTime,,,ViX,Univision,TUDN,,,,default local
+2,2026-07-21,TOL,UNAM,ViX,,,,,,TUDN,,,,,,default local
+2,2026-07-24,UANL,ASL,FOX,FOX One,Azteca 7,,,,Fox Deportes,Universo,Estrella TV,,,,default local
+2,2026-07-24,TIJ,LEO,FOX One,,,,,,TUDN,,,,,,default local
+2,2026-07-24,ATL,AME,Azteca 7,ESPN,Disney+,,,,TUDN,Univision,,,,,default local
+2,2026-07-25,GDL,JUA,Prime Video,,,,,,Telemundo,Universo,,,,,default local
+2,2026-07-25,SAN,ATS,ESPN,Disney+,ViX,LayVTime,,,UniMás,,,,,,default local
+2,2026-07-26,NCX,MTY,FOX One,,,,,,Fox Deportes,,,,,,default local
+2,2026-07-26,PAC,QRO,FOX,FOX One,,,,,TUDN,,,,,,default local
+3,2026-07-31,PUE,GDL,ESPN,Disney+,,,,,TUDN,,,,,,default local
+3,2026-07-31,JUA,UNAM,FOX One,,,,,,Fox Deportes,Universo,Estrella TV,,,,default local
+3,2026-07-31,ASL,TIJ,ViX,ESPN,Disney+,,,,ViX,,,,,,default local
+3,2026-08-01,QRO,UANL,FOX,FOX One,,,,,ViX,,,,,,default local
+3,2026-08-01,ATS,MTY,Canal 5,TUDN,ViX,LayVTime,,,TUDN,Univision,ViX,,,,default local
+3,2026-08-01,LEO,PAC,FOX One,,,,,,TUDN,Univision,,,,,default local
+3,2026-08-01,CAZ,ATL,ViX,TUDN,Canal 5,LayVTime,,,ViX,Univision,TUDN,,,,default local
+3,2026-08-02,AME,SAN,ViX,LayVTime,TUDN,Canal 5,,,TUDN,,,,,,
+3,2026-08-02,TOL,NCX,ViX,TUDN,Canal 5,,,,ViX,TUDN,,,,,
+4,2026-08-15,ATL,TOL,Azteca 7,ESPN,Disney+,,,,TUDN,Univision,,,,,
+4,2026-08-15,MTY,JUA,Canal 5,TUDN,ViX,,,,TUDN,Univision,ViX,,,,
+4,2026-08-15,ATS,UANL,Canal 5,TUDN,ViX,,,,TUDN,Univision,ViX,,,,
+4,2026-08-16,UNAM,QRO,ViX,,,,,,Univision,ViX,,,,,
+4,2026-08-16,AME,ASL,Canal 5,TUDN,ViX,LayVTime,,,TUDN,ViX,,,,,
+4,2026-08-16,SAN,GDL,Canal 5,TUDN,ViX,,,,TUDN,ViX,,,,,
+4,2026-08-16,TIJ,CAZ,FOX One,,,,,,TUDN,,,,,,
+4,2026-08-17,NCX,LEO,FOX,FOX One,,,,,Fox Deportes,,,,,,
+4,2026-08-17,PAC,PUE,FOX,FOX One,,,,,TUDN,,,,,,
+5,2026-08-21,PUE,SAN,Azteca 7,ESPN,Disney+,,,,ViX,,,,,,
+5,2026-08-21,JUA,AME,FOX,FOX One,Azteca 7,,,,Fox Deportes,Universo,Estrella TV,,,,
+5,2026-08-22,QRO,TOL,FOX,FOX One,,,,,TUDN,,,,,,
+5,2026-08-22,GDL,TIJ,Prime Video,,,,,,Telemundo,Universo,,,,,
+5,2026-08-22,LEO,MTY,FOX,FOX One,Azteca 7,,,,TUDN,,,,,,
+5,2026-08-22,UANL,ATL,FOX,FOX One,,,,,Fox Deportes,Universo,Estrella TV,,,,
+5,2026-08-22,CAZ,ATS,Canal 5,TUDN,ViX,LayVTime,,,Univision,TUDN,,,,,
+5,2026-08-23,ASL,PAC,ViX,ESPN,Disney+,,,,ViX,,,,,,
+5,2026-08-23,UNAM,NCX,Canal 5,TUDN,ViX,,,,TUDN,,,,,,
+6,2026-08-28,ATL,LEO,Azteca 7,ESPN,Disney+,,,,TUDN,,,,,,
+6,2026-08-28,NCX,CAZ,FOX One,,,,,,Fox Deportes,,,,,,
+6,2026-08-28,TIJ,UNAM,FOX One,,,,,,TUDN,,,,,,
+6,2026-08-29,ATS,QRO,ViX,LayVTime,,,,,ViX,,,,,,
+6,2026-08-29,PAC,GDL,FOX,FOX One,,,,,TUDN,Univision,,,,,
+6,2026-08-29,AME,PUE,Canal 5,TUDN,ViX,LayVTime,,,TUDN,Univision,ViX,,,,
+6,2026-08-29,SAN,UANL,Canal 5,TUDN,ViX,LayVTime,,,TUDN,Univision,,,,,
+6,2026-08-30,TOL,JUA,ViX,,,,,,TUDN,,,,,,
+6,2026-08-30,MTY,ASL,ViX,LayVTime,,,,,ViX,TUDN,,,,,
+7,2026-09-04,JUA,PAC,FOX,FOX One,Azteca 7,,,,Fox Deportes,Universo,Estrella TV,,,,
+7,2026-09-05,ASL,GDL,ViX,ESPN,Disney+,,,,ViX,,,,,,default local
+7,2026-09-05,UANL,NCX,FOX,FOX One,Azteca 7,,,,Fox Deportes,Universo,Estrella TV,,,,
+7,2026-09-05,ATS,ATL,Canal 5,TUDN,ViX,LayVTime,,,TUDN,Univision,,,,,
+7,2026-09-06,CAZ,SAN,ViX,TUDN,Canal 5,LayVTime,,,Univision,TUDN,,,,,
+7,2026-09-10,UNAM,LEO,ViX,TUDN,Canal 5,,,,ViX,Univision,,,,,
+7,2026-09-15,PUE,TOL,ESPN,Disney+,,,,,TUDN,,,,,,default local
+7,2026-10-28,AME,TIJ,Canal 5,TUDN,ViX,LayVTime,,,TUDN,Univision,ViX,,,,default local
+7,2026-11-14,QRO,MTY,FOX,FOX One,,,,,ViX,,,,,,default local
+8,2026-09-11,NCX,PUE,FOX One,,,,,,Fox Deportes,,,,,,default local
+8,2026-09-11,ATL,PAC,Azteca 7,ESPN,Disney+,,,,ViX,,,,,,
+8,2026-09-11,TIJ,QRO,FOX,FOX One,,,,,TUDN,UniMás,,,,,
+8,2026-09-12,TOL,ATS,Canal 5,TUDN,ViX,,,,ViX,,,,,,
+8,2026-09-12,CAZ,AME,ViX,TUDN,Canal 5,LayVTime,,,ViX,Univision,TUDN,,,,
+8,2026-09-12,LEO,ASL,FOX One,,,,,,TUDN,Univision,,,,,default local
+8,2026-09-13,GDL,UNAM,Prime Video,,,,,,Telemundo,Universo,,,,,
+8,2026-09-13,SAN,JUA,ESPN,Disney+,ViX,,,,TUDN,ViX,,,,,
+8,2026-09-13,MTY,UANL,Canal 5,TUDN,ViX,LayVTime,,,TUDN,Univision,ViX,,,,
+9,2026-09-18,PUE,ATL,Azteca 7,ESPN,Disney+,,,,TUDN,,,,,,
+9,2026-09-18,JUA,UANL,FOX,FOX One,Azteca 7,,,,Fox Deportes,Universo,Estrella TV,,,,
+9,2026-09-19,ASL,NCX,ViX,ESPN,Disney+,,,,ViX,,,,,,default local
+9,2026-09-19,ATS,UNAM,Canal 5,TUDN,ViX,LayVTime,,,TUDN,Univision,,,,,
+9,2026-09-19,MTY,CAZ,Canal 5,TUDN,ViX,LayVTime,,,TUDN,Univision,ViX,,,,
+9,2026-09-19,AME,GDL,Canal 5,TUDN,ViX,LayVTime,,,TUDN,Univision,ViX,,,,
+9,2026-09-20,TOL,SAN,ViX,,,,,,TUDN,,,,,,
+9,2026-09-20,PAC,TIJ,FOX,FOX One,,,,,ViX,,,,,,
+9,2026-09-20,QRO,LEO,FOX,FOX One,,,,,TUDN,,,,,,
+10,2026-09-25,ATL,MTY,Azteca 7,ESPN,Disney+,,,,TUDN,ViX,,,,,
+10,2026-09-25,TIJ,ATS,FOX,FOX One,,,,,TUDN,UniMás,,,,,
+10,2026-09-26,GDL,QRO,Prime Video,,,,,,Telemundo,Universo,,,,,default local
+10,2026-09-26,SAN,PAC,ESPN,Disney+,ViX,LayVTime,,,UniMás,,,,,,default local
+10,2026-09-26,UANL,PUE,FOX,FOX One,Azteca 7,,,,Fox Deportes,Universo,Estrella TV,,,,default local
+10,2026-09-26,CAZ,TOL,ViX,TUDN,Canal 5,LayVTime,,,ViX,Univision,TUDN,,,,default local
+10,2026-09-27,UNAM,ASL,ViX,TUDN,Canal 5,,,,TUDN,ViX,,,,,default local
+10,2026-09-27,LEO,JUA,FOX One,,,,,,TUDN,Univision,,,,,default local
+10,2026-09-27,NCX,AME,FOX One,,,,,,Fox Deportes,,,,,,default local
+11,2026-10-09,PUE,LEO,ESPN,Disney+,,,,,TUDN,,,,,,default local
+11,2026-10-09,QRO,ATL,FOX,FOX One,,,,,ViX,,,,,,default local
+11,2026-10-09,UANL,TOL,FOX,FOX One,Azteca 7,,,,Fox Deportes,Universo,Estrella TV,,,,default local
+11,2026-10-10,JUA,TIJ,FOX One,Azteca 7,,,,,Fox Deportes,Universo,Estrella TV,,,,
+11,2026-10-10,ATS,GDL,Canal 5,TUDN,ViX,LayVTime,,,TUDN,Univision,ViX,,,,default local
+11,2026-10-10,AME,MTY,Canal 5,TUDN,ViX,LayVTime,,,TUDN,Univision,ViX,,,,default local
+11,2026-10-11,PAC,NCX,FOX,FOX One,,,,,TUDN,,,,,,default local
+11,2026-10-11,ASL,SAN,ViX,ESPN,Disney+,,,,ViX,,,,,,default local
+11,2026-10-11,UNAM,CAZ,ViX,TUDN,Canal 5,,,,TUDN,ViX,,,,,default local
+12,2026-10-16,NCX,ATS,FOX,FOX One,,,,,Fox Deportes,,,,,,
+12,2026-10-16,TIJ,PUE,FOX,FOX One,,,,,TUDN,,,,,,
+12,2026-10-16,ATL,UNAM,Azteca 7,ESPN,Disney+,,,,ViX,,,,,,
+12,2026-10-17,GDL,UANL,Prime Video,,,,,,Telemundo,Universo,,,,,default local
+12,2026-10-17,SAN,QRO,ESPN,Disney+,ViX,LayVTime,,,ViX,,,,,,
+12,2026-10-17,LEO,AME,FOX,FOX One,,,,,TUDN,Univision,ViX,,,,
+12,2026-10-17,TOL,ASL,ViX,TUDN,Canal 5,,,,ViX,,,,,,
+12,2026-10-17,CAZ,JUA,ViX,TUDN,Canal 5,LayVTime,,,Univision,TUDN,,,,,
+12,2026-10-18,MTY,PAC,ViX,LayVTime,,,,,TUDN,ViX,,,,,
+13,2026-10-20,JUA,ATL,FOX,FOX One,Azteca 7,,,,Fox Deportes,Universo,,,,,
+13,2026-10-20,ASL,QRO,ViX,ESPN,Disney+,,,,ViX,,,,,,default local
+13,2026-10-20,GDL,NCX,Prime Video,,,,,,Universo,,,,,,
+13,2026-10-20,UANL,LEO,FOX,FOX One,Azteca 7,,,,Fox Deportes,Universo,,,,,
+13,2026-10-21,PUE,MTY,ESPN,Disney+,,,,,TUDN,,,,,,
+13,2026-10-21,ATS,AME,Canal 5,TUDN,ViX,LayVTime,,,TUDN,ViX,,,,,
+13,2026-10-21,TOL,TIJ,FOX,FOX One,Azteca 7,,,,ViX,,,,,,
+13,2026-10-21,PAC,CAZ,FOX,FOX One,,,,,ViX,,,,,,
+13,2026-10-21,SAN,UNAM,ViX,TUDN,Canal 5,LayVTime,,,TUDN,,,,,,
+14,2026-10-23,NCX,JUA,FOX One,,,,,,Fox Deportes,,,,,,default local
+14,2026-10-23,ATL,ASL,Azteca 7,ESPN,Disney+,,,,TUDN,Univision,,,,,default local
+14,2026-10-24,LEO,TOL,FOX One,,,,,,TUDN,Univision,,,,,default local
+14,2026-10-24,MTY,GDL,Canal 5,TUDN,ViX,LayVTime,,,TUDN,Univision,ViX,,,,default local
+14,2026-10-24,UNAM,UANL,ViX,TUDN,Canal 5,,,,TUDN,ViX,,,,,default local
+14,2026-10-25,ATS,PUE,Canal 5,TUDN,ViX,LayVTime,,,TUDN,Univision,ViX,,,,default local
+14,2026-10-25,AME,PAC,Canal 5,TUDN,ViX,LayVTime,,,TUDN,Univision,ViX,,,,default local
+14,2026-10-25,QRO,CAZ,FOX,FOX One,,,,,ViX,,,,,,default local
+14,2026-10-25,TIJ,SAN,FOX One,,,,,,TUDN,,,,,,default local
+15,2026-10-30,JUA,QRO,FOX One,,,,,,Fox Deportes,Universo,Estrella TV,,,,default local
+15,2026-10-30,ASL,ATS,ViX,ESPN,Disney+,,,,ViX,,,,,,default local
+15,2026-10-30,PUE,UNAM,ESPN,Disney+,,,,,TUDN,,,,,,default local
+15,2026-10-31,PAC,UANL,FOX,FOX One,,,,,TUDN,,,,,,default local
+15,2026-10-31,GDL,ATL,Prime Video,,,,,,Telemundo,Universo,,,,,default local
+15,2026-10-31,MTY,TIJ,Canal 5,TUDN,ViX,LayVTime,,,TUDN,Univision,ViX,,,,default local
+15,2026-10-31,AME,TOL,Canal 5,TUDN,ViX,LayVTime,,,TUDN,Univision,ViX,,,,default local
+15,2026-11-01,SAN,NCX,ESPN,Disney+,ViX,LayVTime,,,UniMás,,,,,,default local
+15,2026-11-01,CAZ,LEO,ViX,TUDN,Canal 5,LayVTime,,,ViX,Univision,TUDN,,,,default local
+16,2026-11-06,NCX,TIJ,FOX One,,,,,,Fox Deportes,,,,,,default local
+16,2026-11-06,ASL,JUA,ViX,ESPN,Disney+,,,,ViX,,,,,,default local
+16,2026-11-06,ATL,SAN,Azteca 7,ESPN,Disney+,,,,TUDN,Univision,,,,,default local
+16,2026-11-07,ATS,PAC,Canal 5,TUDN,ViX,LayVTime,,,TUDN,Univision,ViX,,,,default local
+16,2026-11-07,UANL,CAZ,FOX,FOX One,Azteca 7,,,,Fox Deportes,Universo,Estrella TV,,,,default local
+16,2026-11-07,TOL,MTY,ViX,,,,,,TUDN,,,,,,default local
+16,2026-11-07,UNAM,AME,ViX,TUDN,Canal 5,,,,TUDN,ViX,,,,,default local
+16,2026-11-08,QRO,PUE,FOX,FOX One,,,,,ViX,,,,,,default local
+16,2026-11-08,LEO,GDL,FOX One,,,,,,TUDN,Univision,,,,,default local
+17,2026-11-20,PUE,ASL,ESPN,Disney+,,,,,TUDN,,,,,,default local
+17,2026-11-20,JUA,ATS,FOX One,,,,,,Fox Deportes,Universo,Estrella TV,,,,default local
+17,2026-11-20,TIJ,ATL,FOX One,,,,,,TUDN,,,,,,default local
+17,2026-11-21,SAN,LEO,ESPN,Disney+,ViX,LayVTime,,,UniMás,,,,,,default local
+17,2026-11-21,PAC,TOL,FOX,FOX One,,,,,TUDN,,,,,,default local
+17,2026-11-21,UNAM,MTY,ViX,TUDN,Canal 5,,,,TUDN,ViX,,,,,default local
+17,2026-11-21,UANL,AME,FOX,FOX One,Azteca 7,,,,Fox Deportes,Universo,Estrella TV,,,,default local
+17,2026-11-22,GDL,CAZ,Prime Video,,,,,,Telemundo,Universo,,,,,default local
+17,2026-11-22,QRO,NCX,FOX,FOX One,,,,,ViX,,,,,,default local

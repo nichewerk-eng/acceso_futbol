@@ -10,6 +10,20 @@ import { localizeCity, localizeVenue } from '@/lib/sports/localizeEs';
 import { fetchLigaMxFixtures } from '@/lib/sports/espnFallback';
 import { prefetchCurrentJornadaContexto } from '@/lib/sports/getMatch';
 import { aperturaCalendar, refreshAperturaSmMap } from '@/lib/sports/aperturaSmMap';
+import { resolveDondeVer } from '@/config/dondeVer';
+import { ensureDondeVerSheet } from '@/lib/dondeVer/sheet';
+
+function asDondeVerFixture(f: LigaMXFixture): Parameters<typeof resolveDondeVer>[0] {
+  return {
+    date: f.date,
+    league: f.league,
+    jornada: f.jornada,
+    venue: f.venue,
+    city: f.city,
+    home: { id: f.home.abbreviation, name: f.home.name, abbreviation: f.home.abbreviation, score: f.home.score },
+    away: { id: f.away.abbreviation, name: f.away.name, abbreviation: f.away.abbreviation, score: f.away.score },
+  };
+}
 
 // Apertura 2026: July → December 2026
 const DATE_RANGE = '20260701-20261231';
@@ -40,6 +54,7 @@ export async function GET() {
         }))
       ) !== 'live',
     loader: async () => {
+      await ensureDondeVerSheet();
       let live: LigaMXFixture[] = [];
       try {
         const board = await fetchLigaMxFixtures();
@@ -57,8 +72,8 @@ export async function GET() {
         live = parseFixtures(raw);
       }
 
-      const fixtures =
-        live.length > 0 ? mergeLigaMxSchedule(live) : aperturaCalendar();
+      const merged = live.length > 0 ? mergeLigaMxSchedule(live) : aperturaCalendar();
+      const fixtures = merged.map((f) => ({ ...f, dondeVer: resolveDondeVer(asDondeVerFixture(f)) }));
       prefetchCurrentJornadaContexto(fixtures);
       return { fixtures, source: live.length ? 'sportmonks' : 'static' };
     },
@@ -95,6 +110,8 @@ export interface LigaMXFixture {
   city: string | null;
   home: { name: string; abbreviation: string; score: string | null };
   away: { name: string; abbreviation: string; score: string | null };
+  /** Server-resolved (includes the Google Sheet master list). */
+  dondeVer?: ReturnType<typeof resolveDondeVer>;
 }
 
 function parseFixtures(raw: { events?: EventRaw[] }): LigaMXFixture[] {

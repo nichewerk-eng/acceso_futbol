@@ -11,6 +11,8 @@
     "test:toma": "npx tsx --test src/lib/toma/episode.test.ts",
     "test:voice": "npx tsx --test src/lib/radio/voiceSchedule.test.ts",
     "test:sello": "npx tsx --test src/lib/sello/mint.test.ts",
+    "test:canales": "npx tsx --test src/lib/dondeVer/sheet.test.ts",
+    "export:canales": "npx tsx scripts/export-donde-ver-sheet.mts",
     "process-logo": "node scripts/process-logo.mjs"
   },
   "dependencies": {

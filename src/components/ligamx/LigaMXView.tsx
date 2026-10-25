@@ -930,7 +930,7 @@ function KickRow({
   const center = done || live ? `${f.home.score ?? 0}–${f.away.score ?? 0}` : 'VS';
   const homeId = ligaMxClubIdFromAbbr(f.home.abbreviation);
   const awayId = ligaMxClubIdFromAbbr(f.away.abbreviation);
-  const tv = resolveDondeVer({
+  const tv = f.dondeVer ?? resolveDondeVer({
     date: f.date,
     league,
     jornada: f.jornada,

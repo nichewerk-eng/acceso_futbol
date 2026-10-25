@@ -20,6 +20,7 @@ import {
 import { buildElTriBoard } from './elTriBoard';
 import { fetchSeleccionSchedule } from './seleccion';
 import { buildLeaguesCupBoard, fetchLeaguesCupLiveBoard } from './leaguesCupBoard';
+import { ensureDondeVerSheet } from '@/lib/dondeVer/sheet';
 
 export type DayGame = Fixture & {
   phase: RadioPhase;
@@ -314,6 +315,7 @@ function sleep(ms: number) {
 }
 
 export async function getGamesOfDay(now = new Date()): Promise<GamesOfDayPayload> {
+  await ensureDondeVerSheet();
   refreshAperturaSmMap();
   const dayKey = mexicoDayKey(now);
   const seleccionAllP = fetchSeleccionSchedule().catch(() => buildElTriBoard([]));
