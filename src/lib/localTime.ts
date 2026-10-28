@@ -13,8 +13,9 @@ export function formatKickoffTime(iso: string, tz: string): string {
   try {
     return new Date(iso).toLocaleTimeString('es-MX', {
       timeZone: tz,
-      hour: 'numeric',
+      hour: '2-digit',
       minute: '2-digit',
+      hourCycle: 'h23',
     });
   } catch {
     return '';

@@ -7,17 +7,10 @@ import { useGamesOfDay } from '@/lib/client/useGamesOfDay';
 import { competitionBandTag, leaguePath } from '@/lib/radio/phases';
 import type { DayGame } from '@/lib/sports';
 import { kickHold, kickHoldLabel } from '@/lib/sports/localizeEs';
+import { formatKickoffTime } from '@/lib/localTime';
 
 function kickLabel(iso: string, tz: string) {
-  try {
-    return new Date(iso).toLocaleTimeString('es-MX', {
-      timeZone: tz,
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-  } catch {
-    return '';
-  }
+  return formatKickoffTime(iso, tz);
 }
 
 function cabinaLine(g: DayGame, tz: string) {

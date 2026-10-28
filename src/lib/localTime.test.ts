@@ -11,10 +11,10 @@ const KICK = '2026-08-27T02:45:00.000Z';
 
 describe('local kickoff clocks', () => {
   it('prints the same instant in the viewer timezone, not venue or UTC', () => {
-    assert.equal(formatKickoffTime(KICK, 'America/Los_Angeles'), '7:45 p.m.');
-    assert.equal(formatKickoffTime(KICK, 'America/Chicago'), '9:45 p.m.');
-    assert.equal(formatKickoffTime(KICK, 'America/Mexico_City'), '8:45 p.m.');
-    assert.equal(formatKickoffTime(KICK, 'UTC'), '2:45 a.m.');
+    assert.equal(formatKickoffTime(KICK, 'America/Los_Angeles'), '19:45');
+    assert.equal(formatKickoffTime(KICK, 'America/Chicago'), '21:45');
+    assert.equal(formatKickoffTime(KICK, 'America/Mexico_City'), '20:45');
+    assert.equal(formatKickoffTime(KICK, 'UTC'), '02:45');
   });
 
   it('keeps the calendar day in the viewer zone', () => {

@@ -14,6 +14,7 @@ import { competitionBandTag, leaguePath, mexicoDayKey, shiftDayKey } from '@/lib
 import type { Story } from '@/lib/news/types';
 import type { DayGame } from '@/lib/sports';
 import { kickHold, kickHoldLabel } from '@/lib/sports/localizeEs';
+import { formatKickoffTime } from '@/lib/localTime';
 
 function showDondeVer(g: Pick<DayGame, 'state' | 'dondeVer'>) {
   if (g.state === 'post') return false;
@@ -29,15 +30,7 @@ type Props = {
 };
 
 function kickLabel(iso: string, tz: string) {
-  try {
-    return new Date(iso).toLocaleTimeString('es-MX', {
-      timeZone: tz,
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-  } catch {
-    return '';
-  }
+  return formatKickoffTime(iso, tz);
 }
 
 function formatSlateDate(dayKey: string) {

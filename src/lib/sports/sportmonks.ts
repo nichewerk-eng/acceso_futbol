@@ -437,7 +437,7 @@ export function mapFixture(f: SmFixture): Fixture {
     league === 'liga-mx-femenil'
       ? femenilTeamName(awayP?.name ?? 'Visitante')
       : (awayP?.name ?? 'Visitante');
-  const date = f.starting_at ? `${f.starting_at.replace(' ', 'T')}Z` : new Date().toISOString();
+  const date = sportmonksStartingAtIso(f);
   const state = inferFinishedIfKickoffPassed({
     state: coerceInPlayState(f, mapState(stateBlob(f), f.state_id ?? f.state?.id)),
     dateIso: date,
@@ -1033,6 +1033,21 @@ function formKickAtMs(startingAt?: string | null): number {
   return Number.isFinite(t) ? t : 0;
 }
 
+function sportmonksStartingAtIso(f: {
+  starting_at?: string | null;
+  starting_at_timestamp?: number | null;
+}): string {
+  const ts = f.starting_at_timestamp;
+  if (ts != null && Number.isFinite(ts) && ts > 0) {
+    return new Date(ts * 1000).toISOString();
+  }
+  if (f.starting_at) {
+    const iso = f.starting_at.includes('T') ? f.starting_at : f.starting_at.replace(' ', 'T');
+    return iso.endsWith('Z') ? iso : `${iso}Z`;
+  }
+  return new Date().toISOString();
+}
+
 /** Last N finished fixtures, every competition, newest first. */
 export function selectLatestFinished<T extends {
   starting_at?: string | null;
@@ -1073,7 +1088,7 @@ export function formMatchFromLatest(
   }
   return {
     id: String(f.id),
-    date: f.starting_at ? `${f.starting_at.replace(' ', 'T')}Z` : '',
+    date: sportmonksStartingAtIso(f),
     opponentAbbr: scheduleAbbr(opp?.short_code ?? 'RIV'),
     opponentName: opp?.name ?? 'Rival',
     homeScore: currentGoals(f.scores, 'home'),
@@ -1090,7 +1105,7 @@ function meetingFromSm(f: SmFixture): HeadToHeadMeeting | null {
   if (!homeP || !awayP || !isFinishedState(f.state)) return null;
   return {
     id: String(f.id),
-    date: f.starting_at ? `${f.starting_at.replace(' ', 'T')}Z` : '',
+    date: sportmonksStartingAtIso(f),
     homeAbbr: scheduleAbbr(homeP.short_code ?? 'LOC'),
     awayAbbr: scheduleAbbr(awayP.short_code ?? 'VIS'),
     homeName: homeP.name,

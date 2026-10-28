@@ -72,7 +72,7 @@ describe('J7 Leagues Cup makeups', () => {
     const live: LigaMxScheduleFixture[] = [
       {
         id: seed.id,
-        date: '2026-10-28T22:00:00-06:00',
+        date: '2026-10-29T03:00:00Z',
         league: 'liga-mx',
         jornada: seed.jornada ?? null,
         status: {
@@ -93,7 +93,7 @@ describe('J7 Leagues Cup makeups', () => {
       (f) => f.home.abbreviation === 'AME' && f.away.abbreviation === 'TIJ'
     );
     assert.equal(ameTij?.status.shortDetail, 'Próximo');
-    assert.equal(ameTij?.date, '2026-10-28T22:00:00-06:00');
+    assert.equal(ameTij?.date, '2026-10-29T03:00:00Z');
   });
 });
 
