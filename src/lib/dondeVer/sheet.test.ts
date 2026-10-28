@@ -66,6 +66,28 @@ describe('donde-ver sheet', () => {
     setDondeVerOverlay(null);
   });
 
+  it('matches a makeup by Fecha even if the fixture jornada differs', () => {
+    const snap = buildSnapshot(
+      [
+        'Jornada,Fecha,Local,Visita,MX 1,MX 2,MX 3,MX 4,US 1,US 2',
+        '7,2026-10-28,AME,TIJ,Canal 5,TUDN,ViX,LayVTime,TUDN,ViX',
+      ].join('\n'),
+      'Club,MX 1,US 1,US 2,US 3\nAME,Canal 5,TUDN,Univision,ViX\n'
+    );
+    assert.deepEqual(snap.errors, []);
+    setDondeVerOverlay(snap);
+    const d = resolveDondeVer({
+      date: '2026-10-29T03:00:00Z',
+      jornada: 'Jornada 15',
+      league: 'liga-mx',
+      home: { abbreviation: 'AME' },
+      away: { abbreviation: 'TIJ' },
+    } as Parameters<typeof resolveDondeVer>[0]);
+    assert.deepEqual(d.mxChannels, ['canal-5', 'tudn', 'vix', 'layvtime']);
+    assert.deepEqual(d.usChannels, ['tudn', 'vix']);
+    setDondeVerOverlay(null);
+  });
+
   it('dash means no channels on that side', () => {
     const snap = buildSnapshot(
       'Jornada,Local,Visita,MX,US\n14,MTY,GDL,-,TUDN\n',

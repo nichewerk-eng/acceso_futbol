@@ -937,7 +937,8 @@ export function resolveDondeVer(
     const pair = sortedPair(fixture.home.abbreviation, fixture.away.abbreviation);
     const n =
       Number(String(fixture.jornada ?? '').match(/(\d+)/)?.[1]) || overlay.pairJornada[pair];
-    const sheetMatch = n ? overlay.matches[`j${n}|${pair}`] : undefined;
+    const sheetMatch =
+      overlay.matches[dateKey] ?? (n ? overlay.matches[`j${n}|${pair}`] : undefined);
     const home = normAbbr(fixture.home.abbreviation);
     const sheetClub = overlay.clubs[home];
     const codeClub = CLUB_HOME_TV[home];

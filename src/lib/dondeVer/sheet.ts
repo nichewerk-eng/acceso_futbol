@@ -274,7 +274,10 @@ export function buildSnapshot(partidosCsv: string, clubesCsv: string): DondeVerS
     const mx = channelList(sideFromRow(r, 'mx'), `${where} MX`, errors);
     const us = channelList(sideFromRow(r, 'us'), `${where} US`, errors);
     if (mx === undefined && us === undefined) return;
-    matches[`j${n}|${pair}`] = { mx, us };
+    const sides = { mx, us };
+    matches[`j${n}|${pair}`] = sides;
+    const day = String(r.fecha ?? '').match(/(\d{4}-\d{2}-\d{2})/)?.[1];
+    if (day) matches[`${day}|${pair}`] = sides;
   });
 
   records(parseCsv(clubesCsv)).forEach((r, i) => {
@@ -436,6 +439,11 @@ export async function paintDondeVer<T extends Fixture>(fixture: T | null | undef
   if (!fixture) return null;
   await ensureDondeVerSheet();
   return attachDondeVer(fixture) as T;
+}
+
+export async function paintDondeVerList<T extends Fixture>(list: T[]): Promise<T[]> {
+  await ensureDondeVerSheet();
+  return list.map((f) => attachDondeVer(f) as T);
 }
 
 export function dondeVerSheetStatus() {

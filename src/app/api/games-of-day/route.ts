@@ -9,8 +9,9 @@ import {
   seedGamesOfDay,
   type GamesOfDayPayload,
 } from '@/lib/sports/gamesOfDay';
+import { paintDondeVerList } from '@/lib/dondeVer/sheet';
 
-const CACHE_KEY = 'games-of-day-v17-lc-final';
+const CACHE_KEY = 'games-of-day-v18-dv-sheet';
 
 export async function GET() {
   return serveSwr<GamesOfDayPayload>({
@@ -19,6 +20,10 @@ export async function GET() {
     staleOk: (payload) => paceFromFixtures(payload.games) !== 'live',
     loader: () => getGamesOfDay(),
     seed: () => seedGamesOfDay(),
+    map: async (payload) => ({
+      ...payload,
+      games: await paintDondeVerList(payload.games),
+    }),
     headers: (payload, { stale }) => {
       const pace = paceFromFixtures(payload.games);
       return {

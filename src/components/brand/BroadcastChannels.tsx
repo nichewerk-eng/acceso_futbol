@@ -141,7 +141,10 @@ export function BroadcastChannels({
     const all = uniqueChannels(mx, us);
     const marks =
       typeof maxMarks === 'number' && maxMarks > 0 ? all.slice(0, maxMarks) : all;
-    const title = [mxLabel, usLabel].filter(Boolean).join(' · ') || 'Dónde ver';
+    const title =
+      marks.map((id) => TV_CHANNELS[id]?.label).filter(Boolean).join(' · ') ||
+      [mxLabel, usLabel].filter(Boolean).join(' · ') ||
+      'Dónde ver';
     if (marks.length === 0) {
       const fallback = title === 'Dónde ver' ? '' : title;
       if (!fallback) return null;

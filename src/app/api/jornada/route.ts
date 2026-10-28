@@ -10,8 +10,9 @@ import {
   getJornadaOverview,
   type JornadaOverview,
 } from '@/lib/sports/jornada';
+import { paintDondeVerList } from '@/lib/dondeVer/sheet';
 
-const CACHE_KEY = 'jornada-overview-v17-j7-tv';
+const CACHE_KEY = 'jornada-overview-v18-dv-sheet';
 
 function jornadaRows(o: JornadaOverview) {
   return [...o.live, ...o.played, ...o.upcoming, ...(o.postponed ?? [])];
@@ -38,6 +39,16 @@ export async function GET() {
       'empty' in payload || paceFromFixtures(jornadaRows(payload)) !== 'live',
     loader: async () => (await getJornadaOverview()) ?? { empty: true as const },
     notFound: (d) => 'empty' in d,
+    map: async (payload) => {
+      if ('empty' in payload) return payload;
+      const [live, played, upcoming, postponed] = await Promise.all([
+        paintDondeVerList(payload.live),
+        paintDondeVerList(payload.played),
+        paintDondeVerList(payload.upcoming),
+        paintDondeVerList(payload.postponed ?? []),
+      ]);
+      return { ...payload, live, played, upcoming, postponed };
+    },
     headers: (payload, { stale }) => {
       if ('empty' in payload) return undefined;
       const pace = paceFromFixtures(jornadaRows(payload));
