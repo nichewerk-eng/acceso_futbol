@@ -361,7 +361,7 @@ export default function HeroBanner() {
               {boardMode === 'upcoming' && <span className="text-[10px] font-bold tracking-widest uppercase text-white/40">Próximos partidos</span>}
             </div>
             <div className="flex items-center gap-2 text-[10px] text-white/20">
-              <span>{lastUp.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: userTz })} {tzLabel(userTz)}</span>
+              <span>{lastUp.toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true, timeZone: userTz })} {tzLabel(userTz)}</span>
               <button onClick={() => load(false)} disabled={refreshing}
                 className="text-brand-orange hover:text-brand-orange-dark transition disabled:opacity-40">
                 {refreshing ? '…' : '↻'}

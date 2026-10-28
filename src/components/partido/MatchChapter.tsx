@@ -224,8 +224,14 @@ function statusCopy(match: MatchSnapshot): string {
   return localizeStatus(match.statusLabel, match.state);
 }
 
-function kickoffCopy(iso: string, tz: string): { day: string; time: string } {
-  return { day: formatKickoffDay(iso, tz), time: formatKickoffTime(iso, tz) };
+function kickoffCopy(iso: string, tz: string): { day: string; time: string; meridiem: string } {
+  const raw = formatKickoffTime(iso, tz);
+  const parts = raw.match(/^(.+?)\s+(a\.m\.|p\.m\.)$/i);
+  return {
+    day: formatKickoffDay(iso, tz),
+    time: parts ? parts[1] : raw,
+    meridiem: parts ? parts[2].toLowerCase() : '',
+  };
 }
 
 function formatMeetingShort(iso: string, tz: string): string {
@@ -949,7 +955,12 @@ export function MatchChapter({ league, id, initialMatch = null }: Props) {
               </p>
               {pre ? (
                 <>
-                  <p className="match-kick-time">{kick.time || 'VS'}</p>
+                  <p className="match-kick-time">
+                    {kick.time || 'VS'}
+                    {kick.meridiem ? (
+                      <span className="match-kick-meridiem"> {kick.meridiem}</span>
+                    ) : null}
+                  </p>
                   <p className="match-kick-day">{kick.day}</p>
                 </>
               ) : (

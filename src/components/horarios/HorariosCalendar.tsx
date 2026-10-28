@@ -50,7 +50,7 @@ function MatchCard({ f, tz }: { f: Fixture; tz: string }) {
           ) : done ? (
             'Final'
           ) : (
-            hold ?? `${horarioTimeIn(f.date, tz)} h`
+            hold ?? horarioTimeIn(f.date, tz)
           )}
         </p>
         <div className="af-horarios-pair">

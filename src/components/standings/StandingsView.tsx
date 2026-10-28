@@ -466,7 +466,7 @@ export default function StandingsView({ initialGroups, initialFixtures }: Props)
               </div>
               <div className="flex items-center gap-2 text-[10px] text-gray-400 dark:text-white/30">
                 {refreshing ? <span>Actualizando…</span> : (
-                  <span>{lastUpdated.toLocaleTimeString('es-MX', { timeZone: userTz, hour: '2-digit', minute: '2-digit' })}</span>
+                  <span>{lastUpdated.toLocaleTimeString('es-MX', { timeZone: userTz, hour: 'numeric', minute: '2-digit', hour12: true })}</span>
                 )}
               </div>
             </div>

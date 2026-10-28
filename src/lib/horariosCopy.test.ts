@@ -6,18 +6,18 @@ import { groupFixturesByBoardDay, horarioTimeIn, horarioTimeMx } from './horario
 
 describe('horarioTimeMx', () => {
   it('prints the Apertura board clock for summer UTC-5 fixtures', () => {
-    assert.equal(horarioTimeMx('2026-08-28T20:00:00-05:00'), '20:00');
-    assert.equal(horarioTimeMx('2026-08-29T01:00:00Z'), '20:00');
+    assert.equal(horarioTimeMx('2026-08-28T20:00:00-05:00'), '8:00 p.m.');
+    assert.equal(horarioTimeMx('2026-08-29T01:00:00Z'), '8:00 p.m.');
   });
 
   it('prints CST after 24 Oct', () => {
-    assert.equal(horarioTimeMx('2026-10-26T20:00:00-06:00'), '20:00');
-    assert.equal(horarioTimeMx('2026-10-27T02:00:00Z'), '20:00');
+    assert.equal(horarioTimeMx('2026-10-26T20:00:00-06:00'), '8:00 p.m.');
+    assert.equal(horarioTimeMx('2026-10-27T02:00:00Z'), '8:00 p.m.');
   });
 
   it('converts the same instant into the viewer timezone', () => {
-    assert.equal(horarioTimeIn('2026-08-29T01:00:00Z', 'America/Chicago'), '20:00');
-    assert.equal(horarioTimeIn('2026-08-29T01:00:00Z', 'America/Los_Angeles'), '18:00');
+    assert.equal(horarioTimeIn('2026-08-29T01:00:00Z', 'America/Chicago'), '8:00 p.m.');
+    assert.equal(horarioTimeIn('2026-08-29T01:00:00Z', 'America/Los_Angeles'), '6:00 p.m.');
   });
 });
 

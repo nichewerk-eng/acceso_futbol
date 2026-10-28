@@ -31,9 +31,9 @@ export function horarioTimeIn(iso: string, tz: string): string {
   try {
     return new Date(iso).toLocaleTimeString('es-MX', {
       timeZone: tz,
-      hour: '2-digit',
+      hour: 'numeric',
       minute: '2-digit',
-      hour12: false,
+      hour12: true,
     });
   } catch {
     return '';
@@ -51,7 +51,7 @@ export function horarioTimeMx(iso: string): string {
 export function horarioKickoffMx(iso: string): string {
   const day = horarioDateMx(iso);
   const time = horarioTimeMx(iso);
-  return day && time ? `${day} · ${time} h (CDMX)` : kickoffLabelMx(iso);
+  return day && time ? `${day} · ${time} (CDMX)` : kickoffLabelMx(iso);
 }
 
 export function horarioDayKey(iso: string, tz: string): string {

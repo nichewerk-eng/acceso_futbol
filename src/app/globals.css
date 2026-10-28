@@ -6665,6 +6665,16 @@ a.lead-team:hover {
   white-space: nowrap;
 }
 
+.match-kick-meridiem {
+  margin-left: 0.18em;
+  font-size: 0.28em;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+  vertical-align: 0.85em;
+  color: rgba(246, 245, 242, 0.62);
+}
+
 .match-kick-day {
   margin-top: 0.4rem;
   max-width: 7.5rem;

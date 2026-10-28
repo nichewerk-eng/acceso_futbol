@@ -18,6 +18,7 @@ import { ligaMxClubIdFromAbbr } from '@/config/ligaMxLogos';
 import { liveFetch } from '@/lib/client/liveFetch';
 import { startLivePoll } from '@/lib/client/livePoll';
 import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
+import { formatKickoffTime } from '@/lib/localTime';
 import { paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
 import { kickHold, kickHoldLabel } from '@/lib/sports/localizeEs';
 import { lcOnPartidosCalendar } from '@/lib/sports/leaguesCupBoard';
@@ -34,13 +35,7 @@ function dayKeyInTz(d: Date, tz: string) {
 }
 
 function fmtTime(iso: string, tz: string) {
-  // Compact 24h stamp — scans cleaner in the scoreboard center.
-  return new Date(iso).toLocaleTimeString('es-MX', {
-    timeZone: tz,
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
+  return formatKickoffTime(iso, tz);
 }
 
 /** Condensed club label for match bands (full name when short, else abbr). */
@@ -781,9 +776,6 @@ function MatchRow({
               <p className="lc-match-when-primary">
                 {live && <span className="hoy-live-dot mr-1.5" aria-hidden />}
                 {whenPrimary}
-                {f.state === 'pre' && !hold ? (
-                  <span className="lc-match-when-hrs"> hrs</span>
-                ) : null}
               </p>
             </div>
           )}

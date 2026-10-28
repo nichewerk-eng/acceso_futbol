@@ -17,6 +17,7 @@ import type { LigaMXFixture } from '@/app/api/ligamx/fixtures/route';
 import { liveFetch } from '@/lib/client/liveFetch';
 import { startLivePoll } from '@/lib/client/livePoll';
 import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
+import { formatKickoffTime } from '@/lib/localTime';
 import { FRESH, paceFromFixtures, type FreshPace } from '@/lib/sports/freshness';
 import { kickHold, kickHoldLabel } from '@/lib/sports/localizeEs';
 import { mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
@@ -43,11 +44,7 @@ function fmtDate(iso: string, tz: string) {
 }
 
 function fmtTime(iso: string, tz: string) {
-  return new Date(iso).toLocaleTimeString('es-MX', {
-    timeZone: tz,
-    hour: 'numeric',
-    minute: '2-digit',
-  });
+  return formatKickoffTime(iso, tz);
 }
 
 function dayKeyInTz(iso: string, tz: string) {
@@ -77,12 +74,7 @@ function groupByDay(rows: LigaMXFixture[], tz: string) {
 }
 
 function fmtKick(iso: string, tz: string) {
-  return new Date(iso).toLocaleTimeString('es-MX', {
-    timeZone: tz,
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
+  return formatKickoffTime(iso, tz);
 }
 
 function shortClubName(name: string, abbr: string) {
@@ -288,8 +280,9 @@ export default function LigaMXView({
                 SYNC{' '}
                 {lastUpdated
                   ? lastUpdated.toLocaleTimeString('es-MX', {
-                      hour: '2-digit',
+                      hour: 'numeric',
                       minute: '2-digit',
+                      hour12: true,
                       timeZone: userTz,
                     })
                   : '—'}
@@ -926,7 +919,6 @@ function KickRow({
     : done
       ? 'FT'
       : hold ?? fmtKick(f.date, tz);
-  const showHrs = !live && !done && !hold;
   const center = done || live ? `${f.home.score ?? 0}–${f.away.score ?? 0}` : 'VS';
   const homeId = ligaMxClubIdFromAbbr(f.home.abbreviation);
   const awayId = ligaMxClubIdFromAbbr(f.away.abbreviation);
@@ -982,7 +974,6 @@ function KickRow({
               <p className="lc-match-when-primary">
                 {live && <span className="hoy-live-dot mr-1.5" aria-hidden />}
                 {when}
-                {showHrs ? <span className="lc-match-when-hrs"> hrs</span> : null}
               </p>
             </div>
           )}

@@ -42,7 +42,7 @@ export function CableBriefPlayer() {
   const [playing, setPlaying] = useState(false);
   const [payload, setPayload] = useState<BriefPayload | null>(null);
   const [loading, setLoading] = useState(true);
-  const [line, setLine] = useState('Briefing de noticias · 8:00 y 18:00');
+  const [line, setLine] = useState('Briefing de noticias · 8:00 a.m. y 6:00 p.m.');
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const objectUrlRef = useRef<string | null>(null);
   const playingRef = useRef(false);
@@ -197,7 +197,7 @@ export function CableBriefPlayer() {
             {payload?.title ?? 'Briefing de noticias'}
           </p>
           <p className="mt-1 af-tele">
-            {loading ? 'Armando cabina…' : meta || '8:00 y 18:00 México'}
+            {loading ? 'Armando cabina…' : meta || '8:00 a.m. y 6:00 p.m. México'}
           </p>
         </div>
 
@@ -232,7 +232,7 @@ export function CableBriefPlayer() {
         {line}
       </p>
       <p className="mt-2 af-tele">
-        Corte grabado a las 8:00 y 18:00 · México. Play no gasta créditos.
+        Corte grabado a las 8:00 a.m. y 6:00 p.m. · México. Play no gasta créditos.
       </p>
     </div>
   );

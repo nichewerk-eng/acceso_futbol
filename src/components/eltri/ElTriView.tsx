@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 import { BroadcastChannels } from '@/components/brand/BroadcastChannels';
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
+import { formatKickoffTime } from '@/lib/localTime';
 import { kickHold, kickHoldLabel } from '@/lib/sports/localizeEs';
 import type { Fixture } from '@/lib/sports/types';
 
@@ -39,11 +40,7 @@ function dayLabel(day: string) {
 }
 
 function fmtTime(iso: string, tz: string) {
-  return new Date(iso).toLocaleTimeString('es-MX', {
-    timeZone: tz,
-    hour: 'numeric',
-    minute: '2-digit',
-  });
+  return formatKickoffTime(iso, tz);
 }
 
 function kickCell(f: Fixture, tz: string) {
