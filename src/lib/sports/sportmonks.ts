@@ -10,7 +10,7 @@ import {
   type FemenilStandingGroup,
 } from './ligaMxFemenil';
 import { localizeComment, commentLooksLikeGoal } from './localizeComment';
-import { overlayShouldReplaceSeedSchedule } from './scheduleHold';
+import { inferFinishedIfKickoffPassed, overlayShouldReplaceSeedSchedule } from './scheduleHold';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
 import { smFetch } from './sm/client';
 import { LANE, type SmLane } from './sm/lanes';
@@ -32,7 +32,7 @@ import type {
   TeamLineup,
 } from './types';
 
-const SEASON_CACHE_KEY = 'sm-ligamx-season-fixtures-v6-states';
+const SEASON_CACHE_KEY = 'sm-ligamx-season-fixtures-v7-j14-ft';
 const FEM_SEASON_CACHE_KEY = 'sm-ligamx-femenil-season-fixtures-v1-states';
 const LC_SEASON_CACHE_KEY = 'sm-leagues-cup-season-fixtures-v3-states';
 const LIVE_CACHE_KEY = 'sm-livescores-v9-events-player';
@@ -411,8 +411,6 @@ export function mapFixture(f: SmFixture): Fixture {
   const parts = f.participants ?? [];
   const homeP = parts.find((p) => participantSide(p) === 'home') ?? parts[0];
   const awayP = parts.find((p) => participantSide(p) === 'away') ?? parts[1];
-  const state = coerceInPlayState(f, mapState(stateBlob(f), f.state_id ?? f.state?.id));
-
   const homeScore = scoreFor(f.scores, 'home');
   const awayScore = scoreFor(f.scores, 'away');
   const homeId = String(homeP?.id ?? 'home');
@@ -440,6 +438,13 @@ export function mapFixture(f: SmFixture): Fixture {
       ? femenilTeamName(awayP?.name ?? 'Visitante')
       : (awayP?.name ?? 'Visitante');
   const date = f.starting_at ? `${f.starting_at.replace(' ', 'T')}Z` : new Date().toISOString();
+  const state = inferFinishedIfKickoffPassed({
+    state: coerceInPlayState(f, mapState(stateBlob(f), f.state_id ?? f.state?.id)),
+    dateIso: date,
+    homeScore,
+    awayScore,
+    statusLabel: stateBlob(f),
+  });
   const clock = clockFromFixture(f, state);
 
   const roundName = f.round?.name?.trim();

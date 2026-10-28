@@ -27,7 +27,7 @@ function asDondeVerFixture(f: LigaMXFixture): Parameters<typeof resolveDondeVer>
 
 // Apertura 2026: July → December 2026
 const DATE_RANGE = '20260701-20261231';
-const CACHE_KEY = 'ligamx-fixtures-v17-j7-makeup';
+const CACHE_KEY = 'ligamx-fixtures-v18-j14-ft';
 
 type FixturesPayload = { fixtures: LigaMXFixture[]; source: string };
 

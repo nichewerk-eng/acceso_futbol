@@ -2,7 +2,10 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { seedLigaMxFixtures } from './espnFallback';
 import { seedGamesOfDay } from './gamesOfDay';
-import { overlayShouldReplaceSeedSchedule } from './scheduleHold';
+import {
+  inferFinishedIfKickoffPassed,
+  overlayShouldReplaceSeedSchedule,
+} from './scheduleHold';
 import { mergeLigaMxSchedule, type LigaMxScheduleFixture } from './mergeLigaMxSchedule';
 import {
   jornadaFechaCluster,
@@ -156,6 +159,48 @@ describe('overlayShouldReplaceSeedSchedule', () => {
         }
       ),
       false
+    );
+  });
+});
+
+describe('inferFinishedIfKickoffPassed', () => {
+  const kick = '2026-10-24T23:00:00Z';
+  const now = +new Date('2026-10-28T04:00:00Z');
+
+  it('promotes a stale NS row that already has a score', () => {
+    assert.equal(
+      inferFinishedIfKickoffPassed({
+        state: 'pre',
+        dateIso: kick,
+        homeScore: '1',
+        awayScore: '1',
+        now,
+      }),
+      'post'
+    );
+  });
+
+  it('leaves postponed and scoreless rows alone', () => {
+    assert.equal(
+      inferFinishedIfKickoffPassed({
+        state: 'pre',
+        dateIso: kick,
+        homeScore: '1',
+        awayScore: '0',
+        statusLabel: 'POSTPONED',
+        now,
+      }),
+      'pre'
+    );
+    assert.equal(
+      inferFinishedIfKickoffPassed({
+        state: 'pre',
+        dateIso: kick,
+        homeScore: null,
+        awayScore: null,
+        now,
+      }),
+      'pre'
     );
   });
 });

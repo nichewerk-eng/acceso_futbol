@@ -1,5 +1,9 @@
 import { mexicoDayKey } from '@/lib/radio/phases';
 import { kickHold } from './localizeEs';
+import type { MatchState } from './types';
+
+/** Kickoff this old with a score is finished, even if Sportmonks still says NS. */
+const FINISHED_AFTER_MS = 3 * 3600_000;
 
 /**
  * Sportmonks / ESPN overlay wins on a real move (new Mexico day, postpone,
@@ -31,4 +35,27 @@ export function overlayShouldReplaceSeedSchedule(
   } catch {
     return true;
   }
+}
+
+/**
+ * Season includes sometimes keep Saturday results as NS after the date-board
+ * window has closed. A past kickoff with a score is FT, not "Por jugar".
+ */
+export function inferFinishedIfKickoffPassed(opts: {
+  state: MatchState;
+  dateIso: string;
+  homeScore: string | null;
+  awayScore: string | null;
+  statusLabel?: string | null;
+  now?: number;
+}): MatchState {
+  if (opts.state !== 'pre') return opts.state;
+  if (kickHold(opts.statusLabel) === 'postponed' || kickHold(opts.statusLabel) === 'cancelled') {
+    return opts.state;
+  }
+  if (opts.homeScore == null || opts.awayScore == null) return opts.state;
+  const t = +new Date(opts.dateIso);
+  if (!Number.isFinite(t)) return opts.state;
+  if (t > (opts.now ?? Date.now()) - FINISHED_AFTER_MS) return opts.state;
+  return 'post';
 }

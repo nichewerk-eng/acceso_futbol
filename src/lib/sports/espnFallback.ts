@@ -281,8 +281,8 @@ function utcKeysForMexicoDays(days: Iterable<string>): string[] {
   return [...keys];
 }
 
-/** Live / upcoming window — date boards, not a season include. */
-const DATE_BOARD_PAST_MS = 36 * 3600_000;
+/** Cover the previous weekend so Saturday FT is not stuck as NS on Tuesday. */
+const DATE_BOARD_PAST_MS = 8 * 86400_000;
 const DATE_BOARD_FUTURE_MS = 8 * 86400_000;
 /** If the season dump has no FT rows, walk back through Jornada 1. */
 const DATE_BOARD_SEASON_PAST_MS = 45 * 86400_000;
@@ -312,7 +312,7 @@ async function fetchDateBoardFixtures(seed: Fixture[], pastMs: number): Promise<
 type LigaMxBoard = { fixtures: Fixture[]; source: 'sportmonks' | 'espn' | 'static' };
 
 /** Canonical Liga MX board key — one merged snapshot shared across every surface (and isolates via KV). */
-const BOARD_KEY = 'liga-mx-board-v4-j7-makeup';
+const BOARD_KEY = 'liga-mx-board-v5-j14-ft';
 
 /**
  * Static calendar + season FT scores + nearby date boards / livescores.
