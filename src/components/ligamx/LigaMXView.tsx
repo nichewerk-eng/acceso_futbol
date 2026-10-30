@@ -922,26 +922,30 @@ function KickRow({
   const center = done || live ? `${f.home.score ?? 0}–${f.away.score ?? 0}` : 'VS';
   const homeId = ligaMxClubIdFromAbbr(f.home.abbreviation);
   const awayId = ligaMxClubIdFromAbbr(f.away.abbreviation);
-  const tv = f.dondeVer ?? resolveDondeVer({
-    date: f.date,
-    league,
-    jornada: f.jornada,
-    venue: f.venue,
-    city: f.city,
-    home: {
-      id: homeId ?? f.home.abbreviation,
-      name: f.home.name,
-      abbreviation: f.home.abbreviation,
-      score: f.home.score,
-    },
-    away: {
-      id: awayId ?? f.away.abbreviation,
-      name: f.away.name,
-      abbreviation: f.away.abbreviation,
-      score: f.away.score,
-    },
-  });
-  const hasTv = tv.mxChannels.length > 0 || tv.usChannels.length > 0;
+  const tv =
+    f.dondeVer ??
+    (league === 'liga-mx-femenil'
+      ? resolveDondeVer({
+          date: f.date,
+          league,
+          jornada: f.jornada,
+          venue: f.venue,
+          city: f.city,
+          home: {
+            id: homeId ?? f.home.abbreviation,
+            name: f.home.name,
+            abbreviation: f.home.abbreviation,
+            score: f.home.score,
+          },
+          away: {
+            id: awayId ?? f.away.abbreviation,
+            name: f.away.name,
+            abbreviation: f.away.abbreviation,
+            score: f.away.score,
+          },
+        })
+      : { mx: '', us: '', mxChannels: [], usChannels: [], confirmed: false });
+  const hasTv = Boolean(tv.mxChannels?.length || tv.usChannels?.length);
 
   return (
     <li className="lc-match-item">

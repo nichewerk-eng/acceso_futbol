@@ -5,6 +5,7 @@ import { PulseNav } from '@/components/living-room/PulseNav';
 import { JsonLd } from '@/components/seo/JsonLd';
 import type { LigaMXTable } from '@/app/api/ligamx/standings/route';
 import { absoluteUrl, breadcrumbJsonLd, personItemListJsonLd, sportsEventItemListJsonLd } from '@/lib/seo';
+import { paintLigaMxSchedule } from '@/lib/dondeVer/sheet';
 import { fetchLigaMxFixtures } from '@/lib/sports/espnFallback';
 import { fetchLigaMxLeaders } from '@/lib/sports/leaders';
 import { fetchLigaMxChampionBoard } from '@/lib/kalshi/ligaMxChampion';
@@ -73,9 +74,9 @@ async function fetchTable(): Promise<LigaMXTable | null> {
 async function fetchFixtures() {
   try {
     const { fixtures } = await fetchLigaMxFixtures();
-    return mergeLigaMxSchedule(fixtures.map(fixtureToLigaMxSchedule));
+    return paintLigaMxSchedule(mergeLigaMxSchedule(fixtures.map(fixtureToLigaMxSchedule)));
   } catch {
-    return mergeLigaMxSchedule([]);
+    return paintLigaMxSchedule(mergeLigaMxSchedule([]));
   }
 }
 

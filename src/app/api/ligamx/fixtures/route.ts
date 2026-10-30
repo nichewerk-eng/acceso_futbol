@@ -11,23 +11,11 @@ import { fetchLigaMxFixtures } from '@/lib/sports/espnFallback';
 import { prefetchCurrentJornadaContexto } from '@/lib/sports/getMatch';
 import { aperturaCalendar, refreshAperturaSmMap } from '@/lib/sports/aperturaSmMap';
 import { resolveDondeVer } from '@/config/dondeVer';
-import { ensureDondeVerSheet } from '@/lib/dondeVer/sheet';
-
-function asDondeVerFixture(f: LigaMXFixture): Parameters<typeof resolveDondeVer>[0] {
-  return {
-    date: f.date,
-    league: f.league,
-    jornada: f.jornada,
-    venue: f.venue,
-    city: f.city,
-    home: { id: f.home.abbreviation, name: f.home.name, abbreviation: f.home.abbreviation, score: f.home.score },
-    away: { id: f.away.abbreviation, name: f.away.name, abbreviation: f.away.abbreviation, score: f.away.score },
-  };
-}
+import { paintLigaMxSchedule } from '@/lib/dondeVer/sheet';
 
 // Apertura 2026: July → December 2026
 const DATE_RANGE = '20260701-20261231';
-const CACHE_KEY = 'ligamx-fixtures-v18-j14-ft';
+const CACHE_KEY = 'ligamx-fixtures-v19-dv-sheet';
 
 type FixturesPayload = { fixtures: LigaMXFixture[]; source: string };
 
@@ -54,7 +42,6 @@ export async function GET() {
         }))
       ) !== 'live',
     loader: async () => {
-      await ensureDondeVerSheet();
       let live: LigaMXFixture[] = [];
       try {
         const board = await fetchLigaMxFixtures();
@@ -73,20 +60,14 @@ export async function GET() {
       }
 
       const merged = live.length > 0 ? mergeLigaMxSchedule(live) : aperturaCalendar();
-      const fixtures = merged.map((f) => ({ ...f, dondeVer: resolveDondeVer(asDondeVerFixture(f)) }));
+      const fixtures = await paintLigaMxSchedule(merged);
       prefetchCurrentJornadaContexto(fixtures);
       return { fixtures, source: live.length ? 'sportmonks' : 'static' };
     },
-    map: async (payload) => {
-      await ensureDondeVerSheet();
-      return {
-        ...payload,
-        fixtures: payload.fixtures.map((f) => ({
-          ...f,
-          dondeVer: resolveDondeVer(asDondeVerFixture(f)),
-        })),
-      };
-    },
+    map: async (payload) => ({
+      ...payload,
+      fixtures: await paintLigaMxSchedule(payload.fixtures),
+    }),
     headers: (payload, { stale }) => {
       const pace = paceFromFixtures(
         payload.fixtures.map((f) => ({

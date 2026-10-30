@@ -16,6 +16,7 @@ import { getCache, peekCache, peekCacheAgeMs, setCache, singleFlight } from '@/l
 import { kvGetJson, kvSetJson, sharedKvEnabled } from '@/lib/sharedKv';
 import {
   attachDondeVer,
+  resolveDondeVer,
   setDondeVerOverlay,
   TV_CHANNELS,
   type DondeVerOverlay,
@@ -444,6 +445,45 @@ export async function paintDondeVer<T extends Fixture>(fixture: T | null | undef
 export async function paintDondeVerList<T extends Fixture>(list: T[]): Promise<T[]> {
   await ensureDondeVerSheet();
   return list.map((f) => attachDondeVer(f) as T);
+}
+
+type LigaMxChannelRow = {
+  date: string;
+  league: 'liga-mx' | 'liga-mx-femenil';
+  jornada: string | null;
+  venue: string | null;
+  city: string | null;
+  home: { name: string; abbreviation: string; score: string | null };
+  away: { name: string; abbreviation: string; score: string | null };
+};
+
+/** Liga MX schedule rows (page + `/api/ligamx/fixtures`) — same overlay as every other surface. */
+export async function paintLigaMxSchedule<T extends LigaMxChannelRow>(
+  rows: T[]
+): Promise<T[]> {
+  await ensureDondeVerSheet();
+  return rows.map((f) => ({
+    ...f,
+    dondeVer: resolveDondeVer({
+      date: f.date,
+      league: f.league,
+      jornada: f.jornada,
+      venue: f.venue,
+      city: f.city,
+      home: {
+        id: f.home.abbreviation,
+        name: f.home.name,
+        abbreviation: f.home.abbreviation,
+        score: f.home.score,
+      },
+      away: {
+        id: f.away.abbreviation,
+        name: f.away.name,
+        abbreviation: f.away.abbreviation,
+        score: f.away.score,
+      },
+    }),
+  }));
 }
 
 export function dondeVerSheetStatus() {

@@ -24,6 +24,8 @@ export type LigaMxScheduleFixture = {
   city: string | null;
   home: { name: string; abbreviation: string; score: string | null };
   away: { name: string; abbreviation: string; score: string | null };
+  /** Sheet / guide channels. Merge must keep this — the Liga MX page re-merges on the client. */
+  dondeVer?: Fixture['dondeVer'];
 };
 
 function jornadaNum(label: string | null | undefined): number | null {
@@ -67,6 +69,7 @@ export function fixtureToLigaMxSchedule(f: Fixture): LigaMxScheduleFixture {
       abbreviation: f.away.abbreviation,
       score: f.away.score ?? null,
     },
+    dondeVer: f.dondeVer,
   };
 }
 
@@ -111,6 +114,7 @@ export function mergeLigaMxSchedule(live: LigaMxScheduleFixture[]): LigaMxSchedu
       city: overlay.city ?? s.city,
       home: { ...s.home, score: overlay.home.score },
       away: { ...s.away, score: overlay.away.score },
+      dondeVer: overlay.dondeVer ?? s.dondeVer,
     };
   });
   rememberOverlaySmIds(seed, merged);

@@ -95,6 +95,45 @@ describe('J7 Leagues Cup makeups', () => {
     assert.equal(ameTij?.status.shortDetail, 'Próximo');
     assert.equal(ameTij?.date, '2026-10-29T03:00:00Z');
   });
+
+  it('keeps sheet channels when the Liga MX page re-merges the overlay', () => {
+    const seed = seedLigaMxFixtures().find(
+      (f) => f.home.abbreviation === 'AME' && f.away.abbreviation === 'TIJ'
+    );
+    assert.ok(seed);
+    const live: LigaMxScheduleFixture[] = [
+      {
+        id: seed.id,
+        date: seed.date,
+        league: 'liga-mx',
+        jornada: seed.jornada ?? null,
+        status: {
+          completed: false,
+          state: 'pre',
+          description: 'Not Started',
+          shortDetail: 'Próximo',
+          displayClock: '',
+        },
+        venue: seed.venue ?? null,
+        city: seed.city ?? null,
+        home: { name: seed.home.name, abbreviation: seed.home.abbreviation, score: null },
+        away: { name: seed.away.name, abbreviation: seed.away.abbreviation, score: null },
+        dondeVer: {
+          mx: 'Canal 5 · TUDN',
+          us: 'TUDN · ViX',
+          mxChannels: ['canal-5', 'tudn'],
+          usChannels: ['tudn', 'vix'],
+          confirmed: true,
+        },
+      },
+    ];
+    const merged = mergeLigaMxSchedule(live);
+    const ameTij = merged.find(
+      (f) => f.home.abbreviation === 'AME' && f.away.abbreviation === 'TIJ'
+    );
+    assert.deepEqual(ameTij?.dondeVer?.mxChannels, ['canal-5', 'tudn']);
+    assert.deepEqual(ameTij?.dondeVer?.usChannels, ['tudn', 'vix']);
+  });
 });
 
 describe('jornadaFechaCluster', () => {
