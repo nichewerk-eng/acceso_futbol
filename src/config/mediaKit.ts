@@ -14,10 +14,7 @@ export const mediaKit = {
     { title: 'Un siguiente paso medible', copy: 'Lleva al fan a una promoción, registro o página de campaña con enlaces identificables y un reporte acordado desde el brief.' },
   ],
   notes: {
-    followers: 'La suma de seguidores y suscriptores no representa personas únicas. Las vistas tampoco equivalen a alcance único. Cada plataforma tiene su propio periodo y definición de vistas.',
-    medians: 'Medianas de publicaciones de octubre: Facebook 101 piezas, TikTok 43, Instagram 100 y YouTube 47. TikTok e Instagram usan vistas acumuladas al corte por pieza; YouTube usa vistas del periodo 1–31 octubre. Facebook incluye publicaciones mixtas y mide impresiones. No son proyecciones de una integración patrocinada.',
-    geography: 'Las bases son diferentes y no se suman. Instagram: 2,144 de 2,254 seguidores con ubicación están en México/EE. UU. (95.1%); total: 2,270 seguidores. YouTube: 115,796 vistas de México + 46,752 de EE. UU. sobre 174,225 (93.30%). Facebook no incluye desglose por país. No hay datos verificados de edad, ciudad o conversiones en este corte.',
-    proof: 'Ejemplos editoriales destacados. Facebook y TikTok son del archivo de octubre; Instagram conserva el reel de septiembre, el ejemplo más fuerte. Muestran formatos y resultados históricos; no acreditan ventas o registros de patrocinadores. Las medianas muestran el desempeño habitual. Las capturas anteriores ilustran el estilo editorial y son distintas a estos ejemplos.',
+    geography: 'No se suman. Instagram: 95.1% en México o EE. UU. (2,144 de 2,254 con ubicación). YouTube: 93.30% (115,796 + 46,752 de 174,225). Facebook sin país. Sin edad, ciudad ni conversiones.',
     terms: 'Producción, fechas y desplazamientos por acordar. Derechos de uso, pauta y exclusividad se cotizan por separado. Cada propuesta define entregables, revisiones, cancelación y condiciones de reposición.',
   },
   platforms: [

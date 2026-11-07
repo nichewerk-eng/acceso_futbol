@@ -102,12 +102,11 @@ export default function MediaKitView({ locale = 'es' }: { locale?: 'es' | 'en' }
               <p className="text-xs uppercase tracking-[0.16em] text-slate-300 print:text-slate-600">{t("Resultados reportados · octubre 2026", "Reported results · October 2026")}</p>
               <p className="mt-3 font-display text-5xl font-semibold text-[#56dbc1] sm:mt-4 sm:text-6xl print:mt-2 print:text-5xl print:text-brand-blue">{formatNumber(totalViews)}</p>
               <p className="mt-2 text-base print:text-sm">{t("vistas reportadas en las 4 plataformas", "summed reported views across 4 platforms")}</p>
-              <p className="mt-2 text-xs leading-5 text-slate-300 print:text-slate-600">{t("Facebook, TikTok, Instagram y YouTube: 1–31 octubre. Suma de vistas reportadas; incluye repeticiones y stories de Instagram.", "Facebook, TikTok, Instagram and YouTube: October 1–31. Summed reported views; includes repeat views and Instagram stories.")}</p>
+              <p className="mt-2 text-xs leading-5 text-slate-300 print:text-slate-600">{t("Facebook, TikTok, Instagram y YouTube: 1–31 octubre.", "Facebook, TikTok, Instagram and YouTube: October 1–31.")}</p>
               <div className="mt-6 grid grid-cols-2 gap-6 border-t border-white/20 pt-6 print:mt-3 print:gap-3 print:border-slate-300 print:pt-3">
-                <div><p className="font-display text-3xl font-semibold print:text-2xl">{formatNumber(totalFollowers)}</p><p className="mt-2 text-sm text-slate-300 print:mt-1 print:text-xs print:text-slate-600">{t("seguidores y suscriptores sumados. Facebook y TikTok al 31 oct; Instagram y YouTube al 7 nov 2026", "summed followers and subscribers. Facebook and TikTok as of 31 Oct; Instagram and YouTube as of 7 Nov 2026")}</p></div>
+                <div><p className="font-display text-3xl font-semibold print:text-2xl">{formatNumber(totalFollowers)}</p><p className="mt-2 text-sm text-slate-300 print:mt-1 print:text-xs print:text-slate-600">{t("seguidores y suscriptores sumados al cierre reportado", "summed followers and subscribers at the reported closing snapshot")}</p></div>
                 <div><p className="font-display text-3xl font-semibold print:text-2xl">{mediaKit.platforms.length} {t('plataformas', 'platforms')}</p><p className="mt-2 text-sm text-slate-300 print:mt-1 print:text-xs print:text-slate-600">{t("para distribuir tu campaña", "to distribute your campaign")}</p></div>
               </div>
-              <p className="mt-5 text-xs leading-5 text-slate-300 print:mt-3 print:text-slate-600">{mediaKit.notes.followers}</p>
             </div>
           </div>
         </section>
@@ -159,7 +158,6 @@ export default function MediaKitView({ locale = 'es' }: { locale?: 'es' | 'en' }
               </article>)}
             </div>
             <p className={swipeHint}>{t("Desliza para ver las 4 plataformas →", "Swipe to see all 4 platforms →")}</p>
-            <p className="mt-4 text-xs leading-6 text-slate-500">{mediaKit.notes.medians}</p>
           </section>
 
           <section className="grid gap-6 lg:grid-cols-[1fr_1.3fr] print:grid-cols-[1fr_1.3fr] print:gap-4 print:break-inside-avoid">
@@ -178,7 +176,6 @@ export default function MediaKitView({ locale = 'es' }: { locale?: 'es' | 'en' }
               {playExample && tiktokVideoId ? <TikTokVideoPlayer videoId={tiktokVideoId} title={t('Ejemplo editorial de AF en TikTok', 'AF editorial example on TikTok')} className="w-full" /> : <button type="button" onClick={() => setPlayExample(true)} className="min-h-12 border border-[#157c72] px-5 py-3 text-sm font-bold">{t('▶ Reproducir la previa en TikTok', '▶ Play the TikTok preview')}</button>}
               <p className="mt-2 text-xs leading-5 text-slate-500">{t('El reproductor carga TikTok al activarlo. También puedes abrir la publicación original; su disponibilidad depende de la plataforma.', 'The player loads TikTok when activated. You can also open the original post; availability depends on the platform.')}</p>
             </div>
-            <p className="mt-4 text-xs leading-6 text-slate-500">{mediaKit.notes.proof}</p>
           </section>
 
           <section className="print:break-inside-avoid"><h2 className={sectionTitle}>{t("Antes de lanzar tu campaña.", "Before launching your campaign.")}</h2><div className="mt-6 divide-y divide-slate-200 border-y border-slate-200 print:mt-3">{mediaKit.faqs.map(f => <details key={f.question} className="py-3 sm:py-5 print:break-inside-avoid print:py-2"><summary className="flex min-h-11 cursor-pointer items-center text-base font-bold print:text-sm">{f.question}</summary><p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 print:mt-1 print:text-xs print:leading-5">{f.answer}</p></details>)}</div></section>

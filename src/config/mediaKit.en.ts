@@ -14,10 +14,7 @@ export const mediaKitEn = {
     { title: 'A measurable next step', copy: 'Direct fans to a promotion, registration or campaign page with trackable links and reporting agreed in the brief.' },
   ],
   notes: {
-    followers: 'Summed followers and subscribers are not unique people. Platforms use different reporting windows and view definitions. Views are not unique reach.',
-    medians: 'October publication medians: Facebook 101 mixed posts (impressions); TikTok 43 videos; Instagram 100 posts; YouTube 47 videos. TikTok and Instagram use accumulated post views at the export date; YouTube uses October 1–31 views. These are not sponsored-content forecasts.',
-    geography: 'Different denominators; do not add these percentages. Instagram: 2,144 of 2,254 located followers are in Mexico/U.S. (95.1%); total followers: 2,270. YouTube: 115,796 Mexico + 46,752 U.S. views out of 174,225 (93.30%). Facebook has no country breakdown in this snapshot. No verified age, city or conversion data is available.',
-    proof: 'Selected editorial examples. Facebook and TikTok are from the October export; Instagram keeps the September reel, the stronger proof. Historical results demonstrate formats, not sponsor sales or registrations. See the medians for typical post performance. Older screenshots above illustrate editorial style and are separate from these examples.',
+    geography: 'Do not add these up. Instagram: 95.1% in Mexico or the U.S. (2,144 of 2,254 located). YouTube: 93.30% (115,796 + 46,752 of 174,225). Facebook has no country split. No verified age, city or conversions.',
     terms: 'Production, dates and travel require agreement. Usage rights, paid media and exclusivity are quoted separately. Each proposal defines deliverables, revisions, cancellation and replacement terms.',
   },
   platforms: mediaKit.platforms.map((p, i) => ({

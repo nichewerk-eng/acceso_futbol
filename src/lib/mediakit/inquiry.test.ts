@@ -28,7 +28,6 @@ test('both editions preserve verified totals, windows and medians', () => {
     assert.equal(kit.platforms.reduce((sum, p) => sum + p.followers, 0), 46766);
     assert.deepEqual(kit.platforms.map(p => p.median), [11760, 5813, 442, 1804]);
     assert.deepEqual(kit.platforms.map(p => p.views), mediaKit.platforms.map(p => p.views));
-    assert.ok(kit.notes.medians.includes('101') && kit.notes.medians.includes('43'));
     assert.ok(kit.notes.geography.includes('95.1%') && kit.notes.geography.includes('93.30%'));
     assert.ok(kit.platforms.every((p) => /1[–-]31/.test(p.period)));
     assert.match(kit.platforms[2].followerLabel, /7 [Nn]ov/);
