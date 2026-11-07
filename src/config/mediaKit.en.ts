@@ -1,9 +1,9 @@
 import { mediaKit } from './mediaKit';
 
-// Same September snapshot and deliverable counts; only the buyer-facing copy changes.
+// Same October snapshot and deliverable counts; only the buyer-facing copy changes.
 export const mediaKitEn = {
   ...mediaKit,
-  meta: { title: 'Acceso Futbol · Sponsorships', updated: 'September 2026' },
+  meta: { title: 'Acceso Futbol · Sponsorships', updated: 'October 2026' },
   clips: [
     { src: '/luis.jpg', alt: 'Acceso Futbol editorial screenshot: Liga MX in Austin, Texas' },
     { src: '/jonathang.jpg', alt: 'Acceso Futbol editorial screenshot: the road to the 2026 World Cup' },
@@ -14,25 +14,22 @@ export const mediaKitEn = {
     { title: 'A measurable next step', copy: 'Direct fans to a promotion, registration or campaign page with trackable links and reporting agreed in the brief.' },
   ],
   notes: {
-    followers: 'Summed followers and subscribers are not unique people. Platforms use different reporting windows and view definitions. Views are not unique reach.',
-    medians: 'September publication medians: Facebook 101 mixed posts (impressions); TikTok 56 uploads, including September 30; Instagram 98 posts; YouTube 59 posts. TikTok and Instagram use accumulated post views at the export date; YouTube uses September 1–28 views. TikTok’s post cohort differs from its September 1–29 account window. These are not sponsored-content forecasts.',
-    geography: 'Different denominators; do not add these percentages. Instagram: 1,953 of 2,051 located followers are in Mexico/U.S. (95.22%); total followers: 2,055. YouTube: 188,172 Mexico + 71,233 U.S. views out of 282,917 (91.69%). Facebook has no country breakdown in this snapshot. No verified age, city or conversion data is available.',
-    proof: 'Selected editorial examples at the September export date. Historical results demonstrate formats, not sponsor sales or registrations. See the medians for typical post performance. Older screenshots above illustrate editorial style and are separate from the September examples.',
+    geography: 'Do not add these up. Instagram: 95.1% in Mexico or the U.S. (2,144 of 2,254 located). YouTube: 93.30% (115,796 + 46,752 of 174,225). Facebook has no country split. No verified age, city or conversions.',
     terms: 'Production, dates and travel require agreement. Usage rights, paid media and exclusivity are quoted separately. Each proposal defines deliverables, revisions, cancellation and replacement terms.',
   },
   platforms: mediaKit.platforms.map((p, i) => ({
     ...p,
-    period: ['September 1–30', 'September 1–29', 'September 1–30', 'September 1–28'][i],
+    period: ['October 1–31', 'October 1–31', 'October 1–31', 'October 1–31'][i],
     metric: ['video views', 'video views', 'account views, including stories', 'channel views'][i],
-    followerLabel: i === 3 ? 'subscribers' : 'followers',
-    growth: ['+1,432 net', '+150 net', '+207 new (gross)', '+295 net in the period'][i],
-    medianLabel: ['impressions per post', 'views per video', 'views per post', 'views per September video'][i],
-    detail: ['2,219,466 page impressions. Videos and graphics for the matchday conversation.', 'Spanish-language opinion, news and previews. 36.8% of views came from the United States.', 'Reels, stories and graphics. 45.7% of located followers are in the United States.', 'Distribution mainly through Shorts. 118,440 minutes watched (1,974 hours) in the reported window.'][i],
+    followerLabel: i === 3 ? 'subscribers as of 7 Nov 2026' : i === 2 ? 'followers as of 7 Nov 2026' : 'followers',
+    growth: ['+2,622 net', '+856 net', '+178 new (8–31 Oct)', '+157 net in the period'][i],
+    medianLabel: ['impressions per post', 'views per video', 'views per post', 'views per October video'][i],
+    detail: ['6,656,616 page impressions. Videos and graphics for the matchday conversation.', 'Spanish-language opinion, news and previews. 37.0% of the audience in the United States.', 'Reels, stories and graphics. 43.3% of located followers are in the United States.', 'Distribution mainly through Shorts. 64,503 minutes watched (1,075 hours) in the reported window.'][i],
   })),
   geography: [
-    { platform: 'TikTok', population: 'Views · September 1–29', mexico: '31.4%', us: '36.8%' },
-    { platform: 'Instagram', population: 'Located followers · September snapshot', mexico: '49.5%', us: '45.7%' },
-    { platform: 'YouTube', population: 'Views · September 1–28', mexico: '66.5%', us: '25.2%' },
+    { platform: 'TikTok', population: 'Audience · October 1–31', mexico: '30.4%', us: '37.0%' },
+    { platform: 'Instagram', population: 'Located followers · October snapshot', mexico: '51.8%', us: '43.3%' },
+    { platform: 'YouTube', population: 'Views · October 1–31', mexico: '66.5%', us: '26.8%' },
   ],
   packages: [
     { id: 'piloto', name: 'Pilot campaign', duration: 'One campaign', benefit: 'Test how your brand fits into our coverage.', deliverables: ['2 original vertical videos with brand integration', 'Each video distributed on all 4 platforms: 8 video placements', '2 Instagram stories with a campaign link', 'One report by asset and platform'], bestFor: 'Launches, promotions and first collaborations.' },
@@ -40,9 +37,9 @@ export const mediaKitEn = {
     { id: 'evento', name: 'Event coverage', duration: 'One activation', benefit: 'Bring your event into the fan conversation.', deliverables: ['2 original videos: 1 preview and 1 vertical recap', 'Each video distributed on all 4 platforms: 8 video placements', '4 Instagram coverage stories', 'Registration or promotion link and final report'], bestFor: 'Events, watch parties, stores and fan experiences.' },
   ],
   proof: mediaKit.proof.map((p, i) => ({ ...p,
-    title: ['Matchday graphic', 'Title preview', 'A player’s story'][i],
+    title: ['Matchday graphic', 'América vs Tijuana preview', 'A player’s story'][i],
     metric: ['impressions on one post', 'views on one video', 'views on one reel'][i],
-    detail: ['September 6 example. Fixtures and schedules give a brand a place in useful content.', 'Published September 16. A preview offers room for a contextual integration.', 'Published September 6. Player stories open a conversation.'][i],
+    detail: ['October 25 example, Jornada 14 recap. Fixtures and schedules give a brand a place in useful content.', 'Published October 28. A preview offers room for a contextual integration.', 'Published September 6. Player stories open a conversation.'][i],
   })),
   faqs: [
     { question: 'What does a campaign cost?', answer: 'We quote based on production, asset count, duration, usage rights and exclusivity. Share your goal to receive a specific scope and investment.' },

@@ -5,13 +5,18 @@ import {
   boardCacheHeaders,
   paceFromFixtures,
 } from '@/lib/sports/freshness';
-import { fixtureToLigaMxSchedule, mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
+import {
+  fixtureToLigaMxSchedule,
+  mergeLigaMxSchedule,
+  type LigaMxScheduleFixture,
+} from '@/lib/sports/mergeLigaMxSchedule';
 import { localizeCity, localizeVenue } from '@/lib/sports/localizeEs';
 import { fetchLigaMxFixtures } from '@/lib/sports/espnFallback';
 import { prefetchCurrentJornadaContexto } from '@/lib/sports/getMatch';
 import { aperturaCalendar, refreshAperturaSmMap } from '@/lib/sports/aperturaSmMap';
-import { resolveDondeVer } from '@/config/dondeVer';
 import { paintLigaMxSchedule } from '@/lib/dondeVer/sheet';
+
+export type LigaMXFixture = LigaMxScheduleFixture;
 
 // Apertura 2026: July → December 2026
 const DATE_RANGE = '20260701-20261231';
@@ -83,26 +88,6 @@ export async function GET() {
       };
     },
   });
-}
-
-export interface LigaMXFixture {
-  id: string;
-  date: string;
-  league: 'liga-mx' | 'liga-mx-femenil';
-  jornada: string | null;
-  status: {
-    completed: boolean;
-    state: string;
-    description: string;
-    shortDetail: string;
-    displayClock: string;
-  };
-  venue: string | null;
-  city: string | null;
-  home: { name: string; abbreviation: string; score: string | null };
-  away: { name: string; abbreviation: string; score: string | null };
-  /** Server-resolved (includes the Google Sheet master list). */
-  dondeVer?: ReturnType<typeof resolveDondeVer>;
 }
 
 function parseFixtures(raw: { events?: EventRaw[] }): LigaMXFixture[] {

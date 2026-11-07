@@ -33,6 +33,7 @@ export default function MediaKitView({ locale = 'es' }: { locale?: 'es' | 'en' }
   const formatNumber = (n: number) => new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'es-MX').format(n);
   const totalViews = mediaKit.platforms.reduce((sum, p) => sum + p.views, 0);
   const totalFollowers = mediaKit.platforms.reduce((sum, p) => sum + p.followers, 0);
+  const tiktokVideoId = mediaKit.proof.find((p) => p.platform === 'TikTok')?.url.match(/\/video\/(\d+)/)?.[1] ?? '';
   const [packageId, setPackageId] = useState('');
   const [playExample, setPlayExample] = useState(false);
   const viewed = useRef(false);
@@ -40,7 +41,7 @@ export default function MediaKitView({ locale = 'es' }: { locale?: 'es' | 'en' }
   useEffect(() => {
     if (!viewed.current) {
       viewed.current = true;
-      trackClient('mediakit_view', { edition: '2026-09' });
+      trackClient('mediakit_view', { edition: '2026-10' });
     }
     // <details> content is omitted from print when closed; open everything for the PDF.
     const reopen: HTMLDetailsElement[] = [];
@@ -56,7 +57,7 @@ export default function MediaKitView({ locale = 'es' }: { locale?: 'es' | 'en' }
   }
 
   function printKit() {
-    trackClient('mediakit_print_click', { edition: '2026-09' });
+    trackClient('mediakit_print_click', { edition: '2026-10' });
     window.print();
   }
 
@@ -98,15 +99,14 @@ export default function MediaKitView({ locale = 'es' }: { locale?: 'es' | 'en' }
               </div>
             </div>
             <div className="border border-white/20 p-5 sm:p-6 print:border-slate-300 print:p-4">
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-300 print:text-slate-600">{t("Resultados reportados · septiembre 2026", "Reported results · September 2026")}</p>
+              <p className="text-xs uppercase tracking-[0.16em] text-slate-300 print:text-slate-600">{t("Resultados reportados · octubre 2026", "Reported results · October 2026")}</p>
               <p className="mt-3 font-display text-5xl font-semibold text-[#56dbc1] sm:mt-4 sm:text-6xl print:mt-2 print:text-5xl print:text-brand-blue">{formatNumber(totalViews)}</p>
               <p className="mt-2 text-base print:text-sm">{t("vistas reportadas en las 4 plataformas", "summed reported views across 4 platforms")}</p>
-              <p className="mt-2 text-xs leading-5 text-slate-300 print:text-slate-600">{t("Facebook e Instagram: 1–30 septiembre. TikTok: 1–29. YouTube: 1–28. Suma de vistas reportadas; incluye repeticiones y stories de Instagram.", "Facebook and Instagram: September 1–30. TikTok: 1–29. YouTube: 1–28. Summed reported views; includes repeat views and Instagram stories.")}</p>
+              <p className="mt-2 text-xs leading-5 text-slate-300 print:text-slate-600">{t("Facebook, TikTok, Instagram y YouTube: 1–31 octubre.", "Facebook, TikTok, Instagram and YouTube: October 1–31.")}</p>
               <div className="mt-6 grid grid-cols-2 gap-6 border-t border-white/20 pt-6 print:mt-3 print:gap-3 print:border-slate-300 print:pt-3">
                 <div><p className="font-display text-3xl font-semibold print:text-2xl">{formatNumber(totalFollowers)}</p><p className="mt-2 text-sm text-slate-300 print:mt-1 print:text-xs print:text-slate-600">{t("seguidores y suscriptores sumados al cierre reportado", "summed followers and subscribers at the reported closing snapshot")}</p></div>
                 <div><p className="font-display text-3xl font-semibold print:text-2xl">{mediaKit.platforms.length} {t('plataformas', 'platforms')}</p><p className="mt-2 text-sm text-slate-300 print:mt-1 print:text-xs print:text-slate-600">{t("para distribuir tu campaña", "to distribute your campaign")}</p></div>
               </div>
-              <p className="mt-5 text-xs leading-5 text-slate-300 print:mt-3 print:text-slate-600">{mediaKit.notes.followers}</p>
             </div>
           </div>
         </section>
@@ -146,7 +146,7 @@ export default function MediaKitView({ locale = 'es' }: { locale?: 'es' | 'en' }
           </section>
 
           <section id="resultados">
-            <h2 className={sectionTitle}>{t("Septiembre, plataforma por plataforma.", "September, platform by platform.")}</h2>
+            <h2 className={sectionTitle}>{t("Octubre, plataforma por plataforma.", "October, platform by platform.")}</h2>
             <p className="mt-3 leading-7 text-slate-600 print:text-xs print:leading-5">{t("Resultados del contenido de AF. Las vistas e impresiones son métricas distintas y pueden incluir varias exposiciones de una misma persona.", "Results from AF content. Views and impressions are different metrics and may include repeated exposure to the same person.")}</p>
             <div className={`mt-6 sm:mt-7 sm:grid-cols-2 lg:grid-cols-4 print:mt-3 print:grid-cols-4 print:gap-2 ${carousel}`}>
               {mediaKit.platforms.map(p => <article key={p.id} className={`${slide} border border-slate-200 bg-white p-5 print:break-inside-avoid print:p-3`}>
@@ -158,7 +158,6 @@ export default function MediaKitView({ locale = 'es' }: { locale?: 'es' | 'en' }
               </article>)}
             </div>
             <p className={swipeHint}>{t("Desliza para ver las 4 plataformas →", "Swipe to see all 4 platforms →")}</p>
-            <p className="mt-4 text-xs leading-6 text-slate-500">{mediaKit.notes.medians}</p>
           </section>
 
           <section className="grid gap-6 lg:grid-cols-[1fr_1.3fr] print:grid-cols-[1fr_1.3fr] print:gap-4 print:break-inside-avoid">
@@ -174,10 +173,9 @@ export default function MediaKitView({ locale = 'es' }: { locale?: 'es' | 'en' }
             <div className={`mt-6 sm:mt-7 sm:grid-cols-3 sm:gap-5 print:mt-3 print:grid-cols-3 print:gap-3 ${carousel}`}>{mediaKit.proof.map(p => <article key={p.platform} className={`${slide} border border-slate-200 bg-white p-5 sm:p-6 print:break-inside-avoid print:p-3`}><p className="text-xs font-bold uppercase tracking-wider text-[#157c72]">{p.platform}</p><h3 className="mt-3 text-lg font-bold print:mt-1 print:text-sm">{p.title}</h3><p className="mt-4 font-display text-4xl font-semibold print:mt-1 print:text-2xl">{formatNumber(p.value)}</p><p className="mt-1 text-xs text-slate-500">{p.metric}</p><p className="mt-4 text-sm leading-7 text-slate-600 print:mt-2 print:text-xs print:leading-5">{p.detail}</p><a href={p.url} target="_blank" rel="noopener noreferrer" className="mt-5 inline-block text-sm font-bold text-brand-orange-dark underline underline-offset-4 print:hidden" onClick={() => trackClient('mediakit_example_click', { platform: p.platform })}>{t("Ver publicación ↗", "Open original post ↗")}</a></article>)}</div>
             <p className={swipeHint}>{t("Desliza para ver más ejemplos →", "Swipe for more examples →")}</p>
             <div className="mt-5 max-w-sm print:hidden">
-              {playExample ? <TikTokVideoPlayer videoId="7686210799550975263" title={t('Ejemplo editorial de AF en TikTok', 'AF editorial example on TikTok')} className="w-full" /> : <button type="button" onClick={() => setPlayExample(true)} className="min-h-12 border border-[#157c72] px-5 py-3 text-sm font-bold">{t('▶ Reproducir la previa en TikTok', '▶ Play the TikTok preview')}</button>}
+              {playExample && tiktokVideoId ? <TikTokVideoPlayer videoId={tiktokVideoId} title={t('Ejemplo editorial de AF en TikTok', 'AF editorial example on TikTok')} className="w-full" /> : <button type="button" onClick={() => setPlayExample(true)} className="min-h-12 border border-[#157c72] px-5 py-3 text-sm font-bold">{t('▶ Reproducir la previa en TikTok', '▶ Play the TikTok preview')}</button>}
               <p className="mt-2 text-xs leading-5 text-slate-500">{t('El reproductor carga TikTok al activarlo. También puedes abrir la publicación original; su disponibilidad depende de la plataforma.', 'The player loads TikTok when activated. You can also open the original post; availability depends on the platform.')}</p>
             </div>
-            <p className="mt-4 text-xs leading-6 text-slate-500">{mediaKit.notes.proof}</p>
           </section>
 
           <section className="print:break-inside-avoid"><h2 className={sectionTitle}>{t("Antes de lanzar tu campaña.", "Before launching your campaign.")}</h2><div className="mt-6 divide-y divide-slate-200 border-y border-slate-200 print:mt-3">{mediaKit.faqs.map(f => <details key={f.question} className="py-3 sm:py-5 print:break-inside-avoid print:py-2"><summary className="flex min-h-11 cursor-pointer items-center text-base font-bold print:text-sm">{f.question}</summary><p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 print:mt-1 print:text-xs print:leading-5">{f.answer}</p></details>)}</div></section>
