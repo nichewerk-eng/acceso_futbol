@@ -1,8 +1,8 @@
-// September 2026 snapshot supplied by AF, extracted October 1.
-// Sources and exact reporting windows: docs/AF_MEDIAKIT_SEPTEMBER_2026.md.
-// Account-period totals and post-level lifetime results must stay separate.
+// October 2026 snapshot supplied by AF, extracted November 7 from
+// AF_All_Platforms_October_2026.xlsx (Windsor.ai). Account-period totals and
+// post-level lifetime results must stay separate.
 export const mediaKit = {
-  meta: { title: 'Acceso Futbol · Patrocinios', updated: 'Septiembre 2026' },
+  meta: { title: 'Acceso Futbol · Patrocinios', updated: 'Octubre 2026' },
   contact: { email: 'info@accesofutbol.com', subject: 'Propuesta de patrocinio AF' },
   clips: [
     { src: '/luis.jpg', alt: 'Clip de Acceso Futbol sobre la Liga MX en Austin, Texas' },
@@ -15,21 +15,21 @@ export const mediaKit = {
   ],
   notes: {
     followers: 'La suma de seguidores y suscriptores no representa personas únicas. Las vistas tampoco equivalen a alcance único. Cada plataforma tiene su propio periodo y definición de vistas.',
-    medians: 'Medianas de publicaciones de septiembre: Facebook 101 piezas, TikTok 56 (incluye videos del 30 de septiembre), Instagram 98 y YouTube 59. TikTok e Instagram usan vistas acumuladas al corte por pieza; YouTube usa vistas del periodo 1–28 septiembre. La cohorte de TikTok difiere de su ventana de cuenta del 1–29. Facebook incluye publicaciones mixtas y mide impresiones. No son proyecciones de una integración patrocinada.',
-    geography: 'Las bases son diferentes y no se suman. Instagram: 1,953 de 2,051 seguidores con ubicación están en México/EE. UU. (95.22%); total: 2,055 seguidores. YouTube: 188,172 vistas de México + 71,233 de EE. UU. sobre 282,917 (91.69%). Facebook no incluye desglose por país. No hay datos verificados de edad, ciudad o conversiones en este corte.',
-    proof: 'Ejemplos editoriales destacados al corte del archivo de septiembre. Muestran formatos y resultados históricos; no acreditan ventas o registros de patrocinadores. Las medianas muestran el desempeño habitual. Las capturas anteriores ilustran el estilo editorial y son distintas a los ejemplos de septiembre.',
+    medians: 'Medianas de publicaciones de octubre: Facebook 101 piezas, TikTok 43, Instagram 100 y YouTube 47. TikTok e Instagram usan vistas acumuladas al corte por pieza; YouTube usa vistas del periodo 1–31 octubre. Facebook incluye publicaciones mixtas y mide impresiones. No son proyecciones de una integración patrocinada.',
+    geography: 'Las bases son diferentes y no se suman. Instagram: 2,144 de 2,254 seguidores con ubicación están en México/EE. UU. (95.1%); total: 2,270 seguidores. YouTube: 115,796 vistas de México + 46,752 de EE. UU. sobre 174,225 (93.30%). Facebook no incluye desglose por país. No hay datos verificados de edad, ciudad o conversiones en este corte.',
+    proof: 'Ejemplos editoriales destacados. Facebook y TikTok son del archivo de octubre; Instagram conserva el reel de septiembre, el ejemplo más fuerte. Muestran formatos y resultados históricos; no acreditan ventas o registros de patrocinadores. Las medianas muestran el desempeño habitual. Las capturas anteriores ilustran el estilo editorial y son distintas a estos ejemplos.',
     terms: 'Producción, fechas y desplazamientos por acordar. Derechos de uso, pauta y exclusividad se cotizan por separado. Cada propuesta define entregables, revisiones, cancelación y condiciones de reposición.',
   },
   platforms: [
-    { id: 'facebook', name: 'Facebook', period: '1–30 septiembre', metric: 'vistas de video', views: 740646, followers: 24548, followerLabel: 'seguidores', growth: '+1,432 netos', median: 7927, medianLabel: 'impresiones por publicación', detail: '2,219,466 impresiones de página. Videos y gráficos para estar presente en la conversación de cada jornada.' },
-    { id: 'tiktok', name: 'TikTok', period: '1–29 septiembre', metric: 'vistas de video', views: 389184, followers: 12825, followerLabel: 'seguidores', growth: '+150 netos', median: 3973, medianLabel: 'vistas por video', detail: 'Opinión, noticias y previas en español. El 36.8% de las vistas provino de Estados Unidos.' },
-    { id: 'instagram', name: 'Instagram', period: '1–30 septiembre', metric: 'vistas de cuenta, incl. stories', views: 208788, followers: 2055, followerLabel: 'seguidores', growth: '+207 nuevos (brutos)', median: 468, medianLabel: 'vistas por publicación', detail: 'Reels, stories y gráficos. El 45.7% de los seguidores con ubicación está en Estados Unidos.' },
-    { id: 'youtube', name: 'YouTube', period: '1–28 septiembre', metric: 'vistas del canal', views: 282917, followers: 3430, followerLabel: 'suscriptores', growth: '+295 netos en el periodo', median: 1951, medianLabel: 'vistas por video de septiembre', detail: 'Distribución principalmente en Shorts. 118,440 minutos vistos (1,974 horas) durante el periodo reportado.' },
+    { id: 'facebook', name: 'Facebook', period: '1–31 octubre', metric: 'vistas de video', views: 1774900, followers: 27175, followerLabel: 'seguidores', growth: '+2,622 netos', median: 11760, medianLabel: 'impresiones por publicación', detail: '6,656,616 impresiones de página. Videos y gráficos para estar presente en la conversación de cada jornada.' },
+    { id: 'tiktok', name: 'TikTok', period: '1–31 octubre', metric: 'vistas de video', views: 667653, followers: 13681, followerLabel: 'seguidores', growth: '+856 netos', median: 5813, medianLabel: 'vistas por video', detail: 'Opinión, noticias y previas en español. El 37.0% de la audiencia está en Estados Unidos.' },
+    { id: 'instagram', name: 'Instagram', period: '1–31 octubre', metric: 'vistas de cuenta, incl. stories', views: 145380, followers: 2270, followerLabel: 'seguidores al 7 nov 2026', growth: '+178 nuevos (8–31 oct)', median: 442, medianLabel: 'vistas por publicación', detail: 'Reels, stories y gráficos. El 43.3% de los seguidores con ubicación está en Estados Unidos.' },
+    { id: 'youtube', name: 'YouTube', period: '1–31 octubre', metric: 'vistas del canal', views: 174225, followers: 3640, followerLabel: 'suscriptores al 7 nov 2026', growth: '+157 netos en el periodo', median: 1804, medianLabel: 'vistas por video de octubre', detail: 'Distribución principalmente en Shorts. 64,503 minutos vistos (1,075 horas) durante el periodo reportado.' },
   ],
   geography: [
-    { platform: 'TikTok', population: 'Vistas · 1–29 septiembre', mexico: '31.4%', us: '36.8%' },
-    { platform: 'Instagram', population: 'Seguidores con ubicación · corte septiembre', mexico: '49.5%', us: '45.7%' },
-    { platform: 'YouTube', population: 'Vistas · 1–28 septiembre', mexico: '66.5%', us: '25.2%' },
+    { platform: 'TikTok', population: 'Audiencia · 1–31 octubre', mexico: '30.4%', us: '37.0%' },
+    { platform: 'Instagram', population: 'Seguidores con ubicación · corte octubre', mexico: '51.8%', us: '43.3%' },
+    { platform: 'YouTube', population: 'Vistas · 1–31 octubre', mexico: '66.5%', us: '26.8%' },
   ],
   packages: [
     { id: 'piloto', name: 'Campaña piloto', duration: 'Una campaña', benefit: 'Prueba cómo encaja tu marca en nuestra cobertura.', deliverables: ['2 videos verticales originales con integración de marca', 'Distribución de cada video en las 4 plataformas: 8 publicaciones de video', '2 stories en Instagram con enlace de campaña', 'Un reporte con resultados por pieza y plataforma'], bestFor: 'Lanzamientos, promociones y primeras colaboraciones.' },
@@ -37,8 +37,8 @@ export const mediaKit = {
     { id: 'evento', name: 'Cobertura de evento', duration: 'Una activación', benefit: 'Lleva tu evento a la conversación de la afición.', deliverables: ['2 videos originales: 1 previo y 1 resumen vertical', 'Distribución de cada video en las 4 plataformas: 8 publicaciones de video', '4 stories de cobertura en Instagram', 'Enlace de registro o promoción y reporte final'], bestFor: 'Eventos, watch parties, tiendas y experiencias para fans.' },
   ],
   proof: [
-    { platform: 'Facebook', title: 'Gráfico de jornada', value: 340731, metric: 'impresiones de una publicación', detail: 'Ejemplo del 6 de septiembre. Los horarios y cruces dan a la marca un lugar en contenido útil.', url: 'https://www.facebook.com/122142147759026424/posts/122145991617026424' },
-    { platform: 'TikTok', title: 'Previa de un título', value: 36876, metric: 'vistas de un video', detail: 'Ejemplo publicado el 16 de septiembre. Una previa crea espacio para una integración contextual.', url: 'https://www.tiktok.com/@accesofutbolmx/video/7686210799550975263' },
+    { platform: 'Facebook', title: 'Gráfico de jornada', value: 880503, metric: 'impresiones de una publicación', detail: 'Ejemplo del 25 de octubre, recap de Jornada 14. Los horarios y cruces dan a la marca un lugar en contenido útil.', url: 'https://www.facebook.com/122142147759026424/posts/122150998995026424' },
+    { platform: 'TikTok', title: 'Previa América vs Tijuana', value: 187690, metric: 'vistas de un video', detail: 'Ejemplo publicado el 28 de octubre. Una previa crea espacio para una integración contextual.', url: 'https://www.tiktok.com/@accesofutbolmx/video/7701612018683350302' },
     { platform: 'Instagram', title: 'Historia de un jugador', value: 82359, metric: 'vistas de un reel', detail: 'Ejemplo publicado el 6 de septiembre. Historias de jugadores que abren conversación.', url: 'https://www.instagram.com/reel/Dc8z30YBApI/' },
   ],
   faqs: [

@@ -24,12 +24,15 @@ test('English brief labels all requested fields and keeps budget optional', () =
 
 test('both editions preserve verified totals, windows and medians', () => {
   for (const kit of [mediaKit, mediaKitEn]) {
-    assert.equal(kit.platforms.reduce((sum, p) => sum + p.views, 0), 1621535);
-    assert.equal(kit.platforms.reduce((sum, p) => sum + p.followers, 0), 42858);
-    assert.deepEqual(kit.platforms.map(p => p.median), [7927, 3973, 468, 1951]);
+    assert.equal(kit.platforms.reduce((sum, p) => sum + p.views, 0), 2762158);
+    assert.equal(kit.platforms.reduce((sum, p) => sum + p.followers, 0), 46766);
+    assert.deepEqual(kit.platforms.map(p => p.median), [11760, 5813, 442, 1804]);
     assert.deepEqual(kit.platforms.map(p => p.views), mediaKit.platforms.map(p => p.views));
-    assert.ok(kit.notes.medians.includes('30'));
-    assert.ok(kit.notes.geography.includes('95.22%') && kit.notes.geography.includes('91.69%'));
+    assert.ok(kit.notes.medians.includes('101') && kit.notes.medians.includes('43'));
+    assert.ok(kit.notes.geography.includes('95.1%') && kit.notes.geography.includes('93.30%'));
+    assert.ok(kit.platforms.every((p) => /1[–-]31/.test(p.period)));
+    assert.match(kit.platforms[2].followerLabel, /7 [Nn]ov/);
+    assert.match(kit.platforms[3].followerLabel, /7 [Nn]ov/);
   }
 });
 
