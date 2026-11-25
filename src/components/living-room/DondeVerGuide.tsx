@@ -7,6 +7,7 @@ import { DondeVerShare } from '@/components/living-room/DondeVerShare';
 import { RitualSlot } from '@/components/ritual/RitualSlot';
 import { groupDondeVerByDay, dondeVerGuideRows } from '@/lib/share/dondeVerShare';
 import { kickHold, kickHoldLabel } from '@/lib/sports/localizeEs';
+import { isLiguillaNumber, liguillaFixtureTag, roundLabel } from '@/lib/sports/liguilla';
 import type { Fixture } from '@/lib/sports';
 
 function kickClock(iso: string, tz: string) {
@@ -33,6 +34,7 @@ function GuideRow({
   const hold = !live && !post ? kickHoldLabel(kickHold(f.statusLabel)) : null;
   const d = f.dondeVer;
   const confirmed = Boolean(!hold && d?.confirmed && (d.mxChannels?.length || d.usChannels?.length));
+  const tag = liguillaFixtureTag(f);
 
   return (
     <Link
@@ -55,6 +57,7 @@ function GuideRow({
             kickClock(f.date, tz)
           )}
         </p>
+        {tag ? <span className="dv-leg-tag">{tag}</span> : null}
       </div>
 
       <div className="dv-pair">
@@ -153,7 +156,7 @@ export function DondeVerGuide({
             ://DONDE-VER
           </p>
           <Title className="mt-2 font-display text-2xl font-bold uppercase tracking-wide sm:text-3xl">
-            Dónde ver el partido{jornadaNum ? ` · Jornada ${jornadaNum}` : ''}
+            Dónde ver el partido{jornadaNum ? ` · ${roundLabel(jornadaNum)}` : ''}
           </Title>
           <p className="mt-2 max-w-xl font-mono text-[12px] leading-6 text-muted">
             Cada partido con su canal en México y en Estados Unidos. Horario en tu zona.
@@ -163,6 +166,14 @@ export function DondeVerGuide({
                 <Link href="/horarios" className="text-signal hover:text-foreground">
                   Calendario completo
                 </Link>
+                {isLiguillaNumber(jornadaNum) ? (
+                  <>
+                    {' · '}
+                    <Link href="/liguilla" className="text-signal hover:text-foreground">
+                      Cuadro y global de la Liguilla
+                    </Link>
+                  </>
+                ) : null}
                 .
               </>
             ) : null}

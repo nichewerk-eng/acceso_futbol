@@ -3,10 +3,21 @@ import { isMexicoDay, mexicoDayKey } from '@/lib/radio/phases';
 import type { Fixture } from './types';
 import { fetchLigaMxFixtures, seedLigaMxFixtures } from './espnFallback';
 import { isFixtureHeld, isFixturePostponed } from './localizeEs';
+import {
+  isLiguillaNumber,
+  liguillaRoundFromNumber,
+  roundLabel,
+  roundNumberFromLabel,
+  type LiguillaRound,
+} from './liguilla';
 
 export type JornadaOverview = {
+  /** "Jornada 7" or "Cuartos de final". */
   label: string;
+  /** 1–17 regular season; 18 cuartos, 19 semis, 20 final. */
   number: number;
+  phase?: 'regular' | 'liguilla';
+  liguillaRound?: LiguillaRound;
   generatedAt: string;
   source: 'sportmonks' | 'espn' | 'static';
   live: Fixture[];
@@ -17,9 +28,7 @@ export type JornadaOverview = {
 };
 
 export function jornadaNumber(label: string | null | undefined): number | null {
-  if (!label) return null;
-  const m = label.match(/(\d+)/);
-  return m ? Number(m[1]) : null;
+  return roundNumberFromLabel(label);
 }
 
 /** Calendar-day distance between two YYYY-MM-DD keys. */
@@ -65,7 +74,9 @@ export function jornadaFechaCluster<T extends { date: string }>(games: T[]): T[]
 }
 
 export function fixturesOnJornadaFecha(fixtures: Fixture[], n: number): Fixture[] {
-  return jornadaFechaCluster(fixtures.filter((f) => jornadaNumber(f.jornada) === n));
+  const games = fixtures.filter((f) => jornadaNumber(f.jornada) === n);
+  // A Liguilla round is ida + vuelta; never split it into fecha clusters.
+  return isLiguillaNumber(n) ? games : jornadaFechaCluster(games);
 }
 
 /** Live, or a real upcoming kickoff (ignore postponed / abandoned / stale). */
@@ -92,7 +103,7 @@ function pickActiveJornada(fixtures: Fixture[], now = new Date()): number | null
   }
 
   const nums = [...byNum.keys()].sort((a, b) => a - b);
-  const coreOf = (n: number) => jornadaFechaCluster(byNum.get(n)!);
+  const coreOf = (n: number) => fixturesOnJornadaFecha(byNum.get(n)!, n);
 
   // 1) Jornada with a game today or live
   for (const n of nums) {
@@ -134,14 +145,16 @@ function overviewFrom(
   const n = pickActiveJornada(fixtures, now);
   if (n === null) return null;
 
-  const label = `Jornada ${n}`;
+  const liguillaRound = liguillaRoundFromNumber(n);
   const games = fixturesOnJornadaFecha(fixtures, n)
     .map(attachDondeVer)
     .sort((a, b) => +new Date(a.date) - +new Date(b.date));
 
   return {
-    label,
+    label: roundLabel(n),
     number: n,
+    phase: liguillaRound ? 'liguilla' : 'regular',
+    ...(liguillaRound ? { liguillaRound } : {}),
     generatedAt: now.toISOString(),
     source,
     live: games.filter((g) => g.state === 'in'),

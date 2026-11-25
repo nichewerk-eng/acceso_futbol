@@ -6,6 +6,7 @@
 //   CST (UTC-6): Oct 25 – Nov 22
 
 import type { LigaMXFixture } from '@/app/api/ligamx/fixtures/route';
+import { roundNumberFromLabel } from '@/lib/sports/liguilla';
 
 const TEAMS: Record<string, { name: string }> = {
   AME: { name: 'América' },
@@ -299,8 +300,8 @@ export function getCurrentJornada(
 ): number {
   const now = Date.now();
   const live = fixtures.find((f) => f.status.state === 'in');
-  if (live) return Number(live.jornada?.replace('Jornada ', '') ?? 1);
+  if (live) return roundNumberFromLabel(live.jornada) ?? 1;
   const next = fixtures.filter((f) => f.status.state === 'pre' && new Date(f.date).getTime() > now)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
-  return Number(next?.jornada?.replace('Jornada ', '') ?? 17);
+  return roundNumberFromLabel(next?.jornada) ?? 17;
 }

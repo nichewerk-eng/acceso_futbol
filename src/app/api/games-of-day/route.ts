@@ -11,7 +11,7 @@ import {
 } from '@/lib/sports/gamesOfDay';
 import { paintDondeVerList } from '@/lib/dondeVer/sheet';
 
-const CACHE_KEY = 'games-of-day-v19-kick-tz';
+const CACHE_KEY = 'games-of-day-v20-liguilla';
 
 export async function GET() {
   return serveSwr<GamesOfDayPayload>({

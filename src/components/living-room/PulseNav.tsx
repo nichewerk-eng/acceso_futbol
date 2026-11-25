@@ -8,6 +8,7 @@ import { SeguirMenu } from '@/components/living-room/SeguirMenu';
 const LINKS = [
   { href: '/', label: 'Pulso' },
   { href: '/donde-ver', label: 'Dónde ver' },
+  { href: '/liguilla', label: 'Liguilla' },
   { href: '/liga-mx', label: 'Liga MX' },
   { href: '/liga-mx-femenil', label: 'Femenil' },
   { href: '/quiniela', label: 'Quiniela' },

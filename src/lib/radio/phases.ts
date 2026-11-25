@@ -1,4 +1,5 @@
 import type { Fixture, MatchSnapshot } from '@/lib/sports';
+import { liguillaFixtureTag } from '@/lib/sports/liguilla';
 
 export type RadioPhase = 'idle' | 'preshow' | 'live' | 'recap';
 
@@ -114,8 +115,9 @@ export function competitionLabel(
  */
 export function competitionBandTag(
   league: Fixture['league'],
-  jornada?: string | null
+  jornada?: string | null,
+  leg?: Fixture['leg']
 ): string | null {
-  if (league === 'liga-mx') return null;
+  if (league === 'liga-mx') return liguillaFixtureTag({ jornada: jornada ?? null, leg });
   return competitionLabel(league, jornada);
 }

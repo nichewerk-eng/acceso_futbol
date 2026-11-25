@@ -8,6 +8,10 @@ export interface TeamRef {
   abbreviation: string;
   logo?: string;
   score?: string | null;
+  /** Liguilla slot not decided yet ("2º mejor sembrado"). */
+  placeholder?: boolean;
+  /** Seed rank among survivors for a placeholder slot (Sportmonks "2nd ranked" → 2). */
+  placeholderRank?: number;
 }
 
 export type LiveEventKind =
@@ -76,7 +80,12 @@ export interface Fixture {
   venueTz?: string;
   /** ESPN event id behind a board row whose own id is not an ESPN id (El Tri `el-tri-…`). */
   espnEventId?: string;
+  /** "Jornada 7" in the regular season; "Cuartos de final" / "Semifinales" / "Final" in Liguilla. */
   jornada?: string | null;
+  /** Liguilla leg: 1 = ida, 2 = vuelta. */
+  leg?: 1 | 2;
+  /** Shootout score (Liguilla final only). */
+  penalties?: { home: number; away: number } | null;
   state: MatchState;
   statusLabel: string;
   clock?: string;

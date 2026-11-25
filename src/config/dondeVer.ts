@@ -1,6 +1,7 @@
 import { LEAGUES_CUP_KNOCKOUT, LEAGUES_CUP_PHASE_ONE } from '@/config/leaguesCup2026';
 import { mexicoDayKey } from '@/lib/radio/phases';
 import { scheduleAbbr } from '@/lib/sports/ligaMxAbbr';
+import { liguillaRoundFromText, type LiguillaRound } from '@/lib/sports/liguilla';
 import type { Fixture } from '@/lib/sports/types';
 
 export type TvChannelId =
@@ -795,6 +796,11 @@ const GUIDE: Record<string, { mx: TvChannelId[]; us: TvChannelId[] }> = {
   },
 };
 
+/** Sheet key for a Liguilla leg: round + HOME|AWAY in order (the host tells ida from vuelta). */
+export function liguillaGuideKey(round: LiguillaRound, homeAbbr: string, awayAbbr: string): string {
+  return `${round}|${normAbbr(homeAbbr)}|${normAbbr(awayAbbr)}`;
+}
+
 /**
  * Liga MX broadcast rights are sold per HOME club, so when a club hosts we can
  * assume its channel set even before the exact per-match grid is confirmed.
@@ -926,6 +932,8 @@ export function resolveDondeVer(
     return { ...UNCONFIRMED };
   }
   const dateKey = pairKey(fixture.date, fixture.home.abbreviation, fixture.away.abbreviation);
+  const ko = fixture.league === 'liga-mx' ? liguillaRoundFromText(fixture.jornada) : null;
+  if (ko) return resolveLiguillaDondeVer(ko, dateKey, fixture.home.abbreviation, fixture.away.abbreviation);
   const jornadaKey = jornadaGuideKey(
     fixture.jornada,
     fixture.home.abbreviation,
@@ -991,6 +999,36 @@ export function resolveDondeVer(
   }
 
   return { ...UNCONFIRMED };
+}
+
+/**
+ * Liguilla: sheet row → code grid → dated GUIDE → home-club default, per side.
+ * Never borrows a regular-season jornada row for the same pair.
+ */
+function resolveLiguillaDondeVer(
+  round: LiguillaRound,
+  dateKey: string,
+  homeAbbr: string,
+  awayAbbr: string
+): ReturnType<typeof resolveDondeVer> {
+  const key = liguillaGuideKey(round, homeAbbr, awayAbbr);
+  const home = normAbbr(homeAbbr);
+  const sources: (DondeVerSides | undefined)[] = [
+    overlay?.matches[key],
+    overlay?.matches[dateKey],
+    overlay?.clubs[home],
+    CLUB_HOME_TV[home],
+  ];
+  const mx = sources.find((s) => s?.mx)?.mx;
+  const us = sources.find((s) => s?.us)?.us;
+  if (!mx && !us) return { ...UNCONFIRMED };
+  return {
+    mx: labelList(mx ?? []),
+    us: labelList(us ?? []),
+    mxChannels: mx ?? [],
+    usChannels: us ?? [],
+    confirmed: true,
+  };
 }
 
 /** Official Leagues Cup TV grid by board id or Sportmonks fixture id. */

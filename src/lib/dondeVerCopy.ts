@@ -1,9 +1,12 @@
 import { TV_CHANNELS, type TvChannelId } from '@/config/dondeVer';
 import type { ClubIdentity } from '@/config/clubIdentity';
 import type { JornadaOverview } from '@/lib/sports/jornada';
+import { liguillaRoundFromNumber } from '@/lib/sports/liguilla';
 import type { Fixture } from '@/lib/sports/types';
 
 export type FaqItem = { question: string; answer: string };
+
+const KO_PHRASE = { cuartos: 'los cuartos de final', semis: 'las semifinales', final: 'la Final' } as const;
 
 /** Kickoff label in Mexico City time (server-stable, es-MX). */
 export function kickoffLabelMx(iso: string): string {
@@ -112,7 +115,12 @@ export function jornadaDondeVerFaq(overview: JornadaOverview | null): FaqItem[] 
     }
   }
 
-  const jornada = overview?.number ? `la Jornada ${overview.number} de la Liga MX` : 'la Liga MX';
+  const ko = liguillaRoundFromNumber(overview?.number);
+  const jornada = ko
+    ? `${KO_PHRASE[ko]} de la Liguilla`
+    : overview?.number
+      ? `la Jornada ${overview.number} de la Liga MX`
+      : 'la Liga MX';
   const items: FaqItem[] = [];
 
   items.push({

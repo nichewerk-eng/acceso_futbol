@@ -5,6 +5,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperti
 import { ClubLogo } from '@/components/brand/ClubLogo';
 import { leaguePath } from '@/lib/radio/phases';
 import type { Fixture, FixtureScorer } from '@/lib/sports/types';
+import { roundLabel } from '@/lib/sports/liguilla';
 
 const HOLD_MS = 4800;
 /** Keep marquee speed steady as we add copies for wide viewports. */
@@ -150,7 +151,7 @@ export function HeroTablero({
             ://TABLERO
           </p>
           <p className="hero-tablero-meta">
-            {jornadaNum ? `Jornada ${jornadaNum}` : 'Fecha'}
+            {jornadaNum ? roundLabel(jornadaNum) : 'Fecha'}
             {` · ${board.length} sellado${board.length === 1 ? '' : 's'}`}
           </p>
           <a href="#jornada" className="hero-tablero-more">

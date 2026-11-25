@@ -13,6 +13,8 @@ export type LigaMxScheduleFixture = {
   date: string;
   league: 'liga-mx' | 'liga-mx-femenil';
   jornada: string | null;
+  /** Liguilla: 1 ida, 2 vuelta. */
+  leg?: 1 | 2;
   status: {
     completed: boolean;
     state: string;
@@ -50,6 +52,7 @@ export function fixtureToLigaMxSchedule(f: Fixture): LigaMxScheduleFixture {
     date: f.date,
     league: f.league === 'liga-mx-femenil' ? 'liga-mx-femenil' : 'liga-mx',
     jornada: f.jornada ?? null,
+    ...(f.leg ? { leg: f.leg } : {}),
     status: {
       completed: f.state === 'post',
       state: f.state,
@@ -119,9 +122,11 @@ export function mergeLigaMxSchedule(live: LigaMxScheduleFixture[]): LigaMxSchedu
   });
   rememberOverlaySmIds(seed, merged);
 
+  const extras = new Map<string, LigaMxScheduleFixture>();
   for (const f of live) {
-    if (!usedLive.has(f.id) && f.jornada) merged.push(f);
+    if (!usedLive.has(f.id) && f.jornada) extras.set(f.id, f);
   }
+  merged.push(...extras.values());
 
   return merged;
 }

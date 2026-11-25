@@ -2,6 +2,7 @@ import { clubIdentityFromAbbr } from '@/config/clubIdentity';
 import { scheduleAbbr } from '@/lib/sports/ligaMxAbbr';
 import type { JornadaOverview } from '@/lib/sports/jornada';
 import type { Fixture } from '@/lib/sports/types';
+import { roundLabel } from '@/lib/sports/liguilla';
 
 export type JornadaTakePhase = 'preview' | 'live' | 'recap';
 
@@ -328,7 +329,7 @@ export function buildJornadaTake(
 
   const phase = phaseOf(jornada);
   const jornadaNum = jornada.number ?? null;
-  const kicker = jornadaNum ? `Jornada ${jornadaNum}` : 'Liga MX';
+  const kicker = jornadaNum ? roundLabel(jornadaNum) : 'Liga MX';
   const isMine = opts?.isMine ?? (() => false);
   const lockAbbr = opts?.lockAbbr ?? null;
 
@@ -386,7 +387,7 @@ export function buildJornadaTake(
       .filter((f) => f.id !== lead.id)
       .slice(0, 3);
     const lock = isMine(lead);
-    const desk = jornadaNum ? `Jornada ${jornadaNum} Liga MX` : 'Liga MX';
+    const desk = jornadaNum ? `${roundLabel(jornadaNum)} Liga MX` : 'Liga MX';
     return {
       phase,
       jornadaNum,
@@ -427,7 +428,7 @@ export function buildJornadaTake(
 }
 
 export function jornadaTakeShareCopy(take: JornadaTake): { title: string; text: string } {
-  const title = take.jornadaNum ? `Toma · Jornada ${take.jornadaNum}` : 'Toma Acceso';
+  const title = take.jornadaNum ? `Toma · ${roundLabel(take.jornadaNum)}` : 'Toma Acceso';
   const body = jornadaTakeColumnBody(take).join('\n\n');
   const beats = take.beats.map((b) => `· ${b.kicker} — ${b.line}`).join('\n');
   const text = [take.headline, take.dek, body, beats].filter(Boolean).join('\n\n');
@@ -473,7 +474,7 @@ export function jornadaTakeDeskTitle(take: JornadaTake): string {
   if (headline && !looksLikeMatchClock(headline.split(/[.!?]/)[0] ?? headline)) {
     return headline;
   }
-  return take.jornadaNum != null ? `Jornada ${take.jornadaNum} Liga MX` : 'Liga MX';
+  return take.jornadaNum != null ? `${roundLabel(take.jornadaNum)} Liga MX` : 'Liga MX';
 }
 
 function spokenScript(take: JornadaTake): string {
@@ -527,7 +528,7 @@ export function jornadaTakeCortes(take: JornadaTake): TomaCorte[] {
     {
       id: `toma-${hashText(text)}`,
       n: 1,
-      label: take.jornadaNum != null ? `Jornada ${take.jornadaNum}` : 'Toma',
+      label: take.jornadaNum != null ? roundLabel(take.jornadaNum) : 'Toma',
       cue: take.headline,
       text,
     },

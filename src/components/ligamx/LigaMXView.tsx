@@ -9,7 +9,6 @@ import { LigaMxMark } from '@/components/brand/LigaMxMark';
 import { LigaMxFemenilMark } from '@/components/brand/LigaMxFemenilMark';
 import { PartidoLink } from '@/components/partido/PartidoLink';
 import { teamNameEs } from '@/components/standings/teamNames';
-import { resolveDondeVer } from '@/config/dondeVer';
 import { ligaMxClubIdFromAbbr } from '@/config/ligaMxLogos';
 import { getCurrentJornada } from '@/fixtures/ligamx-apertura-2026';
 import type { LigaMXTable, LigaMXEntry } from '@/app/api/ligamx/standings/route';
@@ -22,6 +21,15 @@ import { FRESH, paceFromFixtures, type FreshPace } from '@/lib/sports/freshness'
 import { kickHold, kickHoldLabel } from '@/lib/sports/localizeEs';
 import { mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
 import { LIGUILLA_SPOTS } from '@/lib/sports/liguillaPath';
+import {
+  isLiguillaNumber,
+  LIGUILLA_ROUND_NUMBERS,
+  liguillaFixtureTag,
+  REGULAR_SEASON_ROUNDS,
+  roundLabel,
+  roundNumberFromLabel,
+  roundShort,
+} from '@/lib/sports/liguilla';
 import { FEMENIL_LIGUILLA_SPOTS } from '@/lib/sports/ligaMxFemenil';
 import { GoleoRailCard, GoleoTabla } from '@/components/ligamx/GoleoTabla';
 import { KalshiChampionBoard } from '@/components/ligamx/KalshiChampionBoard';
@@ -115,7 +123,9 @@ export default function LigaMXView({
   const standingsApi =
     league === 'liga-mx-femenil' ? '/api/ligamx-femenil/standings' : '/api/ligamx/standings';
   const baseFixtures =
-    league === 'liga-mx' ? mergeLigaMxSchedule(initialFixtures) : initialFixtures;
+    league === 'liga-mx' && initialFixtures.length === 0
+      ? mergeLigaMxSchedule([])
+      : initialFixtures;
 
   const [table, setTable] = useState<LigaMXTable | null>(initialTable);
   const [fixtures, setFixtures] = useState<LigaMXFixture[]>(baseFixtures);
@@ -139,7 +149,8 @@ export default function LigaMXView({
       if (fr.ok) {
         const d = await fr.json();
         const raw = (d.fixtures ?? []) as LigaMXFixture[];
-        const next = league === 'liga-mx' ? mergeLigaMxSchedule(raw) : raw;
+        const next =
+          league === 'liga-mx' && raw.length === 0 ? mergeLigaMxSchedule([]) : raw;
         setFixtures(next);
         paceRef.current = paceFromFixtures(
           next.map((f) => ({
@@ -176,7 +187,7 @@ export default function LigaMXView({
   const contextoPrefetchKey = useMemo(() => {
     const n = getCurrentJornada(fixtures);
     return fixtures
-      .filter((f) => f.jornada === `Jornada ${n}` && f.status.state !== 'post')
+      .filter((f) => roundNumberFromLabel(f.jornada) === n && f.status.state !== 'post')
       .map((f) => f.id)
       .join(',');
   }, [fixtures]);
@@ -198,7 +209,7 @@ export default function LigaMXView({
               .filter((n) => Number.isFinite(n) && n > 0)
           )
         ).sort((a, b) => a - b)
-      : Array.from({ length: 17 }, (_, i) => i + 1);
+      : [...Array.from({ length: REGULAR_SEASON_ROUNDS }, (_, i) => i + 1), ...LIGUILLA_ROUND_NUMBERS];
   useEffect(() => {
     if (allJornadas.length === 0) return;
     if (!allJornadas.includes(selectedJornada)) {
@@ -206,7 +217,7 @@ export default function LigaMXView({
     }
   }, [allJornadas, selectedJornada]);
   const jornadaFixtures = fixtures
-    .filter((f) => f.jornada === `Jornada ${selectedJornada}`)
+    .filter((f) => roundNumberFromLabel(f.jornada) === selectedJornada)
     .sort((a, b) => +new Date(a.date) - +new Date(b.date));
   const jornadaLive = jornadaFixtures.filter((f) => f.status.state === 'in');
   const jornadaPast = jornadaFixtures.filter((f) => f.status.state === 'post');
@@ -437,7 +448,7 @@ export default function LigaMXView({
                       ://JORNADA
                     </p>
                     <h2 className="mt-1 font-display text-2xl font-bold uppercase tracking-wide sm:text-3xl">
-                      Jornada {selectedJornada}
+                      {roundLabel(selectedJornada)}
                     </h2>
                     <p className="mt-2 af-tele">
                       {jornadaFixtures[0]?.date
@@ -472,7 +483,7 @@ export default function LigaMXView({
                   data-testid="ligamx-jornada-picker"
                 >
                   {allJornadas.map((j) => {
-                    const list = fixtures.filter((f) => f.jornada === `Jornada ${j}`);
+                    const list = fixtures.filter((f) => roundNumberFromLabel(f.jornada) === j);
                     const hasLive = list.some((f) => f.status.state === 'in');
                     const hasPast = list.some((f) => f.status.state === 'post');
                     const active = j === selectedJornada;
@@ -493,7 +504,7 @@ export default function LigaMXView({
                                 : 'border-line text-muted/70 hover:border-signal hover:text-signal',
                         ].join(' ')}
                       >
-                        J{j}
+                        {roundShort(j).toUpperCase()}
                         {hasLive && !active && (
                           <span className="hoy-live-dot absolute -right-0.5 -top-0.5" aria-hidden />
                         )}
@@ -502,6 +513,18 @@ export default function LigaMXView({
                   })}
                 </div>
               </section>
+
+              {league === 'liga-mx' && isLiguillaNumber(selectedJornada) ? (
+                <Link href="/liguilla" className="lm-liguilla-cta" data-testid="ligamx-liguilla-link">
+                  <span className="lm-liguilla-cta-kicker">Liguilla · Apertura 2026</span>
+                  <span className="lm-liguilla-cta-title">
+                    Cuadro, marcador global y dónde ver cada partido
+                  </span>
+                  <span className="lm-liguilla-cta-go" aria-hidden>
+                    →
+                  </span>
+                </Link>
+              ) : null}
 
               {jornadaLive.length > 0 && (
                 <div>
@@ -585,8 +608,12 @@ export default function LigaMXView({
 
               {jornadaFixtures.length === 0 && (
                 <EmptyBoard
-                  title={`Jornada ${selectedJornada}`}
-                  body="Sin partidos registrados para esta fecha."
+                  title={roundLabel(selectedJornada)}
+                  body={
+                    isLiguillaNumber(selectedJornada)
+                      ? 'Los cruces y horarios se publican al cerrar la ronda anterior.'
+                      : 'Sin partidos registrados para esta fecha.'
+                  }
                 />
               )}
 
@@ -922,30 +949,9 @@ function KickRow({
   const center = done || live ? `${f.home.score ?? 0}–${f.away.score ?? 0}` : 'VS';
   const homeId = ligaMxClubIdFromAbbr(f.home.abbreviation);
   const awayId = ligaMxClubIdFromAbbr(f.away.abbreviation);
-  const tv =
-    f.dondeVer ??
-    (league === 'liga-mx-femenil'
-      ? resolveDondeVer({
-          date: f.date,
-          league,
-          jornada: f.jornada,
-          venue: f.venue,
-          city: f.city,
-          home: {
-            id: homeId ?? f.home.abbreviation,
-            name: f.home.name,
-            abbreviation: f.home.abbreviation,
-            score: f.home.score,
-          },
-          away: {
-            id: awayId ?? f.away.abbreviation,
-            name: f.away.name,
-            abbreviation: f.away.abbreviation,
-            score: f.away.score,
-          },
-        })
-      : { mx: '', us: '', mxChannels: [], usChannels: [], confirmed: false });
-  const hasTv = Boolean(tv.mxChannels?.length || tv.usChannels?.length);
+  const tv = f.dondeVer;
+  const hasTv = Boolean(tv?.mxChannels?.length || tv?.usChannels?.length);
+  const tag = liguillaFixtureTag(f);
 
   return (
     <li className="lc-match-item">
@@ -975,6 +981,7 @@ function KickRow({
         <div className="lc-match-mid">
           {!done && (
             <div className="lc-match-when">
+              {tag ? <p className="dv-leg-tag">{tag}</p> : null}
               <p className="lc-match-when-primary">
                 {live && <span className="hoy-live-dot mr-1.5" aria-hidden />}
                 {when}
@@ -1021,10 +1028,10 @@ function KickRow({
         {hasTv ? (
           <BroadcastChannels
             className="lc-match-tv tv-inline-desk"
-            mx={tv.mxChannels}
-            us={tv.usChannels}
-            mxLabel={tv.mx}
-            usLabel={tv.us}
+            mx={tv?.mxChannels}
+            us={tv?.usChannels}
+            mxLabel={tv?.mx}
+            usLabel={tv?.us}
             inline
           />
         ) : null}

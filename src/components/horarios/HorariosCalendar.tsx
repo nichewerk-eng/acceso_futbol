@@ -14,6 +14,7 @@ import {
 import { fixtureChannelLabels } from '@/lib/dondeVerCopy';
 import { isFixtureHeld, kickHoldLabel, kickHold } from '@/lib/sports/localizeEs';
 import type { HorarioRound } from '@/lib/sports/horariosBoard';
+import { isLiguillaNumber, liguillaFixtureTag, roundShort } from '@/lib/sports/liguilla';
 import type { Fixture } from '@/lib/sports/types';
 
 function tvLine(f: Fixture): string {
@@ -28,6 +29,7 @@ function MatchCard({ f, tz }: { f: Fixture; tz: string }) {
   const live = f.state === 'in';
   const done = f.state === 'post';
   const hold = !live && !done ? kickHoldLabel(kickHold(f.statusLabel)) : null;
+  const tag = liguillaFixtureTag(f);
   return (
     <li>
       <Link
@@ -52,6 +54,7 @@ function MatchCard({ f, tz }: { f: Fixture; tz: string }) {
           ) : (
             hold ?? horarioTimeIn(f.date, tz)
           )}
+          {tag ? <span className="dv-leg-tag af-horarios-leg">{tag}</span> : null}
         </p>
         <div className="af-horarios-pair">
           <span className="af-horarios-side">
@@ -147,6 +150,14 @@ function RoundBlock({
           </span>
         </summary>
         <h2 className="sr-only">{round.label} — Horarios Liga MX</h2>
+        {isLiguillaNumber(round.number) ? (
+          <p className="af-horarios-liguilla">
+            Ida y vuelta, marcador global y cuadro completo en{' '}
+            <Link href="/liguilla" className="text-signal hover:text-foreground">
+              Liguilla →
+            </Link>
+          </p>
+        ) : null}
         <div className="af-horarios-days">
           {days.map((day) => (
             <DayBlock key={day.key} label={day.label} fixtures={day.fixtures} tz={tz} />
@@ -179,7 +190,7 @@ export function HorariosCalendar({
                 href={`#jornada-${r.number}`}
                 className={focusNums.has(r.number) ? 'is-now' : undefined}
               >
-                J{r.number}
+                {roundShort(r.number)}
               </a>
             </li>
           ))}

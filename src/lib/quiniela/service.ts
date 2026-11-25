@@ -3,6 +3,7 @@ import { fetchLigaMxFixtures } from '@/lib/sports/espnFallback';
 import { jornadaFechaCluster, jornadaNumber } from '@/lib/sports/jornada';
 import type { Fixture } from '@/lib/sports/types';
 import { isFixtureHeld } from '@/lib/sports/localizeEs';
+import { roundLabel } from '@/lib/sports/liguilla';
 import { isOutcome, missingOpenPicks } from './card';
 import { pickQuinielaJornada, quinielaHoldActive, QUINIELA_FROM } from './jornada';
 import { sanitizeName } from './name';
@@ -89,7 +90,7 @@ export function boardFromFixtures(
     torneo: QUINIELA_TORNEO,
     jornadaKey: jornadaKeyFor(n),
     jornadaNumber: n,
-    jornadaLabel: `Jornada ${n}`,
+    jornadaLabel: roundLabel(n),
     deadline: open.length ? open[0].date : null,
     matches,
     finals,

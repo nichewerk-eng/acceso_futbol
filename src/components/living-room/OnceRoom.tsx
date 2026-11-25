@@ -8,6 +8,7 @@ import { clubIdentityFromAbbr } from '@/config/clubIdentity';
 import { APERTURA_MATCHDAYS } from '@/lib/sports/liguillaPath';
 import { useTotw } from '@/lib/client/useTotw';
 import type { TotwClub, TotwPlayer, TotwBoard } from '@/lib/sports/totw';
+import { roundLabel, roundShort } from '@/lib/sports/liguilla';
 
 function formatRating(n: number): string {
   return n.toFixed(2);
@@ -203,7 +204,7 @@ export function OnceRoom({
                   .filter(Boolean)
                   .join(' ')}
               >
-                J{n}
+                {roundShort(n)}
               </button>
             );
           })}
@@ -221,7 +222,7 @@ export function OnceRoom({
           </p>
           <p className="mt-2 max-w-md font-mono text-[12px] leading-6 text-muted">
             {payload?.pending
-              ? `Jornada ${payload.jornada} ya se selló. El once Acceso sale cuando cierran los ratings de cada partido.`
+              ? `${roundLabel(payload.jornada)} ya se selló. El once Acceso sale cuando cierran los ratings de cada partido.`
               : 'El once de esta fecha llega después del último silbatazo.'}
           </p>
         </div>

@@ -150,7 +150,7 @@ export function PulseHero({ leadStory }: Props) {
   const paperGames = played.length > 0 ? games.filter((g) => g.state !== 'post') : games;
   const liveCount = paperGames.filter((g) => g.state === 'in').length;
   const stage = paperGames.find((g) => g.state === 'in') ?? paperGames[0] ?? null;
-  const stageTag = stage ? competitionBandTag(stage.league, stage.jornada) : null;
+  const stageTag = stage ? competitionBandTag(stage.league, stage.jornada, stage.leg) : null;
   const upcoming = Boolean(payload?.upcoming);
   const todayKey = mexicoDayKey();
   const slateKey = payload?.dayKey;
@@ -354,7 +354,7 @@ export function PulseHero({ leadStory }: Props) {
               .map((g) => {
                 const meta = bandMeta(g, userTz, upcoming, slateKey, todayKey);
                 const href = `/partido/${leaguePath(g.league)}/${g.id}`;
-                const compTag = competitionBandTag(g.league, g.jornada);
+                const compTag = competitionBandTag(g.league, g.jornada, g.leg);
                 return (
                   <Link
                     key={`${g.league}-${g.id}`}

@@ -30,9 +30,17 @@ import type {
   MatchSnapshot,
   MatchState,
   TeamLineup,
+  TeamRef,
 } from './types';
+import {
+  legFromSportmonks,
+  liguillaRoundFromSportmonks,
+  liguillaRoundLabel,
+  placeholderLabel,
+  placeholderRank,
+} from './liguilla';
 
-const SEASON_CACHE_KEY = 'sm-ligamx-season-fixtures-v7-j14-ft';
+const SEASON_CACHE_KEY = 'sm-ligamx-season-fixtures-v8-liguilla';
 const FEM_SEASON_CACHE_KEY = 'sm-ligamx-femenil-season-fixtures-v1-states';
 const LC_SEASON_CACHE_KEY = 'sm-leagues-cup-season-fixtures-v3-states';
 const LIVE_CACHE_KEY = 'sm-livescores-v9-events-player';
@@ -42,10 +50,10 @@ const LIVESCORES_INCLUDE = 'participants;scores;state;periods;events;events.play
 const MATCH_TICK_INCLUDE = 'participants;scores;state;periods;events;events.player';
 /** Full match chapter (lineups, stats, comments). */
 const MATCH_DETAIL_INCLUDE =
-  'participants;scores;state;venue;round;league;periods;events.type;events.player;comments;statistics.type;lineups.type;lineups.player;referees.referee;formations';
+  'participants;scores;state;venue;round;stage;league;periods;events.type;events.player;comments;statistics.type;lineups.type;lineups.player;referees.referee;formations';
 /** Sticky in-play board while /livescores/latest returns empty (no updates in ~10s). */
 const LIVE_STICKY_TTL_MS = 120_000;
-const DATE_CACHE_PREFIX = 'sm-fixtures-date-v5-ht-clock';
+const DATE_CACHE_PREFIX = 'sm-fixtures-date-v6-liguilla';
 const SEASON_TTL_MS = LANE.catalog.memTtlMs;
 const LIVE_TTL_MS = LANE.live.memTtlMs;
 const DATE_TTL_MS = LANE.board.memTtlMs;
@@ -112,6 +120,7 @@ interface SmParticipant {
   name: string;
   short_code?: string;
   image_path?: string;
+  placeholder?: boolean;
   meta?: { location?: string; winner?: boolean };
 }
 
@@ -229,6 +238,10 @@ interface SmFixture {
   periods?: SmPeriod[];
   venue?: { name?: string; city_name?: string };
   round?: { name?: string };
+  /** Liguilla: "1/2" ida, "2/2" vuelta. */
+  leg?: string | null;
+  stage_id?: number | null;
+  stage?: { name?: string };
   league?: { id?: number; name?: string };
 }
 
@@ -343,6 +356,7 @@ export function overlayLiveFixtures(base: Fixture[], live: Fixture[]): Fixture[]
       statusLabel: overlayWins ? l.statusLabel : f.statusLabel,
       clock: overlayWins ? (l.clock ?? f.clock) : f.clock,
       winnerSide: l.winnerSide ?? f.winnerSide,
+      penalties: l.penalties ?? f.penalties,
       scorers: l.scorers ?? f.scorers,
       assists: l.assists ?? f.assists,
       home: {
@@ -449,15 +463,28 @@ export function mapFixture(f: SmFixture): Fixture {
 
   const roundName = f.round?.name?.trim();
   let jornada: string | null = null;
+  let leg: 1 | 2 | undefined;
   if (league === 'leagues-cup') {
     jornada = roundName && !/^jornada/i.test(roundName) ? roundName : leaguesCupPhaseLabel(date);
   } else if (roundName) {
     jornada = /jornada/i.test(roundName) ? roundName : `Jornada ${roundName}`;
+  } else if (league === 'liga-mx') {
+    const ko = liguillaRoundFromSportmonks({
+      stageName: f.stage?.name,
+      stageId: f.stage_id,
+      leg: f.leg,
+      date,
+    });
+    if (ko) {
+      jornada = liguillaRoundLabel(ko);
+      leg = legFromSportmonks(f.leg);
+    }
   }
 
   const events = mapEvents(f.events, homeId, awayId, homeAbbr, awayAbbr, f.periods);
   const scorers = scorersFromEvents(events);
   const assists = assistsFromEvents(events);
+  const penalties = shootoutScore(f.scores);
 
   return {
     id: String(f.id),
@@ -465,6 +492,8 @@ export function mapFixture(f: SmFixture): Fixture {
     league,
     date,
     jornada,
+    ...(leg ? { leg } : {}),
+    ...(penalties ? { penalties } : {}),
     state,
     statusLabel: statusLabelFor(f, state),
     clock,
@@ -473,21 +502,41 @@ export function mapFixture(f: SmFixture): Fixture {
     winnerSide: winnerSideOf(homeP, awayP, state, homeScore, awayScore),
     scorers: scorers.length ? scorers : undefined,
     assists: assists.length ? assists : undefined,
-    home: {
-      id: homeId,
-      name: homeName,
-      abbreviation: homeAbbr,
-      logo: playerPhoto(homeP?.image_path),
-      score: state === 'pre' ? null : homeScore,
-    },
-    away: {
-      id: awayId,
-      name: awayName,
-      abbreviation: awayAbbr,
-      logo: playerPhoto(awayP?.image_path),
-      score: state === 'pre' ? null : awayScore,
-    },
+    home: teamRef(homeP, homeId, homeName, homeAbbr, state === 'pre' ? null : homeScore),
+    away: teamRef(awayP, awayId, awayName, awayAbbr, state === 'pre' ? null : awayScore),
   };
+}
+
+/** Liguilla slots Sportmonks publishes before the clubs are known ("2nd ranked"). */
+function teamRef(
+  p: SmParticipant | undefined,
+  id: string,
+  name: string,
+  abbreviation: string,
+  score: string | null
+): TeamRef {
+  const rank = placeholderRank(p?.name);
+  if (p?.placeholder || rank != null) {
+    return {
+      id,
+      name: placeholderLabel(rank),
+      abbreviation: 'TBD',
+      score,
+      placeholder: true,
+      ...(rank != null ? { placeholderRank: rank } : {}),
+    };
+  }
+  return { id, name, abbreviation, logo: playerPhoto(p?.image_path), score };
+}
+
+function shootoutScore(scores: SmScore[] | undefined): { home: number; away: number } | null {
+  const rows = (scores ?? []).filter(
+    (s) => (s.description ?? '').toUpperCase() === 'PENALTY_SHOOTOUT'
+  );
+  if (!rows.length) return null;
+  const pick = (side: 'home' | 'away') =>
+    Number(rows.find((s) => (s.score?.participant ?? '').toLowerCase() === side)?.score?.goals ?? 0);
+  return { home: pick('home'), away: pick('away') };
 }
 
 function shortName(raw?: string | null): string {
@@ -936,7 +985,7 @@ export async function fetchFixturesByDate(
   const key = `${DATE_CACHE_PREFIX}-${dateYYYYMMDD}-${leagueIds.slice().sort().join(',')}`;
   return singleFlight(key, DATE_TTL_MS, async () => {
     ensureSmRefs();
-    const include = 'participants;scores;state;venue;round;league;periods';
+    const include = 'participants;scores;state;venue;round;stage;league;periods';
     const data = await smFetch<{ data?: SmFixture[] }>(
       `/fixtures/date/${dateYYYYMMDD}`,
       {
@@ -957,7 +1006,7 @@ export async function fetchLigaMxSeasonFixtures(): Promise<Fixture[]> {
       `/seasons/${ligaMxSeasonId()}`,
       {
         include:
-          'fixtures.participants;fixtures.scores;fixtures.state;fixtures.round;fixtures.venue;fixtures.events.type',
+          'fixtures.participants;fixtures.scores;fixtures.state;fixtures.round;fixtures.stage;fixtures.venue;fixtures.events.type',
       },
       'catalog'
     );

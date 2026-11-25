@@ -12,7 +12,7 @@ import {
 } from '@/lib/sports/jornada';
 import { paintDondeVerList } from '@/lib/dondeVer/sheet';
 
-const CACHE_KEY = 'jornada-overview-v18-dv-sheet';
+const CACHE_KEY = 'jornada-overview-v19-liguilla';
 
 function jornadaRows(o: JornadaOverview) {
   return [...o.live, ...o.played, ...o.upcoming, ...(o.postponed ?? [])];

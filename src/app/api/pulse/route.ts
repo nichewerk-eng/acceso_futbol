@@ -8,7 +8,7 @@ import {
   paceFromFixtures,
 } from '@/lib/sports/freshness';
 
-const CACHE_KEY = 'pulse-v6-dv-sheet';
+const CACHE_KEY = 'pulse-v7-liguilla';
 
 export async function GET() {
   return serveSwr<PulsePayload>({

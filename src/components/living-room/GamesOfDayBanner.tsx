@@ -112,7 +112,7 @@ export function GamesOfDayBanner() {
               const path = leaguePath(g.league);
               const href = `/partido/${path}/${g.id}?tab=radio`;
               const line = cabinaLine(g, userTz);
-              const compTag = competitionBandTag(g.league, g.jornada);
+              const compTag = competitionBandTag(g.league, g.jornada, g.leg);
 
               return (
                 <li

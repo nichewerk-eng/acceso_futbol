@@ -9,6 +9,7 @@ import {
 import { mexicoDayKey, shiftDayKey } from '@/lib/radio/phases';
 import { peekCache, singleFlight } from '@/lib/apiCache';
 import { dayPairKey, scheduleAbbr } from './ligaMxAbbr';
+import { resolveLiguillaPlaceholders } from './liguilla';
 import { localizeCity, localizeStatus, localizeVenue } from './localizeEs';
 import { overlayShouldReplaceSeedSchedule } from './scheduleHold';
 import { apiTtlMsForPace, isNearKickoff, looksStillLive, paceFromFixtures } from './freshness';
@@ -250,9 +251,13 @@ function mergeLiveOntoStatic(live: Fixture[]): Fixture[] {
 
   rememberOverlaySmIds(seed, merged);
 
+  // Off-calendar rows (Liguilla, makeups) arrive from both the season dump and
+  // the date window; keep one per id, fresher (later) feed wins.
+  const extras = new Map<string, Fixture>();
   for (const f of live) {
-    if (!usedLive.has(f.id) && f.jornada) merged.push(f);
+    if (!usedLive.has(f.id) && f.jornada) extras.set(f.id, f);
   }
+  merged.push(...extras.values());
 
   return merged;
 }
@@ -312,7 +317,7 @@ async function fetchDateBoardFixtures(seed: Fixture[], pastMs: number): Promise<
 type LigaMxBoard = { fixtures: Fixture[]; source: 'sportmonks' | 'espn' | 'static' };
 
 /** Canonical Liga MX board key — one merged snapshot shared across every surface (and isolates via KV). */
-const BOARD_KEY = 'liga-mx-board-v5-j14-ft';
+const BOARD_KEY = 'liga-mx-board-v6-liguilla';
 
 /**
  * Static calendar + season FT scores + nearby date boards / livescores.
@@ -352,7 +357,9 @@ async function buildLigaMxBoard(): Promise<LigaMxBoard> {
             (f) => f.league === 'liga-mx'
           )
         : [];
-      const fixtures = live.length ? overlayLiveFixtures(dated, live) : dated;
+      const fixtures = resolveLiguillaPlaceholders(
+        live.length ? overlayLiveFixtures(dated, live) : dated
+      );
       const hasSm = fixtures.some((f) => f.provider === 'sportmonks' || /^\d+$/.test(f.id));
       return { fixtures, source: hasSm ? 'sportmonks' : 'static' };
     } catch {

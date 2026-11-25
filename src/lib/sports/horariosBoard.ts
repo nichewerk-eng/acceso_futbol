@@ -1,6 +1,7 @@
 import { attachDondeVer } from '@/config/dondeVer';
 import type { Fixture } from './types';
 import { jornadaNumber } from './jornada';
+import { roundLabel } from './liguilla';
 
 export type HorarioRound = {
   number: number;
@@ -21,7 +22,7 @@ export function groupHorarioRounds(fixtures: Fixture[]): HorarioRound[] {
     .sort((a, b) => a - b)
     .map((n) => ({
       number: n,
-      label: `Jornada ${n}`,
+      label: roundLabel(n),
       fixtures: (byNum.get(n) ?? []).slice().sort((a, b) => +new Date(a.date) - +new Date(b.date)),
     }));
 }

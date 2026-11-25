@@ -7,6 +7,7 @@ import type { LigaMXTable } from '@/app/api/ligamx/standings/route';
 import { absoluteUrl, breadcrumbJsonLd, personItemListJsonLd, sportsEventItemListJsonLd } from '@/lib/seo';
 import { paintLigaMxSchedule } from '@/lib/dondeVer/sheet';
 import { fetchLigaMxFixtures } from '@/lib/sports/espnFallback';
+import { fetchLigaMxStandings, sportmonksEnabled } from '@/lib/sports/sportmonks';
 import { fetchLigaMxLeaders } from '@/lib/sports/leaders';
 import { fetchLigaMxChampionBoard } from '@/lib/kalshi/ligaMxChampion';
 import { fixtureToLigaMxSchedule, mergeLigaMxSchedule } from '@/lib/sports/mergeLigaMxSchedule';
@@ -33,6 +34,14 @@ export const metadata: Metadata = {
 export const revalidate = 10;
 
 async function fetchTable(): Promise<LigaMXTable | null> {
+  if (sportmonksEnabled()) {
+    try {
+      const sm = await fetchLigaMxStandings();
+      if (sm.entries.length > 0) return { ...sm, source: 'sportmonks' };
+    } catch {
+      /* fall through to ESPN */
+    }
+  }
   try {
     const res = await fetch(
       'https://site.api.espn.com/apis/v2/sports/soccer/mex.1/standings',

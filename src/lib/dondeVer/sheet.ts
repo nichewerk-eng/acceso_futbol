@@ -3,6 +3,9 @@
  *
  * Tabs (share as "Anyone with the link · Viewer"):
  *   Partidos: Jornada | Local | Visita | MX 1–6 | US 1–6 | Nota
+ *             Liguilla rows put "Cuartos" / "Semis" / "Final" in Jornada, or leave it
+ *             blank and the Fecha picks the round. Local is that leg's host, so ida
+ *             and vuelta are separate rows.
  *   Clubes:   Club | MX 1–6 | US 1–6   (home-club defaults)
  *   Canales:  Canal | Id | Tipo        (dropdown source; include "Ninguno")
  *
@@ -16,6 +19,7 @@ import { getCache, peekCache, peekCacheAgeMs, setCache, singleFlight } from '@/l
 import { kvGetJson, kvSetJson, sharedKvEnabled } from '@/lib/sharedKv';
 import {
   attachDondeVer,
+  liguillaGuideKey,
   resolveDondeVer,
   setDondeVerOverlay,
   TV_CHANNELS,
@@ -26,6 +30,7 @@ import {
 import type { Fixture } from '@/lib/sports/types';
 import { APERTURA_2026_FIXTURES } from '@/fixtures/ligamx-apertura-2026';
 import { scheduleAbbr } from '@/lib/sports/ligaMxAbbr';
+import { liguillaRoundFromDay, liguillaRoundFromText } from '@/lib/sports/liguilla';
 
 const CACHE_KEY = 'donde-ver-sheet-v2';
 const LOAD_LOCK = 'donde-ver-sheet-v2-load';
@@ -267,8 +272,11 @@ export function buildSnapshot(partidosCsv: string, clubesCsv: string): DondeVerS
       return;
     }
     const pair = sortedPair(home, away);
-    const n = Number(String(r.jornada ?? '').match(/(\d+)/)?.[1]) || PAIR_JORNADA[pair];
-    if (!n) {
+    const day = String(r.fecha ?? '').match(/(\d{4}-\d{2}-\d{2})/)?.[1];
+    const jornadaN = Number(String(r.jornada ?? '').match(/(\d+)/)?.[1]);
+    const ko = liguillaRoundFromText(r.jornada) ?? (jornadaN ? null : liguillaRoundFromDay(day));
+    const n = ko ? null : jornadaN || PAIR_JORNADA[pair];
+    if (!ko && !n) {
       errors.push(`${where}: falta jornada para ${home}-${away}`);
       return;
     }
@@ -276,8 +284,7 @@ export function buildSnapshot(partidosCsv: string, clubesCsv: string): DondeVerS
     const us = channelList(sideFromRow(r, 'us'), `${where} US`, errors);
     if (mx === undefined && us === undefined) return;
     const sides = { mx, us };
-    matches[`j${n}|${pair}`] = sides;
-    const day = String(r.fecha ?? '').match(/(\d{4}-\d{2}-\d{2})/)?.[1];
+    matches[ko ? liguillaGuideKey(ko, home, away) : `j${n}|${pair}`] = sides;
     if (day) matches[`${day}|${pair}`] = sides;
   });
 

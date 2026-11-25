@@ -10,6 +10,7 @@ import { useJornadaOverview } from '@/lib/client/useJornadaOverview';
 import { useTomaTake } from '@/lib/client/useTomaTake';
 import { useDeviceTimeZone } from '@/lib/client/useDeviceTimeZone';
 import { buildJornadaTake, mergeJornadaTake } from '@/lib/sports/jornadaTake';
+import { isLiguillaNumber, roundShort } from '@/lib/sports/liguilla';
 
 export function JornadaRecap() {
   const { payload: data, loading } = useJornadaOverview();
@@ -27,6 +28,7 @@ export function JornadaRecap() {
   const total = filledCount + upcoming.length || 9;
   const doneCount = played.length;
   const jornadaNum = data?.number;
+  const ko = isLiguillaNumber(jornadaNum);
   const fechaCerrada =
     !loading &&
     Boolean(data) &&
@@ -58,18 +60,18 @@ export function JornadaRecap() {
               ://JORNADA
             </p>
             <p
-              className="jor-num mt-1"
+              className={ko ? 'jor-num is-ko mt-1' : 'jor-num mt-1'}
               data-testid="jornada-title"
               aria-label={data?.label ?? 'Jornada'}
             >
-              {loading && !data ? '—' : jornadaNum ?? '—'}
+              {loading && !data ? '—' : ko ? roundShort(jornadaNum) : jornadaNum ?? '—'}
             </p>
           </div>
 
           <div className="min-w-0 lg:pb-2">
             <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
               <p className="font-display text-xl font-bold uppercase tracking-wide sm:text-2xl">
-                {loading && !data ? 'Cargando fecha…' : 'Estado de la fecha'}
+                {loading && !data ? 'Cargando fecha…' : ko ? 'Estado de la Liguilla' : 'Estado de la fecha'}
               </p>
               <p className="af-tele" data-testid="jornada-stats">
                 {loading && !data
@@ -105,10 +107,14 @@ export function JornadaRecap() {
             </div>
             <p className="mt-3 max-w-md text-sm leading-6 text-muted">
               {fechaCerrada
-                ? 'Fecha sellada. Esperando la siguiente jornada.'
+                ? ko
+                  ? 'Ronda sellada. Esperando la siguiente ronda de la Liguilla.'
+                  : 'Fecha sellada. Esperando la siguiente jornada.'
                 : postponed.length
                   ? `${postponed.length} de la fecha están aplazados. Quedan ${upcoming.length} en la cartelera de este fin.`
-                  : 'Resultados sellados y lo que todavía falta por patear.'}
+                  : ko
+                    ? 'Ida y vuelta: resultados sellados, lo que falta y el marcador global en la Liguilla.'
+                    : 'Resultados sellados y lo que todavía falta por patear.'}
             </p>
           </div>
 
@@ -116,6 +122,11 @@ export function JornadaRecap() {
             <Link href="/club/el-tri" className="af-cta !py-2" data-testid="jornada-cta-el-tri">
               El Tri
             </Link>
+            {ko ? (
+              <Link href="/liguilla" className="af-cta !py-2" data-testid="jornada-cta-liguilla">
+                Cuadro Liguilla
+              </Link>
+            ) : null}
             <Link
               href="/liga-mx"
               className="af-cta af-cta-ghost !py-2"

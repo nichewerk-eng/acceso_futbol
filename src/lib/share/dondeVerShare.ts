@@ -1,4 +1,5 @@
 import type { Fixture } from '@/lib/sports';
+import { liguillaFixtureTag, roundLabel } from '@/lib/sports/liguilla';
 
 export function dondeVerGuideRows(
   live: Fixture[],
@@ -66,7 +67,8 @@ export function groupDondeVerByDay(rows: Fixture[], tz: string): {
 }
 
 function lineFor(f: Fixture): string {
-  const pair = `${f.home.abbreviation} vs ${f.away.abbreviation}`;
+  const tag = liguillaFixtureTag(f);
+  const pair = `${f.home.abbreviation} vs ${f.away.abbreviation}${tag ? ` (${tag})` : ''}`;
   const mx = f.dondeVer?.mx && f.dondeVer.confirmed ? f.dondeVer.mx : 'Por confirmar';
   const us = f.dondeVer?.us && f.dondeVer.confirmed ? f.dondeVer.us : 'Por confirmar';
   return `${pair} · MX ${mx} · US ${us}`;
@@ -77,7 +79,7 @@ export function dondeVerShareCopy(
   jornadaNum?: number
 ): { title: string; text: string } {
   const title = jornadaNum
-    ? `Dónde ver Liga MX · Jornada ${jornadaNum}`
+    ? `Dónde ver Liga MX · ${roundLabel(jornadaNum)}`
     : 'Dónde ver Liga MX';
   const text =
     fixtures.length > 0
